@@ -1,0 +1,376 @@
+:root {
+  /* HSL Color Palette - Light Theme */
+  --bg-dark: 0 0% 100%;       /* White background */
+  --bg-panel: 0 0% 98%;       /* Slightly off-white panel */
+  --accent-cyan: 200 100% 50%; /* Sky Blue */
+  --accent-purple: 350 80% 55%; /* Red (replacing cyber purple for gradient) */
+  --accent-green: 150 70% 45%; /* Green */
+  --accent-red: 350 80% 55%;  /* Red */
+  --text-primary: 0 0% 15%;   /* Dark gray for readability */
+  --text-secondary: 0 0% 40%; /* Medium gray */
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-bg-hover: rgba(245, 245, 245, 0.9);
+  
+  /* Typography */
+  --font-sans: 'Vazirmatn', system-ui, sans-serif;
+  --font-code: 'Vazir Code', monospace;
+  
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: hsl(var(--bg-dark));
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  direction: rtl; /* RTL default layout */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Glassmorphism Utilities - adapted for Light Theme */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth), background var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  border-color: hsla(var(--accent-cyan), 0.4);
+  background: var(--glass-bg-hover);
+  box-shadow: 0 12px 40px rgba(0, 191, 255, 0.15);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Custom Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)));
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 6px 20px rgba(0, 191, 255, 0.5);
+  transform: scale(1.02);
+}
+
+.btn-glass {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  backdrop-filter: blur(8px);
+}
+
+.btn-glass:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Glowing Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-glow {
+  background: hsla(var(--accent-cyan), 0.15);
+  color: hsl(var(--accent-cyan));
+  border: 1px solid hsla(var(--accent-cyan), 0.3);
+  box-shadow: 0 0 10px hsla(var(--accent-cyan), 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg-panel));
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Forms and Inputs */
+input, select, textarea {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  transition: border-color var(--transition-fast);
+  width: 100%;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: hsl(var(--accent-cyan));
+  box-shadow: 0 0 0 2px hsla(var(--accent-cyan), 0.2);
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.grid {
+  display: grid;
+}
+
+.flex {
+  display: flex;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modal Dialog Overlays */
+dialog {
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  max-width: 90vw;
+  max-height: 90vh;
+  direction: rtl; /* Ensure modal is RTL */
+}
+
+dialog::backdrop {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+/* Modern Details / Accordion */
+details {
+  border-bottom: 1px solid var(--border-glass);
+  padding: 16px 0;
+}
+details summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+details summary::-webkit-details-marker {
+  display: none;
+}
+details[open] summary ~ * {
+  animation: fadeIn 0.3s ease-in-out;
+  margin-top: 12px;
+  color: hsl(var(--text-secondary));
+}
+
+/* Font classes */
+.font-code {
+  font-family: var(--font-code);
+  font-size: 0.9em; /* Usually monospaced fonts need a slight scale down */
+  letter-spacing: 0px;
+}
+
+/* =========================================================
+   MOBILE & RESPONSIVE PERFECTION
+   ========================================================= */
+
+/* Prevent iOS auto-zoom on input focus (requires font-size >= 16px) */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  .container {
+    padding: 0 14px !important;
+  }
+
+  /* Global touch targets */
+  .btn {
+    min-height: 42px;
+    touch-action: manipulation;
+  }
+
+  /* Typography on Mobile */
+  h1 {
+    font-size: clamp(1.8rem, 7vw, 2.6rem) !important;
+    line-height: 1.25 !important;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 5.5vw, 1.9rem) !important;
+  }
+
+  /* Mobile scroll containers */
+  .overflow-x-auto, [style*="overflowX: auto"], [style*="overflow-x: auto"] {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .overflow-x-auto::-webkit-scrollbar, [style*="overflowX: auto"]::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  /* Responsive dialogs */
+  dialog, .glass-panel[style*="position: fixed"] {
+    width: 95% !important;
+    max-width: 95% !important;
+    max-height: 94vh !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* Touch scrolling helper */
+.touch-scroll-x {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  gap: 8px;
+}
+
+.touch-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.touch-scroll-x > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Modal and Form responsive helpers */
+.checkout-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .checkout-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  
+  .gateway-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-footer-mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+  }
+
+  .modal-footer-mobile-stack button {
+    width: 100% !important;
+  }
+}
+
+.benchmark-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.benchmark-row-name {
+  width: 160px;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.benchmark-row-track {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .benchmark-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .benchmark-row-name {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .benchmark-row-track {
+    width: 100%;
+  }
+}

@@ -1,0 +1,87 @@
+// Password hashing (scrypt) + HMAC-signed tokens. No native dependencies, works on Node and Bun.
+import crypto from 'node:crypto';
+import { db, getSetting } from './db.js';
+
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+
+export function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+export function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored).split(':');
+  if (!salt || !hash) return false;
+  const test = crypto.scryptSync(password, salt, 64);
+  const known = Buffer.from(hash, 'hex');
+  return known.length === test.length && crypto.timingSafeEqual(known, test);
+}
+
+const b64 = (s) => Buffer.from(s).toString('base64url');
+const sign = (data) => crypto.createHmac('sha256', getSetting('token_secret')).update(data).digest('base64url');
+
+export function issueToken(user) {
+  const payload = b64(JSON.stringify({ uid: user.id, role: user.role, exp: Date.now() + TOKEN_TTL_MS }));
+  return `${payload}.${sign(payload)}`;
+}
+
+function readToken(token) {
+  const [payload, sig] = String(token || '').split('.');
+  if (!payload || !sig) return null;
+  const expected = sign(payload);
+  if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+  return data.exp > Date.now() ? data : null;
+}
+
+export const publicUser = (u) =>
+  u && { id: u.id, name: u.name, mobile: u.mobile, phone: u.mobile, email: u.email, role: u.role, mustChangePassword: !!u.must_change_password, createdAt: u.created_at };
+
+// Attaches req.user when a valid token is present (does not reject).
+export function attachUser(req, _res, next) {
+  const header = req.headers.authorization || '';
+  const data = header.startsWith('Bearer ') ? readToken(header.slice(7)) : null;
+  if (data) {
+    const u = db.get('SELECT * FROM users WHERE id = ?', data.uid);
+    if (u && !u.blocked) req.user = u;
+  }
+  next();
+}
+
+export function requireUser(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'لطفاً ابتدا وارد حساب کاربری شوید.' });
+  next();
+}
+
+export function requireAdmin(req, res, next) {
+  if (!req.user) return res.status(401).json({ error: 'لطفاً ابتدا وارد شوید.' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'دسترسی مدیر لازم است.' });
+  next();
+}
+
+// Creates the first admin account on a fresh database.
+export function ensureAdmin() {
+  if (db.get("SELECT id FROM users WHERE role = 'admin' LIMIT 1")) return;
+  const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(6).toString('base64url');
+  const email = process.env.ADMIN_EMAIL || 'admin@techtink.ir';
+  db.run(
+    "INSERT INTO users (name, email, password_hash, role, must_change_password) VALUES (?, ?, ?, 'admin', 1)",
+    'مدیر سایت', email, hashPassword(password)
+  );
+  console.log('\n==============================================');
+  console.log(' Default admin account created');
+  console.log(`   login:    ${email}`);
+  console.log(`   password: ${password}`);
+  console.log(' You will be asked to change it on first login.');
+  console.log('==============================================\n');
+}
+
+// Iranian mobile (09xxxxxxxxx) normalisation, also accepts Persian digits and +98.
+export function normalizeMobile(input) {
+  if (!input) return null;
+  let s = String(input).replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g, '');
+  if (s.startsWith('98')) s = '0' + s.slice(2);
+  if (s.length === 10 && s.startsWith('9')) s = '0' + s;
+  return /^09\d{9}$/.test(s) ? s : null;
+}

@@ -1,0 +1,965 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
+  Cpu, HardDrive, Monitor, Scale, Plus, ShoppingCart, MessageSquare, 
+  Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, 
+  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText
+} from 'lucide-react';
+import { formatPrice } from '../utils/formatPrice.js';
+
+export default function ProductPage({ 
+  productSlug, 
+  onBack, 
+  onAddToCart, 
+  onCompare, 
+  compareList = [], 
+  currentUser, 
+  onOpenAuth,
+  onSelectProduct
+}) {
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Tab navigation inside product page
+  const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'review', 'drivers', 'comments'
+
+  // Selected upgrades
+  const [selectedRam, setSelectedRam] = useState(0);
+  const [selectedStorage, setSelectedStorage] = useState(0);
+  const [selectedDisplay, setSelectedDisplay] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
+
+  // Comments state
+  const [comments, setComments] = useState([]);
+  const [commentRating, setCommentRating] = useState(5);
+  const [commentBody, setCommentBody] = useState('');
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentNotice, setCommentNotice] = useState(null);
+
+  // Drivers state
+  const [drivers, setDrivers] = useState([]);
+  const [driversLoading, setDriversLoading] = useState(false);
+
+  // Related products
+  const [relatedProducts, setRelatedProducts] = useState([]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setLoading(true);
+    setError(null);
+
+    // Fetch product details
+    fetch(`/api/products/${productSlug}`)
+      .then(res => {
+        if (!res.ok) throw new Error('محصول مورد نظر یافت نشد.');
+        return res.json();
+      })
+      .then(data => {
+        setProduct(data);
+        setSelectedRam(0);
+        setSelectedStorage(0);
+        setSelectedDisplay(0);
+        setQuantity(1);
+        setActiveImage(0);
+        setLoading(false);
+
+        // Fetch drivers for this product
+        setDriversLoading(true);
+        fetch(`/api/products/${data.slug}/drivers`)
+          .then(r => r.json())
+          .then(list => {
+            setDrivers(Array.isArray(list) ? list : []);
+            setDriversLoading(false);
+          })
+          .catch(() => setDriversLoading(false));
+
+        // Fetch related products
+        fetch('/api/products')
+          .then(r => r.json())
+          .then(all => {
+            const related = all.filter(p => p.id !== data.id && p.category === data.category);
+            setRelatedProducts(related.slice(0, 3));
+          })
+          .catch(() => {});
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
+
+    // Fetch approved comments
+    fetch(`/api/products/${productSlug}/comments`)
+      .then(res => res.json())
+      .then(setComments)
+      .catch(() => {});
+  }, [productSlug]);
+
+  if (loading) {
+    return (
+      <div className="container" style={{ padding: '120px 24px', textAlign: 'center' }}>
+        <div className="gradient-text font-code" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
+          در حال بارگذاری مشخصات تفصیلی لپ‌تاپ...
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="container" style={{ padding: '100px 24px', textAlign: 'center' }}>
+        <AlertTriangle size={64} color="hsl(var(--accent-red))" style={{ margin: '0 auto 24px' }} />
+        <h2>{error || 'محصول پیدا نشد.'}</h2>
+        <button className="btn btn-primary" style={{ marginTop: '24px' }} onClick={onBack}>
+          بازگشت به فروشگاه
+        </button>
+      </div>
+    );
+  }
+
+  // Calculate dynamic price
+  const ramPrice = product.upgrades?.ram?.[selectedRam]?.price || 0;
+  const storagePrice = product.upgrades?.storage?.[selectedStorage]?.price || 0;
+  const displayPrice = product.upgrades?.display?.[selectedDisplay]?.price || 0;
+  const unitPrice = product.basePrice + ramPrice + storagePrice + displayPrice;
+  const totalPrice = unitPrice * quantity;
+
+  const isComparing = compareList.includes(product.id);
+  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
+  const review = product.expertReview || {};
+
+  const handleAddToCart = () => {
+    onAddToCart({
+      productId: product.id,
+      laptopId: product.id,
+      slug: product.slug,
+      name: product.name,
+      basePrice: product.basePrice,
+      totalPrice: unitPrice,
+      image: product.image,
+      configuration: {
+        ram: product.upgrades?.ram?.[selectedRam]?.name || product.specs?.ram || 'استاندارد',
+        storage: product.upgrades?.storage?.[selectedStorage]?.name || product.specs?.storage || 'استاندارد',
+        display: product.upgrades?.display?.[selectedDisplay]?.name || product.specs?.display || 'استاندارد'
+      },
+      variantIds: [
+        product.upgrades?.ram?.[selectedRam]?.id,
+        product.upgrades?.storage?.[selectedStorage]?.id,
+        product.upgrades?.display?.[selectedDisplay]?.id
+      ].filter(Boolean),
+      quantity
+    });
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentBody.trim()) return;
+    setCommentSubmitting(true);
+    setCommentNotice(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/products/${product.slug}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          rating: commentRating,
+          body: commentBody
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCommentNotice({ type: 'success', text: data.message || 'نظر شما با موفقیت ثبت شد و پس از بررسی تایید می‌شود.' });
+        setCommentBody('');
+      } else {
+        setCommentNotice({ type: 'error', text: data.error || 'خطا در ثبت نظر' });
+      }
+    } catch {
+      setCommentNotice({ type: 'error', text: 'خطا در ارتباط با سرور' });
+    }
+    setCommentSubmitting(false);
+  };
+
+  return (
+    <div className="container" style={{ paddingTop: '24px', paddingBottom: '80px' }}>
+      
+      {/* Embedded mobile styles for product page */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 768px) {
+          .product-hero-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
+            margin-bottom: 32px !important;
+          }
+          .product-main-img {
+            max-height: 290px !important;
+            aspect-ratio: 16/10 !important;
+          }
+          .product-cta-bar {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .product-cta-bar .btn-primary {
+            width: 100% !important;
+            padding: 14px 20px !important;
+            font-size: 1rem !important;
+          }
+          .product-specs-table td {
+            padding: 10px 12px !important;
+            font-size: 0.85rem !important;
+          }
+        }
+      `}} />
+
+      {/* Breadcrumb & Back */}
+      <div className="flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <div className="flex" style={{ alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+          <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} onClick={onBack}>فروشگاه</span>
+          <span>/</span>
+          <span>{product.category}</span>
+          <span>/</span>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{product.name}</span>
+        </div>
+
+        <button className="btn btn-glass" style={{ padding: '6px 14px', fontSize: '0.8125rem' }} onClick={onBack}>
+          <ArrowRight size={16} /> بازگشت به لیست
+        </button>
+      </div>
+
+      {/* Main Product Hero Grid */}
+      <div className="grid product-hero-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '36px', alignItems: 'start', marginBottom: '40px' }}>
+        
+        {/* Right column: Gallery */}
+        <div>
+          <div className="glass-card" style={{ padding: '12px', overflow: 'hidden', position: 'relative', marginBottom: '16px' }}>
+            <img 
+              src={images[activeImage] || product.image} 
+              alt={product.name} 
+              className="product-main-img"
+              style={{ width: '100%', height: 'auto', maxHeight: '420px', aspectRatio: '16/10', objectFit: 'cover', borderRadius: '12px', display: 'block' }}
+            />
+            {product.badge && (
+              <span className="badge badge-glow" style={{ position: 'absolute', top: '20px', right: '20px' }}>
+                {product.badge}
+              </span>
+            )}
+            <div style={{ position: 'absolute', bottom: '24px', right: '24px', display: 'flex', gap: '8px' }}>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
+                {product.cpuBrand || 'Intel'}
+              </span>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
+                {product.gpuBrand || 'NVIDIA'}
+              </span>
+            </div>
+          </div>
+
+          {/* Thumbnails if multiple images */}
+          {images.length > 1 && (
+            <div className="flex" style={{ gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  style={{
+                    border: activeImage === idx ? '2px solid hsl(var(--accent-cyan))' : '1px solid var(--border-glass)',
+                    borderRadius: '8px',
+                    padding: '4px',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    width: '80px',
+                    height: '80px',
+                    flexShrink: 0,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Trust Guarantees */}
+          <div className="glass-panel grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px', padding: '20px', marginTop: '24px' }}>
+            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+              <ShieldCheck size={24} color="hsl(var(--accent-cyan))" />
+              <div style={{ fontSize: '0.8125rem' }}>
+                <div style={{ fontWeight: 'bold' }}>ضمانت ۲ ساله رسمی</div>
+                <div style={{ color: 'var(--text-secondary)' }}>تک‌تینک سرویس</div>
+              </div>
+            </div>
+            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+              <Truck size={24} color="hsl(var(--accent-green))" />
+              <div style={{ fontSize: '0.8125rem' }}>
+                <div style={{ fontWeight: 'bold' }}>ارسال اکسپرس</div>
+                <div style={{ color: 'var(--text-secondary)' }}>بسته‌بندی ایمن و فوری</div>
+              </div>
+            </div>
+            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+              <RotateCcw size={24} color="hsl(var(--accent-purple))" />
+              <div style={{ fontSize: '0.8125rem' }}>
+                <div style={{ fontWeight: 'bold' }}>مهلت تست ۷ روزه</div>
+                <div style={{ color: 'var(--text-secondary)' }}>تضمین سلامت فنی</div>
+              </div>
+            </div>
+            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+              <Sparkles size={24} color="hsl(var(--accent-cyan))" />
+              <div style={{ fontSize: '0.8125rem' }}>
+                <div style={{ fontWeight: 'bold' }}>سازگار با ترب (Torob)</div>
+                <div style={{ color: 'var(--text-secondary)' }}>بهترین قیمت تضمینی</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Left column: Info, Configurator & Purchase */}
+        <div>
+          <div style={{ marginBottom: '8px' }}>
+            <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', marginLeft: '8px' }}>
+              {product.category}
+            </span>
+            <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+              {product.series}
+            </span>
+          </div>
+
+          <h1 style={{ fontSize: '2.25rem', marginBottom: '8px' }}>{product.name}</h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem', marginBottom: '20px' }}>
+            {product.tagline}
+          </p>
+
+          {/* Rating & Stock row */}
+          <div className="flex" style={{ alignItems: 'center', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div className="flex font-code" style={{ alignItems: 'center', gap: '6px' }}>
+              <Star size={18} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
+              <span style={{ fontWeight: 'bold' }}>{product.rating || '۵.۰'}</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                ({product.reviewsCount || comments.length} دیدگاه خریداران)
+              </span>
+            </div>
+
+            <div className="flex" style={{ alignItems: 'center', gap: '6px' }}>
+              {product.inStock ? (
+                <>
+                  <CheckCircle size={18} color="hsl(var(--accent-green))" />
+                  <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    موجود در انبار ({product.stock} عدد)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={18} color="hsl(var(--accent-red))" />
+                  <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    ناموجود
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Price Box */}
+          <div className="glass-card" style={{ padding: '24px', marginBottom: '28px' }}>
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '4px' }}>
+                  قیمت نهایی قابل پرداخت:
+                </div>
+                {product.oldPrice && product.oldPrice > unitPrice && (
+                  <div className="font-code" style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '1rem' }}>
+                    {formatPrice(product.oldPrice)}
+                  </div>
+                )}
+                <div className="gradient-text font-code" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                  {formatPrice(unitPrice)}
+                </div>
+              </div>
+
+              {product.oldPrice && product.oldPrice > unitPrice && (
+                <span className="badge" style={{ background: 'hsl(var(--accent-red))', color: 'white', padding: '6px 12px', fontSize: '0.875rem' }}>
+                  تخفیف ویژه
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Hardware Configurator */}
+          <div style={{ marginBottom: '32px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '16px' }}>پیکربندی قطعات سفارشی:</h3>
+
+            {/* RAM Options */}
+            {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                  <Cpu size={16} color="hsl(var(--accent-cyan))" />
+                  <span>حافظه رم (RAM):</span>
+                </div>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                  {product.upgrades.ram.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedRam(idx)}
+                      className="glass-card"
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        borderColor: selectedRam === idx ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                        background: selectedRam === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
+                      }}
+                    >
+                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                        {opt.name}
+                      </div>
+                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                        {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Storage Options */}
+            {product.upgrades?.storage && product.upgrades.storage.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                  <HardDrive size={16} color="hsl(var(--accent-purple))" />
+                  <span>حافظه ذخیره‌سازی (SSD):</span>
+                </div>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                  {product.upgrades.storage.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedStorage(idx)}
+                      className="glass-card"
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        borderColor: selectedStorage === idx ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
+                        background: selectedStorage === idx ? 'hsla(var(--accent-purple), 0.08)' : 'var(--glass-bg)'
+                      }}
+                    >
+                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                        {opt.name}
+                      </div>
+                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                        {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Display Options */}
+            {product.upgrades?.display && product.upgrades.display.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                  <Monitor size={16} color="hsl(var(--accent-green))" />
+                  <span>صفحه نمایش:</span>
+                </div>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                  {product.upgrades.display.map((opt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedDisplay(idx)}
+                      className="glass-card"
+                      style={{
+                        padding: '12px',
+                        textAlign: 'right',
+                        cursor: 'pointer',
+                        borderColor: selectedDisplay === idx ? 'hsl(var(--accent-green))' : 'var(--border-glass)',
+                        background: selectedDisplay === idx ? 'hsla(var(--accent-green), 0.08)' : 'var(--glass-bg)'
+                      }}
+                    >
+                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                        {opt.name}
+                      </div>
+                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
+                        {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Quantity & CTA */}
+          <div className="flex product-cta-bar" style={{ gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.04)', padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-glass)', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
+                aria-label="کاهش تعداد"
+              >
+                -
+              </button>
+              <span className="font-code" style={{ fontWeight: 'bold', fontSize: '1.125rem', minWidth: '24px', textAlign: 'center' }}>
+                {quantity}
+              </span>
+              <button 
+                onClick={() => setQuantity(q => Math.min(product.stock || 10, q + 1))}
+                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
+                aria-label="افزایش تعداد"
+              >
+                +
+              </button>
+            </div>
+
+            <button 
+              className="btn btn-primary" 
+              style={{ flexGrow: 1, padding: '14px 24px', fontSize: '1.05rem' }}
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+            >
+              <ShoppingCart size={18} /> افزودن به سبد خرید ({formatPrice(totalPrice)})
+            </button>
+
+            <button 
+              className="btn btn-glass" 
+              style={{ padding: '14px', background: isComparing ? 'hsla(var(--accent-purple), 0.15)' : 'transparent', flexShrink: 0 }}
+              onClick={() => onCompare(product.id)}
+              title={isComparing ? 'حذف از مقایسه' : 'افزودن به مقایسه'}
+            >
+              <Scale size={20} color={isComparing ? 'hsl(var(--accent-purple))' : 'var(--text-secondary)'} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs for Detailed Sections */}
+      <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
+        {[
+          { id: 'specs', label: 'مشخصات فنی و چارت بنچمارک', icon: BarChart2 },
+          { id: 'review', label: 'نقد و بررسی تخصصی', icon: BookOpen },
+          { id: 'drivers', label: `درایورها (${drivers.length})`, icon: Download },
+          { id: 'comments', label: `دیدگاه‌ها (${comments.length})`, icon: MessageSquare }
+        ].map(t => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className="btn"
+            style={{
+              padding: '10px 16px',
+              borderRadius: '10px',
+              background: activeTab === t.id ? 'hsl(var(--accent-cyan))' : 'rgba(0,0,0,0.03)',
+              color: activeTab === t.id ? 'white' : 'var(--text-primary)',
+              whiteSpace: 'nowrap',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === t.id ? 'bold' : 'normal',
+              flexShrink: 0
+            }}
+          >
+            <t.icon size={16} /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 1. SPECS & VISUAL BENCHMARK CHART TAB */}
+      {activeTab === 'specs' && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          
+          {/* Visual Benchmark Radar / Bar Chart (Like NotebookCheck / RTINGS) */}
+          <div className="glass-card" style={{ padding: '36px' }}>
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                  <Zap size={22} color="hsl(var(--accent-cyan))" />
+                  چارت عملکرد و نتایج بنچمارک سخت‌افزاری
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
+                  امتیازات بر اساس تست‌های استاندارد آزمایشگاه فنی تک‌تینک (مقیاس ۰ تا ۱۰۰)
+                </p>
+              </div>
+              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
+                تست‌شده در سناریوی سنگین
+              </span>
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+              {[
+                { label: 'پردازش چند‌هسته‌ای (CPU Performance)', val: bm.cpuScore, color: 'hsl(var(--accent-cyan))' },
+                { label: 'قدرت پردازش گرافیک و بازی (Gaming / GPU)', val: bm.gamingScore, color: 'hsl(var(--accent-green))' },
+                { label: 'کیفیت و دقت رنگ نمایشگر (Display Quality)', val: bm.displayScore, color: 'hsl(var(--accent-purple))' },
+                { label: 'راندمان باتری در کاربری روزانه (Battery Life)', val: bm.batteryScore, color: 'hsl(var(--accent-cyan))' },
+                { label: 'سیستم خنک‌کننده و کنترل حرارت (Cooling Tech)', val: bm.coolingScore, color: 'hsl(var(--accent-green))' },
+                { label: 'توان پردازش هوش مصنوعی (NPU AI TOPS)', val: bm.aiScore, color: 'hsl(var(--accent-purple))' }
+              ].map((item, idx) => (
+                <div key={idx} className="glass-panel" style={{ padding: '16px', borderRadius: '12px' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 500 }}>{item.label}</span>
+                    <span className="font-code" style={{ fontWeight: 'bold', color: item.color }}>{item.val} / ۱۰۰</span>
+                  </div>
+                  <div style={{ height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
+                    <div style={{ 
+                      height: '100%', 
+                      width: `${item.val}%`, 
+                      background: item.color,
+                      borderRadius: '6px',
+                      transition: 'width 0.8s ease'
+                    }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Full Specifications Table */}
+          <div className="glass-card" style={{ padding: '36px' }}>
+            <h2 style={{ fontSize: '1.5rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Layers size={22} color="hsl(var(--accent-cyan))" />
+              جدول مشخصات فنی تفصیلی و مهندسی
+            </h2>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.9375rem' }}>
+                <tbody>
+                  {[
+                    { label: 'سازنده پردازنده (CPU Maker)', val: product.cpuBrand || 'Intel' },
+                    { label: 'مدل پردازنده مرکزی', val: product.specs?.cpu },
+                    { label: 'سازنده گرافیک (GPU Maker)', val: product.gpuBrand || 'NVIDIA' },
+                    { label: 'مدل کارت گرافیک اختصاصی', val: product.specs?.gpu },
+                    { label: 'توان موتور عصبی (NPU AI)', val: product.specs?.npuScore },
+                    { label: 'حافظه رم (RAM)', val: product.specs?.ram },
+                    { label: 'حافظه ذخیره‌سازی داخلی', val: product.specs?.storage },
+                    { label: 'صفحه نمایش (Resolution & Refresh Rate)', val: product.specs?.display },
+                    { label: 'ظرفیت باتری و شارژدهی', val: product.specs?.battery },
+                    { label: 'وزن خالص دستگاه', val: product.specs?.weight },
+                    { label: 'سیستم عامل نصب‌شده', val: product.specs?.os },
+                    { label: 'تعداد و نوع پورت‌ها', val: product.specs?.ports },
+                    { label: 'شرایط گارانتی و خدمات پس از فروش', val: product.guarantee || 'گارانتی ۲ ساله طلایی تک‌تینک' }
+                  ].map((row, idx) => (
+                    <tr key={idx} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
+                      <td style={{ padding: '14px 18px', width: '260px', fontWeight: 'bold', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                        {row.label}
+                      </td>
+                      <td className="font-code" style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-glass)' }}>
+                        {row.val || '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. EXPERT REVIEW & PROS/CONS TAB */}
+      {activeTab === 'review' && (
+        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <BookOpen size={24} color="hsl(var(--accent-cyan))" />
+            نقد و بررسی تخصصی کارشناسان تک‌تینک
+          </h2>
+
+          <div style={{ lineHeight: '1.9', fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '36px', background: 'rgba(0,0,0,0.02)', padding: '24px', borderRadius: '12px', borderRight: '4px solid hsl(var(--accent-cyan))' }}>
+            {review.intro || product.description || `${product.name} یک محصول رده‌بالا با کارایی ممتاز است.`}
+          </div>
+
+          {/* Pros & Cons Columns */}
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '28px', marginBottom: '36px' }}>
+            
+            {/* Pros */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: '12px', borderColor: 'hsla(var(--accent-green), 0.3)' }}>
+              <h3 style={{ fontSize: '1.125rem', color: 'hsl(var(--accent-green))', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ThumbsUp size={20} /> نقاط قوت کلیدی
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {(review.pros && review.pros.length > 0 ? review.pros : ['عملکرد پردازشی بسیار سریع', 'صفحه نمایش باکیفیت و شفاف', 'کیفیت ساخت ممتاز']).map((pro, idx) => (
+                  <div key={idx} className="flex" style={{ alignItems: 'flex-start', gap: '10px' }}>
+                    <Check size={18} color="hsl(var(--accent-green))" style={{ flexShrink: 0, marginTop: '3px' }} />
+                    <span style={{ fontSize: '0.9375rem' }}>{pro}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Cons */}
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: '12px', borderColor: 'hsla(var(--accent-red), 0.3)' }}>
+              <h3 style={{ fontSize: '1.125rem', color: 'hsl(var(--accent-red))', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ThumbsDown size={20} /> نقاط ضعف و ملاحظات
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {(review.cons && review.cons.length > 0 ? review.cons : ['قیمت متناسب با رده حرفه‌ای', 'عدم وجود درگاه کارت‌خوان در برخی نسخه‌ها']).map((con, idx) => (
+                  <div key={idx} className="flex" style={{ alignItems: 'flex-start', gap: '10px' }}>
+                    <X size={18} color="hsl(var(--accent-red))" style={{ flexShrink: 0, marginTop: '3px' }} />
+                    <span style={{ fontSize: '0.9375rem' }}>{con}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Verdict Box */}
+          {review.verdict && (
+            <div className="glass-panel" style={{ padding: '24px', borderRadius: '12px', background: 'hsla(var(--accent-cyan), 0.05)', borderColor: 'hsl(var(--accent-cyan))' }}>
+              <h3 style={{ fontSize: '1.125rem', color: 'hsl(var(--accent-cyan))', marginBottom: '8px' }}>
+                جمع‌بندی و نتیجه‌گیری نهایی:
+              </h3>
+              <p style={{ margin: 0, lineHeight: '1.8', fontSize: '0.9375rem' }}>
+                {review.verdict}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. PRODUCT DRIVERS & SUPPORT SECTION TAB */}
+      {activeTab === 'drivers' && (
+        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                <Download size={22} color="hsl(var(--accent-green))" />
+                دانلود درایورها و نرم‌افزارهای اختصاصی {product.name}
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
+                به‌روزترین درایورهای رسمی و آپدیت‌های بایوس منتشر شده توسط تیم فنی
+              </p>
+            </div>
+            <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.15)', color: 'hsl(var(--accent-green))' }}>
+              تایید سلامت و اصالت فایل‌ها
+            </span>
+          </div>
+
+          {driversLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>در حال بارگذاری فایل‌های درایور...</div>
+          ) : drivers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-secondary)' }}>
+              در حال حاضر درایور اختصاصی برای این مدل بارگذاری نشده است. برای دریافت درایور با پشتیبانی تماس بگیرید.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.875rem' }}>
+                <thead>
+                  <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                    <th style={{ padding: '12px' }}>عنوان درایور / نرم‌افزار</th>
+                    <th style={{ padding: '12px' }}>دسته‌بندی</th>
+                    <th style={{ padding: '12px' }}>نسخه</th>
+                    <th style={{ padding: '12px' }}>تاریخ انتشار</th>
+                    <th style={{ padding: '12px' }}>حجم فایل</th>
+                    <th style={{ padding: '12px', textAlign: 'left' }}>دریافت</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {drivers.map((d, idx) => (
+                    <tr key={d.id || idx} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent', borderBottom: '1px solid var(--border-glass)' }}>
+                      <td style={{ padding: '14px 12px', fontWeight: 'bold' }}>
+                        <div className="flex" style={{ alignItems: 'center', gap: '8px' }}>
+                          <FileText size={16} color="hsl(var(--accent-cyan))" />
+                          <span>{d.name}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 12px' }}>
+                        <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', fontSize: '0.75rem' }}>
+                          {d.category || 'درایور سیستم'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 12px' }} className="font-code">{d.version || '1.0'}</td>
+                      <td style={{ padding: '14px 12px' }} className="font-code">{d.date || '۱۴۰۴/۱۲'}</td>
+                      <td style={{ padding: '14px 12px' }} className="font-code">{d.size || '120 MB'}</td>
+                      <td style={{ padding: '14px 12px', textAlign: 'left' }}>
+                        <a 
+                          href={d.downloadUrl || d.download_url || '#'} 
+                          download 
+                          className="btn btn-primary" 
+                          style={{ padding: '6px 14px', fontSize: '0.75rem' }}
+                        >
+                          <Download size={14} /> دانلود مستقیم
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. COMMENTS & REVIEWS TAB */}
+      {activeTab === 'comments' && (
+        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.75rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <MessageSquare size={24} color="hsl(var(--accent-purple))" />
+                دیدگاه‌ها و تجربیات خریداران ({comments.length})
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                نظرات ثبت‌شده توسط خریداران تاییدشده {product.name}
+              </p>
+            </div>
+
+            <div className="flex font-code" style={{ alignItems: 'center', gap: '8px' }}>
+              <Star size={24} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
+              <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{product.rating || '۵.۰'}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>از ۵</span>
+            </div>
+          </div>
+
+          {/* Existing Comments List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
+            {comments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '36px', color: 'var(--text-secondary)' }}>
+                هنوز نظری برای این لپ‌تاپ ثبت نشده است. اولین نفری باشید که نظر خود را به اشتراک می‌گذارد!
+              </div>
+            ) : (
+              comments.map((c) => (
+                <div key={c.id} className="glass-panel" style={{ padding: '20px', borderRadius: '12px' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div className="flex" style={{ alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'hsla(var(--accent-cyan), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <User size={16} color="hsl(var(--accent-cyan))" />
+                      </div>
+                      <span style={{ fontWeight: 'bold' }}>{c.author}</span>
+                    </div>
+
+                    <div className="flex" style={{ alignItems: 'center', gap: '4px' }}>
+                      {[1, 2, 3, 4, 5].map(st => (
+                        <Star 
+                          key={st} 
+                          size={14} 
+                          color="hsl(var(--accent-cyan))" 
+                          fill={st <= c.rating ? 'hsl(var(--accent-cyan))' : 'none'} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <p style={{ color: 'var(--text-primary)', lineHeight: '1.7', fontSize: '0.9375rem', margin: 0 }}>
+                    {c.body}
+                  </p>
+
+                  {c.createdAt && (
+                    <div className="font-code" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', textAlign: 'left' }}>
+                      {c.createdAt}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Add Comment Form or Login Prompt */}
+          <div className="glass-panel" style={{ padding: '28px', borderRadius: '12px', background: 'rgba(0,0,0,0.02)' }}>
+            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px' }}>ثبت دیدگاه جدید</h3>
+
+            {currentUser ? (
+              <form onSubmit={handleCommentSubmit}>
+                {commentNotice && (
+                  <div style={{
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    marginBottom: '16px',
+                    background: commentNotice.type === 'success' ? 'hsla(var(--accent-green), 0.15)' : 'hsla(var(--accent-red), 0.15)',
+                    color: commentNotice.type === 'success' ? 'hsl(var(--accent-green))' : 'hsl(var(--accent-red))',
+                    fontWeight: 'bold',
+                    fontSize: '0.875rem'
+                  }}>
+                    {commentNotice.text}
+                  </div>
+                )}
+
+                {/* Rating stars selector */}
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                    امتیاز شما به این محصول:
+                  </label>
+                  <div className="flex" style={{ gap: '8px' }}>
+                    {[1, 2, 3, 4, 5].map(st => (
+                      <button
+                        type="button"
+                        key={st}
+                        onClick={() => setCommentRating(st)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                      >
+                        <Star 
+                          size={28} 
+                          color="hsl(var(--accent-cyan))" 
+                          fill={st <= commentRating ? 'hsl(var(--accent-cyan))' : 'none'} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div style={{ marginBottom: '16px' }}>
+                  <textarea 
+                    rows="4" 
+                    placeholder="تجربه خود از کار با این لپ‌تاپ را برای دیگران بنویسید..." 
+                    value={commentBody}
+                    onChange={e => setCommentBody(e.target.value)}
+                    required
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '8px' }}
+                  />
+                </div>
+
+                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                    دیدگاه‌ها پس از تأیید تیم مدیریت منتشر خواهند شد.
+                  </span>
+                  <button type="submit" className="btn btn-primary" disabled={commentSubmitting}>
+                    <Send size={16} /> {commentSubmitting ? 'در حال ثبت...' : 'ارسال دیدگاه'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                  برای ثبت دیدگاه و امتیاز به این لپ‌تاپ، لطفاً وارد حساب کاربری خود شوید.
+                </p>
+                <button className="btn btn-primary" onClick={onOpenAuth}>
+                  ورود یا ثبت‌نام در سایت
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Related Products Section */}
+      {relatedProducts.length > 0 && (
+        <div style={{ marginTop: '48px' }}>
+          <h2 style={{ fontSize: '1.75rem', marginBottom: '24px' }}>
+            مدل‌های مرتبط در دسته‌بندی {product.category}
+          </h2>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {relatedProducts.map(rel => (
+              <div 
+                key={rel.id} 
+                className="glass-card flex" 
+                style={{ flexDirection: 'column', overflow: 'hidden', cursor: 'pointer' }}
+                onClick={() => onSelectProduct && onSelectProduct(rel.slug)}
+              >
+                <img src={rel.image} alt={rel.name} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                  <h3 style={{ fontSize: '1.125rem', marginBottom: '4px' }}>{rel.name}</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '16px' }}>{rel.tagline}</p>
+                  <div className="flex" style={{ marginTop: 'auto', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="font-code" style={{ fontWeight: 'bold', color: 'hsl(var(--accent-cyan))' }}>
+                      {formatPrice(rel.basePrice)}
+                    </span>
+                    <button className="btn btn-glass" style={{ padding: '6px 12px', fontSize: '0.8125rem' }}>
+                      مشاهده
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
