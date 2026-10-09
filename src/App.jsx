@@ -185,6 +185,8 @@ function App() {
         onOpenAbout={() => setIsAboutUsOpen(true)}
         theme={theme}
         onToggleTheme={toggleTheme}
+        laptops={laptops}
+        onSelectProduct={handleSelectProduct}
       />
 
       {/* 1. STORE VIEW */}
@@ -408,7 +410,7 @@ function App() {
             <ul style={{ listStyle: 'none', padding: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های گیمینگ</li>
               <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های مهندسی و معماری</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>ایستگاه‌های کاری هوش مصنوعی</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های ورک‌استیشن هوش مصنوعی</li>
               <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('compare')}>ابزار مقایسه مشخصات فنی</li>
             </ul>
           </div>

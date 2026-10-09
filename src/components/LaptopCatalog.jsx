@@ -25,14 +25,27 @@ export default function LaptopCatalog({
   const [chassisFilter, setChassisFilter] = useState('all'); // 'all', 'aluminum', 'magnesium', 'carbon', 'polycarbonate'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
-  const categories = ['همه', 'گیمینگ', 'تولید محتوا', 'فوق سبک', 'ایستگاه کاری', 'اقتصادی'];
+  const categories = ['همه', 'گیمینگ', 'تولید محتوا', 'فوق سبک', 'ورک استیشن', 'اقتصادی'];
 
   const filteredLaptops = useMemo(() => {
     let result = laptops || [];
     
     // Category filter
     if (activeCategory !== 'همه') {
-      result = result.filter(l => l.category === activeCategory);
+      if (!searchQuery.trim()) {
+        result = result.filter(l => l.category === activeCategory);
+      } else {
+        const inCat = result.filter(l => l.category === activeCategory);
+        const q = searchQuery.trim().toLowerCase();
+        const hasMatch = inCat.some(l => 
+          l.name?.toLowerCase().includes(q) || 
+          l.brand?.toLowerCase().includes(q) ||
+          l.model?.toLowerCase().includes(q)
+        );
+        if (hasMatch) {
+          result = inCat;
+        }
+      }
     }
 
     // CPU Maker filter
@@ -86,16 +99,25 @@ export default function LaptopCatalog({
     
     // Search filter
     if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      result = result.filter(l => 
-        l.name?.toLowerCase().includes(q) || 
-        l.brand?.toLowerCase().includes(q) ||
-        l.model?.toLowerCase().includes(q) ||
-        l.tagline?.toLowerCase().includes(q) ||
-        l.specs?.cpu?.toLowerCase().includes(q) ||
-        l.specs?.gpu?.toLowerCase().includes(q) ||
-        (l.chassis || l.specs?.chassis || '').toLowerCase().includes(q)
-      );
+      const terms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      result = result.filter(l => {
+        const hay = [
+          l.name,
+          l.brand,
+          l.model,
+          l.category,
+          l.tagline,
+          l.specs?.cpu,
+          l.specs?.gpu,
+          l.specs?.ram,
+          l.specs?.storage,
+          l.chassis,
+          l.specs?.chassis,
+          l.slug
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        return terms.every(t => hay.includes(t));
+      });
     }
 
     // Price sort
@@ -532,7 +554,7 @@ export default function LaptopCatalog({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
                     <HardDrive size={14} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
                     <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {shortSpecs.ram} RAM
+                      {shortSpecs.ram}
                     </span>
                   </div>
 

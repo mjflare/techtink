@@ -27,9 +27,10 @@ export function parseShortGpu(str, brand = '') {
 }
 
 export function parseShortRam(str) {
-  if (!str) return '16GB';
+  if (!str) return '16GB RAM';
   const m = str.match(/(\d+\s*GB)/i);
-  return m ? m[1].toUpperCase() : str.split(' ')[0];
+  const val = m ? m[1].toUpperCase().replace(/\s+/g, '') : str.split(' ')[0];
+  return `${val} RAM`;
 }
 
 export function parseShortStorage(str) {
@@ -67,10 +68,16 @@ export function getShortSpecs(product) {
   const specs = product.specs || {};
   const existingShort = product.shortSpecs || specs.shortSpecs || {};
 
+  let ramValue = existingShort.ram || parseShortRam(specs.ram);
+  if (ramValue) {
+    const cleanNum = ramValue.replace(/\bRAM\b/gi, '').trim();
+    ramValue = cleanNum ? `${cleanNum} RAM` : '16GB RAM';
+  }
+
   return {
     cpu: existingShort.cpu || parseShortCpu(specs.cpu, product.cpuBrand),
     gpu: existingShort.gpu || parseShortGpu(specs.gpu, product.gpuBrand),
-    ram: existingShort.ram || parseShortRam(specs.ram),
+    ram: ramValue,
     storage: existingShort.storage || parseShortStorage(specs.storage),
     display: existingShort.display || parseShortDisplay(specs.display),
     battery: existingShort.battery || parseShortBattery(specs.battery),

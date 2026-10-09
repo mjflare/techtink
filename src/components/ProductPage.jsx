@@ -462,7 +462,7 @@ export default function ProductPage({
                 <HardDrive size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shortSpecs.ram} RAM
+                {shortSpecs.ram}
               </div>
             </div>
 

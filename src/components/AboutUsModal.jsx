@@ -12,7 +12,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
     store_mobile: '۰۹۱۲-۳۴۵۶۷۸۹',
     store_hours: 'شنبه تا چهارشنبه ۱۰:۰۰ الی ۲۰:۰۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۶:۰۰',
     store_map_link: 'https://maps.google.com/?q=Tehran+Valiasr+TechTink',
-    store_about: 'تک‌تینک نخستین مرجع تخصصی بررسی سخت‌افزاری، بنچمارک‌های آزمایشگاهی و عرضه بی‌واسطه لپ‌تاپ‌های گیمینگ، اولترابوک‌ها و ایستگاه‌های کاری (Workstation) در ایران است.',
+    store_about: 'تک‌تینک نخستین مرجع تخصصی بررسی سخت‌افزاری، بنچمارک‌های آزمایشگاهی و عرضه بی‌واسطه لپ‌تاپ‌های گیمینگ، اولترابوک‌ها و ورک‌استیشن‌ها (Workstation) در ایران است.',
     telegram_url: 'https://t.me/techtink',
     instagram_url: 'https://instagram.com/techtink',
     bale_url: 'https://ble.ir/techtink',
@@ -61,7 +61,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
           style={{ 
             position: 'relative',
             padding: '36px 32px 28px',
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+            background: 'var(--modal-header-bg, var(--glass-card-bg))',
             borderBottom: '1px solid var(--border-glass)',
             overflow: 'hidden'
           }}
@@ -148,7 +148,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
             </div>
 
             <div className="grid" style={{ gridTemplateColumns: '1fr', gap: '16px' }}>
-              <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '16px', padding: '20px 24px' }}>
+              <div style={{ background: 'var(--table-stripe)', border: '1px solid var(--border-glass)', borderRadius: '16px', padding: '20px 24px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   
                   {/* Address */}
@@ -158,7 +158,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
                     </div>
                     <div>
                       <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>نشانی شوروم:</span>
-                      <strong style={{ fontSize: '0.95rem', lineHeight: 1.6 }}>{aboutData.store_address}</strong>
+                      <strong style={{ fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--text-primary)' }}>{aboutData.store_address}</strong>
                     </div>
                   </div>
 
@@ -169,7 +169,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
                     </div>
                     <div>
                       <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '2px' }}>ساعات پاسخگویی و بازدید حضوری:</span>
-                      <span style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>{aboutData.store_hours}</span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>{aboutData.store_hours}</span>
                     </div>
                   </div>
 
@@ -181,7 +181,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
                       </div>
                       <div>
                         <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>تلفن ثابت فروشگاه:</span>
-                        <a href={`tel:${aboutData.store_phone.replace(/[^0-9]/g, '')}`} style={{ direction: 'ltr', fontSize: '0.95rem', fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                        <a href={`tel:${aboutData.store_phone.replace(/[^0-9]/g, '')}`} style={{ direction: 'ltr', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
                           {aboutData.store_phone}
                         </a>
                       </div>
@@ -193,7 +193,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
                       </div>
                       <div>
                         <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>تلفن همراه و واتس‌اپ مهندسی:</span>
-                        <a href={`tel:${aboutData.store_mobile.replace(/[^0-9]/g, '')}`} style={{ direction: 'ltr', fontSize: '0.95rem', fontWeight: 700, color: '#fff', textDecoration: 'none' }}>
+                        <a href={`tel:${aboutData.store_mobile.replace(/[^0-9]/g, '')}`} style={{ direction: 'ltr', fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
                           {aboutData.store_mobile}
                         </a>
                       </div>
@@ -379,7 +379,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
             alignItems: 'center', 
             padding: '16px 32px', 
             borderTop: '1px solid var(--border-glass)',
-            background: 'rgba(0,0,0,0.2)' 
+            background: 'var(--table-stripe)' 
           }}
         >
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
