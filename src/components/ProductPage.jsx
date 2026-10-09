@@ -6,6 +6,7 @@ import {
   ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { getShortSpecs } from '../utils/shortSpecs.js';
 
 export default function ProductPage({ 
   productSlug, 
@@ -129,6 +130,7 @@ export default function ProductPage({
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
   const review = product.expertReview || {};
+  const shortSpecs = getShortSpecs(product);
 
   const handleAddToCart = () => {
     onAddToCart({
@@ -373,7 +375,7 @@ export default function ProductPage({
                 <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {product.specs?.cpu || product.cpuBrand || '—'}
+                {shortSpecs.cpu}
               </div>
             </div>
 
@@ -382,7 +384,7 @@ export default function ProductPage({
                 <Zap size={13} color="hsl(var(--accent-green))" /> کارت گرافیک
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {product.specs?.gpu || product.gpuBrand || '—'}
+                {shortSpecs.gpu}
               </div>
             </div>
 
@@ -391,7 +393,7 @@ export default function ProductPage({
                 <HardDrive size={13} color="hsl(var(--accent-purple))" /> رم و حافظه
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {product.specs?.ram} • {product.specs?.storage}
+                {shortSpecs.ram} • {shortSpecs.storage}
               </div>
             </div>
 
@@ -400,7 +402,7 @@ export default function ProductPage({
                 <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {product.specs?.display || '16" Pro Display'}
+                {shortSpecs.display}
               </div>
             </div>
 
@@ -409,7 +411,7 @@ export default function ProductPage({
                 <ShieldCheck size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {product.chassis || product.specs?.chassis || 'All-Aluminum CNC Machined'}
+                {shortSpecs.chassis}
               </div>
             </div>
           </div>

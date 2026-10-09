@@ -60,6 +60,14 @@ export function serializeProduct(p, { full = false } = {}) {
     guarantee: p.guarantee,
     chassis: p.chassis || specs.chassis || 'All-Aluminum CNC Machined',
     specs,
+    shortSpecs: specs.shortSpecs || {
+      cpu: (specs.cpu ? specs.cpu.split('(')[0].trim() : (cpuBrand || 'Processor')),
+      gpu: (specs.gpu ? specs.gpu.split('(')[0].replace(/GeForce\s*/i, '').replace(/GDDR\d+/i, '').replace(/ECC/i, '').replace(/Integrated\s*/i, '').trim() : (gpuBrand || 'Graphics')),
+      ram: (specs.ram ? (specs.ram.match(/(\d+\s*GB)/i)?.[1]?.toUpperCase() || specs.ram.split(' ')[0]) : '16GB'),
+      storage: (specs.storage ? (specs.storage.match(/(\d+\s*(?:TB|GB))/i)?.[1]?.toUpperCase() + ' SSD' || specs.storage.split(' ')[0] + ' SSD') : '1TB SSD'),
+      display: (specs.display ? specs.display.split('(')[0].replace(/\b(?:Dual-Mode|Anti-Glare|\d+ms)\b/gi, '').replace(/\s+/g, ' ').trim() : 'Display'),
+      chassis: (/carbon/i.test(p.chassis || specs.chassis || '') ? 'Carbon Fiber' : /magnesium/i.test(p.chassis || specs.chassis || '') ? 'Magnesium Alloy' : /polycarbonate/i.test(p.chassis || specs.chassis || '') ? 'Polycarbonate' : 'All-Aluminum')
+    },
     cpuBrand,
     gpuBrand,
     benchmarks,

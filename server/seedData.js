@@ -12,7 +12,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 12,
     image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "Intel Core i9-14900HX",
+      gpu: "NVIDIA RTX 4090 16GB",
+      ram: "32GB",
+      storage: "2TB SSD",
+      display: '16" Mini-LED 240Hz',
+      chassis: "Magnesium Alloy"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "Intel Core i9-14900HX",
+        gpu: "NVIDIA RTX 4090 16GB",
+        ram: "32GB",
+        storage: "2TB SSD",
+        display: '16" Mini-LED 240Hz',
+        chassis: "Magnesium Alloy"
+      },
       cpu: "Intel Core i9-14900HX (24C / 32T, up to 5.8GHz)",
       gpu: "NVIDIA GeForce RTX 4090 16GB GDDR6 (175W TGP)",
       ram: "32GB DDR5-5600MHz (Dual Channel)",
@@ -61,7 +77,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 25,
     image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "AMD Ryzen 9 8945HS",
+      gpu: "NVIDIA RTX 4070 8GB",
+      ram: "32GB",
+      storage: "1TB SSD",
+      display: '14.5" 3.2K OLED 120Hz',
+      chassis: "All-Aluminum"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "AMD Ryzen 9 8945HS",
+        gpu: "NVIDIA RTX 4070 8GB",
+        ram: "32GB",
+        storage: "1TB SSD",
+        display: '14.5" 3.2K OLED 120Hz',
+        chassis: "All-Aluminum"
+      },
       cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz with Ryzen AI)",
       gpu: "NVIDIA GeForce RTX 4070 8GB GDDR6 (115W TGP)",
       ram: "32GB LPDDR5X-7500MHz High-Speed",
@@ -109,7 +141,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 18,
     image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "Intel Core Ultra 7 155H",
+      gpu: "Intel Arc Graphics",
+      ram: "16GB",
+      storage: "1TB SSD",
+      display: '13.3" 2.8K OLED 90Hz',
+      chassis: "Carbon Fiber"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "Intel Core Ultra 7 155H",
+        gpu: "Intel Arc Graphics",
+        ram: "16GB",
+        storage: "1TB SSD",
+        display: '13.3" 2.8K OLED 90Hz',
+        chassis: "Carbon Fiber"
+      },
       cpu: "Intel Core Ultra 7 155H (16C / 22T, Intel AI Boost)",
       gpu: "Intel Arc Graphics (8 Xe-Cores, 2.25GHz)",
       ram: "16GB LPDDR5X-7467MHz Dual Channel",
@@ -155,7 +203,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 7,
     image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "Intel Core i9-14950HX",
+      gpu: "NVIDIA RTX 5000 16GB",
+      ram: "64GB",
+      storage: "4TB SSD",
+      display: '18" 4K 144Hz Mini-LED',
+      chassis: "All-Aluminum"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "Intel Core i9-14950HX",
+        gpu: "NVIDIA RTX 5000 16GB",
+        ram: "64GB",
+        storage: "4TB SSD",
+        display: '18" 4K 144Hz Mini-LED',
+        chassis: "All-Aluminum"
+      },
       cpu: "Intel Core i9-14950HX (24C / 32T, up to 6.0GHz)",
       gpu: "NVIDIA RTX 5000 Ada Generation 16GB ECC GDDR6",
       ram: "64GB DDR5-5600MHz ECC Workstation Memory",
@@ -201,7 +265,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 15,
     image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "AMD Ryzen 9 8945HS",
+      gpu: "NVIDIA RTX 4080 12GB",
+      ram: "32GB",
+      storage: "1TB SSD",
+      display: '14" QHD+ 240Hz',
+      chassis: "All-Aluminum"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "AMD Ryzen 9 8945HS",
+        gpu: "NVIDIA RTX 4080 12GB",
+        ram: "32GB",
+        storage: "1TB SSD",
+        display: '14" QHD+ 240Hz',
+        chassis: "All-Aluminum"
+      },
       cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz)",
       gpu: "NVIDIA GeForce RTX 4080 12GB GDDR6 (140W TGP)",
       ram: "32GB DDR5-5600MHz (Dual Channel)",
@@ -247,7 +327,23 @@ export const LAPTOPS = [
     inStock: true,
     stockCount: 40,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=80",
+    shortSpecs: {
+      cpu: "Intel Core Ultra 5 125H",
+      gpu: "Intel Arc Graphics",
+      ram: "16GB",
+      storage: "512GB SSD",
+      display: '15.6" FHD IPS',
+      chassis: "Polycarbonate"
+    },
     specs: {
+      shortSpecs: {
+        cpu: "Intel Core Ultra 5 125H",
+        gpu: "Intel Arc Graphics",
+        ram: "16GB",
+        storage: "512GB SSD",
+        display: '15.6" FHD IPS',
+        chassis: "Polycarbonate"
+      },
       cpu: "Intel Core Ultra 5 125H (14C / 18T, up to 4.5GHz)",
       gpu: "Intel Arc Integrated Graphics (7 Xe-Cores)",
       ram: "16GB LPDDR5-6400MHz",

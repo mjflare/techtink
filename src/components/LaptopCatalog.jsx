@@ -4,6 +4,7 @@ import {
   Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, ShieldCheck 
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { getShortSpecs } from '../utils/shortSpecs.js';
 
 export default function LaptopCatalog({ 
   laptops, 
@@ -405,6 +406,7 @@ export default function LaptopCatalog({
           };
 
           const bm = laptop.benchmarks || { cpuScore: 90, gamingScore: 85, displayScore: 92 };
+          const shortSpecs = getShortSpecs(laptop);
 
           return (
             <div key={laptop.id} className="glass-card flex animate-fade-in" style={{ flexDirection: 'column', overflow: 'hidden' }}>
@@ -466,7 +468,7 @@ export default function LaptopCatalog({
                   )}
                 </div>
 
-                {/* 100% Clean International Hardware Deck (Zero Mixed-Text BiDi Glitches) */}
+                {/* Essential Hardware Quick Deck (Clean, Uncluttered at-a-glance specs) */}
                 <div style={{ 
                   background: 'linear-gradient(180deg, rgba(0,0,0,0.015) 0%, rgba(0,0,0,0.035) 100%)', 
                   border: '1px solid var(--border-glass)', 
@@ -481,67 +483,43 @@ export default function LaptopCatalog({
                 }}>
                   {/* CPU */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-cyan), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Cpu size={13} color="hsl(var(--accent-cyan))" />
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <Cpu size={14} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
                       <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {laptop.specs?.cpu || 'Processor'}
+                        {shortSpecs.cpu}
                       </span>
                     </div>
-                    <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                      {laptop.cpuBrand || 'CPU'}
-                    </span>
                   </div>
 
                   {/* GPU */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Zap size={13} color="hsl(var(--accent-green))" />
-                      </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <Zap size={14} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
                       <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {laptop.specs?.gpu || 'Graphics'}
+                        {shortSpecs.gpu}
                       </span>
                     </div>
-                    <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                      {laptop.gpuBrand || 'GPU'}
-                    </span>
                   </div>
 
                   {/* RAM & Storage */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-purple), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <HardDrive size={13} color="hsl(var(--accent-purple))" />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <HardDrive size={14} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
+                      <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <strong style={{ fontWeight: 600 }}>{shortSpecs.ram} RAM</strong> • <span style={{ color: 'var(--text-secondary)' }}>{shortSpecs.storage}</span>
+                      </span>
                     </div>
-                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <strong style={{ fontWeight: 600 }}>{laptop.specs?.ram}</strong> • <span style={{ color: 'var(--text-secondary)' }}>{laptop.specs?.storage}</span>
-                    </span>
                   </div>
 
-                  {/* Chassis Build (New Parameter!) */}
-                  {(laptop.chassis || laptop.specs?.chassis) && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <ShieldCheck size={13} color="hsl(var(--accent-green))" />
-                      </div>
-                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {laptop.chassis || laptop.specs?.chassis}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Display */}
-                  {laptop.specs?.display && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Monitor size={13} color="var(--text-secondary)" />
-                      </div>
-                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {laptop.specs?.display}
-                      </span>
-                    </div>
-                  )}
+                  {/* Display & Chassis Quick Pills */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <span className="badge" style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(0,0,0,0.03)', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Monitor size={11} /> {shortSpecs.display}
+                    </span>
+                    <span className="badge" style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'hsla(var(--accent-green), 0.1)', color: 'hsl(var(--accent-green))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <ShieldCheck size={11} /> {shortSpecs.chassis}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Mini Benchmark Performance Bar */}
