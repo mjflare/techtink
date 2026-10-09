@@ -810,17 +810,63 @@ export default function AdminDashboard({ user, onLogout }) {
     setTimeout(() => setTorobCopied(false), 3000);
   };
 
-  const tabs = [
-    { id: 'dashboard', label: 'داشبورد و آمار', icon: BarChart3 },
-    { id: 'products', label: 'محصولات و مشخصات', icon: Package },
-    { id: 'inventory', label: 'انبارداری و لجستیک', icon: Truck },
-    { id: 'appointments', label: 'نوبت‌ها و خدمات', icon: Calendar },
-    { id: 'blog', label: 'مدیریت وبلاگ و مقالات', icon: BookOpen },
-    { id: 'orders', label: 'سفارشات مشتریان', icon: ShoppingCart },
-    { id: 'comments', label: 'مدیریت نظرات', icon: MessageSquare },
-    { id: 'dbtools', label: 'ابزارهای پایگاه داده (SQLite)', icon: Database },
-    { id: 'settings', label: 'تنظیمات، آدرس و ترب', icon: Settings }
+  const ADMIN_CATEGORIES = [
+    {
+      id: 'analytics',
+      title: 'داشبورد و آمار تحلیلی',
+      enTitle: 'Analytics & Overview',
+      desc: 'شاخص‌های فروش، درآمد و وضعیت کل سیستم',
+      icon: BarChart3,
+      tabs: [
+        { id: 'dashboard', label: 'شاخص‌های کلیدی و آمار لحظه‌ای', icon: BarChart3, badge: 'زنده' }
+      ]
+    },
+    {
+      id: 'logistics',
+      title: 'لجستیک و مدیریت انبار',
+      enTitle: 'Logistics & Supply',
+      desc: 'ورود و خروج کالا، سفارشات و نوبت‌های حضوری',
+      icon: Truck,
+      tabs: [
+        { id: 'inventory', label: 'انبارداری و ورود/خروج بار', icon: Truck, badge: 'حواله‌ها' },
+        { id: 'products', label: 'محصولات و موجودی انبار', icon: Package, badge: products.length > 0 ? `${products.length} کالا` : null },
+        { id: 'orders', label: 'سفارشات مشتریان', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : null },
+        { id: 'appointments', label: 'نوبت‌های تست شوروم و ارتقا', icon: Calendar, badge: appointments.length > 0 ? `${appointments.length}` : null }
+      ]
+    },
+    {
+      id: 'reviews_blog',
+      title: 'نقد، بررسی و مقالات',
+      enTitle: 'Reviews & Blog',
+      desc: 'وبلاگ تخصصی، ویدیوهای آپارات/یوتیوب و نظرات',
+      icon: BookOpen,
+      tabs: [
+        { id: 'blog', label: 'وبلاگ و نقد‌های ویدیویی', icon: BookOpen, badge: blogPosts.length > 0 ? `${blogPosts.length} مقاله` : null },
+        { id: 'comments', label: 'دیدگاه‌ها و نظرات خریداران', icon: MessageSquare, badge: comments.filter(c => c.status === 'pending').length > 0 ? `${comments.filter(c => c.status === 'pending').length} در انتظار` : null }
+      ]
+    },
+    {
+      id: 'developers',
+      title: 'توسعه‌دهندگان و سیستم',
+      enTitle: 'Developers & System',
+      desc: 'پایگاه داده SQLite، وب‌سرویس ترب و نشانی',
+      icon: Database,
+      tabs: [
+        { id: 'dbtools', label: 'پایگاه داده (SQLite Console)', icon: Database, badge: 'SQL' },
+        { id: 'settings', label: 'تنظیمات، وب‌سرویس ترب و نشانی', icon: Settings, badge: 'API' }
+      ]
+    }
   ];
+
+  // Derive active category from current activeSection
+  const activeCategoryObj = ADMIN_CATEGORIES.find(c => c.tabs.some(t => t.id === activeSection)) || ADMIN_CATEGORIES[0];
+  const activeCategoryId = activeCategoryObj.id;
+
+  const handleSelectCategory = (cat) => {
+    if (!cat.tabs.some(t => t.id === activeSection)) {
+      setActiveSection(cat.tabs[0].id);
+    }
+  };
 
   // If user is not admin, show admin login screen
   const isAdmin = user?.role === 'admin' || (authToken && !authError);
@@ -894,80 +940,339 @@ export default function AdminDashboard({ user, onLogout }) {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex" style={{ gap: '8px', marginBottom: '32px', overflowX: 'auto', paddingBottom: '8px' }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSection(tab.id)}
-            className="btn glass-panel"
-            style={{
-              padding: '12px 20px',
-              background: activeSection === tab.id ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
-              borderColor: activeSection === tab.id ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <tab.icon size={18} color={activeSection === tab.id ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)'} />
-            <span style={{ color: activeSection === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
-              {tab.label}
-            </span>
-          </button>
-        ))}
+      {/* 1. Categorized Admin Navigation Cards */}
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+        {ADMIN_CATEGORIES.map(cat => {
+          const isCatActive = cat.id === activeCategoryId;
+          const IconComp = cat.icon;
+          return (
+            <div
+              key={cat.id}
+              className="glass-panel"
+              onClick={() => handleSelectCategory(cat)}
+              style={{
+                padding: '16px 20px',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                background: isCatActive 
+                  ? 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.15), hsla(var(--accent-purple), 0.12))' 
+                  : 'rgba(255, 255, 255, 0.02)',
+                borderColor: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                boxShadow: isCatActive ? '0 0 24px hsla(var(--accent-cyan), 0.25)' : 'none',
+                transform: isCatActive ? 'translateY(-2px)' : 'none'
+              }}
+            >
+              <div 
+                style={{ 
+                  width: '46px', 
+                  height: '46px', 
+                  borderRadius: '14px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  background: isCatActive 
+                    ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' 
+                    : 'rgba(255, 255, 255, 0.06)',
+                  color: isCatActive ? '#ffffff' : 'var(--text-secondary)',
+                  boxShadow: isCatActive ? '0 0 16px hsla(var(--accent-cyan), 0.4)' : 'none',
+                  flexShrink: 0
+                }}
+              >
+                <IconComp size={22} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: isCatActive ? '#ffffff' : 'var(--text-primary)' }}>
+                    {cat.title}
+                  </h3>
+                  <span style={{ fontSize: '0.65rem', color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', fontWeight: 700 }}>
+                    {cat.tabs.length} بخش
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {cat.enTitle}
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* 1. DASHBOARD OVERVIEW */}
+      {/* 2. Sub-Tabs Bar for Selected Category */}
+      <div 
+        className="glass-card" 
+        style={{ 
+          padding: '10px 14px', 
+          marginBottom: '32px', 
+          display: 'flex', 
+          gap: '8px', 
+          overflowX: 'auto', 
+          alignItems: 'center',
+          borderRadius: '14px',
+          background: 'rgba(0,0,0,0.2)'
+        }}
+      >
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', padding: '0 8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+          <Layers size={14} color="hsl(var(--accent-cyan))" />
+          بخش‌های {activeCategoryObj.title}:
+        </span>
+
+        {activeCategoryObj.tabs.map(tab => {
+          const isTabActive = activeSection === tab.id;
+          const TabIcon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSection(tab.id)}
+              className="btn"
+              style={{
+                padding: '8px 16px',
+                borderRadius: '10px',
+                fontSize: '0.85rem',
+                fontWeight: isTabActive ? 700 : 500,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                whiteSpace: 'nowrap',
+                background: isTabActive ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(255, 255, 255, 0.04)',
+                color: isTabActive ? '#ffffff' : 'var(--text-secondary)',
+                border: isTabActive ? 'none' : '1px solid var(--border-glass)',
+                boxShadow: isTabActive ? '0 0 14px hsla(var(--accent-cyan), 0.3)' : 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <TabIcon size={16} />
+              <span>{tab.label}</span>
+              {tab.badge && (
+                <span style={{
+                  fontSize: '0.65rem',
+                  padding: '2px 6px',
+                  borderRadius: '10px',
+                  background: isTabActive ? 'rgba(0,0,0,0.25)' : 'rgba(255, 255, 255, 0.1)',
+                  color: isTabActive ? '#ffffff' : 'var(--text-secondary)',
+                  fontWeight: 700
+                }}>
+                  {tab.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 1. DASHBOARD & RICH ANALYTICS OVERVIEW */}
       {activeSection === 'dashboard' && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           {statsLoading ? (
-            <div style={{ textAlign: 'center', padding: '60px' }}>در حال بارگذاری آمار...</div>
+            <div style={{ textAlign: 'center', padding: '60px' }}>در حال بارگذاری شاخص‌های تحلیلی...</div>
           ) : stats ? (
             <>
-              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-                <div className="glass-card" style={{ padding: '24px' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '8px' }}>درآمد کل حاصل از فروش</div>
-                  <div className="font-code gradient-text" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>
+              {/* Primary Financial & Operational KPIs */}
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+                <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: '-10px', left: '-10px', width: '80px', height: '80px', background: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.2), transparent 70%)', pointerEvents: 'none' }} />
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>درآمد کل حاصل از فروش (تومان)</div>
+                  <div className="font-code gradient-text" style={{ fontSize: '1.85rem', fontWeight: 900 }}>
                     {formatPrice(stats.totalRevenue || stats.revenue || 0)}
                   </div>
+                  <span style={{ fontSize: '0.725rem', color: 'hsl(var(--accent-green))', marginTop: '4px', display: 'block' }}>
+                    تراکنش‌های عضو شبکه شتاب و زرین‌پال
+                  </span>
                 </div>
+
                 <div className="glass-card" style={{ padding: '24px' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '8px' }}>تعداد کل سفارشات</div>
-                  <div className="font-code" style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'hsl(var(--accent-cyan))' }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>تعداد کل سفارشات ثبت‌شده</div>
+                  <div className="font-code" style={{ fontSize: '1.85rem', fontWeight: 900, color: 'hsl(var(--accent-cyan))' }}>
                     {(stats.totalOrders || stats.ordersTotal || 0).toLocaleString('fa-IR')}
                   </div>
+                  <span style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                    {(stats.ordersPaid || stats.paidOrdersCount || 0).toLocaleString('fa-IR')} سفارش پرداخت‌شده
+                  </span>
                 </div>
+
                 <div className="glass-card" style={{ padding: '24px' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '8px' }}>کل محصولات فعال</div>
-                  <div className="font-code" style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'hsl(var(--accent-purple))' }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>محصولات فعال در ویترین</div>
+                  <div className="font-code" style={{ fontSize: '1.85rem', fontWeight: 900, color: 'hsl(var(--accent-purple))' }}>
                     {(stats.totalProducts || 0).toLocaleString('fa-IR')}
                   </div>
+                  <span style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                    با مشخصات کامل و تست آزمایشگاهی
+                  </span>
                 </div>
+
                 <div className="glass-card" style={{ padding: '24px' }}>
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '8px' }}>موجودی کل انبار</div>
-                  <div className="font-code" style={{ fontSize: '1.75rem', fontWeight: 'bold', color: 'hsl(var(--accent-green))' }}>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>موجودی کل لپ‌تاپ‌های انبار</div>
+                  <div className="font-code" style={{ fontSize: '1.85rem', fontWeight: 900, color: 'hsl(var(--accent-green))' }}>
                     {(stats.totalStock || 0).toLocaleString('fa-IR')} عدد
+                  </div>
+                  <span style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'block' }}>
+                    آماده تحویل فوری و ارسال با تیپاکس
+                  </span>
+                </div>
+              </div>
+
+              {/* Order Fulfillment Pipeline Status */}
+              <div className="glass-card" style={{ padding: '24px' }}>
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShoppingCart size={18} color="hsl(var(--accent-cyan))" />
+                  جریان پردازش و تحویل سفارشات مشتریان (Orders Fulfillment)
+                </h3>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+                  <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.25)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-green))', fontWeight: 600 }}>پرداخت شده (Paid)</div>
+                    <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px' }}>
+                      {(stats.statusBreakdown?.paid || 0).toLocaleString('fa-IR')}
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-cyan))', fontWeight: 600 }}>در حال آماده‌سازی</div>
+                    <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px' }}>
+                      {(stats.statusBreakdown?.processing || 0).toLocaleString('fa-IR')}
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.08)', border: '1px solid rgba(168, 85, 247, 0.25)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-purple))', fontWeight: 600 }}>تحویل به پست/تیپاکس</div>
+                    <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px' }}>
+                      {(stats.statusBreakdown?.shipped || 0).toLocaleString('fa-IR')}
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>تحویل داده شده</div>
+                    <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px' }}>
+                      {(stats.statusBreakdown?.delivered || 0).toLocaleString('fa-IR')}
+                    </div>
+                  </div>
+                  <div style={{ padding: '14px', borderRadius: '12px', background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.25)' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#eab308', fontWeight: 600 }}>در انتظار پرداخت</div>
+                    <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: '4px' }}>
+                      {(stats.statusBreakdown?.pending || 0).toLocaleString('fa-IR')}
+                    </div>
                   </div>
                 </div>
               </div>
 
+              {/* Operations Analytics: Logistics, Appointments & Reviews */}
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                
+                {/* Logistics Pulse */}
+                <div className="glass-card" style={{ padding: '24px' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Truck size={18} color="hsl(var(--accent-cyan))" /> لجستیک و انبارداری
+                    </h3>
+                    <button className="btn btn-glass" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => setActiveSection('inventory')}>
+                      مدیریت انبار ←
+                    </button>
+                  </div>
+                  <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>رسیدهای ورود بار جدید:</span>
+                      <strong className="font-code">{(stats.inboundShipments || 0).toLocaleString('fa-IR')} بارنامه</strong>
+                    </div>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>حواله‌های خروج و ارسال مرسوله:</span>
+                      <strong className="font-code">{(stats.outboundShipments || 0).toLocaleString('fa-IR')} مرسوله</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Showroom & Service Appointments Pulse */}
+                <div className="glass-card" style={{ padding: '24px' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Calendar size={18} color="hsl(var(--accent-purple))" /> نوبت‌های تست شوروم و خدمات
+                    </h3>
+                    <button className="btn btn-glass" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => setActiveSection('appointments')}>
+                      مشاهده نوبت‌ها ←
+                    </button>
+                  </div>
+                  <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>کل نوبت‌های رزرو شده:</span>
+                      <strong className="font-code">{(stats.appointmentsTotal || 0).toLocaleString('fa-IR')} نوبت</strong>
+                    </div>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>در انتظار بررسی و هماهنگی:</span>
+                      <strong className="font-code" style={{ color: '#f59e0b' }}>{(stats.pendingAppointments || 0).toLocaleString('fa-IR')} نوبت</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content & Community Pulse */}
+                <div className="glass-card" style={{ padding: '24px' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <BookOpen size={18} color="#ec4899" /> نقد، مقالات و دیدگاه‌ها
+                    </h3>
+                    <button className="btn btn-glass" style={{ padding: '4px 10px', fontSize: '0.75rem' }} onClick={() => setActiveSection('blog')}>
+                      مدیریت مقالات ←
+                    </button>
+                  </div>
+                  <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>مقالات و بررسی‌های ویدیویی:</span>
+                      <strong className="font-code">{(stats.totalBlogPosts || 0).toLocaleString('fa-IR')} مقاله</strong>
+                    </div>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>دیدگاه‌های کاربران در انتظار تایید:</span>
+                      <strong className="font-code" style={{ color: stats.pendingComments > 0 ? '#ef4444' : 'hsl(var(--accent-green))' }}>
+                        {(stats.pendingComments || 0).toLocaleString('fa-IR')} دیدگاه
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
               {/* Low stock alerts */}
               {stats.lowStock && stats.lowStock.length > 0 && (
-                <div className="glass-card" style={{ padding: '24px', marginBottom: '32px', borderColor: 'hsla(var(--accent-red), 0.3)' }}>
-                  <h3 style={{ fontSize: '1.125rem', marginBottom: '16px', color: 'hsl(var(--accent-red))', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <AlertTriangle size={20} /> هشدارهای موجودی رو به اتمام (کمتر از ۵ عدد)
-                  </h3>
+                <div className="glass-card" style={{ padding: '24px', borderColor: 'hsla(var(--accent-red), 0.3)' }}>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '1.125rem', margin: 0, color: 'hsl(var(--accent-red))', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={20} /> هشدارهای موجودی انبار (رو به اتمام - کمتر از ۵ دستگاه)
+                    </h3>
+                    <button className="btn btn-primary" style={{ padding: '6px 14px', fontSize: '0.75rem' }} onClick={() => setActiveSection('inventory')}>
+                      ثبت ورود بار جدید به انبار
+                    </button>
+                  </div>
                   <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
                     {stats.lowStock.map(ls => (
-                      <div key={ls.id} className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.03)', padding: '12px', borderRadius: '8px' }}>
-                        <span style={{ fontWeight: 'bold' }}>{ls.name}</span>
+                      <div key={ls.id} className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-glass)' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{ls.name}</span>
                         <span className="badge" style={{ background: 'hsla(var(--accent-red), 0.15)', color: 'hsl(var(--accent-red))' }}>
-                          تنها {ls.stock} عدد
+                          تنها {ls.stock} عدد موجود
                         </span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
+
+              {/* Quick Action Shortcuts */}
+              <div className="glass-panel" style={{ padding: '20px 24px', borderRadius: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  ⚡ دسترسی‌های سریع و عملیات پرکاربرد مدیریت:
+                </span>
+                <div className="flex" style={{ gap: '10px', flexWrap: 'wrap' }}>
+                  <button className="btn btn-glass" style={{ padding: '8px 14px', fontSize: '0.8rem' }} onClick={() => setActiveSection('inventory')}>
+                    <ArrowDownLeft size={15} color="hsl(var(--accent-green))" /> ورود بار جدید
+                  </button>
+                  <button className="btn btn-glass" style={{ padding: '8px 14px', fontSize: '0.8rem' }} onClick={() => handleOpenBarcode(null)}>
+                    <BarcodeIcon size={15} color="hsl(var(--accent-purple))" /> چاپ لیبل بارکد
+                  </button>
+                  <button className="btn btn-glass" style={{ padding: '8px 14px', fontSize: '0.8rem' }} onClick={handleOpenAddProduct}>
+                    <Plus size={15} color="hsl(var(--accent-cyan))" /> افزودن لپ‌تاپ جدید
+                  </button>
+                  <button className="btn btn-glass" style={{ padding: '8px 14px', fontSize: '0.8rem' }} onClick={handleOpenAddBlogPost}>
+                    <BookOpen size={15} color="#ec4899" /> مقاله نقد و بررسی
+                  </button>
+                </div>
+              </div>
+
             </>
           ) : null}
         </div>

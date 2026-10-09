@@ -25,6 +25,19 @@ const getDashboardData = () => {
   const totalProducts = db.get('SELECT COUNT(*) AS v FROM products').v;
   const totalStock = db.get('SELECT COALESCE(SUM(stock),0) AS v FROM products').v;
   const totalUsers = db.get('SELECT COUNT(*) AS v FROM users').v;
+  const appointmentsTotal = db.get('SELECT COUNT(*) AS v FROM appointments').v;
+  const pendingAppointments = db.get("SELECT COUNT(*) AS v FROM appointments WHERE status = 'pending'").v;
+  const confirmedAppointments = db.get("SELECT COUNT(*) AS v FROM appointments WHERE status = 'confirmed'").v;
+  const inboundShipments = db.get("SELECT COUNT(*) AS v FROM inventory_shipments WHERE type = 'inbound'").v;
+  const outboundShipments = db.get("SELECT COUNT(*) AS v FROM inventory_shipments WHERE type = 'outbound'").v;
+  const totalBlogPosts = db.get('SELECT COUNT(*) AS v FROM blog_posts').v;
+  const statusBreakdown = {
+    paid: db.get("SELECT COUNT(*) AS v FROM orders WHERE status = 'paid'").v,
+    processing: db.get("SELECT COUNT(*) AS v FROM orders WHERE status = 'processing'").v,
+    shipped: db.get("SELECT COUNT(*) AS v FROM orders WHERE status = 'shipped'").v,
+    delivered: db.get("SELECT COUNT(*) AS v FROM orders WHERE status = 'delivered'").v,
+    pending: db.get("SELECT COUNT(*) AS v FROM orders WHERE status = 'pending_payment'").v
+  };
 
   return {
     revenue,
@@ -41,6 +54,13 @@ const getDashboardData = () => {
     totalRevenue: revenue,
     totalUsers,
     paidOrdersCount: ordersPaid,
+    appointmentsTotal,
+    pendingAppointments,
+    confirmedAppointments,
+    inboundShipments,
+    outboundShipments,
+    totalBlogPosts,
+    statusBreakdown
   };
 };
 
