@@ -58,6 +58,7 @@ export function serializeProduct(p, { full = false } = {}) {
     active: !!p.active,
     image: p.image,
     guarantee: p.guarantee,
+    chassis: p.chassis || specs.chassis || 'All-Aluminum CNC Machined',
     specs,
     cpuBrand,
     gpuBrand,

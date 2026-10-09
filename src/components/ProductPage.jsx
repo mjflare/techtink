@@ -403,6 +403,15 @@ export default function ProductPage({
                 {product.specs?.display || '16" Pro Display'}
               </div>
             </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <ShieldCheck size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {product.chassis || product.specs?.chassis || 'All-Aluminum CNC Machined'}
+              </div>
+            </div>
           </div>
 
           {/* Price Box */}
@@ -793,6 +802,10 @@ export default function ProductPage({
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                  <div className="spec-row">
+                    <span className="spec-row-label">جنس و ساختار شاسی</span>
+                    <span className="spec-row-value">{product.chassis || product.specs?.chassis || 'All-Aluminum CNC Machined'}</span>
+                  </div>
                   <div className="spec-row">
                     <span className="spec-row-label">ظرفیت باتری</span>
                     <span className="spec-row-value">{product.specs?.battery || '—'}</span>

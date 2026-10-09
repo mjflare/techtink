@@ -117,6 +117,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
             <tbody>
               {[
                 { label: 'دسته‌بندی کاربری', key: 'category' },
+                { label: 'جنس بدنه و ساختار شاسی', key: 'chassis', fallback: 'All-Aluminum CNC Machined' },
                 { label: 'سازنده پردازنده', key: 'cpuBrand', fallback: 'Intel' },
                 { label: 'مدل پردازنده مرکزی (CPU)', key: 'specs.cpu' },
                 { label: 'سازنده کارت گرافیک', key: 'gpuBrand', fallback: 'NVIDIA' },
@@ -138,6 +139,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                     const keys = row.key.split('.');
                     let val = laptop;
                     for (const k of keys) val = val ? val[k] : null;
+                    if (!val && row.key === 'chassis') val = laptop.specs?.chassis;
                     if (!val && row.fallback) val = row.fallback;
                     
                     return (

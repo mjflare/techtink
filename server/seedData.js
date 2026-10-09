@@ -13,16 +13,17 @@ export const LAPTOPS = [
     stockCount: 12,
     image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "Intel Core i9-14900HX (۲۴ هسته، ۵.۸ گیگاهرتز)",
-      gpu: "NVIDIA GeForce RTX 4090 ۱۶ گیگابایت (توان ۱۷۵ وات)",
-      ram: "۳۲ گیگابایت DDR5-5600MHz",
-      storage: "۲ ترابایت PCIe 4.0 NVMe SSD",
-      display: '۱۶ اینچ Mini-LED دوگانه (4K 120Hz / FHD+ 240Hz)',
-      battery: "۹۹.۹ وات ساعت (۹ ساعت شارژدهی)",
-      weight: "۲.۴۵ کیلوگرم",
-      os: "ویندوز ۱۱ پرو",
-      ports: "۲ عدد تاندربولت ۴، ۳ عدد USB 3.2 Gen 2، درگاه HDMI 2.1، کارت‌خوان شبکه ۲.۵ گیگ",
-      npuScore: "۴۵ ترافلاپس پردازش هوش مصنوعی"
+      cpu: "Intel Core i9-14900HX (24C / 32T, up to 5.8GHz)",
+      gpu: "NVIDIA GeForce RTX 4090 16GB GDDR6 (175W TGP)",
+      ram: "32GB DDR5-5600MHz (Dual Channel)",
+      storage: "2TB PCIe 4.0 NVMe M.2 SSD",
+      display: '16" Mini-LED Dual-Mode (4K 120Hz / FHD+ 240Hz, 1100 nits)',
+      chassis: "Magnesium-Aluminum Alloy CNC Unibody",
+      battery: "99.9Wh (Up to 9 Hours Battery Life)",
+      weight: "2.45 kg",
+      os: "Windows 11 Pro",
+      ports: "2x Thunderbolt 4, 3x USB 3.2 Gen 2, HDMI 2.1, 2.5G LAN, SD Reader",
+      npuScore: "45 TOPS NPU AI Accelerator"
     },
     upgrades: {
       ram: [
@@ -61,16 +62,17 @@ export const LAPTOPS = [
     stockCount: 25,
     image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "AMD Ryzen 9 8945HS با هوش مصنوعی رایزن (۸ هسته/۱۶ رشته)",
-      gpu: "NVIDIA GeForce RTX 4070 ۸ گیگابایت",
-      ram: "۳۲ گیگابایت LPDDR5X-7500MHz",
-      storage: "۱ ترابایت PCIe 4.0 NVMe SSD",
-      display: '۱۴.۵ اینچ 3.2K 120Hz OLED پوشش ۱۰۰٪ DCI-P3',
-      battery: "۸۴ وات ساعت (۱۴ ساعت شارژدهی)",
-      weight: "۱.۵۲ کیلوگرم",
-      os: "ویندوز ۱۱ پرو / لینوکس",
-      ports: "۱ عدد USB4، ۱ عدد USB-C 3.2، ۲ عدد USB-A، درگاه HDMI 2.1",
-      npuScore: "۳۸ ترافلاپس موتور عصبی"
+      cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz with Ryzen AI)",
+      gpu: "NVIDIA GeForce RTX 4070 8GB GDDR6 (115W TGP)",
+      ram: "32GB LPDDR5X-7500MHz High-Speed",
+      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
+      display: '14.5" 3.2K 120Hz OLED (100% DCI-P3, HDR 600)',
+      chassis: "All-Aluminum CNC Machined Unibody",
+      battery: "84Wh (Up to 14 Hours Battery Life)",
+      weight: "1.52 kg",
+      os: "Windows 11 Pro / Ubuntu Ready",
+      ports: "1x USB4 40Gbps, 1x USB-C 3.2, 2x USB-A 3.2, HDMI 2.1",
+      npuScore: "38 TOPS Neural AI Engine"
     },
     upgrades: {
       ram: [
@@ -108,16 +110,17 @@ export const LAPTOPS = [
     stockCount: 18,
     image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "Intel Core Ultra 7 155H (۱۶ هسته مجتمع با NPU)",
-      gpu: "گرافیک Intel Arc (۸ هسته Xe)",
-      ram: "۱۶ گیگابایت LPDDR5X-7467MHz",
-      storage: "۱ ترابایت PCIe 4.0 NVMe SSD",
-      display: '۱۳.۳ اینچ 2.8K 90Hz OLED روشنایی ۶۰۰ نیت',
-      battery: "۷۵ وات ساعت (۱۸.۵ ساعت شارژدهی)",
-      weight: "۰.۹۸ کیلوگرم",
-      os: "ویندوز ۱۱ هوم",
-      ports: "۲ عدد تاندربولت ۴، ۱ عدد USB-A 3.2، جک صدای ۳.۵ میلی‌متری",
-      npuScore: "۳۴ ترافلاپس Intel AI Boost"
+      cpu: "Intel Core Ultra 7 155H (16C / 22T, Intel AI Boost)",
+      gpu: "Intel Arc Graphics (8 Xe-Cores, 2.25GHz)",
+      ram: "16GB LPDDR5X-7467MHz Dual Channel",
+      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
+      display: '13.3" 2.8K 90Hz OLED (100% DCI-P3, 600 nits)',
+      chassis: "Ultra-Light Carbon Fiber & Magnesium Alloy",
+      battery: "75Wh (Up to 18.5 Hours Battery Life)",
+      weight: "0.98 kg",
+      os: "Windows 11 Home",
+      ports: "2x Thunderbolt 4, 1x USB-A 3.2, 3.5mm Audio Jack",
+      npuScore: "34 TOPS Intel AI Boost NPU"
     },
     upgrades: {
       ram: [
@@ -153,16 +156,17 @@ export const LAPTOPS = [
     stockCount: 7,
     image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "Intel Core i9-14950HX (۲۴ هسته، تا ۶.۰ گیگاهرتز)",
-      gpu: "NVIDIA RTX 5000 Ada با ۱۶ گیگابایت حافظه ECC",
-      ram: "۶۴ گیگابایت حافظه ECC DDR5-5600MHz",
-      storage: "۴ ترابایت PCIe 4.0 NVMe RAID 0",
-      display: '۱۸ اینچ 4K UHD+ 144Hz Mini-LED پشتیبانی از HDR 1000',
-      battery: "۹۹.۹ وات ساعت + شارژر 330W GaN",
-      weight: "۳.۱ کیلوگرم",
-      os: "ویندوز ۱۱ پرو فور ورک‌استیشن / اوبونتو 24.04",
-      ports: "۲ عدد تاندربولت ۴، ۴ عدد USB-A 3.2، شبکه محلی، HDMI 2.1",
-      npuScore: "۶۸ ترافلاپس موتور دوگانه هوش مصنوعی Tensor"
+      cpu: "Intel Core i9-14950HX (24C / 32T, up to 6.0GHz)",
+      gpu: "NVIDIA RTX 5000 Ada Generation 16GB ECC GDDR6",
+      ram: "64GB DDR5-5600MHz ECC Workstation Memory",
+      storage: "4TB (2x 2TB RAID 0) PCIe 4.0 NVMe SSD",
+      display: '18" 4K UHD+ 144Hz Mini-LED (HDR 1000, 100% DCI-P3)',
+      chassis: "All-Aluminum CNC Machined with Titanium Accents",
+      battery: "99.9Wh + 330W GaN Fast Charger",
+      weight: "3.10 kg",
+      os: "Windows 11 Pro for Workstations / Ubuntu 24.04",
+      ports: "2x Thunderbolt 4, 4x USB-A 3.2, 2.5G LAN, HDMI 2.1",
+      npuScore: "68 TOPS Dual Tensor AI Workstation Engine"
     },
     upgrades: {
       ram: [
@@ -198,16 +202,17 @@ export const LAPTOPS = [
     stockCount: 15,
     image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "AMD Ryzen 9 8945HS (۸ هسته، ۵.۲ گیگاهرتز)",
-      gpu: "NVIDIA GeForce RTX 4080 ۱۲ گیگابایت (۱۴۰ وات)",
-      ram: "۳۲ گیگابایت DDR5-5600MHz",
-      storage: "۱ ترابایت PCIe 4.0 NVMe SSD",
-      display: '۱۴ اینچ QHD+ 240Hz 3ms IPS',
-      battery: "۷۶ وات ساعت (۱۰ ساعت شارژدهی)",
-      weight: "۱.۷۸ کیلوگرم",
-      os: "ویندوز ۱۱ هوم",
-      ports: "۲ عدد USB4، ۲ عدد USB-A 3.2، HDMI 2.1",
-      npuScore: "۳۹ ترافلاپس موتور هوش مصنوعی Ryzen"
+      cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz)",
+      gpu: "NVIDIA GeForce RTX 4080 12GB GDDR6 (140W TGP)",
+      ram: "32GB DDR5-5600MHz (Dual Channel)",
+      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
+      display: '14" QHD+ 240Hz 3ms IPS (100% DCI-P3, G-Sync)',
+      chassis: "All-Aluminum CNC Machined Anodized Black",
+      battery: "76Wh (Up to 10 Hours Battery Life)",
+      weight: "1.78 kg",
+      os: "Windows 11 Home",
+      ports: "2x USB4 40Gbps, 2x USB-A 3.2, HDMI 2.1",
+      npuScore: "39 TOPS Ryzen AI Engine"
     },
     upgrades: {
       ram: [
@@ -243,16 +248,17 @@ export const LAPTOPS = [
     stockCount: 40,
     image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=80",
     specs: {
-      cpu: "Intel Core Ultra 5 125H (۱۴ هسته)",
-      gpu: "گرافیک مجتمع اینتل",
-      ram: "۱۶ گیگابایت LPDDR5-6400MHz",
-      storage: "۵۱۲ گیگابایت PCIe NVMe SSD",
-      display: '۱۵.۶ اینچ FHD IPS مات و ضد انعکاس',
-      battery: "۶۵ وات ساعت (۱۲ ساعت شارژدهی)",
-      weight: "۱.۶۵ کیلوگرم",
-      os: "ویندوز ۱۱ هوم",
-      ports: "۱ عدد USB-C تاندربولت، ۲ عدد USB-A، HDMI 1.4، کارت‌خوان SD",
-      npuScore: "۲۸ ترافلاپس هوش مصنوعی"
+      cpu: "Intel Core Ultra 5 125H (14C / 18T, up to 4.5GHz)",
+      gpu: "Intel Arc Integrated Graphics (7 Xe-Cores)",
+      ram: "16GB LPDDR5-6400MHz",
+      storage: "512GB PCIe NVMe M.2 SSD",
+      display: '15.6" FHD (1920x1080) IPS Anti-Glare 300 nits',
+      chassis: "Reinforced Polycarbonate & Recycled Aluminum Frame",
+      battery: "65Wh (Up to 12 Hours Battery Life)",
+      weight: "1.65 kg",
+      os: "Windows 11 Home",
+      ports: "1x Thunderbolt 4 / USB-C, 2x USB-A 3.2, HDMI 1.4, SD Reader",
+      npuScore: "28 TOPS Intel AI NPU"
     },
     upgrades: {
       ram: [

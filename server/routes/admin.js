@@ -58,17 +58,18 @@ function saveProduct(id, b, userId) {
   const cpuBrand = b.cpuBrand || (b.specs?.cpu?.toLowerCase().includes('amd') ? 'AMD' : 'Intel');
   const gpuBrand = b.gpuBrand || (b.specs?.gpu?.toLowerCase().includes('nvidia') || b.specs?.gpu?.toLowerCase().includes('rtx') ? 'NVIDIA' : b.specs?.gpu?.toLowerCase().includes('amd') ? 'AMD' : 'Intel');
   const expertReview = typeof b.expertReview === 'object' ? JSON.stringify(b.expertReview) : (b.expertReview || '{}');
+  const chassis = b.chassis || b.specs?.chassis || 'All-Aluminum CNC Machined';
 
   const fields = [
     slug, b.name, b.tagline || '', b.category || '', b.series || '', b.badge || '', b.description || '',
     int(b.basePrice), b.oldPrice ? int(b.oldPrice) : null, b.active === false ? 0 : 1, b.guarantee || '',
     (b.images && b.images[0]) || b.image || '', JSON.stringify(b.specs || {}), JSON.stringify(b.highlights || []),
-    expertReview, cpuBrand, gpuBrand
+    expertReview, cpuBrand, gpuBrand, chassis
   ];
   return db.tx(() => {
     let pid = id;
     if (id) {
-      db.run(`UPDATE products SET slug=?, name=?, tagline=?, category=?, series=?, badge=?, description=?, base_price=?, old_price=?, active=?, guarantee=?, image=?, specs=?, highlights=?, expert_review=?, cpu_brand=?, gpu_brand=?, updated_at=datetime('now') WHERE id=?`, ...fields, id);
+      db.run(`UPDATE products SET slug=?, name=?, tagline=?, category=?, series=?, badge=?, description=?, base_price=?, old_price=?, active=?, guarantee=?, image=?, specs=?, highlights=?, expert_review=?, cpu_brand=?, gpu_brand=?, chassis=?, updated_at=datetime('now') WHERE id=?`, ...fields, id);
       if (b.stock !== undefined) {
         const cur = db.get('SELECT stock FROM products WHERE id = ?', id);
         const newStock = int(b.stock);
@@ -78,7 +79,7 @@ function saveProduct(id, b, userId) {
         }
       }
     } else {
-      pid = db.run(`INSERT INTO products (slug, name, tagline, category, series, badge, description, base_price, old_price, active, guarantee, image, specs, highlights, expert_review, cpu_brand, gpu_brand, stock) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, ...fields, int(b.stock)).lastId;
+      pid = db.run(`INSERT INTO products (slug, name, tagline, category, series, badge, description, base_price, old_price, active, guarantee, image, specs, highlights, expert_review, cpu_brand, gpu_brand, chassis, stock) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, ...fields, int(b.stock)).lastId;
       if (int(b.stock)) db.run('INSERT INTO stock_log (product_id, delta, reason, user_id) VALUES (?, ?, ?, ?)', pid, int(b.stock), 'موجودی اولیه', userId);
     }
     if (b.upgrades) {

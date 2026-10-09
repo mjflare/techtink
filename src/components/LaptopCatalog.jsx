@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Filter, Star, CheckCircle, SlidersHorizontal, Scale, Eye, Wrench, 
-  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles 
+  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, ShieldCheck 
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
@@ -21,6 +21,7 @@ export default function LaptopCatalog({
   const [gpuMaker, setGpuMaker] = useState('all'); // 'all', 'NVIDIA', 'AMD', 'Intel'
   const [ramFilter, setRamFilter] = useState('all'); // 'all', '16', '32', '64+'
   const [screenFilter, setScreenFilter] = useState('all'); // 'all', '13-14', '15-16'
+  const [chassisFilter, setChassisFilter] = useState('all'); // 'all', 'aluminum', 'magnesium', 'carbon', 'polycarbonate'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   const categories = ['همه', 'گیمینگ', 'تولید محتوا', 'فوق سبک', 'ایستگاه کاری', 'اقتصادی'];
@@ -69,6 +70,18 @@ export default function LaptopCatalog({
         return true;
       });
     }
+
+    // Chassis Build filter
+    if (chassisFilter !== 'all') {
+      result = result.filter(l => {
+        const ch = ((l.chassis || l.specs?.chassis || '') + ' ' + (l.highlights?.join(' ') || '')).toLowerCase();
+        if (chassisFilter === 'aluminum') return ch.includes('aluminum') || ch.includes('آلومینیوم');
+        if (chassisFilter === 'magnesium') return ch.includes('magnesium') || ch.includes('منیزیم');
+        if (chassisFilter === 'carbon') return ch.includes('carbon') || ch.includes('کربن');
+        if (chassisFilter === 'polycarbonate') return ch.includes('polycarbonate') || ch.includes('پلی‌کربنات') || ch.includes('پلاستیک');
+        return true;
+      });
+    }
     
     // Search filter
     if (searchQuery.trim()) {
@@ -77,7 +90,8 @@ export default function LaptopCatalog({
         l.name?.toLowerCase().includes(q) || 
         l.tagline?.toLowerCase().includes(q) ||
         l.specs?.cpu?.toLowerCase().includes(q) ||
-        l.specs?.gpu?.toLowerCase().includes(q)
+        l.specs?.gpu?.toLowerCase().includes(q) ||
+        (l.chassis || l.specs?.chassis || '').toLowerCase().includes(q)
       );
     }
 
@@ -88,9 +102,14 @@ export default function LaptopCatalog({
       result = [...result].sort((a, b) => b.basePrice - a.basePrice);
     }
     return result;
-  }, [laptops, activeCategory, cpuMaker, gpuMaker, ramFilter, screenFilter, priceSort, searchQuery]);
+  }, [laptops, activeCategory, cpuMaker, gpuMaker, ramFilter, screenFilter, chassisFilter, priceSort, searchQuery]);
 
-  const activeFiltersCount = (cpuMaker !== 'all' ? 1 : 0) + (gpuMaker !== 'all' ? 1 : 0) + (ramFilter !== 'all' ? 1 : 0) + (screenFilter !== 'all' ? 1 : 0);
+  const activeFiltersCount = 
+    (cpuMaker !== 'all' ? 1 : 0) + 
+    (gpuMaker !== 'all' ? 1 : 0) + 
+    (ramFilter !== 'all' ? 1 : 0) + 
+    (screenFilter !== 'all' ? 1 : 0) +
+    (chassisFilter !== 'all' ? 1 : 0);
 
   const resetAllFilters = () => {
     setActiveCategory('همه');
@@ -98,6 +117,7 @@ export default function LaptopCatalog({
     setGpuMaker('all');
     setRamFilter('all');
     setScreenFilter('all');
+    setChassisFilter('all');
     setPriceSort('default');
   };
 
@@ -324,6 +344,39 @@ export default function LaptopCatalog({
             </div>
           </div>
 
+          {/* Chassis Build (New Filter!) */}
+          <div>
+            <div className="flex" style={{ alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+              <ShieldCheck size={16} color="hsl(var(--accent-green))" />
+              <span>جنس بدنه و شاسی:</span>
+            </div>
+            <div className="flex" style={{ gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'همه' },
+                { id: 'aluminum', label: 'تمام آلومینیوم' },
+                { id: 'magnesium', label: 'آلیاژ منیزیم' },
+                { id: 'carbon', label: 'فیبر کربن' },
+                { id: 'polycarbonate', label: 'پلی‌کربنات مقاوم' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setChassisFilter(item.id)}
+                  className="btn"
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    borderRadius: '6px',
+                    background: chassisFilter === item.id ? 'hsla(var(--accent-green), 0.2)' : 'rgba(0,0,0,0.03)',
+                    borderColor: chassisFilter === item.id ? 'hsl(var(--accent-green))' : 'var(--border-glass)',
+                    color: chassisFilter === item.id ? 'hsl(var(--accent-green))' : 'var(--text-secondary)'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* Clear Filters bar */}
@@ -413,7 +466,7 @@ export default function LaptopCatalog({
                   )}
                 </div>
 
-                {/* Sophisticated Hardware Specs Presentation */}
+                {/* 100% Clean International Hardware Deck (Zero Mixed-Text BiDi Glitches) */}
                 <div style={{ 
                   background: 'linear-gradient(180deg, rgba(0,0,0,0.015) 0%, rgba(0,0,0,0.035) 100%)', 
                   border: '1px solid var(--border-glass)', 
@@ -422,15 +475,18 @@ export default function LaptopCatalog({
                   marginBottom: '16px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px'
+                  gap: '8px',
+                  direction: 'ltr',
+                  textAlign: 'left'
                 }}>
+                  {/* CPU */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                       <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-cyan), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Cpu size={13} color="hsl(var(--accent-cyan))" />
                       </div>
-                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
-                        {laptop.specs?.cpu}
+                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {laptop.specs?.cpu || 'Processor'}
                       </span>
                     </div>
                     <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
@@ -438,13 +494,14 @@ export default function LaptopCatalog({
                     </span>
                   </div>
 
+                  {/* GPU */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                       <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Zap size={13} color="hsl(var(--accent-green))" />
                       </div>
-                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
-                        {laptop.specs?.gpu}
+                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {laptop.specs?.gpu || 'Graphics'}
                       </span>
                     </div>
                     <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
@@ -452,21 +509,35 @@ export default function LaptopCatalog({
                     </span>
                   </div>
 
+                  {/* RAM & Storage */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                     <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-purple), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <HardDrive size={13} color="hsl(var(--accent-purple))" />
                     </div>
-                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', direction: 'ltr' }}>
-                      <strong style={{ fontWeight: 600 }}>{laptop.specs?.ram}</strong> RAM • <span style={{ color: 'var(--text-secondary)' }}>{laptop.specs?.storage}</span>
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <strong style={{ fontWeight: 600 }}>{laptop.specs?.ram}</strong> • <span style={{ color: 'var(--text-secondary)' }}>{laptop.specs?.storage}</span>
                     </span>
                   </div>
 
+                  {/* Chassis Build (New Parameter!) */}
+                  {(laptop.chassis || laptop.specs?.chassis) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <ShieldCheck size={13} color="hsl(var(--accent-green))" />
+                      </div>
+                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {laptop.chassis || laptop.specs?.chassis}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Display */}
                   {laptop.specs?.display && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                       <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <Monitor size={13} color="var(--text-secondary)" />
                       </div>
-                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
+                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {laptop.specs?.display}
                       </span>
                     </div>

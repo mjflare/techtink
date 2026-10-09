@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS products (
   image TEXT,
   specs TEXT NOT NULL DEFAULT '{}',
   highlights TEXT NOT NULL DEFAULT '[]',
+  chassis TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -196,7 +197,18 @@ function migrate() {
   try { db.exec("ALTER TABLE products ADD COLUMN expert_review TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN cpu_brand TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN gpu_brand TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN chassis TEXT;"); } catch {}
   try { db.exec("ALTER TABLE drivers ADD COLUMN download_url TEXT;"); } catch {}
+  
+  // Sync clean English specs and chassis
+  try {
+    for (const l of LAPTOPS) {
+      db.run("UPDATE products SET specs = ?, chassis = ? WHERE slug = ?", JSON.stringify(l.specs), l.specs.chassis, l.id);
+    }
+  } catch (e) {
+    console.error("Migration specs sync error:", e);
+  }
+
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
     db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);
   }

@@ -41,6 +41,7 @@ export default function AdminDashboard({ user, onLogout }) {
     guarantee: 'گارانتی ۲ ساله طلایی تک‌تینک',
     cpuBrand: 'Intel',
     gpuBrand: 'NVIDIA',
+    chassis: 'All-Aluminum CNC Machined',
     specs: {
       cpu: 'Intel Core i7-14700HX',
       gpu: 'NVIDIA GeForce RTX 4060 (8GB)',
@@ -49,7 +50,8 @@ export default function AdminDashboard({ user, onLogout }) {
       display: '15.6" QHD 165Hz IPS',
       battery: '80Wh (شارژ سریع 230W)',
       weight: '2.1 kg',
-      npuScore: '30 TOPS'
+      npuScore: '30 TOPS',
+      chassis: 'All-Aluminum CNC Machined'
     },
     expertReview: {
       intro: '',
@@ -246,6 +248,7 @@ export default function AdminDashboard({ user, onLogout }) {
       guarantee: p.guarantee || 'گارانتی ۲ ساله طلایی تک‌تینک',
       cpuBrand: p.cpuBrand || 'Intel',
       gpuBrand: p.gpuBrand || 'NVIDIA',
+      chassis: p.chassis || p.specs?.chassis || 'All-Aluminum CNC Machined',
       specs: {
         cpu: p.specs?.cpu || '',
         gpu: p.specs?.gpu || '',
@@ -254,7 +257,8 @@ export default function AdminDashboard({ user, onLogout }) {
         display: p.specs?.display || '',
         battery: p.specs?.battery || '',
         weight: p.specs?.weight || '',
-        npuScore: p.specs?.npuScore || ''
+        npuScore: p.specs?.npuScore || '',
+        chassis: p.chassis || p.specs?.chassis || 'All-Aluminum CNC Machined'
       },
       expertReview: {
         intro: p.expertReview?.intro || '',
@@ -281,6 +285,8 @@ export default function AdminDashboard({ user, onLogout }) {
       .map(s => s.trim())
       .filter(Boolean);
 
+    const chassisVal = productForm.chassis || productForm.specs?.chassis || 'All-Aluminum CNC Machined';
+
     const payload = {
       name: productForm.name,
       slug: productForm.slug || productForm.name.toLowerCase().replace(/[\s]+/g, '-'),
@@ -294,7 +300,8 @@ export default function AdminDashboard({ user, onLogout }) {
       guarantee: productForm.guarantee,
       cpuBrand: productForm.cpuBrand,
       gpuBrand: productForm.gpuBrand,
-      specs: { ...productForm.specs },
+      chassis: chassisVal,
+      specs: { ...productForm.specs, chassis: chassisVal },
       expertReview: {
         intro: productForm.expertReview?.intro || '',
         pros: prosList,
@@ -1329,7 +1336,16 @@ export default function AdminDashboard({ user, onLogout }) {
                         type="text" 
                         value={productForm.specs.weight || ''} 
                         onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, weight: e.target.value } })} 
-                        placeholder="2.2 کیلوگرم" 
+                        placeholder="2.2 kg" 
+                      />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>جنس بدنه و ساختار شاسی (Chassis Build & Material)</label>
+                      <input 
+                        type="text" 
+                        value={productForm.specs?.chassis || productForm.chassis || ''} 
+                        onChange={e => setProductForm({ ...productForm, chassis: e.target.value, specs: { ...productForm.specs, chassis: e.target.value } })} 
+                        placeholder="All-Aluminum CNC Machined Unibody" 
                       />
                     </div>
                   </div>
