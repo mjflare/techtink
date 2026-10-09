@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink, ShoppingCart, X } from 'lucide-react';
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
@@ -25,6 +25,35 @@ function App() {
   const [compareList, setCompareList] = useState([]); // Array of laptop IDs
   const [isAboutUsOpen, setIsAboutUsOpen] = useState(false);
   const [storeAboutInfo, setStoreAboutInfo] = useState(null);
+
+  // Floating Island Interactive Flyout Popover ('compare' | 'cart' | null)
+  const [activeIslandPopover, setActiveIslandPopover] = useState(null);
+  const islandRef = useRef(null);
+
+  // Outside click / ESC listener to close floating island popover
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (islandRef.current && !islandRef.current.contains(e.target)) {
+        setActiveIslandPopover(null);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setActiveIslandPopover(null);
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick, { passive: true });
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Compute compared laptop objects
+  const comparedLaptops = useMemo(() => {
+    return (laptops || []).filter(l => compareList.includes(l.id));
+  }, [laptops, compareList]);
   
   // Persistent Cart
   const [cartItems, setCartItems] = useState(() => {
@@ -314,127 +343,396 @@ function App() {
       {/* Interactive Floating Bottom Action Island */}
       {(compareList.length > 0 || cartCount > 0) && activeTab !== 'admin' && (
         <div 
+          ref={islandRef}
           className="floating-action-island animate-fade-in"
           style={{
             position: 'fixed',
             bottom: '20px',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 100,
+            zIndex: 1000,
             background: 'var(--glass-card-bg)',
             backdropFilter: 'blur(24px) saturate(190%)',
             WebkitBackdropFilter: 'blur(24px) saturate(190%)',
             border: '1px solid var(--border-glass)',
             boxShadow: 'var(--glass-specular), 0 16px 45px rgba(0, 0, 0, 0.22)',
             borderRadius: '34px',
-            padding: '6px 14px',
+            padding: '6px 12px',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '12px',
-            maxWidth: 'calc(100vw - 24px)',
+            gap: '8px',
+            maxWidth: 'calc(100vw - 20px)',
             boxSizing: 'border-box'
           }}
+          onMouseLeave={() => setActiveIslandPopover(null)}
         >
-          {/* Compare Capsule */}
-          {compareList.length > 0 && activeTab !== 'compare' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ 
+          {/* FLYOUT POPOVER: Compare Items */}
+          {activeIslandPopover === 'compare' && compareList.length > 0 && (
+            <div 
+              className="floating-island-popover animate-fade-in"
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 12px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'min(350px, calc(100vw - 24px))',
+                background: 'var(--glass-card-bg)',
+                backdropFilter: 'blur(28px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+                border: '1px solid var(--border-glass)',
+                boxShadow: 'var(--glass-specular), 0 24px 55px rgba(0, 0, 0, 0.35)',
+                borderRadius: '20px',
+                padding: '16px',
+                zIndex: 1005,
+                boxSizing: 'border-box',
+                color: 'var(--text-primary)',
+                direction: 'rtl',
+                textAlign: 'right'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Popover Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ArrowLeftRight size={14} color="#ef4444" />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>لیست مقایسه ({comparedLaptops.length} مدل)</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button 
+                    type="button" 
+                    onClick={() => { setCompareList([]); setActiveIslandPopover(null); }} 
+                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px' }}
+                    title="حذف همه مدل‌ها"
+                  >
+                    حذف همه
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setActiveIslandPopover(null)} 
+                    className="btn btn-glass" 
+                    style={{ padding: '3px', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    aria-label="بستن پنجره"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Laptop List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', marginBottom: '12px' }}>
+                {comparedLaptops.map(item => (
+                  <div 
+                    key={item.id} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px', 
+                      padding: '8px 10px', 
+                      borderRadius: '12px', 
+                      background: 'var(--glass-bg-hover)', 
+                      border: '1px solid var(--border-glass)' 
+                    }}
+                  >
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.brand ? `${item.brand} ${item.model}` : item.name}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-cyan))', fontWeight: 700, marginTop: '2px' }}>
+                        {formatPrice(item.price)}
+                      </div>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleCompare(item.id);
+                      }}
+                      className="btn btn-glass"
+                      style={{ padding: '4px', borderRadius: '50%', width: '24px', height: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}
+                      title="حذف این مورد از مقایسه"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Button */}
+              <button 
+                type="button" 
+                className="btn" 
+                style={{ 
+                  width: '100%', 
                   background: '#ef4444', 
                   color: 'white', 
-                  borderRadius: '50%', 
-                  width: '22px', 
-                  height: '22px', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.825rem', 
+                  fontWeight: 600, 
                   display: 'flex', 
                   alignItems: 'center', 
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
-                }}>
-                  {compareList.length}
-                </span>
-                <span className="floating-island-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  مدل در مقایسه
-                </span>
+                  justifyContent: 'center', 
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  setActiveIslandPopover(null);
+                  handleTabChange('compare');
+                }}
+              >
+                <ArrowLeftRight size={14} /> مشاهده جدول مقایسه کامل
+              </button>
+            </div>
+          )}
+
+          {/* FLYOUT POPOVER: Cart Items */}
+          {activeIslandPopover === 'cart' && cartCount > 0 && (
+            <div 
+              className="floating-island-popover animate-fade-in"
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 12px)',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: 'min(350px, calc(100vw - 24px))',
+                background: 'var(--glass-card-bg)',
+                backdropFilter: 'blur(28px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+                border: '1px solid var(--border-glass)',
+                boxShadow: 'var(--glass-specular), 0 24px 55px rgba(0, 0, 0, 0.35)',
+                borderRadius: '20px',
+                padding: '16px',
+                zIndex: 1005,
+                boxSizing: 'border-box',
+                color: 'var(--text-primary)',
+                direction: 'rtl',
+                textAlign: 'right'
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Popover Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '26px', height: '26px', borderRadius: '8px', background: 'hsla(var(--accent-purple), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ShoppingCart size={14} color="hsl(var(--accent-purple))" />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>سبد خرید شما ({cartCount} کالا)</span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveIslandPopover(null)} 
+                  className="btn btn-glass" 
+                  style={{ padding: '3px', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="بستن پنجره"
+                >
+                  <X size={12} />
+                </button>
               </div>
+
+              {/* Items List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', marginBottom: '12px' }}>
+                {cartItems.map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '10px', 
+                      padding: '8px 10px', 
+                      borderRadius: '12px', 
+                      background: 'var(--glass-bg-hover)', 
+                      border: '1px solid var(--border-glass)' 
+                    }}
+                  >
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.name}
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px', fontSize: '0.75rem' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>تعداد: {item.quantity}</span>
+                        <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 700 }}>
+                          {formatPrice((item.totalPrice || item.basePrice || 0) * (item.quantity || 1))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Total & Action Button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border-glass)', marginBottom: '10px', fontSize: '0.85rem', fontWeight: 700 }}>
+                <span>مبلغ کل سبد:</span>
+                <span style={{ color: 'hsl(var(--accent-cyan))' }}>{formatPrice(cartSubtotal)}</span>
+              </div>
+
               <button 
+                type="button" 
                 className="btn" 
+                style={{ 
+                  width: '100%', 
+                  background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '12px', 
+                  fontSize: '0.825rem', 
+                  fontWeight: 600, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '8px',
+                  boxShadow: '0 4px 14px hsla(var(--accent-purple), 0.4)',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  setActiveIslandPopover(null);
+                  setIsCartOpen(true);
+                }}
+              >
+                <ShoppingCart size={14} /> مشاهده سبد و تکمیل سفارش
+              </button>
+            </div>
+          )}
+
+          {/* Compare Capsule in Bottom Dock */}
+          {compareList.length > 0 && activeTab !== 'compare' && (
+            <div 
+              className="floating-island-capsule"
+              onMouseEnter={() => setActiveIslandPopover('compare')}
+              onClick={() => setActiveIslandPopover(prev => prev === 'compare' ? null : 'compare')}
+              title="کلیک یا هاور برای مشاهده اقلام مقایسه"
+            >
+              <span style={{ 
+                background: '#ef4444', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '20px', 
+                height: '20px', 
+                minWidth: '20px',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+              }}>
+                {compareList.length}
+              </span>
+              <span className="floating-island-desktop-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                مدل در مقایسه
+              </span>
+              <button 
+                type="button"
+                className="btn island-action-btn" 
                 style={{ 
                   background: '#ef4444', 
                   color: 'white',
                   border: 'none',
-                  padding: '6px 14px', 
-                  fontSize: '0.8rem', 
-                  borderRadius: '20px', 
+                  padding: '5px 12px', 
+                  fontSize: '0.78rem', 
+                  borderRadius: '18px', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '6px',
+                  gap: '5px',
                   boxShadow: '0 0 12px rgba(239, 68, 68, 0.35)',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer'
                 }}
-                onClick={() => handleTabChange('compare')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTabChange('compare');
+                }}
+                title="مشاهده جدول مقایسه کامل"
               >
-                <ArrowLeftRight size={14} /> مقایسه
+                <ArrowLeftRight size={13} /> <span className="island-btn-text">مقایسه</span>
               </button>
               <button 
-                className="btn btn-glass" 
-                style={{ padding: '4px', borderRadius: '50%', width: '26px', height: '26px', minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                onClick={() => setCompareList([])}
+                type="button"
+                className="btn btn-glass island-clear-btn" 
+                style={{ padding: '3px', borderRadius: '50%', width: '24px', height: '24px', minHeight: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCompareList([]);
+                  setActiveIslandPopover(null);
+                }}
                 title="پاک کردن مقایسه‌ها"
                 aria-label="پاک کردن مقایسه‌ها"
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             </div>
           )}
 
           {/* Divider between Compare and Cart if both exist */}
           {compareList.length > 0 && activeTab !== 'compare' && cartCount > 0 && (
-            <div style={{ width: '1px', height: '22px', background: 'var(--border-glass)', flexShrink: 0 }} />
+            <div className="island-divider" style={{ width: '1px', height: '20px', background: 'var(--border-glass)', flexShrink: 0 }} />
           )}
 
-          {/* Cart Capsule */}
+          {/* Cart Capsule in Bottom Dock */}
           {cartCount > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ 
-                  background: 'hsl(var(--accent-purple))', 
-                  color: 'white', 
-                  borderRadius: '50%', 
-                  width: '22px', 
-                  height: '22px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  boxShadow: '0 0 10px hsla(var(--accent-purple), 0.5)'
-                }}>
-                  {cartCount}
-                </span>
-                <span className="floating-island-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                  سبد خرید ({formatPrice(cartSubtotal)})
-                </span>
-              </div>
+            <div 
+              className="floating-island-capsule"
+              onMouseEnter={() => setActiveIslandPopover('cart')}
+              onClick={() => setActiveIslandPopover(prev => prev === 'cart' ? null : 'cart')}
+              title="کلیک یا هاور برای مشاهده اقلام سبد خرید"
+            >
+              <span style={{ 
+                background: 'hsl(var(--accent-purple))', 
+                color: 'white', 
+                borderRadius: '50%', 
+                width: '20px', 
+                height: '20px', 
+                minWidth: '20px',
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                boxShadow: '0 0 10px hsla(var(--accent-purple), 0.5)'
+              }}>
+                {cartCount}
+              </span>
+              <span className="floating-island-desktop-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                سبد خرید ({formatPrice(cartSubtotal)})
+              </span>
               <button 
-                className="btn" 
+                type="button"
+                className="btn island-action-btn" 
                 style={{ 
                   background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', 
                   color: 'white',
                   border: 'none',
-                  padding: '6px 14px', 
-                  fontSize: '0.8rem', 
-                  borderRadius: '20px', 
+                  padding: '5px 12px', 
+                  fontSize: '0.78rem', 
+                  borderRadius: '18px', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '6px',
-                  boxShadow: '0 0 14px hsla(var(--accent-purple), 0.35)',
-                  whiteSpace: 'nowrap'
+                  gap: '5px',
+                  boxShadow: '0 0 12px hsla(var(--accent-purple), 0.35)',
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer'
                 }}
-                onClick={() => setIsCartOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCartOpen(true);
+                }}
+                title="مشاهده سبد خرید و تسویه حساب"
               >
-                <ShoppingCart size={14} /> مشاهده سبد
+                <ShoppingCart size={13} /> <span className="island-btn-text">سبد</span>
               </button>
             </div>
           )}

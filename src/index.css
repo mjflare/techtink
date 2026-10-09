@@ -360,24 +360,94 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Floating Bottom Action Island (Dynamic Compare & Cart) */
 .floating-action-island {
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .floating-action-island:hover {
-  transform: translateX(-50%) translateY(-2px) scale(1.01);
   border-color: var(--border-glass-hover);
   box-shadow: var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.28);
 }
 
-@media (max-width: 600px) {
-  .floating-action-island {
-    bottom: 14px !important;
-    padding: 5px 10px !important;
-    gap: 8px !important;
-    border-radius: 24px !important;
+.floating-island-capsule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 20px;
+  transition: background 0.2s ease;
+}
+
+.floating-island-capsule:hover {
+  background: var(--glass-bg-hover);
+}
+
+.floating-island-popover {
+  animation: islandFlyoutEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes islandFlyoutEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.97);
   }
-  .floating-island-label {
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.island-action-btn {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.island-action-btn:hover {
+  transform: scale(1.03);
+}
+
+.island-clear-btn {
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.island-clear-btn:hover {
+  transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+}
+
+@media (max-width: 768px) {
+  .floating-action-island {
+    bottom: 12px !important;
+    padding: 4px 8px !important;
+    gap: 6px !important;
+    border-radius: 24px !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+  .floating-island-desktop-label {
     display: none !important;
+  }
+  .floating-island-capsule {
+    gap: 5px !important;
+    padding: 2px 4px !important;
+  }
+  .island-action-btn {
+    padding: 4px 8px !important;
+    font-size: 0.74rem !important;
+    border-radius: 14px !important;
+  }
+  .island-clear-btn {
+    width: 22px !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 2px !important;
+  }
+  .island-divider {
+    height: 16px !important;
+  }
+  .floating-island-popover {
+    width: min(340px, calc(100vw - 20px)) !important;
+    padding: 12px !important;
+    border-radius: 18px !important;
   }
 }
 
