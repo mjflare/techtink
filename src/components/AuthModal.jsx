@@ -111,7 +111,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
   const labelStyle = {
     fontSize: '0.85rem',
     fontWeight: 600,
-    color: 'hsl(var(--text-secondary))',
+    color: 'var(--text-secondary)',
   };
 
   const inputWrapperStyle = {
@@ -123,7 +123,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
   const inputIconStyle = {
     position: 'absolute',
     right: '12px',
-    color: 'hsl(var(--text-secondary))',
+    color: 'var(--text-secondary)',
     pointerEvents: 'none',
   };
 
@@ -194,8 +194,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
               background:
                 activeTab === 'login'
                   ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))'
-                  : 'rgba(0, 0, 0, 0.03)',
-              color: activeTab === 'login' ? 'white' : 'hsl(var(--text-secondary))',
+                  : 'var(--btn-glass-bg, rgba(255, 255, 255, 0.05))',
+              color: activeTab === 'login' ? 'white' : 'var(--text-secondary)',
               boxShadow:
                 activeTab === 'login' ? '0 4px 15px rgba(0, 191, 255, 0.3)' : 'none',
             }}
@@ -222,8 +222,8 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
               background:
                 activeTab === 'register'
                   ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))'
-                  : 'rgba(0, 0, 0, 0.03)',
-              color: activeTab === 'register' ? 'white' : 'hsl(var(--text-secondary))',
+                  : 'var(--btn-glass-bg, rgba(255, 255, 255, 0.05))',
+              color: activeTab === 'register' ? 'white' : 'var(--text-secondary)',
               boxShadow:
                 activeTab === 'register' ? '0 4px 15px rgba(0, 191, 255, 0.3)' : 'none',
             }}
@@ -293,7 +293,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        color: 'hsl(var(--text-secondary))',
+                        color: 'var(--text-secondary)',
                         padding: '4px',
                         display: 'flex',
                         alignItems: 'center',
@@ -344,7 +344,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
                   <p
                     style={{
                       fontSize: '0.78rem',
-                      color: 'hsl(var(--text-secondary))',
+                      color: 'var(--text-secondary)',
                       margin: 0,
                     }}
                   >
@@ -356,7 +356,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
                   <p
                     style={{
                       fontSize: '0.78rem',
-                      color: 'hsl(var(--text-secondary))',
+                      color: 'var(--text-secondary)',
                       margin: 0,
                     }}
                   >
@@ -441,7 +441,7 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
                         background: 'none',
                         border: 'none',
                         cursor: 'pointer',
-                        color: 'hsl(var(--text-secondary))',
+                        color: 'var(--text-secondary)',
                         padding: '4px',
                         display: 'flex',
                         alignItems: 'center',

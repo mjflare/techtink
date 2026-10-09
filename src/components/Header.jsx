@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight } from 'lucide-react';
+import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon } from 'lucide-react';
 
 export default function Header({ 
   activeTab, 
@@ -12,13 +12,14 @@ export default function Header({
   onLogout,
   searchQuery,
   onSearchChange,
-  onOpenAbout
+  onOpenAbout,
+  theme = 'dark',
+  onToggleTheme
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const tabs = [
     { id: 'store', label: 'فروشگاه' },
-    { id: 'compare', label: 'مقایسه مشخصات' },
     { id: 'support', label: 'پشتیبانی' },
     { id: 'blog', label: 'وبلاگ تکنولوژی' }
   ];
@@ -136,6 +137,23 @@ export default function Header({
           ) : (
             <button className="btn btn-glass" style={{ padding: '8px 12px', fontSize: '0.8125rem' }} onClick={onOpenAuth}>
               <User size={16} /> <span>ورود</span>
+            </button>
+          )}
+
+          {/* Theme Toggle Button */}
+          {onToggleTheme && (
+            <button 
+              className="btn btn-glass theme-toggle-btn"
+              style={{ position: 'relative', padding: '10px' }}
+              onClick={onToggleTheme}
+              aria-label={theme === 'dark' ? 'حالت روشن' : 'حالت تاریک'}
+              title={theme === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تاریک'}
+            >
+              {theme === 'dark' ? (
+                <Sun size={20} color="#fbbf24" style={{ filter: 'drop-shadow(0 0 5px rgba(251, 191, 36, 0.6))' }} />
+              ) : (
+                <Moon size={20} color="#6366f1" style={{ filter: 'drop-shadow(0 0 5px rgba(99, 102, 241, 0.5))' }} />
+              )}
             </button>
           )}
 

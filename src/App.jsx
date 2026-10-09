@@ -50,6 +50,26 @@ function App() {
   const [authNotice, setAuthNotice] = useState(null);
   const [pendingCheckout, setPendingCheckout] = useState(false);
 
+  // Theme State ('dark' | 'light')
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('techtink_theme') || 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('techtink_theme', theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -163,6 +183,8 @@ function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenAbout={() => setIsAboutUsOpen(true)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* 1. STORE VIEW */}
@@ -409,50 +431,54 @@ function App() {
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '14px', lineHeight: 1.6 }}>
               برای تماشای ویدیوهای بررسی، آنباکسینگ‌ها و اطلاعیه‌های روزانه:
             </p>
-            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="flex" style={{ gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
               
               <a 
                 href={storeAboutInfo?.telegram_url || 'https://t.me/techtink'} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-glass"
-                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                className="btn btn-glass social-icon-btn"
+                style={{ width: '44px', height: '44px', borderRadius: '12px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
                 title="کانال رسمی تلگرام تک‌تینک"
+                aria-label="تلگرام"
               >
-                <TelegramIcon size={16} color="#29a9ea" /> تلگرام
+                <TelegramIcon size={22} color="#29a9ea" />
               </a>
 
               <a 
                 href={storeAboutInfo?.instagram_url || 'https://instagram.com/techtink'} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-glass"
-                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                className="btn btn-glass social-icon-btn"
+                style={{ width: '44px', height: '44px', borderRadius: '12px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
                 title="صفحه اینستاگرام تک‌تینک"
+                aria-label="اینستاگرام"
               >
-                <InstagramIcon size={16} color="#e1306c" /> اینستاگرام
+                <InstagramIcon size={22} color="#e1306c" />
               </a>
 
               <a 
                 href={storeAboutInfo?.bale_url || 'https://ble.ir/techtink'} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-glass"
-                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                className="btn btn-glass social-icon-btn"
+                style={{ width: '44px', height: '44px', borderRadius: '12px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
                 title="کانال پیام‌رسان بله تک‌تینک"
+                aria-label="پیام‌رسان بله"
               >
-                <BaleIcon size={16} /> بله (Bale)
+                <BaleIcon size={22} />
               </a>
 
               <a 
                 href={storeAboutInfo?.aparat_url || 'https://www.aparat.com/techtink'} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-glass"
-                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                className="btn btn-glass social-icon-btn"
+                style={{ width: '44px', height: '44px', borderRadius: '12px', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
                 title="کانال ویدیوهای آپارات تک‌تینک"
+                aria-label="آپارات"
               >
-                <AparatIcon size={16} /> آپارات
+                <AparatIcon size={22} />
               </a>
 
             </div>
