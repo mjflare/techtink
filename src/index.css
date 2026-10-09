@@ -358,6 +358,29 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--glass-bg-hover) !important;
 }
 
+/* Floating Bottom Action Island (Dynamic Compare & Cart) */
+.floating-action-island {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s;
+}
+
+.floating-action-island:hover {
+  transform: translateX(-50%) translateY(-2px) scale(1.01);
+  border-color: var(--border-glass-hover);
+  box-shadow: var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+@media (max-width: 600px) {
+  .floating-action-island {
+    bottom: 14px !important;
+    padding: 5px 10px !important;
+    gap: 8px !important;
+    border-radius: 24px !important;
+  }
+  .floating-island-label {
+    display: none !important;
+  }
+}
+
 /* Social Media Icon-Only Glass Buttons */
 .social-icon-btn {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s, background 0.25s;

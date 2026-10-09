@@ -332,15 +332,15 @@ export default function Header({
             }
           `}} />
 
-          {/* 2. Compare Button */}
-          <button 
-            className={`dock-btn ${compareCount > 0 ? 'is-active' : ''}`}
-            onClick={() => handleTabClick('compare')} 
-            aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
-            title="مقایسه مشخصات لپ‌تاپ‌ها"
-          >
-            <ArrowLeftRight size={17} color={compareCount > 0 ? '#ef4444' : 'currentColor'} />
-            {compareCount > 0 && (
+          {/* 2. Compare Button - ONLY shown when compareCount > 0 */}
+          {compareCount > 0 && (
+            <button 
+              className="dock-btn is-active"
+              onClick={() => handleTabClick('compare')} 
+              aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
+              title="مشاهده مقایسه لپ‌تاپ‌ها"
+            >
+              <ArrowLeftRight size={17} color="#ef4444" />
               <span style={{
                 position: 'absolute', top: '1px', right: '1px',
                 background: '#ef4444', color: 'white',
@@ -350,18 +350,18 @@ export default function Header({
               }}>
                 {compareCount}
               </span>
-            )}
-          </button>
+            </button>
+          )}
 
-          {/* 3. Cart Button */}
-          <button 
-            className="dock-btn" 
-            onClick={onCartClick} 
-            aria-label="سبد خرید"
-            title="سبد خرید"
-          >
-            <ShoppingCart size={17} />
-            {cartCount > 0 && (
+          {/* 3. Cart Button - ONLY shown when cartCount > 0 */}
+          {cartCount > 0 && (
+            <button 
+              className="dock-btn" 
+              onClick={onCartClick} 
+              aria-label="سبد خرید"
+              title="سبد خرید"
+            >
+              <ShoppingCart size={17} color="hsl(var(--accent-purple))" />
               <span style={{
                 position: 'absolute', top: '1px', right: '1px',
                 background: 'hsl(var(--accent-purple))', color: 'white',
@@ -370,65 +370,11 @@ export default function Header({
               }}>
                 {cartCount}
               </span>
-            )}
-          </button>
-
-          {/* Divider */}
-          <div className="dock-divider" />
-
-          {/* 4. Compact iOS Theme Toggle */}
-          {onToggleTheme && (
-            <div 
-              className="dock-theme-switch"
-              onClick={onToggleTheme}
-              role="switch"
-              aria-checked={theme === 'dark'}
-              title={theme === 'dark' ? 'حالت شب فعال است — کلیک برای حالت روز' : 'حالت روز فعال است — کلیک برای حالت شب'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                position: 'relative',
-                background: 'var(--input-bg)',
-                border: '1px solid var(--border-glass)',
-                borderRadius: '16px',
-                padding: '2px',
-                cursor: 'pointer',
-                width: '54px',
-                height: '30px',
-                boxSizing: 'border-box',
-                userSelect: 'none'
-              }}
-            >
-              {/* Sliding Pill Knob */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '2px',
-                  bottom: '2px',
-                  right: theme === 'dark' ? '2px' : 'calc(50% + 1px)',
-                  left: theme === 'dark' ? 'calc(50% + 1px)' : '2px',
-                  borderRadius: '13px',
-                  background: theme === 'dark' ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))' : '#ffffff',
-                  boxShadow: theme === 'dark' ? '0 1px 4px rgba(0,0,0,0.5)' : '0 1px 4px rgba(0,0,0,0.18)',
-                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                  zIndex: 0
-                }}
-              />
-
-              {/* Moon Icon */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                <Moon size={13} color={theme === 'dark' ? '#818cf8' : 'var(--text-secondary)'} style={{ filter: theme === 'dark' ? 'drop-shadow(0 0 4px rgba(129, 140, 248, 0.6))' : 'none', opacity: theme === 'dark' ? 1 : 0.45 }} />
-              </div>
-
-              {/* Sun Icon */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                <Sun size={13} color={theme === 'light' ? '#f59e0b' : 'var(--text-secondary)'} style={{ filter: theme === 'light' ? 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.6))' : 'none', opacity: theme === 'light' ? 1 : 0.45 }} />
-              </div>
-            </div>
+            </button>
           )}
 
-          {/* Divider */}
-          <div className="dock-divider" />
+          {/* Divider (only if compare or cart buttons are present) */}
+          {(compareCount > 0 || cartCount > 0) && <div className="dock-divider" />}
 
           {/* 5. User Profile with Elegant Dropdown */}
           {user ? (

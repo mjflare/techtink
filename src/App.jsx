@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink } from 'lucide-react';
+import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink, ShoppingCart, X } from 'lucide-react';
+import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import LaptopCatalog from './components/LaptopCatalog.jsx';
@@ -37,6 +38,9 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
+  const cartCount = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const cartSubtotal = cartItems.reduce((acc, item) => acc + ((item.totalPrice || item.basePrice || 0) * (item.quantity || 1)), 0);
+
   // User Auth State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
@@ -50,12 +54,12 @@ function App() {
   const [authNotice, setAuthNotice] = useState(null);
   const [pendingCheckout, setPendingCheckout] = useState(false);
 
-  // Theme State ('dark' | 'light')
+  // Theme State ('light' by default, switchable to 'dark')
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem('techtink_theme') || 'dark';
+      return localStorage.getItem('techtink_theme') || 'light';
     } catch {
-      return 'dark';
+      return 'light';
     }
   });
 
@@ -174,7 +178,7 @@ function App() {
       <Header 
         activeTab={activeTab} 
         setActiveTab={handleTabChange} 
-        cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+        cartCount={cartCount}
         compareCount={compareList.length}
         onCartClick={() => setIsCartOpen(true)}
         user={currentUser}
@@ -307,70 +311,133 @@ function App() {
         notice={authNotice}
       />
 
-      {/* Floating Bottom Comparison Dock */}
-      {compareList.length > 0 && activeTab !== 'compare' && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 90,
-          background: 'rgba(255, 255, 255, 0.94)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(239, 68, 68, 0.35)',
-          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.15), 0 0 20px rgba(239, 68, 68, 0.25)',
-          borderRadius: '50px',
-          padding: '8px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          maxWidth: '92vw',
-          animation: 'fadeIn 0.3s ease-out'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', fontWeight: 600 }}>
-            <span style={{ 
-              background: '#ef4444', 
-              color: 'white', 
-              borderRadius: '50%', 
-              width: '24px', 
-              height: '24px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)'
-            }}>
-              {compareList.length}
-            </span>
-            <span>دستگاه برای مقایسه انتخاب شده</span>
-          </div>
-          <button 
-            className="btn" 
-            style={{ 
-              background: '#ef4444', 
-              color: 'white',
-              border: 'none',
-              padding: '6px 16px', 
-              fontSize: '0.8125rem', 
-              borderRadius: '30px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              boxShadow: '0 0 14px rgba(239, 68, 68, 0.4)'
-            }}
-            onClick={() => handleTabChange('compare')}
-          >
-            <ArrowLeftRight size={14} /> مشاهده مقایسه
-          </button>
-          <button 
-            className="btn btn-glass" 
-            style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '30px' }}
-            onClick={() => setCompareList([])}
-          >
-            پاک کردن
-          </button>
+      {/* Interactive Floating Bottom Action Island */}
+      {(compareList.length > 0 || cartCount > 0) && activeTab !== 'admin' && (
+        <div 
+          className="floating-action-island animate-fade-in"
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            background: 'var(--glass-card-bg)',
+            backdropFilter: 'blur(24px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+            border: '1px solid var(--border-glass)',
+            boxShadow: 'var(--glass-specular), 0 16px 45px rgba(0, 0, 0, 0.22)',
+            borderRadius: '34px',
+            padding: '6px 14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            maxWidth: 'calc(100vw - 24px)',
+            boxSizing: 'border-box'
+          }}
+        >
+          {/* Compare Capsule */}
+          {compareList.length > 0 && activeTab !== 'compare' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ 
+                  background: '#ef4444', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: '22px', 
+                  height: '22px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+                }}>
+                  {compareList.length}
+                </span>
+                <span className="floating-island-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  مدل در مقایسه
+                </span>
+              </div>
+              <button 
+                className="btn" 
+                style={{ 
+                  background: '#ef4444', 
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 14px', 
+                  fontSize: '0.8rem', 
+                  borderRadius: '20px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  boxShadow: '0 0 12px rgba(239, 68, 68, 0.35)',
+                  whiteSpace: 'nowrap'
+                }}
+                onClick={() => handleTabChange('compare')}
+              >
+                <ArrowLeftRight size={14} /> مقایسه
+              </button>
+              <button 
+                className="btn btn-glass" 
+                style={{ padding: '4px', borderRadius: '50%', width: '26px', height: '26px', minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => setCompareList([])}
+                title="پاک کردن مقایسه‌ها"
+                aria-label="پاک کردن مقایسه‌ها"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          )}
+
+          {/* Divider between Compare and Cart if both exist */}
+          {compareList.length > 0 && activeTab !== 'compare' && cartCount > 0 && (
+            <div style={{ width: '1px', height: '22px', background: 'var(--border-glass)', flexShrink: 0 }} />
+          )}
+
+          {/* Cart Capsule */}
+          {cartCount > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ 
+                  background: 'hsl(var(--accent-purple))', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  width: '22px', 
+                  height: '22px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  boxShadow: '0 0 10px hsla(var(--accent-purple), 0.5)'
+                }}>
+                  {cartCount}
+                </span>
+                <span className="floating-island-label" style={{ fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  سبد خرید ({formatPrice(cartSubtotal)})
+                </span>
+              </div>
+              <button 
+                className="btn" 
+                style={{ 
+                  background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', 
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 14px', 
+                  fontSize: '0.8rem', 
+                  borderRadius: '20px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px',
+                  boxShadow: '0 0 14px hsla(var(--accent-purple), 0.35)',
+                  whiteSpace: 'nowrap'
+                }}
+                onClick={() => setIsCartOpen(true)}
+              >
+                <ShoppingCart size={14} /> مشاهده سبد
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -488,8 +555,40 @@ function App() {
 
         </div>
 
-        <div className="container" style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid var(--border-glass)', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-          تمامی حقوق مادی و معنوی برای فروشگاه تخصصی لپ‌تاپ تک‌تینک محفوظ است. © ۱۴۰۵
+        <div className="container flex" style={{ 
+          marginTop: '40px', 
+          paddingTop: '24px', 
+          borderTop: '1px solid var(--border-glass)', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: '14px',
+          color: 'var(--text-secondary)', 
+          fontSize: '0.8125rem' 
+        }}>
+          <div>تمامی حقوق مادی و معنوی برای فروشگاه تخصصی لپ‌تاپ تک‌تینک محفوظ است. © ۱۴۰۵</div>
+
+          {/* Discreet Theme Switcher in Footer for Night Mode Seekers */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>تنظیمات تم صفحه:</span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn btn-glass"
+              style={{
+                padding: '5px 14px',
+                borderRadius: '18px',
+                fontSize: '0.78rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid var(--border-glass)'
+              }}
+              title="تغییر وضعیت به حالت شب یا روز"
+            >
+              {theme === 'dark' ? '🌙 حالت شب فعال است (تغییر به روز)' : '☀️ حالت روز فعال است (تغییر به شب)'}
+            </button>
+          </div>
         </div>
       </footer>
 
