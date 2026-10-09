@@ -69,7 +69,7 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
           
           <div className="glass-card" style={{ padding: '20px' }}>
             <h3 style={{ marginBottom: '16px', fontSize: '1.25rem' }}>خلاصه قطعات انتخابی</h3>
-            <ul className="font-code" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+            <ul className="font-tech" style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
               {ramUpgrades[selectedRam] && (
                 <li className="flex" style={{ gap: '12px', marginBottom: '12px' }}>
                   <Cpu size={16} color="hsl(var(--accent-cyan))" /> {ramUpgrades[selectedRam].name}
@@ -114,9 +114,9 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid', borderColor: selectedRam === idx ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {selectedRam === idx && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'hsl(var(--accent-cyan))' }} />}
                       </div>
-                      <span className="font-code">{opt.name}</span>
+                      <span className="font-tech" style={{ fontWeight: 600 }}>{opt.name}</span>
                     </div>
-                    <span className="font-code" style={{ color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                    <span className="font-tech" style={{ fontWeight: 600, color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
                       {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                     </span>
                   </div>
@@ -147,9 +147,9 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid', borderColor: selectedStorage === idx ? 'hsl(var(--accent-purple))' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {selectedStorage === idx && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'hsl(var(--accent-purple))' }} />}
                       </div>
-                      <span className="font-code">{opt.name}</span>
+                      <span className="font-tech" style={{ fontWeight: 600 }}>{opt.name}</span>
                     </div>
-                    <span className="font-code" style={{ color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                    <span className="font-tech" style={{ fontWeight: 600, color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
                       {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                     </span>
                   </div>
@@ -180,9 +180,9 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
                       <div style={{ width: '20px', height: '20px', borderRadius: '50%', border: '2px solid', borderColor: selectedDisplay === idx ? 'hsl(var(--accent-green))' : 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {selectedDisplay === idx && <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'hsl(var(--accent-green))' }} />}
                       </div>
-                      <span className="font-code">{opt.name}</span>
+                      <span className="font-tech" style={{ fontWeight: 600 }}>{opt.name}</span>
                     </div>
-                    <span className="font-code" style={{ color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
+                    <span className="font-tech" style={{ fontWeight: 600, color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
                       {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
       <div className="flex modal-footer-mobile-stack" style={{ padding: '24px', borderTop: '1px solid var(--border-glass)', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)' }}>
         <div>
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>قیمت نهایی به تومان</div>
-          <div className="gradient-text font-code" style={{ fontSize: '1.75rem', fontWeight: 'bold' }}>
+          <div className="gradient-text font-tech" style={{ fontSize: '1.75rem', fontWeight: 800 }}>
             {formatPrice(totalPrice)}
           </div>
         </div>

@@ -77,7 +77,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                               transition: 'width 0.6s ease'
                             }}></div>
                           </div>
-                          <span className="font-code" style={{ width: '50px', textAlign: 'left', fontWeight: 'bold', fontSize: '0.875rem', color, flexShrink: 0 }}>
+                          <span className="font-tech" style={{ width: '50px', textAlign: 'left', fontWeight: 700, fontSize: '0.875rem', color, flexShrink: 0 }}>
                             {score} / ۱۰۰
                           </span>
                         </div>
@@ -103,7 +103,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                     <div className="glass-panel" style={{ padding: '12px', borderRadius: '12px' }}>
                       <img src={laptop.image} alt={laptop.name} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
                       <div style={{ fontSize: '1.125rem', marginBottom: '6px' }}>{laptop.name}</div>
-                      <div className="font-code gradient-text" style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '8px' }}>
+                      <div className="font-tech gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>
                         {formatPrice(laptop.basePrice)}
                       </div>
                       <span className="badge" style={{ background: laptopColors[idx % laptopColors.length], color: 'white', fontSize: '0.75rem' }}>
@@ -141,7 +141,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                     if (!val && row.fallback) val = row.fallback;
                     
                     return (
-                      <td className="font-code" key={laptop.id + row.key} style={{ padding: '16px', borderBottom: '1px solid var(--border-glass)' }}>
+                      <td className="font-tech" key={laptop.id + row.key} style={{ padding: '16px', borderBottom: '1px solid var(--border-glass)', direction: 'ltr', textAlign: 'left', fontWeight: 500 }}>
                         {val || '—'}
                       </td>
                     );

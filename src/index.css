@@ -13,8 +13,10 @@
   --glass-bg-hover: rgba(245, 245, 245, 0.9);
   
   /* Typography */
-  --font-sans: 'Vazirmatn', system-ui, sans-serif;
-  --font-code: 'Vazir Code', monospace;
+  --font-sans: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  --font-tech: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Vazirmatn', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-code: var(--font-tech);
   
   /* Transitions */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -233,10 +235,103 @@ details[open] summary ~ * {
 }
 
 /* Font classes */
+.font-tech {
+  font-family: var(--font-tech);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+}
+
 .font-code {
-  font-family: var(--font-code);
-  font-size: 0.9em; /* Usually monospaced fonts need a slight scale down */
-  letter-spacing: 0px;
+  font-family: var(--font-tech);
+  letter-spacing: -0.01em;
+  font-feature-settings: "tnum";
+}
+
+/* Sophisticated Hardware Specs Components */
+.spec-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border-glass);
+  border-radius: 10px;
+  font-family: var(--font-tech);
+  font-size: 0.8125rem;
+  transition: all var(--transition-fast);
+}
+
+.spec-pill:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: hsla(var(--accent-cyan), 0.3);
+}
+
+.spec-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.spec-section-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+
+.spec-section-card:hover {
+  border-color: hsla(var(--accent-cyan), 0.3);
+  box-shadow: 0 8px 30px rgba(0, 191, 255, 0.08);
+}
+
+.spec-section-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.04) 100%);
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  font-size: 0.875rem;
+  gap: 16px;
+}
+
+.spec-row:last-child {
+  border-bottom: none;
+}
+
+.spec-row:nth-child(even) {
+  background: rgba(0, 0, 0, 0.015);
+}
+
+.spec-row-label {
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.spec-row-value {
+  font-family: var(--font-tech);
+  font-weight: 600;
+  color: var(--text-primary);
+  direction: ltr;
+  text-align: left;
+  font-size: 0.875rem;
+  word-break: break-word;
 }
 
 /* =========================================================

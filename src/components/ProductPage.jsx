@@ -3,7 +3,7 @@ import {
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
   Cpu, HardDrive, Monitor, Scale, Plus, ShoppingCart, MessageSquare, 
   Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, 
-  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText
+  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
@@ -333,10 +333,10 @@ export default function ProductPage({
           </p>
 
           {/* Rating & Stock row */}
-          <div className="flex" style={{ alignItems: 'center', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            <div className="flex font-code" style={{ alignItems: 'center', gap: '6px' }}>
+          <div className="flex" style={{ alignItems: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div className="flex font-tech" style={{ alignItems: 'center', gap: '6px' }}>
               <Star size={18} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
-              <span style={{ fontWeight: 'bold' }}>{product.rating || '۵.۰'}</span>
+              <span style={{ fontWeight: 700 }}>{product.rating || '۵.۰'}</span>
               <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
                 ({product.reviewsCount || comments.length} دیدگاه خریداران)
               </span>
@@ -346,18 +346,62 @@ export default function ProductPage({
               {product.inStock ? (
                 <>
                   <CheckCircle size={18} color="hsl(var(--accent-green))" />
-                  <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 600, fontSize: '0.875rem' }}>
                     موجود در انبار ({product.stock} عدد)
                   </span>
                 </>
               ) : (
                 <>
                   <AlertTriangle size={18} color="hsl(var(--accent-red))" />
-                  <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 600, fontSize: '0.875rem' }}>
                     ناموجود
                   </span>
                 </>
               )}
+            </div>
+          </div>
+
+          {/* Key Hardware Highlights Deck */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+            gap: '10px',
+            marginBottom: '24px'
+          }}>
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {product.specs?.cpu || product.cpuBrand || '—'}
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <Zap size={13} color="hsl(var(--accent-green))" /> کارت گرافیک
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {product.specs?.gpu || product.gpuBrand || '—'}
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <HardDrive size={13} color="hsl(var(--accent-purple))" /> رم و حافظه
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {product.specs?.ram} • {product.specs?.storage}
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {product.specs?.display || '16" Pro Display'}
+              </div>
             </div>
           </div>
 
@@ -369,11 +413,11 @@ export default function ProductPage({
                   قیمت نهایی قابل پرداخت:
                 </div>
                 {product.oldPrice && product.oldPrice > unitPrice && (
-                  <div className="font-code" style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '1rem' }}>
+                  <div className="font-tech" style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '1rem' }}>
                     {formatPrice(product.oldPrice)}
                   </div>
                 )}
-                <div className="gradient-text font-code" style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                <div className="gradient-text font-tech" style={{ fontSize: '2rem', fontWeight: 800 }}>
                   {formatPrice(unitPrice)}
                 </div>
               </div>
@@ -411,10 +455,10 @@ export default function ProductPage({
                         background: selectedRam === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
                       }}
                     >
-                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
                         {opt.name}
                       </div>
-                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -444,10 +488,10 @@ export default function ProductPage({
                         background: selectedStorage === idx ? 'hsla(var(--accent-purple), 0.08)' : 'var(--glass-bg)'
                       }}
                     >
-                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
                         {opt.name}
                       </div>
-                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -477,10 +521,10 @@ export default function ProductPage({
                         background: selectedDisplay === idx ? 'hsla(var(--accent-green), 0.08)' : 'var(--glass-bg)'
                       }}
                     >
-                      <div className="font-code" style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
                         {opt.name}
                       </div>
-                      <div className="font-code" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -594,7 +638,7 @@ export default function ProductPage({
                 <div key={idx} className="glass-panel" style={{ padding: '16px', borderRadius: '12px' }}>
                   <div className="flex" style={{ justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '8px' }}>
                     <span style={{ fontWeight: 500 }}>{item.label}</span>
-                    <span className="font-code" style={{ fontWeight: 'bold', color: item.color }}>{item.val} / ۱۰۰</span>
+                    <span className="font-tech" style={{ fontWeight: 700, color: item.color }}>{item.val} / ۱۰۰</span>
                   </div>
                   <div style={{ height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
                     <div style={{ 
@@ -610,42 +654,169 @@ export default function ProductPage({
             </div>
           </div>
 
-          {/* Full Specifications Table */}
-          <div className="glass-card" style={{ padding: '36px' }}>
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Layers size={22} color="hsl(var(--accent-cyan))" />
-              جدول مشخصات فنی تفصیلی و مهندسی
-            </h2>
+          {/* Detailed Categorized Specifications (Apple / ROG Style) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                  <Layers size={22} color="hsl(var(--accent-cyan))" />
+                  مشخصات فنی تفصیلی و مهندسی قطعات
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
+                  معماری سخت‌افزاری، فرکانس‌ها، نوع قطعات و استانداردهای ارتباطی دستگاه
+                </p>
+              </div>
+            </div>
 
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.9375rem' }}>
-                <tbody>
-                  {[
-                    { label: 'سازنده پردازنده (CPU Maker)', val: product.cpuBrand || 'Intel' },
-                    { label: 'مدل پردازنده مرکزی', val: product.specs?.cpu },
-                    { label: 'سازنده گرافیک (GPU Maker)', val: product.gpuBrand || 'NVIDIA' },
-                    { label: 'مدل کارت گرافیک اختصاصی', val: product.specs?.gpu },
-                    { label: 'توان موتور عصبی (NPU AI)', val: product.specs?.npuScore },
-                    { label: 'حافظه رم (RAM)', val: product.specs?.ram },
-                    { label: 'حافظه ذخیره‌سازی داخلی', val: product.specs?.storage },
-                    { label: 'صفحه نمایش (Resolution & Refresh Rate)', val: product.specs?.display },
-                    { label: 'ظرفیت باتری و شارژدهی', val: product.specs?.battery },
-                    { label: 'وزن خالص دستگاه', val: product.specs?.weight },
-                    { label: 'سیستم عامل نصب‌شده', val: product.specs?.os },
-                    { label: 'تعداد و نوع پورت‌ها', val: product.specs?.ports },
-                    { label: 'شرایط گارانتی و خدمات پس از فروش', val: product.guarantee || 'گارانتی ۲ ساله طلایی تک‌تینک' }
-                  ].map((row, idx) => (
-                    <tr key={idx} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
-                      <td style={{ padding: '14px 18px', width: '260px', fontWeight: 'bold', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
-                        {row.label}
-                      </td>
-                      <td className="font-code" style={{ padding: '14px 18px', borderBottom: '1px solid var(--border-glass)' }}>
-                        {row.val || '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="spec-card-grid">
+              {/* 1. Processor & Core */}
+              <div className="spec-section-card">
+                <div className="spec-section-header">
+                  <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-cyan), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Cpu size={18} color="hsl(var(--accent-cyan))" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>پردازنده و چیپست اصلی</span>
+                  </div>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.75rem' }}>
+                    {product.cpuBrand || 'Intel'}
+                  </span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">سازنده پردازنده</span>
+                  <span className="spec-row-value">{product.cpuBrand || 'Intel'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">مدل دقیق CPU</span>
+                  <span className="spec-row-value">{product.specs?.cpu || '—'}</span>
+                </div>
+                {product.specs?.npuScore && (
+                  <div className="spec-row">
+                    <span className="spec-row-label">پردازش عصبی (NPU AI)</span>
+                    <span className="spec-row-value">{product.specs.npuScore}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Graphics & GPU */}
+              <div className="spec-section-card">
+                <div className="spec-section-header">
+                  <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Zap size={18} color="hsl(var(--accent-green))" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>گرافیک و پردازش تصویر</span>
+                  </div>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.15)', color: 'hsl(var(--accent-green))', fontSize: '0.75rem' }}>
+                    {product.gpuBrand || 'NVIDIA'}
+                  </span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">سازنده گرافیک</span>
+                  <span className="spec-row-value">{product.gpuBrand || 'NVIDIA'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">مدل کارت گرافیک</span>
+                  <span className="spec-row-value">{product.specs?.gpu || '—'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">توان پردازش گرافیکی</span>
+                  <span className="spec-row-value">{bm.gamingScore > 80 ? 'Dedicated High-TGP' : 'Optimized Mobile GPU'}</span>
+                </div>
+              </div>
+
+              {/* 3. Memory & Storage */}
+              <div className="spec-section-card">
+                <div className="spec-section-header">
+                  <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-purple), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <HardDrive size={18} color="hsl(var(--accent-purple))" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>حافظه رم و ذخیره‌سازی</span>
+                  </div>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-purple), 0.15)', color: 'hsl(var(--accent-purple))', fontSize: '0.75rem' }}>
+                    High-Speed NVMe
+                  </span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">حافظه رم (RAM)</span>
+                  <span className="spec-row-value">{product.specs?.ram || '—'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">حافظه ذخیره‌سازی داخلی</span>
+                  <span className="spec-row-value">{product.specs?.storage || '—'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">قابلیت ارتقا قطعات</span>
+                  <span className="spec-row-value" style={{ color: 'hsl(var(--accent-green))' }}>امکان ارتقا آنلاین در سبد</span>
+                </div>
+              </div>
+
+              {/* 4. Display & Visuals */}
+              <div className="spec-section-card">
+                <div className="spec-section-header">
+                  <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-cyan), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Monitor size={18} color="hsl(var(--accent-cyan))" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>صفحه نمایش و کیفیت تصویر</span>
+                  </div>
+                  <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                    Display
+                  </span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">مشخصات صفحه نمایش</span>
+                  <span className="spec-row-value">{product.specs?.display || '—'}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">دقت رنگ و استاندارد</span>
+                  <span className="spec-row-value">۱۰۰٪ sRGB / DCI-P3 Certified</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-row-label">امتیاز کیفی نمایشگر</span>
+                  <span className="spec-row-value" style={{ color: 'hsl(var(--accent-cyan))' }}>{bm.displayScore} / ۱۰۰</span>
+                </div>
+              </div>
+
+              {/* 5. Battery, Ports & Build */}
+              <div className="spec-section-card" style={{ gridColumn: '1 / -1' }}>
+                <div className="spec-section-header">
+                  <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ShieldCheck size={18} color="hsl(var(--accent-green))" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>باتری، درگاه‌ها، اتصالات و بدنه</span>
+                  </div>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.15)', color: 'hsl(var(--accent-green))', fontSize: '0.75rem' }}>
+                    Build & I/O
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                  <div className="spec-row">
+                    <span className="spec-row-label">ظرفیت باتری</span>
+                    <span className="spec-row-value">{product.specs?.battery || '—'}</span>
+                  </div>
+                  <div className="spec-row">
+                    <span className="spec-row-label">وزن خالص دستگاه</span>
+                    <span className="spec-row-value">{product.specs?.weight || '—'}</span>
+                  </div>
+                  <div className="spec-row">
+                    <span className="spec-row-label">سیستم عامل پیش‌فرض</span>
+                    <span className="spec-row-value">{product.specs?.os || 'Windows 11 Home / Pro'}</span>
+                  </div>
+                  <div className="spec-row">
+                    <span className="spec-row-label">پورت‌ها و خروجی‌ها</span>
+                    <span className="spec-row-value">{product.specs?.ports || 'Thunderbolt / USB-C / HDMI'}</span>
+                  </div>
+                  <div className="spec-row" style={{ gridColumn: '1 / -1' }}>
+                    <span className="spec-row-label">شرایط ضمانت و پشتیبانی</span>
+                    <span className="spec-row-value" style={{ color: 'hsl(var(--accent-cyan))', direction: 'rtl', textAlign: 'left' }}>
+                      {product.guarantee || 'گارانتی ۱۸ ماهه طلایی تک‌تینک با پوشش تعویض قطعات'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

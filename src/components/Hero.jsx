@@ -26,15 +26,15 @@ export default function Hero({ onExploreClick }) {
 
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', marginTop: '36px', gap: '16px' }}>
             <div>
-              <div className="font-code" style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 'bold', fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۶۸ ترافلاپس</div>
+              <div className="font-tech" style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 800, fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۶۸ ترافلاپس</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '2px' }}>توان موتور عصبی</div>
             </div>
             <div>
-              <div className="font-code" style={{ color: 'hsl(var(--accent-purple))', fontWeight: 'bold', fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۱۷۵ وات</div>
+              <div className="font-tech" style={{ color: 'hsl(var(--accent-purple))', fontWeight: 800, fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۱۷۵ وات</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '2px' }}>حداکثر توان گرافیک</div>
             </div>
             <div>
-              <div className="font-code" style={{ color: 'hsl(var(--accent-green))', fontWeight: 'bold', fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۱۸ ساعت</div>
+              <div className="font-tech" style={{ color: 'hsl(var(--accent-green))', fontWeight: 800, fontSize: 'clamp(1.2rem, 3vw, 1.5rem)' }}>۱۸ ساعت</div>
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '2px' }}>دوام باتری</div>
             </div>
           </div>
@@ -57,15 +57,15 @@ export default function Hero({ onExploreClick }) {
           <div className="glass-panel" style={{ position: 'absolute', bottom: '12px', left: '12px', padding: '10px 14px', zIndex: 2, display: 'flex', gap: '12px', direction: 'rtl', maxWidth: 'calc(100% - 24px)' }}>
             <div className="flex" style={{ flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
               <Cpu size={18} color="hsl(var(--accent-cyan))" />
-              <span className="font-code" style={{ fontSize: '11px', fontWeight: 'bold' }}>Intel Ultra</span>
+              <span className="font-tech" style={{ fontSize: '11px', fontWeight: 700 }}>Intel Ultra</span>
             </div>
             <div className="flex" style={{ flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
               <Zap size={18} color="hsl(var(--accent-purple))" />
-              <span className="font-code" style={{ fontSize: '11px', fontWeight: 'bold' }}>RTX 5090</span>
+              <span className="font-tech" style={{ fontSize: '11px', fontWeight: 700 }}>RTX 5090</span>
             </div>
             <div className="flex" style={{ flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
               <Battery size={18} color="hsl(var(--accent-green))" />
-              <span className="font-code" style={{ fontSize: '11px', fontWeight: 'bold' }}>99.9Wh</span>
+              <span className="font-tech" style={{ fontSize: '11px', fontWeight: 700 }}>99.9Wh</span>
             </div>
           </div>
         </div>

@@ -388,7 +388,7 @@ export default function LaptopCatalog({
                   >
                     {laptop.name}
                   </h3>
-                  <div className="font-code gradient-text" style={{ fontWeight: 'bold', fontSize: '1.125rem', whiteSpace: 'nowrap' }}>
+                  <div className="font-tech gradient-text" style={{ fontWeight: 700, fontSize: '1.2rem', whiteSpace: 'nowrap' }}>
                     {formatPrice(laptop.basePrice)}
                   </div>
                 </div>
@@ -396,7 +396,7 @@ export default function LaptopCatalog({
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '16px' }}>{laptop.tagline}</p>
                 
                 {/* Rating & Stock */}
-                <div className="flex font-code" style={{ gap: '16px', marginBottom: '16px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                <div className="flex font-tech" style={{ gap: '16px', marginBottom: '16px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                   <div className="flex" style={{ alignItems: 'center', gap: '4px' }}>
                     <Star size={16} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
                     <span>{laptop.rating || '۵.۰'} ({laptop.reviewsCount || 0})</span>
@@ -413,26 +413,78 @@ export default function LaptopCatalog({
                   )}
                 </div>
 
-                {/* Hardware Specs Box */}
-                <div className="font-code" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-glass)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.8125rem', direction: 'ltr', textAlign: 'left' }}>
-                  <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <strong style={{ color: 'hsl(var(--accent-cyan))' }}>CPU:</strong> {laptop.specs?.cpu}
+                {/* Sophisticated Hardware Specs Presentation */}
+                <div style={{ 
+                  background: 'linear-gradient(180deg, rgba(0,0,0,0.015) 0%, rgba(0,0,0,0.035) 100%)', 
+                  border: '1px solid var(--border-glass)', 
+                  padding: '12px 14px', 
+                  borderRadius: '12px', 
+                  marginBottom: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-cyan), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Cpu size={13} color="hsl(var(--accent-cyan))" />
+                      </div>
+                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
+                        {laptop.specs?.cpu}
+                      </span>
+                    </div>
+                    <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      {laptop.cpuBrand || 'CPU'}
+                    </span>
                   </div>
-                  <div style={{ marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <strong style={{ color: 'hsl(var(--accent-green))' }}>GPU:</strong> {laptop.specs?.gpu}
+
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Zap size={13} color="hsl(var(--accent-green))" />
+                      </div>
+                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
+                        {laptop.specs?.gpu}
+                      </span>
+                    </div>
+                    <span className="badge" style={{ fontSize: '0.6875rem', padding: '2px 6px', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                      {laptop.gpuBrand || 'GPU'}
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <strong style={{ color: 'hsl(var(--accent-purple))' }}>RAM & SSD:</strong> {laptop.specs?.ram} | {laptop.specs?.storage}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'hsla(var(--accent-purple), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <HardDrive size={13} color="hsl(var(--accent-purple))" />
+                    </div>
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', direction: 'ltr' }}>
+                      <strong style={{ fontWeight: 600 }}>{laptop.specs?.ram}</strong> RAM • <span style={{ color: 'var(--text-secondary)' }}>{laptop.specs?.storage}</span>
+                    </span>
                   </div>
+
+                  {laptop.specs?.display && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                      <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Monitor size={13} color="var(--text-secondary)" />
+                      </div>
+                      <span className="font-tech" style={{ fontSize: '0.78125rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', direction: 'ltr' }}>
+                        {laptop.specs?.display}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mini Benchmark Performance Bar */}
                 <div style={{ marginBottom: '20px' }}>
-                  <div className="flex" style={{ justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px', color: 'var(--text-secondary)' }}>
-                    <span>شاخص قدرت سخت‌افزار (بنچمارک)</span>
-                    <span className="font-code" style={{ fontWeight: 'bold', color: 'hsl(var(--accent-cyan))' }}>{bm.cpuScore} / ۱۰۰</span>
+                  <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78125rem', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Sparkles size={13} color="hsl(var(--accent-cyan))" />
+                      شاخص راندمان سخت‌افزار
+                    </span>
+                    <span className="font-tech" style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'hsl(var(--accent-cyan))' }}>
+                      {bm.cpuScore} <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ ۱۰۰</span>
+                    </span>
                   </div>
-                  <div style={{ height: '6px', background: 'rgba(0,0,0,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ height: '6px', background: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
                       height: '100%', 
                       width: `${bm.cpuScore}%`, 

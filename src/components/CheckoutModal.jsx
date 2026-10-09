@@ -384,7 +384,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
                           </span>
                         )}
                       </span>
-                      <span className="font-code" style={{ direction: 'ltr', color: 'var(--text-secondary)' }}>
+                      <span className="font-tech" style={{ direction: 'ltr', color: 'var(--text-secondary)' }}>
                         {formatPrice(item.totalPrice * item.quantity)}
                       </span>
                     </div>
@@ -395,20 +395,20 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
                   {/* Subtotal */}
                   <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     <span>جمع مبلغ</span>
-                    <span className="font-code" style={{ direction: 'ltr' }}>{formatPrice(subtotal)}</span>
+                    <span className="font-tech" style={{ direction: 'ltr' }}>{formatPrice(subtotal)}</span>
                   </div>
 
                   {/* Tax */}
                   <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     <span>مالیات (۹٪)</span>
-                    <span className="font-code" style={{ direction: 'ltr' }}>{formatPrice(tax)}</span>
+                    <span className="font-tech" style={{ direction: 'ltr' }}>{formatPrice(tax)}</span>
                   </div>
 
                   {/* Shipping */}
                   <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '12px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     <span>هزینه ارسال</span>
                     <span
-                      className="font-code"
+                      className="font-tech"
                       style={{
                         direction: 'ltr',
                         color: shippingCost === 0 ? 'hsl(var(--accent-green))' : undefined,
@@ -431,7 +431,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
                     }}
                   >
                     <span>مبلغ قابل پرداخت</span>
-                    <span className="gradient-text font-code" style={{ direction: 'ltr' }}>
+                    <span className="gradient-text font-tech" style={{ direction: 'ltr', fontWeight: 800 }}>
                       {formatPrice(total)}
                     </span>
                   </div>
