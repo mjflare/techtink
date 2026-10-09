@@ -42,10 +42,28 @@ r.get('/products/:slug/comments', (req, res) => {
   res.json(rows);
 });
 
-const mapPost = (p) => ({
-  id: p.id, title: p.title, excerpt: p.excerpt, category: p.category, author: p.author, authorRole: p.author_role,
-  authorAvatar: p.author_avatar, date: p.date, readTime: p.read_time, image: p.image, content: p.content,
-});
+const mapPost = (p) => {
+  let linkedProduct = null;
+  if (p.product_slug) {
+    const prod = db.get('SELECT id, name, slug, image, base_price, category FROM products WHERE slug = ?', p.product_slug);
+    if (prod) {
+      linkedProduct = {
+        id: prod.id,
+        name: prod.name,
+        slug: prod.slug,
+        image: prod.image,
+        basePrice: prod.base_price,
+        category: prod.category
+      };
+    }
+  }
+  return {
+    id: p.id, title: p.title, excerpt: p.excerpt, category: p.category, author: p.author, authorRole: p.author_role,
+    authorAvatar: p.author_avatar, date: p.date, readTime: p.read_time, image: p.image, content: p.content,
+    productSlug: p.product_slug,
+    linkedProduct
+  };
+};
 r.get('/blog', (_req, res) => res.json(db.all('SELECT * FROM blog_posts WHERE published = 1 ORDER BY rowid DESC').map(mapPost)));
 r.get('/blog/:id', (req, res) => {
   const p = db.get('SELECT * FROM blog_posts WHERE id = ? AND published = 1', req.params.id);
@@ -89,4 +107,96 @@ r.post('/support/ticket', (req, res) => {
   res.json({ success: true, ticketId: code, message: 'تیکت پشتیبانی با موفقیت ثبت شد.' });
 });
 
+r.get('/about', (_req, res) => {
+  res.json({
+    name: getSetting('store_name') || 'تک‌تینک',
+    address: getSetting('store_address'),
+    phone: getSetting('store_phone'),
+    mobile: getSetting('store_mobile'),
+    hours: getSetting('store_hours'),
+    mapLink: getSetting('store_map_link'),
+    about: getSetting('store_about'),
+    socials: {
+      telegram: getSetting('telegram_url'),
+      instagram: getSetting('instagram_url'),
+      bale: getSetting('bale_url'),
+      aparat: getSetting('aparat_url'),
+    }
+  });
+});
+
+r.post('/support/appointment', (req, res) => {
+  const {
+    type,
+    productSlug,
+    productName,
+    deviceModel,
+    services,
+    customerName,
+    customerPhone,
+    customerEmail,
+    preferredDate,
+    preferredTime,
+    deliveryMethod,
+    notes
+  } = req.body || {};
+
+  if (!customerName || !customerPhone || !type) {
+    return res.status(400).json({ error: 'نام و شماره تماس و نوع خدمت الزامی است.' });
+  }
+
+  const code = 'RES-' + crypto.randomInt(100000, 999999);
+  const servicesJson = typeof services === 'object' ? JSON.stringify(services) : (services || '[]');
+
+  db.run(
+    `INSERT INTO appointments (
+      tracking_code, type, product_slug, product_name, device_model, services,
+      customer_name, customer_phone, customer_email, preferred_date, preferred_time,
+      delivery_method, notes, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+    code,
+    type,
+    productSlug || null,
+    productName || null,
+    deviceModel || null,
+    servicesJson,
+    customerName,
+    customerPhone,
+    customerEmail || null,
+    preferredDate || null,
+    preferredTime || null,
+    deliveryMethod || 'in_person',
+    notes || null
+  );
+
+  res.json({
+    success: true,
+    trackingCode: code,
+    message: 'درخواست نوبت شما با موفقیت ثبت شد. کارشناسان تک‌تینک جهت هماهنگی با شما تماس خواهند گرفت.'
+  });
+});
+
+r.get('/support/appointment/:code', (req, res) => {
+  const appt = db.get('SELECT * FROM appointments WHERE tracking_code = ?', req.params.code.toUpperCase());
+  if (!appt) return res.status(404).json({ error: 'نوبتی با این کد رهگیری یافت نشد.' });
+  res.json({
+    id: appt.id,
+    trackingCode: appt.tracking_code,
+    type: appt.type,
+    productName: appt.product_name,
+    deviceModel: appt.device_model,
+    services: JSON.parse(appt.services || '[]'),
+    customerName: appt.customer_name,
+    customerPhone: appt.customer_phone,
+    preferredDate: appt.preferred_date,
+    preferredTime: appt.preferred_time,
+    deliveryMethod: appt.delivery_method,
+    status: appt.status,
+    notes: appt.notes,
+    adminNotes: appt.admin_notes,
+    createdAt: appt.created_at
+  });
+});
+
 export default r;
+

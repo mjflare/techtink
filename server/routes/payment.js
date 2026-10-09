@@ -33,23 +33,16 @@ r.post('/checkout/init', (req, res) => {
   const { items, total, userId, shipping, gateway } = req.body || {};
   if (!items || !items.length) return res.status(400).json({ error: 'سبد خرید خالی است.' });
 
-  // Resolve user
-  let uid = req.user?.id || userId;
+  // Resolve user - Strictly enforce registered & authenticated user
+  const tokenUser = req.user;
+  let uid = tokenUser?.id || (userId ? Number(userId) : null);
   if (!uid) {
-    const rawPhone = shipping?.phone || shipping?.mobile;
-    const m = rawPhone ? normalizeMobile(rawPhone) : null;
-    let u = m ? db.get('SELECT id FROM users WHERE mobile = ?', m) : null;
-    if (!u) {
-      const { lastId } = db.run(
-        'INSERT INTO users (name, mobile, password_hash) VALUES (?, ?, ?)',
-        shipping?.fullName || 'مشتری مهمان',
-        m,
-        hashPassword('guest-' + Date.now())
-      );
-      uid = lastId;
-    } else {
-      uid = u.id;
-    }
+    return res.status(401).json({ error: 'برای ثبت سفارش و پرداخت، لطفاً ابتدا وارد حساب کاربری خود شوید یا حساب بسازید.' });
+  }
+
+  const registeredUser = db.get('SELECT id FROM users WHERE id = ?', uid);
+  if (!registeredUser) {
+    return res.status(401).json({ error: 'حساب کاربری یافت نشد. لطفاً ابتدا وارد حساب کاربری شوید یا ثبت‌نام کنید.' });
   }
 
   const token = 'PAY-' + crypto.randomUUID();

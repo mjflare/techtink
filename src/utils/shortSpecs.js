@@ -47,13 +47,19 @@ export function parseShortDisplay(str) {
   return clean || 'Display';
 }
 
+export function parseShortBattery(str) {
+  if (!str) return '50Wh Battery';
+  const m = str.match(/(\d+\s*Wh)/i);
+  return m ? m[1].toUpperCase() + ' Battery' : '50Wh Battery';
+}
+
 export function parseShortChassis(str) {
-  if (!str) return 'All-Aluminum';
-  if (/carbon/i.test(str)) return 'Carbon Fiber';
-  if (/magnesium/i.test(str)) return 'Magnesium Alloy';
-  if (/polycarbonate/i.test(str)) return 'Polycarbonate';
-  if (/aluminum|aluminium/i.test(str)) return 'All-Aluminum';
-  return str.split(' ')[0];
+  if (!str) return 'تمام آلومینیوم';
+  if (/carbon|کربن/i.test(str)) return 'فیبر کربن';
+  if (/magnesium|منیزیم/i.test(str)) return 'آلیاژ منیزیم';
+  if (/polycarbonate|پلی‌کربنات/i.test(str)) return 'پلی‌کربنات مقاوم';
+  if (/aluminum|aluminium|آلومینیوم/i.test(str)) return 'تمام آلومینیوم';
+  return str;
 }
 
 export function getShortSpecs(product) {
@@ -67,6 +73,7 @@ export function getShortSpecs(product) {
     ram: existingShort.ram || parseShortRam(specs.ram),
     storage: existingShort.storage || parseShortStorage(specs.storage),
     display: existingShort.display || parseShortDisplay(specs.display),
+    battery: existingShort.battery || parseShortBattery(specs.battery),
     chassis: existingShort.chassis || parseShortChassis(product.chassis || specs.chassis)
   };
 }

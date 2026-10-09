@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, ChevronLeft, X, Mail } from 'lucide-react';
+import { Calendar, Clock, ChevronLeft, X, Mail, Package } from 'lucide-react';
+import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
+import { formatPrice } from '../utils/formatPrice.js';
 
-export default function BlogSection() {
+export default function BlogSection({ onSelectProduct }) {
   const [posts, setPosts] = useState([]);
   const [activeArticle, setActiveArticle] = useState(null);
   const [subscribeEmail, setSubscribeEmail] = useState('');
@@ -40,8 +42,11 @@ export default function BlogSection() {
             <div key={post.id} className="glass-card animate-fade-in" style={{ overflow: 'hidden', cursor: 'pointer', animationDelay: (idx * 0.1) + 's' }} onClick={() => setActiveArticle(post)}>
               <div style={{ position: 'relative', height: '300px' }}>
                 <img src={post.image} alt={post.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', top: '16px', right: '16px' }}>
+                <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
                   <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: 'white' }}>{post.category}</span>
+                  {(post.productSlug || post.product_slug) && (
+                    <span className="badge" style={{ background: 'hsl(var(--accent-purple))', color: 'white' }}>بررسی تخصصی لپ‌تاپ</span>
+                  )}
                 </div>
               </div>
               <div style={{ padding: '32px' }}>
@@ -109,15 +114,16 @@ export default function BlogSection() {
 
       {/* Article Reader Modal */}
       {activeArticle && (
-        <dialog open className="glass-panel" style={{ 
-          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-          width: '95%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto', zIndex: 1100,
-          display: 'flex', flexDirection: 'column', padding: 0, direction: 'rtl'
-        }}>
-          <div style={{ position: 'relative', height: '400px' }}>
-            <img src={activeArticle.image} alt={activeArticle.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, hsl(var(--bg-panel)))' }}></div>
-            <button className="btn btn-glass" style={{ position: 'absolute', top: '24px', left: '24px', padding: '12px', borderRadius: '50%', zIndex: 10, background: 'rgba(255,255,255,0.5)', color: 'black' }} onClick={() => setActiveArticle(null)}>
+        <div className="modal-backdrop-wrapper" onClick={() => setActiveArticle(null)}>
+          <div 
+            className="glass-panel modal-card" 
+            style={{ maxWidth: '1000px', padding: 0 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ position: 'relative', height: '400px' }}>
+              <img src={activeArticle.image} alt={activeArticle.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, hsl(var(--bg-panel)))' }}></div>
+              <button className="btn btn-glass" style={{ position: 'absolute', top: '24px', left: '24px', padding: '12px', borderRadius: '50%', zIndex: 10, background: 'rgba(255,255,255,0.5)', color: 'black' }} onClick={() => setActiveArticle(null)}>
               <X size={24} />
             </button>
             <div style={{ position: 'absolute', bottom: '40px', left: '40px', right: '40px' }}>
@@ -135,21 +141,63 @@ export default function BlogSection() {
               </div>
             </div>
 
-            <div className="article-content" dangerouslySetInnerHTML={{
-              __html: activeArticle.content
-                .replace(/^# (.*$)/gim, '<h1 style="font-size: 2.5rem; margin: 40px 0 24px; color: var(--text-primary);">$1</h1>')
-                .replace(/^## (.*$)/gim, '<h2 style="font-size: 2rem; margin: 32px 0 16px; color: hsl(var(--accent-cyan));">$1</h2>')
-                .replace(/^### (.*$)/gim, '<h3 style="font-size: 1.5rem; margin: 24px 0 16px; color: var(--text-primary);">$1</h3>')
-                .replace(/\*\*(.*?)\*\*/gim, '<strong style="color: var(--text-primary);">$1</strong>')
-                .replace(/\*(.*?)\*/gim, '<em style="color: var(--text-secondary);">$1</em>')
-                .replace(/> (.*$)/gim, '<blockquote style="border-right: 4px solid hsl(var(--accent-purple)); padding-right: 16px; margin: 24px 0; color: var(--text-secondary); font-style: italic; background: rgba(0,0,0,0.03); padding: 16px;">$1</blockquote>')
-                .replace(/\n- (.*)/gim, '<li>$1</li>')
-                .replace(/(<li>.*<\/li>)/gims, '<ul style="padding-right: 24px; margin-bottom: 24px; color: var(--text-secondary); line-height: 1.8;">$1</ul>')
-                .replace(/\n\n/g, '<p style="margin-bottom: 24px; color: var(--text-secondary); line-height: 1.8; font-size: 1.125rem;"></p>')
-            }} />
+            {/* Linked Product Banner */}
+            {activeArticle.linkedProduct && (
+              <div 
+                className="glass-panel" 
+                style={{ 
+                  marginBottom: '32px', 
+                  padding: '20px 24px', 
+                  borderRadius: '16px', 
+                  background: 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.1) 0%, hsla(var(--accent-purple), 0.1) 100%)', 
+                  border: '1px solid hsla(var(--accent-cyan), 0.35)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '20px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <div className="flex" style={{ alignItems: 'center', gap: '16px' }}>
+                  <img 
+                    src={activeArticle.linkedProduct.image} 
+                    alt={activeArticle.linkedProduct.name} 
+                    style={{ width: '90px', height: '65px', objectFit: 'cover', borderRadius: '10px' }}
+                  />
+                  <div>
+                    <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#000', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                      دستگاه بررسی‌شده در این مقاله
+                    </span>
+                    <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.15rem', color: 'var(--text-primary)' }}>{activeArticle.linkedProduct.name}</h4>
+                    <div className="font-tech gradient-text" style={{ fontWeight: 'bold', fontSize: '1.05rem' }}>
+                      {formatPrice(activeArticle.linkedProduct.basePrice)}
+                    </div>
+                  </div>
+                </div>
+
+                {onSelectProduct && (
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ padding: '10px 20px', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '8px' }}
+                    onClick={() => {
+                      setActiveArticle(null);
+                      onSelectProduct(activeArticle.linkedProduct.slug);
+                    }}
+                  >
+                    <Package size={16} /> مشاهده مشخصات و خرید
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div 
+              className="article-content" 
+              dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(activeArticle.content) }} 
+            />
           </div>
-        </dialog>
-      )}
-    </div>
-  );
+        </div>
+      </div>
+    )}
+  </div>
+);
 }

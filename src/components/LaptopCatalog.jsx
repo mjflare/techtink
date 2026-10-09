@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Filter, Star, CheckCircle, SlidersHorizontal, Scale, Eye, Wrench, 
-  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, ShieldCheck 
+  Filter, Star, CheckCircle, SlidersHorizontal, ArrowLeftRight, Eye, Wrench, 
+  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, Layers, Battery 
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
@@ -89,6 +89,8 @@ export default function LaptopCatalog({
       const q = searchQuery.trim().toLowerCase();
       result = result.filter(l => 
         l.name?.toLowerCase().includes(q) || 
+        l.brand?.toLowerCase().includes(q) ||
+        l.model?.toLowerCase().includes(q) ||
         l.tagline?.toLowerCase().includes(q) ||
         l.specs?.cpu?.toLowerCase().includes(q) ||
         l.specs?.gpu?.toLowerCase().includes(q) ||
@@ -348,7 +350,7 @@ export default function LaptopCatalog({
           {/* Chassis Build (New Filter!) */}
           <div>
             <div className="flex" style={{ alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-              <ShieldCheck size={16} color="hsl(var(--accent-green))" />
+              <Layers size={16} color="hsl(var(--accent-green))" />
               <span>جنس بدنه و شاسی:</span>
             </div>
             <div className="flex" style={{ gap: '6px', flexWrap: 'wrap' }}>
@@ -407,6 +409,9 @@ export default function LaptopCatalog({
 
           const bm = laptop.benchmarks || { cpuScore: 90, gamingScore: 85, displayScore: 92 };
           const shortSpecs = getShortSpecs(laptop);
+          const brand = laptop.brand || (laptop.name ? laptop.name.split(' ')[0] : '');
+          const model = laptop.model || (laptop.name ? laptop.name.replace(brand, '').trim() : laptop.name);
+          const overallScore = laptop.techTinkScore?.overall || bm.cpuScore || 88;
 
           return (
             <div key={laptop.id} className="glass-card flex animate-fade-in" style={{ flexDirection: 'column', overflow: 'hidden' }}>
@@ -436,16 +441,44 @@ export default function LaptopCatalog({
               </div>
               
               <div className="flex catalog-card-body" style={{ flexDirection: 'column', padding: '24px', flexGrow: 1 }}>
-                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                  <h3 
-                    style={{ fontSize: '1.25rem', marginBottom: '4px', cursor: 'pointer', flexGrow: 1, minWidth: '160px' }}
-                    onClick={handleProductClick}
-                  >
-                    {laptop.name}
+                {/* Product Name (Brand on top line, Model below) */}
+                <div 
+                  style={{ cursor: 'pointer', textAlign: 'left', direction: 'ltr', marginBottom: '8px' }}
+                  onClick={handleProductClick}
+                >
+                  <div style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: 800, 
+                    letterSpacing: '0.08em', 
+                    textTransform: 'uppercase', 
+                    color: 'hsl(var(--accent-cyan))', 
+                    fontFamily: 'var(--font-tech)',
+                    lineHeight: 1.2
+                  }}>
+                    {brand}
+                  </div>
+                  <h3 style={{ 
+                    fontSize: '1.3rem', 
+                    fontWeight: 700, 
+                    margin: '2px 0 0', 
+                    lineHeight: 1.3,
+                    fontFamily: 'var(--font-tech)',
+                    color: 'var(--text-primary)'
+                  }}>
+                    {model}
                   </h3>
-                  <div className="font-tech gradient-text" style={{ fontWeight: 700, fontSize: '1.2rem', whiteSpace: 'nowrap' }}>
+                </div>
+
+                {/* Price Under Product Name */}
+                <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+                  <div className="font-tech gradient-text" style={{ fontWeight: 800, fontSize: '1.35rem', lineHeight: 1.2 }}>
                     {formatPrice(laptop.basePrice)}
                   </div>
+                  {laptop.oldPrice && laptop.oldPrice > laptop.basePrice && (
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+                      {formatPrice(laptop.oldPrice)}
+                    </span>
+                  )}
                 </div>
                 
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '16px' }}>{laptop.tagline}</p>
@@ -468,7 +501,7 @@ export default function LaptopCatalog({
                   )}
                 </div>
 
-                {/* Essential Hardware Quick Deck (Clean, Uncluttered at-a-glance specs) */}
+                {/* Essential Hardware Quick Deck (Strictly One Parameter Per Row) */}
                 <div style={{ 
                   background: 'linear-gradient(180deg, rgba(0,0,0,0.015) 0%, rgba(0,0,0,0.035) 100%)', 
                   border: '1px solid var(--border-glass)', 
@@ -477,66 +510,80 @@ export default function LaptopCatalog({
                   marginBottom: '16px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '8px',
-                  direction: 'ltr',
-                  textAlign: 'left'
+                  gap: '7px',
                 }}>
-                  {/* CPU */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                      <Cpu size={14} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
-                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {shortSpecs.cpu}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* GPU */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                      <Zap size={14} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
-                      <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {shortSpecs.gpu}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* RAM & Storage */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                      <HardDrive size={14} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
-                      <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <strong style={{ fontWeight: 600 }}>{shortSpecs.ram} RAM</strong> • <span style={{ color: 'var(--text-secondary)' }}>{shortSpecs.storage}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Display & Chassis Quick Pills */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-                    <span className="badge" style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'rgba(0,0,0,0.03)', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <Monitor size={11} /> {shortSpecs.display}
+                  {/* 1. CPU */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <Cpu size={14} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.cpu}
                     </span>
-                    <span className="badge" style={{ fontSize: '0.72rem', padding: '2px 8px', background: 'hsla(var(--accent-green), 0.1)', color: 'hsl(var(--accent-green))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <ShieldCheck size={11} /> {shortSpecs.chassis}
+                  </div>
+
+                  {/* 2. GPU */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <Zap size={14} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.gpu}
+                    </span>
+                  </div>
+
+                  {/* 3. RAM (Dedicated Row) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <HardDrive size={14} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.ram} RAM
+                    </span>
+                  </div>
+
+                  {/* 4. Storage SSD (Dedicated Row) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <HardDrive size={14} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.storage}
+                    </span>
+                  </div>
+
+                  {/* 5. Display (Dedicated Row) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <Monitor size={14} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.display}
+                    </span>
+                  </div>
+
+                  {/* 6. Battery Capacity */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left' }}>
+                    <Battery size={14} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                    <span className="font-tech" style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.battery || '50Wh Battery'}
+                    </span>
+                  </div>
+
+                  {/* 7. Chassis (Dedicated Row - LTR aligned like the other specs) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, direction: 'ltr', textAlign: 'left', paddingTop: '4px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+                    <Layers size={14} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {shortSpecs.chassis}
                     </span>
                   </div>
                 </div>
 
-                {/* Mini Benchmark Performance Bar */}
+                {/* TechTink Score Bar */}
                 <div style={{ marginBottom: '20px' }}>
                   <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78125rem', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Sparkles size={13} color="hsl(var(--accent-cyan))" />
-                      شاخص راندمان سخت‌افزار
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      <Sparkles size={14} color="hsl(var(--accent-cyan))" />
+                      امتیاز تک‌تینک
                     </span>
                     <span className="font-tech" style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'hsl(var(--accent-cyan))' }}>
-                      {bm.cpuScore} <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ ۱۰۰</span>
+                      {overallScore} <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ ۱۰۰</span>
                     </span>
                   </div>
                   <div style={{ height: '6px', background: 'rgba(0,0,0,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ 
                       height: '100%', 
-                      width: `${bm.cpuScore}%`, 
+                      width: `${overallScore}%`, 
                       background: 'linear-gradient(90deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))',
                       borderRadius: '4px'
                     }}></div>
@@ -561,12 +608,12 @@ export default function LaptopCatalog({
                     <Wrench size={18} color="hsl(var(--accent-cyan))" />
                   </button>
                   <button 
-                    className="btn btn-glass" 
+                    className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
                     onClick={() => onCompare(laptop.id)}
-                    style={{ padding: '10px', background: isComparing ? 'hsla(var(--accent-purple), 0.15)' : '' }}
+                    style={{ padding: '10px' }}
                     title={isComparing ? "حذف از مقایسه" : "افزودن به مقایسه"}
                   >
-                    <Scale size={18} color={isComparing ? "hsl(var(--accent-purple))" : "var(--text-secondary)"} />
+                    <ArrowLeftRight size={18} className="compare-icon" />
                   </button>
                 </div>
               </div>

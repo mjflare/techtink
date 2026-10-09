@@ -195,21 +195,109 @@ input:focus, select:focus, textarea:focus {
   animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Modal Dialog Overlays */
+/* Modern Centered & Scalable Modal System */
+.modal-backdrop-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 3vw, 28px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: modalBackdropFadeIn 0.22s ease-out forwards;
+}
+
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-card {
+  position: relative;
+  width: 100%;
+  margin: auto;
+  max-height: min(90vh, 90dvh);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 20px;
+  animation: modalScaleIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border-glass);
+  direction: rtl;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Comparison Button Glowing Styles */
+.btn-compare {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: rgba(0, 0, 0, 0.02);
+  border-color: var(--border-glass);
+}
+
+.btn-compare .compare-icon {
+  color: rgba(156, 163, 175, 0.5);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-compare.is-active {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border-color: rgba(239, 68, 68, 0.6) !important;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4), inset 0 0 8px rgba(239, 68, 68, 0.18) !important;
+}
+
+.btn-compare.is-active .compare-icon {
+  color: #ef4444 !important;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.75)) !important;
+}
+
+/* Backward compatibility for native dialog tags */
 dialog {
   margin: auto;
   padding: 0;
   border: none;
   background: transparent;
   color: inherit;
-  max-width: 90vw;
-  max-height: 90vh;
-  direction: rtl; /* Ensure modal is RTL */
+  max-width: 95vw;
+  max-height: 92vh;
+  direction: rtl;
 }
 
 dialog::backdrop {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
+}
+
+/* Modal mobile scaling */
+@media (max-width: 640px) {
+  .modal-backdrop-wrapper {
+    padding: 8px !important;
+  }
+  .modal-card {
+    max-height: min(94vh, 94dvh) !important;
+    border-radius: 16px !important;
+    width: 98% !important;
+  }
+  .modal-card > div[style*="padding: 24px"],
+  .modal-card > div[style*="padding: 32px"],
+  .modal-card > div[style*="padding: 40px"] {
+    padding: 16px !important;
+  }
 }
 
 /* Modern Details / Accordion */

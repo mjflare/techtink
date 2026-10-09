@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
@@ -32,14 +32,19 @@ const inputStyle = {
 };
 
 const labelStyle = {
-  display: 'block',
+  display: 'flex',
+  alignItems: 'center',
   marginBottom: '6px',
   fontSize: '0.875rem',
   color: 'var(--text-secondary)',
   fontWeight: 500,
 };
 
-export default function CheckoutModal({ cartItems, onClose, onClearCart, user }) {
+const RequiredStar = () => (
+  <span style={{ color: '#ef4444', marginRight: '4px', fontWeight: 'bold' }}>*</span>
+);
+
+export default function CheckoutModal({ cartItems, onClose, onClearCart, user, onOpenAuth }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [redirecting, setRedirecting] = useState(false);
@@ -48,14 +53,21 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
   const [selectedGateway, setSelectedGateway] = useState('zarinpal');
   const [error, setError] = useState(null);
 
-  // Shipping form state
+  // Shipping form state prefilled from authenticated user
   const [fullName, setFullName] = useState(user?.name || '');
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState(user?.phone || user?.mobile || '');
   const [nationalId, setNationalId] = useState('');
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      if (user.name && !fullName) setFullName(user.name);
+      if ((user.phone || user.mobile) && !phone) setPhone(user.phone || user.mobile);
+    }
+  }, [user]);
 
   // Price calculations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
@@ -63,20 +75,96 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
   const shippingCost = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
   const total = subtotal + tax + shippingCost;
 
+  // Enforce auth gate if user is not logged in
+  if (!user) {
+    return (
+      <div className="modal-backdrop-wrapper" onClick={onClose}>
+        <div
+          className="glass-panel modal-card"
+          style={{ maxWidth: '500px', textAlign: 'center', padding: '36px 28px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px auto',
+              color: '#ef4444'
+            }}
+          >
+            <ShieldCheck size={32} />
+          </div>
+
+          <h2 style={{ fontSize: '1.35rem', marginBottom: '12px' }}>
+            ورود به حساب کاربری الزامی است
+          </h2>
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.7', marginBottom: '28px' }}>
+            برای تکمیل سفارش، ثبت مشخصات ارسال و پرداخت امن، لطفاً ابتدا وارد حساب کاربری خود شوید یا در کمتر از ۱ دقیقه حساب جدید بسازید.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}
+              onClick={() => {
+                onClose();
+                if (onOpenAuth) onOpenAuth();
+              }}
+            >
+              ورود / ایجاد حساب کاربری
+            </button>
+            <button
+              className="btn btn-glass"
+              style={{ width: '100%', padding: '10px' }}
+              onClick={onClose}
+            >
+              بازگشت به سبد خرید
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleShippingSubmit = (e) => {
     e.preventDefault();
+    if (!user) {
+      if (onOpenAuth) onOpenAuth();
+      return;
+    }
     setStep(2);
   };
 
   const handlePayment = async (e) => {
     e.preventDefault();
+    if (!user) {
+      setError('برای پرداخت، ابتدا باید وارد حساب کاربری خود شوید.');
+      if (onOpenAuth) {
+        onClose();
+        onOpenAuth();
+      }
+      return;
+    }
+
     setLoading(true);
     setError(null);
+
+    const token = localStorage.getItem('token');
 
     try {
       const response = await fetch('/api/checkout/init', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           items: cartItems,
           total,
@@ -87,6 +175,18 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
       });
       const data = await response.json();
 
+      if (!response.ok) {
+        setLoading(false);
+        setError(data.error || 'خطا در ثبت سفارش. لطفاً مجدداً بررسی فرمایید.');
+        if (response.status === 401 && onOpenAuth) {
+          setTimeout(() => {
+            onClose();
+            onOpenAuth();
+          }, 1500);
+        }
+        return;
+      }
+
       // Show redirecting state
       setLoading(false);
       setRedirecting(true);
@@ -96,10 +196,16 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
         try {
           const verifyRes = await fetch('/api/checkout/verify', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({ paymentToken: data.paymentToken }),
           });
           const verifyData = await verifyRes.json();
+          if (!verifyRes.ok) {
+            throw new Error(verifyData.error || 'خطا در تایید پرداخت');
+          }
           setOrderId(verifyData.orderId);
           setRefId(verifyData.refId);
           setRedirecting(false);
@@ -107,7 +213,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
         } catch (err) {
           console.error(err);
           setRedirecting(false);
-          setError('خطا در تایید پرداخت. لطفاً دوباره تلاش کنید.');
+          setError(err.message || 'خطا در تایید پرداخت. لطفاً دوباره تلاش کنید.');
         }
       }, 2000);
     } catch (err) {
@@ -123,34 +229,14 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
   };
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(6px)',
-          zIndex: 1090,
-        }}
-        onClick={step !== 3 ? onClose : undefined}
-      />
-
+    <div className="modal-backdrop-wrapper" onClick={step !== 3 ? onClose : undefined}>
       {/* Dialog */}
       <div
-        className="glass-panel animate-fade-in"
+        className="glass-panel modal-card"
         style={{
-          position: 'fixed',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '92%',
-          maxWidth: '650px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          zIndex: 1100,
-          display: 'flex',
-          flexDirection: 'column',
-          direction: 'rtl',
+          maxWidth: '680px',
         }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -225,15 +311,23 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
           {/* ──────── Step 1: Shipping Info ──────── */}
           {step === 1 && (
             <form onSubmit={handleShippingSubmit} className="animate-fade-in">
-              <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={20} />
-                اطلاعات ارسال
-              </h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={20} />
+                  اطلاعات ارسال
+                </h3>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  (فیلدهای دارای <span style={{ color: '#ef4444', fontWeight: 'bold' }}>*</span> الزامی هستند)
+                </span>
+              </div>
 
               <div className="checkout-form-grid">
                 {/* Full Name */}
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>نام و نام خانوادگی</label>
+                  <label style={labelStyle}>
+                    نام و نام خانوادگی
+                    <RequiredStar />
+                  </label>
                   <input
                     type="text"
                     value={fullName}
@@ -250,6 +344,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
                       <Smartphone size={14} />
                       شماره موبایل
                     </span>
+                    <RequiredStar />
                   </label>
                   <input
                     type="tel"
@@ -264,7 +359,10 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
 
                 {/* National ID */}
                 <div>
-                  <label style={labelStyle}>کد ملی</label>
+                  <label style={labelStyle}>
+                    کد ملی
+                    <RequiredStar />
+                  </label>
                   <input
                     type="text"
                     value={nationalId}
@@ -283,6 +381,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
                       <Building2 size={14} />
                       استان
                     </span>
+                    <RequiredStar />
                   </label>
                   <select
                     value={province}
@@ -299,7 +398,10 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
 
                 {/* City */}
                 <div>
-                  <label style={labelStyle}>شهر</label>
+                  <label style={labelStyle}>
+                    شهر
+                    <RequiredStar />
+                  </label>
                   <input
                     type="text"
                     value={city}
@@ -311,7 +413,10 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
 
                 {/* Address */}
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>آدرس پستی</label>
+                  <label style={labelStyle}>
+                    آدرس پستی
+                    <RequiredStar />
+                  </label>
                   <textarea
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
@@ -323,7 +428,10 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
 
                 {/* Postal Code */}
                 <div>
-                  <label style={labelStyle}>کد پستی</label>
+                  <label style={labelStyle}>
+                    کد پستی
+                    <RequiredStar />
+                  </label>
                   <input
                     type="text"
                     value={postalCode}
@@ -652,6 +760,6 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user })
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

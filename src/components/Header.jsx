@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight } from 'lucide-react';
 
 export default function Header({ 
   activeTab, 
   setActiveTab, 
   cartCount, 
+  compareCount = 0,
   onCartClick, 
   user, 
   onOpenAuth, 
   onLogout,
   searchQuery,
-  onSearchChange
+  onSearchChange,
+  onOpenAbout
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -54,6 +56,18 @@ export default function Header({
               {tab.label}
             </button>
           ))}
+          {onOpenAbout && (
+            <button 
+              onClick={onOpenAbout}
+              className="btn btn-glass"
+              style={{
+                background: 'transparent',
+                borderColor: 'transparent'
+              }}
+            >
+              درباره ما
+            </button>
+          )}
           {user?.role === 'admin' && (
             <button 
               onClick={() => handleTabClick('admin')}
@@ -125,6 +139,28 @@ export default function Header({
             </button>
           )}
 
+          {/* Compare Button */}
+          <button 
+            className={`btn btn-glass btn-compare ${compareCount > 0 ? 'is-active' : ''}`}
+            style={{ position: 'relative', padding: '10px' }} 
+            onClick={() => handleTabClick('compare')} 
+            aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
+            title="مقایسه مشخصات لپ‌تاپ‌ها"
+          >
+            <ArrowLeftRight size={20} className="compare-icon" />
+            {compareCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '-5px', right: '-5px',
+                background: '#ef4444', color: 'white',
+                fontSize: '11px', fontWeight: 'bold', width: '18px', height: '18px',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.7)'
+              }}>
+                {compareCount}
+              </span>
+            )}
+          </button>
+
           {/* Cart Button */}
           <button className="btn btn-glass" style={{ position: 'relative', padding: '10px' }} onClick={onCartClick} aria-label="سبد خرید">
             <ShoppingCart size={20} />
@@ -187,6 +223,15 @@ export default function Header({
                 {tab.label}
               </button>
             ))}
+            {onOpenAbout && (
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenAbout(); }}
+                className="btn btn-glass"
+                style={{ justifyContent: 'flex-start', padding: '12px 16px', width: '100%' }}
+              >
+                درباره ما و نشانی شوروم
+              </button>
+            )}
             {user?.role === 'admin' && (
               <button 
                 onClick={() => handleTabClick('admin')}

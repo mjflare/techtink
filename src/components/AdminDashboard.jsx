@@ -3,9 +3,15 @@ import {
   Package, ShoppingCart, Users, TrendingUp, Settings, BarChart3, 
   Edit, Save, X, Check, Database, MessageSquare, Download, RefreshCw, 
   Plus, AlertTriangle, Shield, CheckCircle, ExternalLink, Copy, Search, Trash2,
-  Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench
+  Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
+  Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
+  ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import BlogEditorModal from './BlogEditorModal.jsx';
+import ProductEditorModal from './ProductEditorModal.jsx';
+import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
+import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout }) {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -108,6 +114,68 @@ export default function AdminDashboard({ user, onLogout }) {
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [torobCopied, setTorobCopied] = useState(false);
 
+  // Blog Management
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [blogLoading, setBlogLoading] = useState(false);
+  const [isBlogModalOpen, setIsBlogModalOpen] = useState(false);
+  const [blogSaving, setBlogSaving] = useState(false);
+  const [blogError, setBlogError] = useState('');
+  const [blogSearch, setBlogSearch] = useState('');
+
+  const defaultBlogForm = {
+    id: '',
+    title: '',
+    excerpt: '',
+    category: 'راهنمای خرید',
+    author: user?.name || 'تیم تحریریه تک‌تینک',
+    author_role: 'کارشناس سخت‌افزار',
+    author_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    date: '۱۲ مهر ۱۴۰۵',
+    read_time: '۵ دقیقه',
+    image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80',
+    content: '',
+    product_slug: '',
+    published: 1,
+  };
+  const [blogForm, setBlogForm] = useState(defaultBlogForm);
+
+  // Barcode Modal
+  const [barcodeModalOpen, setBarcodeModalOpen] = useState(false);
+  const [barcodeProduct, setBarcodeProduct] = useState(null);
+
+  // Appointments Management
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
+  const [appointmentFilter, setAppointmentFilter] = useState('all');
+  const [appointmentSearch, setAppointmentSearch] = useState('');
+
+  // Inventory & Logistics Management
+  const [shipments, setShipments] = useState([]);
+  const [shipmentsLoading, setShipmentsLoading] = useState(false);
+  const [stockLog, setStockLog] = useState([]);
+  const [stockLogLoading, setStockLogLoading] = useState(false);
+  const [inventorySubTab, setInventorySubTab] = useState('inbound'); // 'inbound' | 'outbound' | 'history'
+  const [inboundForm, setInboundForm] = useState({
+    product_id: '',
+    quantity: 1,
+    supplier_name: '',
+    batch_code: '',
+    unit_cost: '',
+    shelf_location: 'قفسه A-1',
+    notes: ''
+  });
+  const [outboundForm, setOutboundForm] = useState({
+    product_id: '',
+    quantity: 1,
+    courier: 'تیپاکس (Tipax)',
+    tracking_number: '',
+    destination: 'تهران',
+    recipient_name: '',
+    notes: ''
+  });
+  const [submittingShipment, setSubmittingShipment] = useState(false);
+  const [shipmentMessage, setShipmentMessage] = useState(null);
+
   const authHeaders = {
     'Content-Type': 'application/json',
     ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
@@ -169,6 +237,21 @@ export default function AdminDashboard({ user, onLogout }) {
     if (activeSection === 'dbtools') {
       loadDbTables();
     }
+    if (activeSection === 'blog') {
+      loadBlogPosts();
+    }
+    if (activeSection === 'appointments') {
+      loadAppointments();
+    }
+    if (activeSection === 'inventory') {
+      loadInventory();
+      if (products.length === 0) {
+        fetch('/api/admin/products', { headers: authHeaders })
+          .then(res => res.json())
+          .then(data => setProducts(Array.isArray(data) ? data : []))
+          .catch(() => {});
+      }
+    }
     if (activeSection === 'settings') {
       setSettingsLoading(true);
       fetch('/api/admin/settings', { headers: authHeaders })
@@ -181,6 +264,228 @@ export default function AdminDashboard({ user, onLogout }) {
         .catch(() => setSettingsLoading(false));
     }
   }, [activeSection, authToken]);
+
+  const loadAppointments = () => {
+    setAppointmentsLoading(true);
+    fetch('/api/admin/appointments', { headers: authHeaders })
+      .then(res => res.json())
+      .then(data => { setAppointments(Array.isArray(data) ? data : []); setAppointmentsLoading(false); })
+      .catch(() => setAppointmentsLoading(false));
+  };
+
+  const updateAppointmentStatus = async (id, status, notes = null) => {
+    try {
+      const res = await fetch(`/api/admin/appointments/${id}`, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({ status, notes })
+      });
+      if (res.ok) {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status, ...(notes !== null ? { notes } : {}) } : a));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteAppointment = async (id) => {
+    if (!window.confirm('آیا از حذف این نوبت اطمینان دارید؟')) return;
+    try {
+      const res = await fetch(`/api/admin/appointments/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      if (res.ok) {
+        setAppointments(prev => prev.filter(a => a.id !== id));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadInventory = () => {
+    setShipmentsLoading(true);
+    fetch('/api/admin/inventory/shipments', { headers: authHeaders })
+      .then(res => res.json())
+      .then(data => { setShipments(Array.isArray(data) ? data : []); setShipmentsLoading(false); })
+      .catch(() => setShipmentsLoading(false));
+
+    setStockLogLoading(true);
+    fetch('/api/admin/inventory/stock-log', { headers: authHeaders })
+      .then(res => res.json())
+      .then(data => { setStockLog(Array.isArray(data) ? data : []); setStockLogLoading(false); })
+      .catch(() => setStockLogLoading(false));
+  };
+
+  const handleInboundSubmit = async (e) => {
+    e.preventDefault();
+    if (!inboundForm.product_id) return;
+    setSubmittingShipment(true);
+    setShipmentMessage(null);
+    try {
+      const res = await fetch('/api/admin/inventory/shipments', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'inbound',
+          product_id: parseInt(inboundForm.product_id),
+          quantity: parseInt(inboundForm.quantity) || 1,
+          supplier_name: inboundForm.supplier_name,
+          batch_code: inboundForm.batch_code,
+          unit_cost: inboundForm.unit_cost ? parseInt(inboundForm.unit_cost) : null,
+          shelf_location: inboundForm.shelf_location,
+          notes: inboundForm.notes
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShipmentMessage({ type: 'success', text: `رسید ورود بار جدید با کد ${data.shipment?.tracking_number} با موفقیت ثبت و به موجودی انبار اضافه گردید.` });
+        setInboundForm({ product_id: '', quantity: 1, supplier_name: '', batch_code: '', unit_cost: '', shelf_location: 'قفسه A-1', notes: '' });
+        loadInventory();
+        fetch('/api/admin/products', { headers: authHeaders })
+          .then(res => res.json())
+          .then(data => setProducts(Array.isArray(data) ? data : []));
+      } else {
+        setShipmentMessage({ type: 'error', text: data.error || 'خطا در ثبت ورود کالا' });
+      }
+    } catch (err) {
+      setShipmentMessage({ type: 'error', text: 'خطا در برقراری ارتباط با سرور' });
+    }
+    setSubmittingShipment(false);
+  };
+
+  const handleOutboundSubmit = async (e) => {
+    e.preventDefault();
+    if (!outboundForm.product_id) return;
+    setSubmittingShipment(true);
+    setShipmentMessage(null);
+    try {
+      const res = await fetch('/api/admin/inventory/shipments', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          type: 'outbound',
+          product_id: parseInt(outboundForm.product_id),
+          quantity: parseInt(outboundForm.quantity) || 1,
+          courier: outboundForm.courier,
+          tracking_number: outboundForm.tracking_number,
+          destination: outboundForm.destination,
+          recipient_name: outboundForm.recipient_name,
+          notes: outboundForm.notes
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setShipmentMessage({ type: 'success', text: `حواله خروج و ارسال مرسوله با موفقیت ثبت و از موجودی انبار کسر گردید.` });
+        setOutboundForm({ product_id: '', quantity: 1, courier: 'تیپاکس (Tipax)', tracking_number: '', destination: 'تهران', recipient_name: '', notes: '' });
+        loadInventory();
+        fetch('/api/admin/products', { headers: authHeaders })
+          .then(res => res.json())
+          .then(data => setProducts(Array.isArray(data) ? data : []));
+      } else {
+        setShipmentMessage({ type: 'error', text: data.error || 'خطا در ثبت خروج کالا' });
+      }
+    } catch (err) {
+      setShipmentMessage({ type: 'error', text: 'خطا در برقراری ارتباط با سرور' });
+    }
+    setSubmittingShipment(false);
+  };
+
+  const handleOpenBarcode = (prod = null) => {
+    setBarcodeProduct(prod);
+    setBarcodeModalOpen(true);
+  };
+
+  const loadBlogPosts = () => {
+    setBlogLoading(true);
+    fetch('/api/admin/blog', { headers: authHeaders })
+      .then(res => res.json())
+      .then(data => { setBlogPosts(Array.isArray(data) ? data : []); setBlogLoading(false); })
+      .catch(() => setBlogLoading(false));
+  };
+
+  const handleOpenAddBlogPost = () => {
+    if (products.length === 0) {
+      fetch('/api/admin/products', { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => setProducts(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }
+    const today = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium' }).format(new Date());
+    setBlogForm({
+      ...defaultBlogForm,
+      product_slug: '',
+      date: today
+    });
+    setBlogError('');
+    setIsBlogModalOpen(true);
+  };
+
+  const handleOpenEditBlogPost = (post) => {
+    if (products.length === 0) {
+      fetch('/api/admin/products', { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => setProducts(Array.isArray(data) ? data : []))
+        .catch(() => {});
+    }
+    setBlogForm({
+      id: post.id || '',
+      title: post.title || '',
+      excerpt: post.excerpt || '',
+      category: post.category || 'راهنمای خرید',
+      author: post.author || '',
+      author_role: post.author_role || post.authorRole || '',
+      author_avatar: post.author_avatar || post.authorAvatar || '',
+      date: post.date || '',
+      read_time: post.read_time || post.readTime || '۵ دقیقه',
+      image: post.image || '',
+      content: post.content || '',
+      product_slug: post.product_slug || post.productSlug || '',
+      published: post.published === 0 || post.published === false ? 0 : 1,
+    });
+    setBlogError('');
+    setIsBlogModalOpen(true);
+  };
+
+  const handleSaveBlogPost = async (customData) => {
+    if (customData && customData.preventDefault) customData.preventDefault();
+    const dataToSave = (customData && !customData.preventDefault && customData.title) ? customData : blogForm;
+    if (!dataToSave.title) {
+      setBlogError('عنوان مقاله الزامی است.');
+      return;
+    }
+    setBlogSaving(true);
+    setBlogError('');
+    try {
+      const res = await fetch('/api/admin/blog', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(dataToSave)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در ذخیره مقاله');
+      setIsBlogModalOpen(false);
+      loadBlogPosts();
+    } catch (err) {
+      setBlogError(err.message);
+    }
+    setBlogSaving(false);
+  };
+
+  const handleDeleteBlogPost = async (id, title) => {
+    if (!window.confirm(`آیا از حذف مقاله "${title}" اطمینان دارید؟`)) return;
+    try {
+      const res = await fetch(`/api/admin/blog/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      if (res.ok) {
+        loadBlogPosts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const loadDbTables = () => {
     setDbLoading(true);
@@ -223,6 +528,7 @@ export default function AdminDashboard({ user, onLogout }) {
   };
 
   const handleOpenAddProduct = () => {
+    if (blogPosts.length === 0) loadBlogPosts();
     setProductModalMode('add');
     setProductModalTab('basic');
     setProductModalError('');
@@ -231,6 +537,7 @@ export default function AdminDashboard({ user, onLogout }) {
   };
 
   const handleOpenEditProduct = (p) => {
+    if (blogPosts.length === 0) loadBlogPosts();
     setProductModalMode('edit');
     setProductModalTab('basic');
     setProductModalError('');
@@ -264,55 +571,59 @@ export default function AdminDashboard({ user, onLogout }) {
         intro: p.expertReview?.intro || '',
         pros: Array.isArray(p.expertReview?.pros) ? p.expertReview.pros.join('\n') : (p.expertReview?.pros || ''),
         cons: Array.isArray(p.expertReview?.cons) ? p.expertReview.cons.join('\n') : (p.expertReview?.cons || ''),
-        verdict: p.expertReview?.verdict || ''
+        verdict: p.expertReview?.verdict || '',
+        fullReview: p.expertReview?.fullReview || p.expertReview?.intro || ''
       }
     });
     setProductModalOpen(true);
   };
 
-  const handleSaveProductForm = async (e) => {
-    e.preventDefault();
+  const handleSaveProductForm = async (customPayload) => {
+    if (customPayload && customPayload.preventDefault) customPayload.preventDefault();
+    const dataToSave = (customPayload && !customPayload.preventDefault && customPayload.name) ? customPayload : productForm;
     setSavingProduct(true);
     setProductModalError('');
 
-    const prosList = (productForm.expertReview?.pros || '')
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const prosList = Array.isArray(dataToSave.expertReview?.pros)
+      ? dataToSave.expertReview.pros
+      : (dataToSave.expertReview?.pros || '').split('\n').map(s => s.trim()).filter(Boolean);
 
-    const consList = (productForm.expertReview?.cons || '')
-      .split('\n')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const consList = Array.isArray(dataToSave.expertReview?.cons)
+      ? dataToSave.expertReview.cons
+      : (dataToSave.expertReview?.cons || '').split('\n').map(s => s.trim()).filter(Boolean);
 
-    const chassisVal = productForm.chassis || productForm.specs?.chassis || 'All-Aluminum CNC Machined';
+    const chassisVal = dataToSave.chassis || dataToSave.specs?.chassis || 'All-Aluminum CNC Machined';
 
     const payload = {
-      name: productForm.name,
-      slug: productForm.slug || productForm.name.toLowerCase().replace(/[\s]+/g, '-'),
-      category: productForm.category,
-      series: productForm.series,
-      basePrice: Number(productForm.basePrice),
-      stock: Number(productForm.stock),
-      tagline: productForm.tagline,
-      badge: productForm.badge,
-      image: productForm.image,
-      guarantee: productForm.guarantee,
-      cpuBrand: productForm.cpuBrand,
-      gpuBrand: productForm.gpuBrand,
+      name: dataToSave.name,
+      slug: dataToSave.slug || dataToSave.name.toLowerCase().replace(/[\s]+/g, '-'),
+      brand: dataToSave.brand,
+      model: dataToSave.model,
+      grade: dataToSave.grade,
+      category: dataToSave.category,
+      series: dataToSave.series,
+      basePrice: Number(dataToSave.basePrice),
+      stock: Number(dataToSave.stock),
+      tagline: dataToSave.tagline,
+      badge: dataToSave.badge,
+      image: dataToSave.image,
+      guarantee: dataToSave.guarantee,
+      cpuBrand: dataToSave.cpuBrand,
+      gpuBrand: dataToSave.gpuBrand,
       chassis: chassisVal,
-      specs: { ...productForm.specs, chassis: chassisVal },
+      specs: { ...dataToSave.specs, chassis: chassisVal },
       expertReview: {
-        intro: productForm.expertReview?.intro || '',
+        intro: dataToSave.expertReview?.intro || '',
         pros: prosList,
         cons: consList,
-        verdict: productForm.expertReview?.verdict || ''
+        verdict: dataToSave.expertReview?.verdict || '',
+        fullReview: dataToSave.expertReview?.fullReview || dataToSave.expertReview?.intro || ''
       }
     };
 
     try {
-      const isEdit = productModalMode === 'edit' && productForm.id;
-      const url = isEdit ? `/api/admin/products/${productForm.id}` : '/api/admin/products';
+      const isEdit = productModalMode === 'edit' && dataToSave.id;
+      const url = isEdit ? `/api/admin/products/${dataToSave.id}` : '/api/admin/products';
       const method = isEdit ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -326,7 +637,7 @@ export default function AdminDashboard({ user, onLogout }) {
       }
 
       if (isEdit) {
-        setProducts(prev => prev.map(p => p.id === productForm.id ? { ...p, ...data, stockCount: data.stock } : p));
+        setProducts(prev => prev.map(p => p.id === dataToSave.id ? { ...p, ...data, stockCount: data.stock } : p));
       } else {
         setProducts(prev => [data, ...prev]);
       }
@@ -501,11 +812,14 @@ export default function AdminDashboard({ user, onLogout }) {
 
   const tabs = [
     { id: 'dashboard', label: 'داشبورد و آمار', icon: BarChart3 },
-    { id: 'products', label: 'مدیریت موجودی و محصولات', icon: Package },
+    { id: 'products', label: 'محصولات و مشخصات', icon: Package },
+    { id: 'inventory', label: 'انبارداری و لجستیک', icon: Truck },
+    { id: 'appointments', label: 'نوبت‌ها و خدمات', icon: Calendar },
+    { id: 'blog', label: 'مدیریت وبلاگ و مقالات', icon: BookOpen },
     { id: 'orders', label: 'سفارشات مشتریان', icon: ShoppingCart },
     { id: 'comments', label: 'مدیریت نظرات', icon: MessageSquare },
     { id: 'dbtools', label: 'ابزارهای پایگاه داده (SQLite)', icon: Database },
-    { id: 'settings', label: 'تنظیمات و درگاه ترب (Torob)', icon: Settings }
+    { id: 'settings', label: 'تنظیمات، آدرس و ترب', icon: Settings }
   ];
 
   // If user is not admin, show admin login screen
@@ -563,14 +877,20 @@ export default function AdminDashboard({ user, onLogout }) {
             پنل مدیریت <span className="gradient-text">تک‌تینک</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
-            مدیریت موجودی انبار، قیمت‌گذاری به تومان، سفارش‌ها، دیتابیس و اتصال به ترب
+            مدیریت موجودی انبار، قیمت‌گذاری به تومان، وبلاگ، سفارش‌ها، دیتابیس و اتصال به ترب
           </p>
         </div>
 
         <div className="flex" style={{ gap: '12px' }}>
-          <button className="btn btn-primary" onClick={handleOpenAddProduct}>
-            <Plus size={18} /> افزودن محصول جدید
-          </button>
+          {activeSection === 'blog' ? (
+            <button className="btn btn-primary" onClick={handleOpenAddBlogPost}>
+              <Plus size={18} /> افزودن مقاله جدید
+            </button>
+          ) : (
+            <button className="btn btn-primary" onClick={handleOpenAddProduct}>
+              <Plus size={18} /> افزودن محصول جدید
+            </button>
+          )}
         </div>
       </div>
 
@@ -769,6 +1089,14 @@ export default function AdminDashboard({ user, onLogout }) {
                           </button>
                           <button 
                             className="btn btn-glass" 
+                            style={{ padding: '6px 12px', fontSize: '0.75rem', gap: '4px', borderColor: 'hsla(var(--accent-purple), 0.3)' }}
+                            onClick={() => handleOpenBarcode(p)}
+                            title="چاپ بارکد و لیبل حرارتی کالا"
+                          >
+                            <BarcodeIcon size={13} color="hsl(var(--accent-purple))" /> بارکد
+                          </button>
+                          <button 
+                            className="btn btn-glass" 
                             style={{ padding: '6px 10px', fontSize: '0.75rem', color: 'hsl(var(--accent-red))' }}
                             onClick={() => handleDeleteProduct(p.id, p.name)}
                             title="حذف یا غیرفعال‌سازی کالا"
@@ -782,6 +1110,677 @@ export default function AdminDashboard({ user, onLogout }) {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* 2.2. INVENTORY & LOGISTICS MANAGEMENT */}
+      {activeSection === 'inventory' && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Top Bar with Barcode Trigger */}
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.6rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Truck size={24} color="hsl(var(--accent-cyan))" />
+                مدیریت زنجیره تامین، انبارداری و لجستیک تک‌تینک
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '4px 0 0' }}>
+                ثبت ورود کالای جدید، حواله خروج و ارسال تیپاکس/پست، ردگیری موجودی و چاپ بارکد حرارتی
+              </p>
+            </div>
+
+            <div className="flex" style={{ gap: '10px' }}>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', background: 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' }}
+                onClick={() => handleOpenBarcode(null)}
+              >
+                <BarcodeIcon size={18} /> سازنده و چاپ بارکد کالا (Barcode Hub)
+              </button>
+            </div>
+          </div>
+
+          {shipmentMessage && (
+            <div style={{ 
+              padding: '14px 18px', 
+              borderRadius: '12px', 
+              background: shipmentMessage.type === 'success' ? 'hsla(var(--accent-green), 0.15)' : 'rgba(239, 68, 68, 0.15)', 
+              color: shipmentMessage.type === 'success' ? 'hsl(var(--accent-green))' : '#ef4444', 
+              border: `1px solid ${shipmentMessage.type === 'success' ? 'hsla(var(--accent-green), 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px' 
+            }}>
+              {shipmentMessage.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+              <span>{shipmentMessage.text}</span>
+            </div>
+          )}
+
+          {/* Sub Navigation */}
+          <div className="flex" style={{ gap: '8px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px' }}>
+            <button
+              type="button"
+              className="btn btn-glass"
+              style={{
+                background: inventorySubTab === 'inbound' ? 'hsla(var(--accent-green), 0.15)' : 'transparent',
+                borderColor: inventorySubTab === 'inbound' ? 'hsl(var(--accent-green))' : 'var(--border-glass)',
+                color: inventorySubTab === 'inbound' ? 'hsl(var(--accent-green))' : 'var(--text-secondary)',
+                fontWeight: inventorySubTab === 'inbound' ? 700 : 500
+              }}
+              onClick={() => setInventorySubTab('inbound')}
+            >
+              <ArrowDownLeft size={16} /> ثبت ورود بار جدید (خرید و شارژ انبار)
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-glass"
+              style={{
+                background: inventorySubTab === 'outbound' ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
+                borderColor: inventorySubTab === 'outbound' ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                color: inventorySubTab === 'outbound' ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)',
+                fontWeight: inventorySubTab === 'outbound' ? 700 : 500
+              }}
+              onClick={() => setInventorySubTab('outbound')}
+            >
+              <ArrowUpRight size={16} /> ثبت حواله خروج و ارسال مرسوله (تیپاکس/پست)
+            </button>
+
+            <button
+              type="button"
+              className="btn btn-glass"
+              style={{
+                background: inventorySubTab === 'history' ? 'hsla(var(--accent-purple), 0.15)' : 'transparent',
+                borderColor: inventorySubTab === 'history' ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
+                color: inventorySubTab === 'history' ? 'hsl(var(--accent-purple))' : 'var(--text-secondary)',
+                fontWeight: inventorySubTab === 'history' ? 700 : 500
+              }}
+              onClick={() => setInventorySubTab('history')}
+            >
+              <FileText size={16} /> تاریخچه حواله‌ها و گردش کالا ({stockLog.length})
+            </button>
+          </div>
+
+          {/* INBOUND SHIPMENT FORM */}
+          {inventorySubTab === 'inbound' && (
+            <div className="glass-card" style={{ padding: '28px' }}>
+              <div className="flex" style={{ alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(34, 197, 94, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ArrowDownLeft size={20} color="hsl(var(--accent-green))" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>رسید ورود بار جدید به انبار تک‌تینک</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>تعداد وارد شده مستقیماً به موجودی فعال سایت اضافه خواهد شد</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleInboundSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      انتخاب کالا <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      required
+                      value={inboundForm.product_id}
+                      onChange={e => setInboundForm({ ...inboundForm, product_id: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">-- انتخاب دستگاه از انبار --</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.brand} {p.model} (موجودی فعلی: {p.stock} عدد)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      تعداد دستگاه دریافتی <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={inboundForm.quantity}
+                      onChange={e => setInboundForm({ ...inboundForm, quantity: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      نام تامین‌کننده / بازرگانی
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: بازرگانی پارس آریا دبی"
+                      value={inboundForm.supplier_name}
+                      onChange={e => setInboundForm({ ...inboundForm, supplier_name: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      کد بچ یا شماره کوتاژ گمرکی
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="BATCH-2026-X1"
+                      className="font-code"
+                      value={inboundForm.batch_code}
+                      onChange={e => setInboundForm({ ...inboundForm, batch_code: e.target.value })}
+                      style={{ width: '100%', direction: 'ltr' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      بهای تمام‌شده هر واحد (تومان)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="مثال: 45000000"
+                      value={inboundForm.unit_cost}
+                      onChange={e => setInboundForm({ ...inboundForm, unit_cost: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      موقعیت و شماره قفسه در انبار
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="قفسه A-3 ردیف ۲"
+                      value={inboundForm.shelf_location}
+                      onChange={e => setInboundForm({ ...inboundForm, shelf_location: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                    توضیحات و گزارش سلامت فیزیکی بار
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="مثال: کارتن‌ها پلمپ، بدون آسیب، پارت نامبر اروپا"
+                    value={inboundForm.notes}
+                    onChange={e => setInboundForm({ ...inboundForm, notes: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className="flex" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <button
+                    type="submit"
+                    disabled={submittingShipment}
+                    className="btn btn-primary"
+                    style={{ padding: '12px 28px', background: 'hsl(var(--accent-green))', color: '#000', fontWeight: 700 }}
+                  >
+                    <ArrowDownLeft size={16} /> {submittingShipment ? 'در حال ثبت...' : 'ثبت قطعی ورود کالا و افزایش موجودی'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* OUTBOUND SHIPMENT FORM */}
+          {inventorySubTab === 'outbound' && (
+            <div className="glass-card" style={{ padding: '28px' }}>
+              <div className="flex" style={{ alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ArrowUpRight size={20} color="hsl(var(--accent-cyan))" />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700 }}>صدور حواله خروج و ارسال سفارش (Logistics Dispatch)</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>تعداد خارج شده بلافاصله از موجودی سیستم کسر خواهد شد</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleOutboundSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      انتخاب کالا <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      required
+                      value={outboundForm.product_id}
+                      onChange={e => setOutboundForm({ ...outboundForm, product_id: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="">-- انتخاب دستگاه --</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.brand} {p.model} (موجودی فعلی: {p.stock} عدد)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      تعداد ارسال <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      required
+                      value={outboundForm.quantity}
+                      onChange={e => setOutboundForm({ ...outboundForm, quantity: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      شرکت حمل و روش ارسال
+                    </label>
+                    <select
+                      value={outboundForm.courier}
+                      onChange={e => setOutboundForm({ ...outboundForm, courier: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="تیپاکس (Tipax)">تیپاکس (Tipax)</option>
+                      <option value="پست پیشتاز">پست پیشتاز</option>
+                      <option value="چاپار (Chapar)">چاپار (Chapar)</option>
+                      <option value="پیک موتوری ویژه تهران">پیک موتوری ویژه تهران</option>
+                      <option value="تحویل حضوری در شوروم">تحویل حضوری در شوروم</option>
+                      <option value="باربری هوایی / اتوبوسی">باربری هوایی / اتوبوسی</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      کد رهگیری / بارنامه (Waybill)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: TPX-98402187"
+                      className="font-code"
+                      value={outboundForm.tracking_number}
+                      onChange={e => setOutboundForm({ ...outboundForm, tracking_number: e.target.value })}
+                      style={{ width: '100%', direction: 'ltr' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      نام تحویل‌گیرنده / مشتری
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: مهندس رادمهر"
+                      value={outboundForm.recipient_name}
+                      onChange={e => setOutboundForm({ ...outboundForm, recipient_name: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                      شهر و استان مقصد
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: اصفهان"
+                      value={outboundForm.destination}
+                      onChange={e => setOutboundForm({ ...outboundForm, destination: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, marginBottom: '6px' }}>
+                    شماره فاکتور یا توضیحات مرسوله
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="مثال: سفارش اینترنتی #۱۰۴۲ - بسته‌بندی ضد ضربه حبابدار"
+                    value={outboundForm.notes}
+                    onChange={e => setOutboundForm({ ...outboundForm, notes: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className="flex" style={{ justifyContent: 'flex-end', marginTop: '8px' }}>
+                  <button
+                    type="submit"
+                    disabled={submittingShipment}
+                    className="btn btn-primary"
+                    style={{ padding: '12px 28px', background: 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' }}
+                  >
+                    <ArrowUpRight size={16} /> {submittingShipment ? 'در حال ثبت...' : 'صدور حواله خروج و کسر از انبار'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* HISTORY & AUDIT LOG */}
+          {inventorySubTab === 'history' && (
+            <div className="glass-card" style={{ padding: '24px' }}>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '16px' }}>
+                دفتر کل گردش موجودی انبار (Stock Movement Audit Trail)
+              </h3>
+
+              {stockLogLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>در حال بارگذاری لاگ انبار...</div>
+              ) : stockLog.length === 0 ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  هنوز هیچ رکورد گردشی ثبت نشده است.
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', minWidth: '780px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.8125rem' }}>
+                    <thead>
+                      <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                        <th style={{ padding: '10px' }}>زمان</th>
+                        <th style={{ padding: '10px' }}>محصول</th>
+                        <th style={{ padding: '10px' }}>نوع عملیات</th>
+                        <th style={{ padding: '10px' }}>تغییر موجودی</th>
+                        <th style={{ padding: '10px' }}>موجودی قبل / بعد</th>
+                        <th style={{ padding: '10px' }}>شرح و مرجع</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stockLog.map((log, idx) => (
+                        <tr key={log.id || idx} style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                          <td style={{ padding: '10px', color: 'var(--text-secondary)' }} className="font-code">{log.timestamp}</td>
+                          <td style={{ padding: '10px', fontWeight: 700 }}>{log.product_name || `محصول #${log.product_id}`}</td>
+                          <td style={{ padding: '10px' }}>
+                            <span className="badge" style={{
+                              background: log.change_amount > 0 ? 'hsla(var(--accent-green), 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                              color: log.change_amount > 0 ? 'hsl(var(--accent-green))' : '#ef4444'
+                            }}>
+                              {log.change_amount > 0 ? 'ورود به انبار' : 'خروج از انبار'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px', fontWeight: 800 }} className="font-code">
+                            {log.change_amount > 0 ? `+${log.change_amount}` : log.change_amount} عدد
+                          </td>
+                          <td style={{ padding: '10px' }} className="font-code">
+                            {log.old_stock} ← <strong>{log.new_stock}</strong>
+                          </td>
+                          <td style={{ padding: '10px', color: 'var(--text-secondary)' }}>
+                            {log.reason || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* 2.3. APPOINTMENTS & SERVICES MANAGEMENT */}
+      {activeSection === 'appointments' && (
+        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.6rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Calendar size={24} color="hsl(var(--accent-purple))" />
+                مدیریت نوبت‌ها، تست حضوری و خدمات ارتقا
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '4px 0 0' }}>
+                بررسی درخواست‌های بازدید در شوروم، ارتقای سخت‌افزاری و پذیرش گارانتی
+              </p>
+            </div>
+
+            <div className="flex" style={{ gap: '10px', alignItems: 'center' }}>
+              <div style={{ position: 'relative', width: '260px' }}>
+                <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="جستجو با نام، موبایل یا کد RES..."
+                  value={appointmentSearch}
+                  onChange={e => setAppointmentSearch(e.target.value)}
+                  style={{ paddingRight: '36px', width: '100%', fontSize: '0.85rem' }}
+                />
+              </div>
+
+              <select
+                value={appointmentFilter}
+                onChange={e => setAppointmentFilter(e.target.value)}
+                style={{ fontSize: '0.85rem' }}
+              >
+                <option value="all">همه دسته‌ها</option>
+                <option value="showcase">تست حضوری لپ‌تاپ</option>
+                <option value="upgrade">ارتقا و سرویس سیستم</option>
+                <option value="warranty">پذیرش گارانتی</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="glass-card" style={{ padding: '24px' }}>
+            {appointmentsLoading ? (
+              <div style={{ textAlign: 'center', padding: '60px' }}>در حال بارگذاری نوبت‌ها...</div>
+            ) : appointments.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                هیچ نوبت یا درخواست خدماتی ثبت نشده است.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '950px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.825rem' }}>
+                  <thead>
+                    <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                      <th style={{ padding: '12px 10px' }}>کد رهگیری</th>
+                      <th style={{ padding: '12px 10px' }}>مشتری</th>
+                      <th style={{ padding: '12px 10px' }}>شماره تماس</th>
+                      <th style={{ padding: '12px 10px' }}>نوع خدمت</th>
+                      <th style={{ padding: '12px 10px' }}>زمان رزرو</th>
+                      <th style={{ padding: '12px 10px' }}>دستگاه / توضیحات</th>
+                      <th style={{ padding: '12px 10px' }}>وضعیت</th>
+                      <th style={{ padding: '12px 10px', textAlign: 'left' }}>عملیات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appointments
+                      .filter(a => {
+                        if (appointmentFilter !== 'all' && a.appointment_type !== appointmentFilter) return false;
+                        if (appointmentSearch.trim()) {
+                          const q = appointmentSearch.toLowerCase();
+                          return (
+                            a.tracking_code?.toLowerCase().includes(q) ||
+                            a.customer_name?.toLowerCase().includes(q) ||
+                            a.customer_phone?.includes(q) ||
+                            a.product_name?.toLowerCase().includes(q)
+                          );
+                        }
+                        return true;
+                      })
+                      .map((a, idx) => (
+                        <tr key={a.id || idx} style={{ borderBottom: '1px solid var(--border-glass)', background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent' }}>
+                          <td style={{ padding: '12px 10px' }}>
+                            <strong className="font-code" style={{ color: 'hsl(var(--accent-cyan))' }}>{a.tracking_code}</strong>
+                          </td>
+                          <td style={{ padding: '12px 10px', fontWeight: 700 }}>{a.customer_name}</td>
+                          <td style={{ padding: '12px 10px' }} className="font-code" dir="ltr">{a.customer_phone}</td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <span className="badge" style={{
+                              background: a.appointment_type === 'showcase' ? 'hsla(var(--accent-cyan), 0.15)' : a.appointment_type === 'upgrade' ? 'hsla(var(--accent-purple), 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                              color: a.appointment_type === 'showcase' ? 'hsl(var(--accent-cyan))' : a.appointment_type === 'upgrade' ? 'hsl(var(--accent-purple))' : '#ef4444'
+                            }}>
+                              {a.appointment_type === 'showcase' ? 'تست حضوری' : a.appointment_type === 'upgrade' ? 'ارتقای سیستم' : 'گارانتی'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <div>{a.preferred_date}</div>
+                            <span style={{ fontSize: '0.725rem', color: 'var(--text-secondary)' }}>{a.preferred_time}</span>
+                          </td>
+                          <td style={{ padding: '12px 10px', maxWidth: '240px' }}>
+                            {a.product_name && <div style={{ fontWeight: 600, color: 'hsl(var(--accent-cyan))' }}>{a.product_name}</div>}
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{a.notes || '—'}</span>
+                          </td>
+                          <td style={{ padding: '12px 10px' }}>
+                            <select
+                              value={a.status}
+                              onChange={e => updateAppointmentStatus(a.id, e.target.value)}
+                              style={{ 
+                                padding: '4px 8px', 
+                                fontSize: '0.75rem', 
+                                borderRadius: '6px',
+                                background: a.status === 'confirmed' ? 'hsla(var(--accent-green), 0.2)' : a.status === 'completed' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0,0,0,0.2)'
+                              }}
+                            >
+                              <option value="pending">در انتظار بررسی</option>
+                              <option value="confirmed">تایید شده</option>
+                              <option value="in_progress">در حال سرویس</option>
+                              <option value="completed">تکمیل و تحویل داده شد</option>
+                              <option value="cancelled">لغو شده</option>
+                            </select>
+                          </td>
+                          <td style={{ padding: '12px 10px', textAlign: 'left' }}>
+                            <button
+                              type="button"
+                              className="btn btn-glass"
+                              style={{ padding: '4px 8px', color: 'hsl(var(--accent-red))' }}
+                              onClick={() => deleteAppointment(a.id)}
+                              title="حذف رکورد نوبت"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* 2.5. BLOG MANAGEMENT */}
+      {activeSection === 'blog' && (
+        <div className="animate-fade-in">
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+            <div className="flex" style={{ gap: '12px', alignItems: 'center' }}>
+              <div style={{ position: 'relative', width: '280px' }}>
+                <Search size={16} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="جستجو در عنوان یا دسته..."
+                  value={blogSearch}
+                  onChange={e => setBlogSearch(e.target.value)}
+                  style={{ paddingRight: '36px', width: '100%' }}
+                />
+              </div>
+              <span style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                {blogPosts.length} مقاله ثبت شده
+              </span>
+            </div>
+
+            <button className="btn btn-primary" onClick={handleOpenAddBlogPost}>
+              <Plus size={18} /> افزودن مقاله جدید
+            </button>
+          </div>
+
+          {blogLoading ? (
+            <div style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
+              در حال بارگذاری مقالات...
+            </div>
+          ) : blogPosts.length === 0 ? (
+            <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <BookOpen size={48} color="var(--text-secondary)" style={{ margin: '0 auto 16px', opacity: 0.5 }} />
+              <h3>هنوز مقاله‌ای در وبلاگ ثبت نشده است</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                با نوشتن مقالات تخصصی و راهنمای خرید، سئو و ترافیک فروشگاه تک‌تینک را افزایش دهید.
+              </p>
+              <button className="btn btn-primary" onClick={handleOpenAddBlogPost}>
+                <Plus size={18} /> اولین مقاله را بنویسید
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+              {blogPosts
+                .filter(p => !blogSearch || p.title?.toLowerCase().includes(blogSearch.toLowerCase()) || p.category?.toLowerCase().includes(blogSearch.toLowerCase()))
+                .map(post => (
+                  <div key={post.id} className="glass-card flex" style={{ flexDirection: 'column', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', height: '170px', width: '100%', overflow: 'hidden' }}>
+                      <img
+                        src={post.image || 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80'}
+                        alt={post.title}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <span className="badge" style={{ position: 'absolute', top: '10px', right: '10px', background: 'hsl(var(--accent-cyan))', color: '#fff' }}>
+                        {post.category || 'تکنولوژی'}
+                      </span>
+                      <span className="badge" style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '10px',
+                        background: (post.published !== 0 && post.published !== false) ? 'hsla(var(--accent-green), 0.2)' : 'rgba(100,100,100,0.5)',
+                        color: (post.published !== 0 && post.published !== false) ? 'hsl(var(--accent-green))' : '#ccc',
+                        border: '1px solid currentColor'
+                      }}>
+                        {(post.published !== 0 && post.published !== false) ? 'منتشر شده' : 'پیش‌نویس'}
+                      </span>
+                    </div>
+
+                    <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                      <div className="flex" style={{ gap: '8px', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '10px', flexWrap: 'wrap' }}>
+                        <span>{post.date}</span>
+                        <span>•</span>
+                        <span>{post.read_time || post.readTime || '۵ دقیقه'}</span>
+                        <span>•</span>
+                        <span>{post.author || 'تک‌تینک'}</span>
+                      </div>
+
+                      <h3 style={{ fontSize: '1.05rem', marginBottom: '8px', lineHeight: '1.5' }}>
+                        {post.title}
+                      </h3>
+
+                      <p style={{
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.85rem',
+                        lineHeight: '1.6',
+                        marginBottom: '16px',
+                        flexGrow: 1,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {post.excerpt || 'بدون خلاصه'}
+                      </p>
+
+                      <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--border-glass)' }}>
+                        <button
+                          className="btn btn-glass"
+                          style={{ padding: '6px 14px', fontSize: '0.8125rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          onClick={() => handleOpenEditBlogPost(post)}
+                        >
+                          <Edit size={14} /> ویرایش
+                        </button>
+                        <button
+                          className="btn btn-glass"
+                          style={{ padding: '6px 12px', fontSize: '0.8125rem', color: 'hsl(var(--accent-red))' }}
+                          onClick={() => handleDeleteBlogPost(post.id, post.title)}
+                          title="حذف مقاله"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1053,6 +2052,136 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
               </div>
 
+              {/* Showroom & Business Location Settings */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={18} color="hsl(var(--accent-cyan))" />
+                  اطلاعات نشانی، ساعات کاری و موقعیت مکانی شوروم
+                </h3>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>نشانی کامل شوروم و دفتر مرکزی</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.store_address || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_address: e.target.value })} 
+                      placeholder="تهران، خیابان ولیعصر، تقاطع طالقانی..."
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>تلفن ثابت فروشگاه</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.store_phone || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_phone: e.target.value })} 
+                      placeholder="۰۲۱-۸۸۲۲۶۶۰۰"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>شماره همراه و مشاوره واتس‌اپ</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.store_mobile || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_mobile: e.target.value })} 
+                      placeholder="۰۹۱۲-۳۴۵۶۷۸۹"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>ساعات پاسخگویی و پذیرش حضوری</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.store_hours || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_hours: e.target.value })} 
+                      placeholder="شنبه تا چهارشنبه ۱۰:۰۰ الی ۲۰:۰۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۶:۰۰"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>لینک مسیریابی در نقشه (گوگل مپ / نشان / بلد)</label>
+                    <input 
+                      type="text" 
+                      className="font-code"
+                      value={settingsForm.store_map_link || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_map_link: e.target.value })} 
+                      placeholder="https://maps.google.com/?q=..."
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>متن معرفی و درباره فروشگاه (نمایش در مودال درباره ما)</label>
+                    <textarea 
+                      rows="3"
+                      value={settingsForm.store_about || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, store_about: e.target.value })} 
+                      placeholder="تک‌تینک نخستین مرجع تخصصی بررسی سخت‌افزاری..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Official Social Media Channels */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ExternalLink size={18} color="hsl(var(--accent-purple))" />
+                  کانال‌ها و شبکه‌های اجتماعی رسمی تک‌تینک (فوتر و درباره ما)
+                </h3>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '0.85rem' }}>
+                      <TelegramIcon size={16} color="#29a9ea" /> لینک کانال تلگرام (Telegram)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="font-code"
+                      value={settingsForm.telegram_url || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, telegram_url: e.target.value })} 
+                      placeholder="https://t.me/techtink"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '0.85rem' }}>
+                      <InstagramIcon size={16} color="#e1306c" /> لینک پیج اینستاگرام (Instagram)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="font-code"
+                      value={settingsForm.instagram_url || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, instagram_url: e.target.value })} 
+                      placeholder="https://instagram.com/techtink"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '0.85rem' }}>
+                      <BaleIcon size={16} /> لینک کانال پیام‌رسان بله (Bale)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="font-code"
+                      value={settingsForm.bale_url || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, bale_url: e.target.value })} 
+                      placeholder="https://ble.ir/techtink"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', fontSize: '0.85rem' }}>
+                      <AparatIcon size={16} /> لینک کانال ویدیوهای آپارات (Aparat)
+                    </label>
+                    <input 
+                      type="text" 
+                      className="font-code"
+                      value={settingsForm.aparat_url || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, aparat_url: e.target.value })} 
+                      placeholder="https://www.aparat.com/techtink"
+                      style={{ direction: 'ltr' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div style={{ marginTop: '16px' }}>
                 <button type="submit" className="btn btn-primary" disabled={savingSettings}>
                   {savingSettings ? 'در حال ذخیره...' : 'ذخیره تنظیمات فروشگاه'}
@@ -1063,389 +2192,22 @@ export default function AdminDashboard({ user, onLogout }) {
         </div>
       )}
 
-      {/* 1. Modal: Comprehensive Product Editor & Expert Review */}
-      {productModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', borderRadius: '20px', border: '1px solid var(--border-glass)' }}>
-            
-            {/* Modal Header */}
-            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Package size={22} color="hsl(var(--accent-cyan))" />
-                  {productModalMode === 'edit' ? `ویرایش و نقد تخصصی: ${productForm.name}` : 'افزودن لپ‌تاپ جدید به انبار'}
-                </h2>
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                  تنظیم مشخصات فنی، سازندگان قطعات، نقد و بررسی و معرفی اجمالی
-                </p>
-              </div>
-              <button className="btn btn-glass" style={{ padding: '8px', borderRadius: '50%' }} onClick={() => setProductModalOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Modal Tabs */}
-            <div className="flex" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
-              {[
-                { id: 'basic', label: 'اطلاعات عمومی و قیمت', icon: Package },
-                { id: 'specs', label: 'سخت‌افزار و برندها', icon: Cpu },
-                { id: 'review', label: 'نقد، معرفی و بررسی تخصصی', icon: BookOpen }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setProductModalTab(tab.id)}
-                  className="btn"
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '0.875rem',
-                    borderRadius: '8px',
-                    background: productModalTab === tab.id ? 'hsl(var(--accent-cyan))' : 'rgba(0,0,0,0.04)',
-                    color: productModalTab === tab.id ? 'white' : 'var(--text-primary)',
-                    fontWeight: productModalTab === tab.id ? 'bold' : 'normal'
-                  }}
-                >
-                  <tab.icon size={16} /> {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {productModalError && (
-              <div style={{ padding: '12px', borderRadius: '8px', background: 'hsla(var(--accent-red), 0.15)', color: 'hsl(var(--accent-red))', marginBottom: '16px', fontSize: '0.875rem' }}>
-                {productModalError}
-              </div>
-            )}
-
-            <form onSubmit={handleSaveProductForm} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              
-              {/* TAB 1: BASIC INFO */}
-              {productModalTab === 'basic' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="animate-fade-in">
-                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>نام کامل لپ‌تاپ *</label>
-                      <input 
-                        type="text" 
-                        required 
-                        value={productForm.name} 
-                        onChange={e => setProductForm({ ...productForm, name: e.target.value })} 
-                        placeholder="مثال: تک‌تینک پرو ۱۶ (نسخه OLED)" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>نامک لاتین یکتا (Slug) *</label>
-                      <input 
-                        type="text" 
-                        className="font-code" 
-                        required 
-                        value={productForm.slug} 
-                        onChange={e => setProductForm({ ...productForm, slug: e.target.value })} 
-                        placeholder="tink-pro-16-oled" 
-                        style={{ direction: 'ltr' }} 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>قیمت پایه کالا (تومان) *</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={productForm.basePrice} 
-                        onChange={e => setProductForm({ ...productForm, basePrice: e.target.value })} 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>موجودی فیزیکی در انبار (عدد) *</label>
-                      <input 
-                        type="number" 
-                        required 
-                        value={productForm.stock} 
-                        onChange={e => setProductForm({ ...productForm, stock: e.target.value })} 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>دسته‌بندی اصلی</label>
-                      <select 
-                        value={productForm.category} 
-                        onChange={e => setProductForm({ ...productForm, category: e.target.value })}
-                      >
-                        <option value="گیمینگ">گیمینگ (Gaming)</option>
-                        <option value="تولید محتوا">تولید محتوا و طراحی (Creator)</option>
-                        <option value="فوق سبک">فوق سبک و باریک (Ultrabook)</option>
-                        <option value="ایستگاه کاری">ایستگاه کاری مهندسی (Workstation)</option>
-                        <option value="اقتصادی">اقتصادی و دانشجویی (Budget)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>سری ساخت / خانواده محصول</label>
-                      <input 
-                        type="text" 
-                        value={productForm.series} 
-                        onChange={e => setProductForm({ ...productForm, series: e.target.value })} 
-                        placeholder="مثال: سری بلید یا سری استودیو" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>برچسب ویژه (نشان کالا)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.badge} 
-                        onChange={e => setProductForm({ ...productForm, badge: e.target.value })} 
-                        placeholder="مثلاً: پرچمدار، جدید، ۲۰۲۴" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>شرایط گارانتی و ضمانت</label>
-                      <input 
-                        type="text" 
-                        value={productForm.guarantee} 
-                        onChange={e => setProductForm({ ...productForm, guarantee: e.target.value })} 
-                        placeholder="گارانتی ۲ ساله طلایی تک‌تینک" 
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>لینک تصویر شاخص محصول (URL)</label>
-                    <input 
-                      type="text" 
-                      className="font-code" 
-                      value={productForm.image} 
-                      onChange={e => setProductForm({ ...productForm, image: e.target.value })} 
-                      style={{ direction: 'ltr' }} 
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>شعار تبلیغاتی و عنوان بازاریابی</label>
-                    <input 
-                      type="text" 
-                      value={productForm.tagline} 
-                      onChange={e => setProductForm({ ...productForm, tagline: e.target.value })} 
-                      placeholder="لپ‌تاپ فوق حرفه‌ای برای هوش مصنوعی و گیمینگ سطح بالا" 
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: HARDWARE & SPECS */}
-              {productModalTab === 'specs' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="animate-fade-in">
-                  
-                  {/* Brand categorization pills */}
-                  <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px', background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '12px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--accent-cyan))' }}>
-                        سازنده پردازنده مرکزی (CPU Maker)
-                      </label>
-                      <select 
-                        value={productForm.cpuBrand} 
-                        onChange={e => setProductForm({ ...productForm, cpuBrand: e.target.value })}
-                        style={{ fontWeight: 'bold' }}
-                      >
-                        <option value="Intel">اینتل (Intel)</option>
-                        <option value="AMD">ای‌ام‌دی (AMD)</option>
-                        <option value="Apple">اپل (Apple Silicon)</option>
-                        <option value="Other">سایر سازندگان</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 'bold', marginBottom: '6px', color: 'hsl(var(--accent-green))' }}>
-                        سازنده پردازنده گرافیکی (GPU Maker)
-                      </label>
-                      <select 
-                        value={productForm.gpuBrand} 
-                        onChange={e => setProductForm({ ...productForm, gpuBrand: e.target.value })}
-                        style={{ fontWeight: 'bold' }}
-                      >
-                        <option value="NVIDIA">انویدیا (NVIDIA GeForce)</option>
-                        <option value="AMD">ای‌ام‌دی (AMD Radeon)</option>
-                        <option value="Intel">اینتل (Intel Arc)</option>
-                        <option value="Apple">اپل (Apple GPU)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>مدل دقیق CPU</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.cpu || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, cpu: e.target.value } })} 
-                        placeholder="Intel Core i9-14900HX" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>مدل دقیق گرافیک (GPU)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.gpu || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, gpu: e.target.value } })} 
-                        placeholder="NVIDIA GeForce RTX 4080 (12GB GDDR6)" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>توان هوش مصنوعی (NPU)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.npuScore || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, npuScore: e.target.value } })} 
-                        placeholder="45 TOPS" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>حافظه رم (RAM)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.ram || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, ram: e.target.value } })} 
-                        placeholder="32GB DDR5 5600MHz" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>حافظه داخلی (SSD)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.storage || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, storage: e.target.value } })} 
-                        placeholder="1TB NVMe PCIe 4.0 SSD" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>صفحه نمایش (Display)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.display || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, display: e.target.value } })} 
-                        placeholder="16 QHD+ 240Hz 100% DCI-P3" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>باتری و آداپتور شارژ</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.battery || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, battery: e.target.value } })} 
-                        placeholder="90Wh (شارژ فوق سریع 280W)" 
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>وزن خالص دستگاه</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs.weight || ''} 
-                        onChange={e => setProductForm({ ...productForm, specs: { ...productForm.specs, weight: e.target.value } })} 
-                        placeholder="2.2 kg" 
-                      />
-                    </div>
-                    <div style={{ gridColumn: '1 / -1' }}>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>جنس بدنه و ساختار شاسی (Chassis Build & Material)</label>
-                      <input 
-                        type="text" 
-                        value={productForm.specs?.chassis || productForm.chassis || ''} 
-                        onChange={e => setProductForm({ ...productForm, chassis: e.target.value, specs: { ...productForm.specs, chassis: e.target.value } })} 
-                        placeholder="All-Aluminum CNC Machined Unibody" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: EXPERT REVIEW & BRIEF INTRO */}
-              {productModalTab === 'review' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }} className="animate-fade-in">
-                  
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '6px' }}>
-                      معرفی اجمالی لپ‌تاپ (Product Overview & Brief Introduction)
-                    </label>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', margin: '0 0 8px 0' }}>
-                      متن معرفی کالا که در بالای صفحه محصول و در ابتدای برگه نقد و بررسی تخصصی نمایش داده می‌شود.
-                    </p>
-                    <textarea 
-                      rows={3} 
-                      value={productForm.expertReview.intro} 
-                      onChange={e => setProductForm({ ...productForm, expertReview: { ...productForm.expertReview, intro: e.target.value } })} 
-                      placeholder="این لپ‌تاپ با طراحی باریک، سیستم خنک‌کننده محفظه بخار و پردازش پرشتاب گرافیکی، یکی از قدرتمندترین ابزارهای بازار برای گیمرها و طراحان ۳ بعدی است..."
-                      style={{ width: '100%', padding: '12px', lineHeight: '1.7' }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '6px' }}>
-                      جمع‌بندی کارشناسی (Expert Verdict)
-                    </label>
-                    <textarea 
-                      rows={2} 
-                      value={productForm.expertReview.verdict} 
-                      onChange={e => setProductForm({ ...productForm, expertReview: { ...productForm.expertReview, verdict: e.target.value } })} 
-                      placeholder="اگر به دنبال نهایت پایداری در نرخ فریم بازی‌ها و پردازش بدون افت هستید، این لپ‌تاپ انتخابی بی‌نظیر با ارزش خرید بسیار بالا است."
-                      style={{ width: '100%', padding: '12px', lineHeight: '1.7' }}
-                    />
-                  </div>
-
-                  <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: 'hsl(var(--accent-green))', marginBottom: '6px' }}>
-                        نقاط قوت کلیدی (هر مورد در یک خط)
-                      </label>
-                      <textarea 
-                        rows={4} 
-                        value={productForm.expertReview.pros} 
-                        onChange={e => setProductForm({ ...productForm, expertReview: { ...productForm.expertReview, pros: e.target.value } })} 
-                        placeholder="پردازنده مرکزی قدرتمند با توان توربو&#10;صفحه نمایش پرسرعت و دقیق کالیبره&#10;خنک‌کنندگی ساکت و کم‌صدا&#10;کیفیت شاسی تمام آلومینیومی"
-                        style={{ width: '100%', padding: '12px', lineHeight: '1.7' }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 'bold', color: 'hsl(var(--accent-red))', marginBottom: '6px' }}>
-                        نقاط ضعف و ملاحظات (هر مورد در یک خط)
-                      </label>
-                      <textarea 
-                        rows={4} 
-                        value={productForm.expertReview.cons} 
-                        onChange={e => setProductForm({ ...productForm, expertReview: { ...productForm.expertReview, cons: e.target.value } })} 
-                        placeholder="قیمت در رده پریمیوم&#10;آداپتور برق نسبتاً سنگین برای حمل"
-                        style={{ width: '100%', padding: '12px', lineHeight: '1.7' }}
-                      />
-                    </div>
-                  </div>
-
-                </div>
-              )}
-
-              {/* Modal Actions */}
-              <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-glass)' }}>
-                <button type="button" className="btn btn-glass" onClick={() => setProductModalOpen(false)}>
-                  انصراف
-                </button>
-                <div className="flex" style={{ gap: '12px' }}>
-                  {productModalTab !== 'review' && (
-                    <button 
-                      type="button" 
-                      className="btn btn-glass" 
-                      onClick={() => setProductModalTab(productModalTab === 'basic' ? 'specs' : 'review')}
-                    >
-                      مرحله بعدی
-                    </button>
-                  )}
-                  <button type="submit" className="btn btn-primary" disabled={savingProduct}>
-                    {savingProduct ? 'در حال ثبت...' : (productModalMode === 'edit' ? 'ذخیره تغییرات لپ‌تاپ' : 'ثبت لپ‌تاپ در انبار')}
-                  </button>
-                </div>
-              </div>
-
-            </form>
-          </div>
-        </div>
-      )}
+      {/* 1. Modal: Comprehensive Product Editor & Expert Review with Live Split View */}
+      <ProductEditorModal
+        isOpen={productModalOpen}
+        mode={productModalMode}
+        initialData={productForm}
+        onClose={() => setProductModalOpen(false)}
+        onSave={handleSaveProductForm}
+        isSaving={savingProduct}
+        error={productModalError}
+        blogPosts={blogPosts}
+      />
 
       {/* 2. Modal: Model-Specific Drivers & Support Management */}
       {driverModalProduct && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', zIndex: 1200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '820px', maxHeight: '90vh', overflowY: 'auto', padding: '32px', borderRadius: '20px', border: '1px solid var(--border-glass)' }}>
+        <div className="modal-backdrop-wrapper" onClick={() => setDriverModalProduct(null)}>
+          <div className="glass-panel modal-card" style={{ maxWidth: '820px', padding: '32px' }} onClick={e => e.stopPropagation()}>
             
             <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
@@ -1625,6 +2387,25 @@ export default function AdminDashboard({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      {/* 3. Modal: Sophisticated Blog Post Editor with Live View & Inline Photo Inserter */}
+      <BlogEditorModal
+        isOpen={isBlogModalOpen}
+        initialData={blogForm}
+        onClose={() => setIsBlogModalOpen(false)}
+        onSave={handleSaveBlogPost}
+        isSaving={blogSaving}
+        error={blogError}
+        products={products}
+      />
+
+      {/* 4. Modal: Vector Code 128 & QR Barcode Label Generator */}
+      <BarcodeGeneratorModal
+        isOpen={barcodeModalOpen}
+        onClose={() => { setBarcodeModalOpen(false); setBarcodeProduct(null); }}
+        product={barcodeProduct}
+        allProducts={products}
+      />
 
     </div>
   );

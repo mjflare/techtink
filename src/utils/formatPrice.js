@@ -1,4 +1,4 @@
-// Formats prices in Toman with Persian thousands separators and optional currency label
+// Formats prices in "میلیون تومان" with Persian digits and concise decimals (no clutter of zeros)
 
 export function toPersianDigits(num) {
   if (num === null || num === undefined) return '';
@@ -8,12 +8,32 @@ export function toPersianDigits(num) {
 
 export function formatPrice(price, includeUnit = true) {
   if (price === null || price === undefined || isNaN(price)) {
-    return includeUnit ? '۰ تومان' : '۰';
+    return includeUnit ? '۰ میلیون تومان' : '۰';
   }
-  const rounded = Math.round(Number(price));
-  const formattedNumber = rounded.toLocaleString('en-US'); // e.g. 24,500,000
-  const persianFormatted = toPersianDigits(formattedNumber);
-  return includeUnit ? `${persianFormatted} تومان` : persianFormatted;
+  const num = Number(price);
+  if (num === 0) {
+    return includeUnit ? '۰ میلیون تومان' : '۰';
+  }
+
+  let formattedVal = '';
+  let unit = 'میلیون تومان';
+
+  if (num < 1000) {
+    // Already in millions (e.g. 21.8 or 35)
+    formattedVal = num % 1 === 0 ? num.toFixed(0) : num.toFixed(1).replace(/\.0$/, '');
+  } else if (num >= 1000000) {
+    // Full Toman amount (e.g. 21,800,000 or 35,000,000)
+    const millions = num / 1000000;
+    formattedVal = millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1).replace(/\.0$/, '');
+  } else {
+    // Under 1 million (e.g. 500,000)
+    const thousands = num / 1000;
+    formattedVal = thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1).replace(/\.0$/, '');
+    unit = 'هزار تومان';
+  }
+
+  const persian = toPersianDigits(formattedVal);
+  return includeUnit ? `${persian} ${unit}` : persian;
 }
 
 export function parseToman(str) {
@@ -21,6 +41,10 @@ export function parseToman(str) {
   const english = String(str)
     .replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
     .replace(/[٠-٩]/g, (d) => '٠١٢٣۴٥۶۷۸۹'.indexOf(d))
-    .replace(/[^0-9]/g, '');
-  return parseInt(english, 10) || 0;
+    .replace(/[^0-9.]/g, '');
+  const num = parseFloat(english);
+  if (isNaN(num)) return 0;
+  // If user entered e.g. 21.5 (millions), convert to full Toman
+  if (num < 1000) return Math.round(num * 1000000);
+  return Math.round(num);
 }

@@ -15,7 +15,26 @@ export function serializeProduct(p, { full = false } = {}) {
   const cpuBrand = p.cpu_brand || specs.cpuBrand || (cpuStr.includes('intel') ? 'Intel' : cpuStr.includes('amd') ? 'AMD' : 'Intel');
   const gpuBrand = p.gpu_brand || specs.gpuBrand || (gpuStr.includes('nvidia') || gpuStr.includes('rtx') ? 'NVIDIA' : gpuStr.includes('amd') || gpuStr.includes('radeon') ? 'AMD' : 'Intel');
 
-  // Benchmark scores (0-100 scale for charts)
+  // TechTink Score (0-100 scale across the 6 key parameters)
+  const defaultOverall = (cpuStr.includes('i9') || cpuStr.includes('ryzen 9')) ? 92 : (cpuStr.includes('i7') || cpuStr.includes('ryzen 7')) ? 89 : 86;
+  const techTinkScore = specs.techTinkScore || {
+    overall: defaultOverall,
+    batteryLife: (specs.battery?.includes('۹') || specs.battery?.includes('9') || specs.battery?.includes('80Wh')) ? 88 : 82,
+    temperature: 87,
+    processingPower: (cpuStr.includes('i7') || cpuStr.includes('ryzen 7') || gpuStr.includes('3060') || gpuStr.includes('quadro')) ? 91 : 80,
+    usability: 91,
+    buildQuality: 92,
+    repairability: 89
+  };
+
+  // Determine Brand, Model, and Grade
+  const rawName = p.name || '';
+  const firstWord = rawName.split(' ')[0] || '';
+  const brand = p.brand || specs.brand || (['Lenovo', 'HP', 'Dell', 'Asus', 'Apple', 'Acer', 'MSI'].includes(firstWord) ? firstWord : 'TechTink');
+  const model = p.model || specs.model || (rawName.startsWith(brand) ? rawName.slice(brand.length).trim() : rawName);
+  const grade = p.grade || specs.grade || 'گرید ++A اروپایی (تمیز در حد نو)';
+
+  // Benchmark scores (0-100 scale for charts, kept for compatibility)
   const benchmarks = specs.benchmarks || {
     cpuScore: (cpuStr.includes('i9') || cpuStr.includes('ryzen 9')) ? 96 : (cpuStr.includes('i7') || cpuStr.includes('ryzen 7') || cpuStr.includes('ultra 7')) ? 89 : 78,
     gamingScore: gpuStr.includes('4090') ? 99 : gpuStr.includes('4080') ? 94 : gpuStr.includes('4070') ? 86 : gpuStr.includes('4060') ? 78 : gpuStr.includes('4050') ? 68 : 50,
@@ -46,6 +65,9 @@ export function serializeProduct(p, { full = false } = {}) {
     id: p.id,
     slug: p.slug,
     name: p.name,
+    brand,
+    model,
+    grade,
     tagline: p.tagline,
     category: p.category,
     series: p.series,
@@ -66,10 +88,12 @@ export function serializeProduct(p, { full = false } = {}) {
       ram: (specs.ram ? (specs.ram.match(/(\d+\s*GB)/i)?.[1]?.toUpperCase() || specs.ram.split(' ')[0]) : '16GB'),
       storage: (specs.storage ? (specs.storage.match(/(\d+\s*(?:TB|GB))/i)?.[1]?.toUpperCase() + ' SSD' || specs.storage.split(' ')[0] + ' SSD') : '1TB SSD'),
       display: (specs.display ? specs.display.split('(')[0].replace(/\b(?:Dual-Mode|Anti-Glare|\d+ms)\b/gi, '').replace(/\s+/g, ' ').trim() : 'Display'),
-      chassis: (/carbon/i.test(p.chassis || specs.chassis || '') ? 'Carbon Fiber' : /magnesium/i.test(p.chassis || specs.chassis || '') ? 'Magnesium Alloy' : /polycarbonate/i.test(p.chassis || specs.chassis || '') ? 'Polycarbonate' : 'All-Aluminum')
+      battery: (specs.battery ? (specs.battery.match(/(\d+\s*Wh)/i)?.[1]?.toUpperCase() + ' Battery' || '50Wh Battery') : '50Wh Battery'),
+      chassis: (/carbon|کربن/i.test(p.chassis || specs.chassis || '') ? 'فیبر کربن' : /magnesium|منیزیم/i.test(p.chassis || specs.chassis || '') ? 'آلیاژ منیزیم' : /polycarbonate|پلی‌کربنات/i.test(p.chassis || specs.chassis || '') ? 'پلی‌کربنات مقاوم' : 'تمام آلومینیوم')
     },
     cpuBrand,
     gpuBrand,
+    techTinkScore,
     benchmarks,
     expertReview,
     rating: rating.c ? Math.round(rating.avg * 10) / 10 : null,
@@ -81,6 +105,21 @@ export function serializeProduct(p, { full = false } = {}) {
   const variants = db.all('SELECT id, type, name, price FROM product_variants WHERE product_id = ? ORDER BY type, sort, id', p.id);
   out.upgrades = { ram: [], storage: [], display: [] };
   for (const v of variants) (out.upgrades[v.type] ||= []).push({ id: v.id, name: v.name, price: v.price });
+
+  // Associated blog reviews
+  const linkedReviews = db.all("SELECT id, title, excerpt, date, read_time, image, author, author_role, category FROM blog_posts WHERE product_slug = ? AND published = 1 ORDER BY rowid DESC", p.slug);
+  out.blogReviews = linkedReviews.map(r => ({
+    id: r.id,
+    title: r.title,
+    excerpt: r.excerpt,
+    date: r.date,
+    readTime: r.read_time,
+    image: r.image,
+    author: r.author,
+    authorRole: r.author_role,
+    category: r.category
+  }));
+  out.blogReview = out.blogReviews[0] || null;
   
   if (full) {
     out.description = p.description;

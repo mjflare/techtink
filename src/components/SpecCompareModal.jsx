@@ -15,20 +15,21 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
   ];
 
   return (
-    <dialog open className="glass-panel" style={{ 
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-      width: '95%', maxWidth: '1200px', maxHeight: '92vh', overflowY: 'auto', zIndex: 1000,
-      display: 'flex', flexDirection: 'column', direction: 'rtl'
-    }}>
-      {/* Header */}
-      <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid var(--border-glass)' }}>
+    <div className="modal-backdrop-wrapper" onClick={onClose}>
+      <div 
+        className="glass-panel modal-card" 
+        style={{ maxWidth: '1200px' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid var(--border-glass)' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BarChart2 size={24} color="hsl(var(--accent-cyan))" />
             مقایسه تخصصی و چارت عملکرد لپ‌تاپ‌ها ({compareLaptops.length} مدل)
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px', margin: 0 }}>
-            مقایسه شاخص‌های بنچمارک سخت‌افزاری و مشخصات فنی رو در رو
+            مقایسه امتیاز تک‌تینک و مشخصات فنی تفصیلی رو در رو
           </p>
         </div>
         <button className="btn btn-glass" style={{ padding: '8px', borderRadius: '50%' }} onClick={onClose}>
@@ -38,19 +39,21 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
 
       <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
         
-        {/* 1. VISUAL COMPARISON BENCHMARK CHART */}
+        {/* 1. TECHTINK SCORE COMPARISON CHART */}
         <div className="glass-card" style={{ padding: '28px' }}>
           <h3 style={{ fontSize: '1.25rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Zap size={20} color="hsl(var(--accent-cyan))" />
-            چارت مقایسه‌ای قدرت سخت‌افزار و راندمان (مقیاس ۰ تا ۱۰۰)
+            <Sparkles size={20} color="hsl(var(--accent-cyan))" />
+            چارت مقایسه‌ای امتیاز تک‌تینک (مقیاس ۰ تا ۱۰۰)
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {[
-              { label: 'توان پردازنده مرکزی (CPU Multi-Core Benchmark)', key: 'cpuScore' },
-              { label: 'قدرت پردازش گرافیک و گیمینگ (Gaming / 3D Graphics)', key: 'gamingScore' },
-              { label: 'دقت و روشنایی صفحه نمایش (Display Quality)', key: 'displayScore' },
-              { label: 'ماندگاری باتری در کاربری روزانه (Battery Endurance)', key: 'batteryScore' }
+              { label: 'عمر باتری', key: 'batteryLife' },
+              { label: 'دما', key: 'temperature' },
+              { label: 'توان پردازشی', key: 'processingPower' },
+              { label: 'سهولت استفاده', key: 'usability' },
+              { label: 'کیفیت ساخت و حس دستگاه', key: 'buildQuality' },
+              { label: 'ارتقا پذیری و تعمیر پذیری', key: 'repairability' }
             ].map((metric, mi) => (
               <div key={mi} style={{ background: 'rgba(0,0,0,0.02)', padding: '16px 20px', borderRadius: '12px' }}>
                 <div style={{ fontWeight: 'bold', fontSize: '0.9375rem', marginBottom: '12px' }}>
@@ -58,14 +61,22 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {compareLaptops.map((laptop, li) => {
-                    const bm = laptop.benchmarks || { cpuScore: 88, gamingScore: 80, displayScore: 90, batteryScore: 78 };
-                    const score = bm[metric.key] || 80;
+                    const scoreObj = laptop.techTinkScore || {
+                      batteryLife: 85,
+                      temperature: 88,
+                      processingPower: 86,
+                      usability: 91,
+                      buildQuality: 92,
+                      repairability: 89
+                    };
+                    const score = scoreObj[metric.key] || 85;
                     const color = laptopColors[li % laptopColors.length];
+                    const labelName = laptop.brand ? `${laptop.brand} ${laptop.model}` : laptop.name;
 
                     return (
                       <div key={laptop.id} className="benchmark-row">
-                        <span className="benchmark-row-name">
-                          {laptop.name}
+                        <span className="benchmark-row-name" style={{ direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-tech)', fontWeight: 600 }}>
+                          {labelName}
                         </span>
                         <div className="benchmark-row-track">
                           <div style={{ flexGrow: 1, height: '10px', background: 'rgba(0,0,0,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
@@ -102,8 +113,15 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                   <th key={laptop.id} style={{ padding: '16px', borderBottom: '1px solid var(--border-glass)', verticalAlign: 'top' }}>
                     <div className="glass-panel" style={{ padding: '12px', borderRadius: '12px' }}>
                       <img src={laptop.image} alt={laptop.name} style={{ width: '100%', height: '140px', objectFit: 'cover', borderRadius: '8px', marginBottom: '12px' }} />
-                      <div style={{ fontSize: '1.125rem', marginBottom: '6px' }}>{laptop.name}</div>
-                      <div className="font-tech gradient-text" style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px' }}>
+                      <div style={{ textAlign: 'left', direction: 'ltr', marginBottom: '6px' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'hsl(var(--accent-cyan))', fontFamily: 'var(--font-tech)' }}>
+                          {laptop.brand || (laptop.name?.split(' ')[0] || '')}
+                        </div>
+                        <div style={{ fontSize: '1.05rem', fontWeight: 700, fontFamily: 'var(--font-tech)', color: 'var(--text-primary)' }}>
+                          {laptop.model || (laptop.name?.replace(laptop.brand || '', '').trim() || laptop.name)}
+                        </div>
+                      </div>
+                      <div className="font-tech gradient-text" style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '8px', textAlign: 'right', direction: 'rtl' }}>
                         {formatPrice(laptop.basePrice)}
                       </div>
                       <span className="badge" style={{ background: laptopColors[idx % laptopColors.length], color: 'white', fontSize: '0.75rem' }}>
@@ -116,8 +134,8 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
             </thead>
             <tbody>
               {[
-                { label: 'دسته‌بندی کاربری', key: 'category' },
-                { label: 'جنس بدنه و ساختار شاسی', key: 'chassis', fallback: 'All-Aluminum CNC Machined' },
+                { label: 'دسته‌بندی کاربری', key: 'category', isPersian: true },
+                { label: 'جنس بدنه و ساختار شاسی', key: 'chassis', fallback: 'تمام آلومینیوم' },
                 { label: 'سازنده پردازنده', key: 'cpuBrand', fallback: 'Intel' },
                 { label: 'مدل پردازنده مرکزی (CPU)', key: 'specs.cpu' },
                 { label: 'سازنده کارت گرافیک', key: 'gpuBrand', fallback: 'NVIDIA' },
@@ -143,7 +161,13 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                     if (!val && row.fallback) val = row.fallback;
                     
                     return (
-                      <td className="font-tech" key={laptop.id + row.key} style={{ padding: '16px', borderBottom: '1px solid var(--border-glass)', direction: 'ltr', textAlign: 'left', fontWeight: 500 }}>
+                      <td className={row.isPersian ? "" : "font-tech"} key={laptop.id + row.key} style={{ 
+                        padding: '16px', 
+                        borderBottom: '1px solid var(--border-glass)', 
+                        direction: row.isPersian ? 'rtl' : 'ltr', 
+                        textAlign: row.isPersian ? 'right' : 'left', 
+                        fontWeight: 500 
+                      }}>
                         {val || '—'}
                       </td>
                     );
@@ -155,6 +179,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
         </div>
 
       </div>
-    </dialog>
+    </div>
+  </div>
   );
 }

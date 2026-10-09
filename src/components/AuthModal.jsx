@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, LogIn, UserPlus, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 
-export default function AuthModal({ isOpen, onClose, onLogin }) {
+export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
   const [activeTab, setActiveTab] = useState('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -128,37 +128,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
   };
 
   return (
-    <>
-      {/* Backdrop overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.4)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          zIndex: 1099,
-        }}
-      />
-
+    <div className="modal-backdrop-wrapper" onClick={onClose}>
       {/* Modal */}
       <div
-        className="glass-panel animate-fade-in"
+        className="glass-panel modal-card"
         style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '90%',
-          maxWidth: '440px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          zIndex: 1100,
-          direction: 'rtl',
-          display: 'flex',
-          flexDirection: 'column',
+          maxWidth: '460px',
         }}
+        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -181,6 +158,14 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
             <X size={18} />
           </button>
         </div>
+
+        {/* Auth Notice banner if redirected from checkout */}
+        {notice && (
+          <div style={{ margin: '16px 24px 0', padding: '12px 16px', background: 'hsla(var(--accent-cyan), 0.1)', border: '1px solid hsla(var(--accent-cyan), 0.3)', borderRadius: '10px', fontSize: '0.875rem', color: 'hsl(var(--accent-cyan))', lineHeight: '1.6', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LogIn size={18} style={{ flexShrink: 0 }} />
+            <span>{notice}</span>
+          </div>
+        )}
 
         {/* Tabs */}
         <div
@@ -486,6 +471,6 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

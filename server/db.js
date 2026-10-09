@@ -161,7 +161,8 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL, excerpt TEXT, category TEXT, author TEXT, author_role TEXT,
   author_avatar TEXT, date TEXT, read_time TEXT, image TEXT, content TEXT,
-  published INTEGER NOT NULL DEFAULT 1
+  published INTEGER NOT NULL DEFAULT 1,
+  product_slug TEXT
 );
 CREATE TABLE IF NOT EXISTS faqs (
   id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT NOT NULL, q TEXT NOT NULL, a TEXT NOT NULL, sort INTEGER DEFAULT 0
@@ -176,9 +177,47 @@ CREATE TABLE IF NOT EXISTS tickets (
   id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT, user_id INTEGER, name TEXT, email TEXT, issue TEXT,
   status TEXT NOT NULL DEFAULT 'open', created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS appointments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tracking_code TEXT UNIQUE,
+  type TEXT NOT NULL,
+  product_slug TEXT,
+  product_name TEXT,
+  device_model TEXT,
+  services TEXT,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_email TEXT,
+  preferred_date TEXT,
+  preferred_time TEXT,
+  delivery_method TEXT DEFAULT 'in_person',
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  admin_notes TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS inventory_shipments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tracking_number TEXT,
+  type TEXT NOT NULL,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  product_name TEXT NOT NULL,
+  sku TEXT,
+  quantity INTEGER NOT NULL,
+  unit_cost INTEGER DEFAULT 0,
+  batch_code TEXT,
+  supplier_or_dest TEXT,
+  courier TEXT,
+  shelf_location TEXT,
+  notes TEXT,
+  created_by TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_comments_product ON comments(product_id, status);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory_shipments(product_id);
 `;
 
 export const DEFAULT_SETTINGS = {
@@ -190,7 +229,22 @@ export const DEFAULT_SETTINGS = {
   zarinpal_sandbox: '1',
   torob_token: '',
   low_stock_threshold: '5',
+  // Location & Contact Info
+  store_address: 'تهران، خیابان ولیعصر، تقاطع طالقانی، مجتمع نور تهران، طبقه همکف سوم، واحد ۸۰۲۴',
+  store_phone: '۰۲۱-۸۸۹۴۲۱۷۵',
+  store_mobile: '۰۹۱۲-۳۴۵۶۷۸۹',
+  store_hours: 'شنبه تا چهارشنبه ۱۰:۰۰ الی ۱۹:۳۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۵:۰۰',
+  store_map_link: 'https://neshan.org/maps',
+  store_about: 'فروشگاه تخصصی تک‌تینک، مرجع مستقیم واردات و ارزیابی مهندسی لپ‌تاپ‌های استوک صنعتی، اداری و گیمینگ اروپا و آمریکا با ضمانت سلامت سخت‌افزاری و تست ۳۰ روزه در ایران.',
+  // Social Media Channels
+  telegram_url: 'https://t.me/techtink',
+  instagram_url: 'https://instagram.com/techtink',
+  bale_url: 'https://ble.ir/techtink',
+  aparat_url: 'https://aparat.com/techtink'
 };
+
+// USD seed prices -> Toman, or direct Toman prices >= 10000
+const toToman = (val) => (val >= 10000 ? val : Math.round((val * 65000) / 100000) * 100000);
 
 function migrate() {
   db.exec(SCHEMA);
@@ -198,15 +252,70 @@ function migrate() {
   try { db.exec("ALTER TABLE products ADD COLUMN cpu_brand TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN gpu_brand TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN chassis TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN brand TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN model TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN grade TEXT;"); } catch {}
   try { db.exec("ALTER TABLE drivers ADD COLUMN download_url TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE blog_posts ADD COLUMN product_slug TEXT;"); } catch {}
   
-  // Sync clean English specs and chassis
+  // Sync clean Iranian stock laptop inventory & clean Persian chassis
   try {
-    for (const l of LAPTOPS) {
-      db.run("UPDATE products SET specs = ?, chassis = ? WHERE slug = ?", JSON.stringify(l.specs), l.specs.chassis, l.id);
+    const hasStock = db.get("SELECT id FROM products WHERE slug = 'lenovo-thinkpad-t14'");
+    if (!hasStock) {
+      console.log('[db] Migrating catalog to Iranian stock laptops from raitop.ir...');
+      db.tx(() => {
+        // Remove old demo products
+        db.run("DELETE FROM products WHERE slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13', 'neuralcraft-18', 'tink-blade-14', 'tink-student-15')");
+        // Insert new stock laptops
+        for (const l of LAPTOPS) {
+          const base = toToman(l.basePrice);
+          const old = l.oldPrice ? toToman(l.oldPrice) : Math.round(base * 1.08 / 100000) * 100000;
+          const { lastId } = db.run(
+            `INSERT INTO products (slug, name, brand, model, grade, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee, chassis, cpu_brand, gpu_brand)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            l.id, l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, base, old,
+            l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
+            l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand
+          );
+          for (const type of ['ram', 'storage', 'display']) {
+            (l.upgrades?.[type] || []).forEach((v, i) =>
+              db.run('INSERT INTO product_variants (product_id, type, name, price, sort) VALUES (?, ?, ?, ?, ?)', lastId, type, v.name, toToman(v.price), i)
+            );
+          }
+          db.run('INSERT INTO product_images (product_id, url, sort) VALUES (?, ?, 0)', lastId, l.image);
+        }
+      });
+    } else {
+      for (const l of LAPTOPS) {
+        db.run(
+          "UPDATE products SET name = ?, brand = ?, model = ?, grade = ?, tagline = ?, category = ?, series = ?, badge = ?, base_price = ?, old_price = ?, specs = ?, highlights = ?, chassis = ?, cpu_brand = ?, gpu_brand = ? WHERE slug = ?",
+          l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, toToman(l.basePrice), l.oldPrice ? toToman(l.oldPrice) : null,
+          JSON.stringify(l.specs), JSON.stringify(l.highlights || []), l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand, l.id
+        );
+      }
     }
   } catch (e) {
     console.error("Migration specs sync error:", e);
+  }
+
+  // Update drivers and warranties if needed
+  try {
+    const hasNewDriver = db.get("SELECT id FROM drivers WHERE product_slug = 'lenovo-thinkpad-t14'");
+    if (!hasNewDriver) {
+      db.tx(() => {
+        db.run("DELETE FROM drivers WHERE product_slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13')");
+        for (const d of DRIVER_DOWNLOADS) {
+          for (const f of d.files) {
+            db.run('INSERT INTO drivers (product_slug, model_name, name, date, size, version, category) VALUES (?, ?, ?, ?, ?, ?, ?)', d.modelId, d.modelName, f.name, f.date, f.size, f.version, f.category);
+          }
+        }
+      });
+    }
+    for (const w of Object.values(WARRANTY_DATABASE)) {
+      db.run('INSERT OR REPLACE INTO warranties VALUES (?, ?, ?, ?, ?, ?, ?)', w.serialNumber, w.model, w.purchaseDate, w.warrantyExpiry, w.status, w.carePlus ? 1 : 0, w.owner);
+    }
+  } catch (e) {
+    console.error("Migration drivers/warranties sync error:", e);
   }
 
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
@@ -217,22 +326,21 @@ function migrate() {
   }
 }
 
-// USD seed prices -> Toman, rounded to 100,000.
-const toToman = (usd) => Math.round((usd * 65000) / 100000) * 100000;
-
 function seed() {
   if (db.get('SELECT COUNT(*) AS c FROM products').c > 0) return;
   db.tx(() => {
     for (const l of LAPTOPS) {
       const base = toToman(l.basePrice);
+      const old = l.oldPrice ? toToman(l.oldPrice) : Math.round(base * 1.08 / 100000) * 100000;
       const { lastId } = db.run(
-        `INSERT INTO products (slug, name, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        l.id, l.name, l.tagline, l.category, l.series, l.badge, base, Math.round(base * 1.08 / 100000) * 100000,
-        l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights), 'گارانتی ۲ ساله تک‌تینک'
+        `INSERT INTO products (slug, name, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee, chassis, cpu_brand, gpu_brand)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        l.id, l.name, l.tagline, l.category, l.series, l.badge, base, old,
+        l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
+        l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand
       );
       for (const type of ['ram', 'storage', 'display']) {
-        (l.upgrades[type] || []).forEach((v, i) =>
+        (l.upgrades?.[type] || []).forEach((v, i) =>
           db.run('INSERT INTO product_variants (product_id, type, name, price, sort) VALUES (?, ?, ?, ?, ?)', lastId, type, v.name, toToman(v.price), i)
         );
       }

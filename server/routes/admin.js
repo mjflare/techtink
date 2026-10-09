@@ -211,12 +211,12 @@ r.get('/blog', (_req, res) => res.json(db.all('SELECT * FROM blog_posts ORDER BY
 r.post('/blog', (req, res) => {
   const b = req.body || {};
   const id = slugify(b.id || b.title) || 'post-' + Date.now();
-  if (!b.title) return res.status(400).json({ error: 'عنوان الزامی است.' });
-  db.run(`INSERT INTO blog_posts (id, title, excerpt, category, author, author_role, author_avatar, date, read_time, image, content, published)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, excerpt=excluded.excerpt, category=excluded.category,
+  const productSlug = b.product_slug || b.productSlug || null;
+  db.run(`INSERT INTO blog_posts (id, title, excerpt, category, author, author_role, author_avatar, date, read_time, image, content, published, product_slug)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, excerpt=excluded.excerpt, category=excluded.category,
     author=excluded.author, author_role=excluded.author_role, author_avatar=excluded.author_avatar, date=excluded.date, read_time=excluded.read_time,
-    image=excluded.image, content=excluded.content, published=excluded.published`,
-    id, b.title, b.excerpt, b.category, b.author, b.author_role, b.author_avatar, b.date, b.read_time, b.image, b.content, b.published === false || b.published === 0 ? 0 : 1);
+    image=excluded.image, content=excluded.content, published=excluded.published, product_slug=excluded.product_slug`,
+    id, b.title, b.excerpt, b.category, b.author, b.author_role, b.author_avatar, b.date, b.read_time, b.image, b.content, b.published === false || b.published === 0 ? 0 : 1, productSlug);
   res.json({ success: true, id });
 });
 r.delete('/blog/:id', (req, res) => { db.run('DELETE FROM blog_posts WHERE id = ?', req.params.id); res.json({ success: true }); });
@@ -236,8 +236,100 @@ r.delete('/faqs/:id', (req, res) => { db.run('DELETE FROM faqs WHERE id = ?', re
 r.get('/tickets', (_req, res) => res.json(db.all('SELECT * FROM tickets ORDER BY id DESC LIMIT 300')));
 r.put('/tickets/:id', (req, res) => { db.run('UPDATE tickets SET status = ? WHERE id = ?', req.body?.status === 'closed' ? 'closed' : 'open', req.params.id); res.json({ success: true }); });
 
+// ---------- Appointments (Showcase, Upgrade, Warranty) ----------
+r.get('/appointments', (_req, res) => {
+  const rows = db.all('SELECT * FROM appointments ORDER BY id DESC LIMIT 500');
+  res.json(rows.map(r => ({
+    ...r,
+    services: JSON.parse(r.services || '[]')
+  })));
+});
+
+r.put('/appointments/:id', (req, res) => {
+  const { status, adminNotes } = req.body || {};
+  db.run('UPDATE appointments SET status = COALESCE(?, status), admin_notes = COALESCE(?, admin_notes) WHERE id = ?',
+    status || null, adminNotes !== undefined ? adminNotes : null, req.params.id);
+  res.json({ success: true });
+});
+
+r.delete('/appointments/:id', (req, res) => {
+  db.run('DELETE FROM appointments WHERE id = ?', req.params.id);
+  res.json({ success: true });
+});
+
+// ---------- Inventory & Logistics Hub ----------
+r.get('/inventory/shipments', (_req, res) => {
+  const rows = db.all(`
+    SELECT s.*, p.slug AS product_slug, p.image AS product_image
+    FROM inventory_shipments s
+    LEFT JOIN products p ON p.id = s.product_id
+    ORDER BY s.id DESC LIMIT 300
+  `);
+  res.json(rows);
+});
+
+r.post('/inventory/shipments', (req, res) => {
+  const {
+    type, // 'inbound' | 'outbound'
+    productId,
+    productName,
+    sku,
+    quantity,
+    unitCost,
+    batchCode,
+    supplierOrDest,
+    courier,
+    shelfLocation,
+    notes
+  } = req.body || {};
+
+  const qty = parseInt(quantity, 10);
+  if (!qty || qty <= 0) return res.status(400).json({ error: 'تعداد باید عددی بزرگتر از صفر باشد.' });
+
+  const prod = productId ? db.get('SELECT * FROM products WHERE id = ?', productId) : null;
+  const prodName = prod ? prod.name : (productName || 'کالای عمومی انبار');
+  const trackingNumber = (type === 'inbound' ? 'IN-' : 'OUT-') + Date.now().toString().slice(-6);
+
+  db.tx(() => {
+    // 1. Insert shipment record
+    db.run(`
+      INSERT INTO inventory_shipments (
+        tracking_number, type, product_id, product_name, sku, quantity,
+        unit_cost, batch_code, supplier_or_dest, courier, shelf_location, notes, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, trackingNumber, type, prod?.id || null, prodName, sku || prod?.slug || '', qty,
+       unitCost || 0, batchCode || '', supplierOrDest || '', courier || '', shelfLocation || '', notes || '', req.user?.name || 'مدیر انبار');
+
+    // 2. Adjust stock in products table & stock_log
+    if (prod) {
+      const delta = type === 'inbound' ? qty : -qty;
+      const newStock = Math.max(0, (prod.stock || 0) + delta);
+      db.run('UPDATE products SET stock = ? WHERE id = ?', newStock, prod.id);
+      db.run('INSERT INTO stock_log (product_id, delta, reason, user_id) VALUES (?, ?, ?, ?)',
+        prod.id, delta, `${type === 'inbound' ? 'ورود به انبار' : 'خروج کالا'} (${trackingNumber}) - ${supplierOrDest || ''} ${notes || ''}`.trim(), req.user?.id || null);
+    }
+  });
+
+  res.json({ success: true, trackingNumber });
+});
+
+r.get('/inventory/stock-log', (_req, res) => {
+  const rows = db.all(`
+    SELECT sl.*, p.name AS product_name, p.slug AS product_slug, u.name AS user_name
+    FROM stock_log sl
+    JOIN products p ON p.id = sl.product_id
+    LEFT JOIN users u ON u.id = sl.user_id
+    ORDER BY sl.id DESC LIMIT 200
+  `);
+  res.json(rows);
+});
+
 // ---------- Settings ----------
-const EDITABLE = ['store_name', 'site_url', 'banner_text', 'shipping_fee', 'zarinpal_merchant_id', 'zarinpal_sandbox', 'torob_token', 'low_stock_threshold'];
+const EDITABLE = [
+  'store_name', 'site_url', 'banner_text', 'shipping_fee', 'zarinpal_merchant_id', 'zarinpal_sandbox', 'torob_token', 'low_stock_threshold',
+  'store_address', 'store_phone', 'store_mobile', 'store_hours', 'store_map_link', 'store_about',
+  'telegram_url', 'instagram_url', 'bale_url', 'aparat_url'
+];
 r.get('/settings', (_req, res) => {
   const all = getSettings();
   res.json(all);
@@ -245,7 +337,9 @@ r.get('/settings', (_req, res) => {
 
 r.patch('/settings', (req, res) => {
   for (const [k, v] of Object.entries(req.body || {})) {
-    setSetting(k, v);
+    if (EDITABLE.includes(k)) {
+      setSetting(k, v);
+    }
   }
   res.json(getSettings());
 });

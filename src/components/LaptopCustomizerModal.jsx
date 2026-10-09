@@ -43,12 +43,13 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
   };
 
   return (
-    <dialog open className="glass-panel" style={{ 
-      position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-      width: '90%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', zIndex: 1000,
-      display: 'flex', flexDirection: 'column', direction: 'rtl'
-    }}>
-      <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid var(--border-glass)' }}>
+    <div className="modal-backdrop-wrapper" onClick={onClose}>
+      <div 
+        className="glass-panel modal-card" 
+        style={{ maxWidth: '900px' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid var(--border-glass)' }}>
         <h2 style={{ fontSize: '1.5rem', margin: 0 }}>شخصی‌سازی قطعات {laptop.name}</h2>
         <button className="btn btn-glass" style={{ padding: '8px', borderRadius: '50%' }} onClick={onClose}>
           <X size={20} />
@@ -207,6 +208,7 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
         </button>
       </div>
 
-    </dialog>
+      </div>
+    </div>
   );
 }

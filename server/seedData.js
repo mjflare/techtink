@@ -1,379 +1,563 @@
 export const LAPTOPS = [
   {
-    id: "tink-blade-16",
-    name: "تک‌تینک بلید ۱۶ الترا",
-    tagline: "اوج عملکرد گیمینگ و هوش مصنوعی قابل حمل",
-    category: "گیمینگ",
-    series: "سری بلید",
-    badge: "پرچمدار",
-    rating: 4.9,
-    reviewsCount: 142,
-    basePrice: 2899,
-    inStock: true,
-    stockCount: 12,
-    image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1000&q=80",
-    shortSpecs: {
-      cpu: "Intel Core i9-14900HX",
-      gpu: "NVIDIA RTX 4090 16GB",
-      ram: "32GB",
-      storage: "2TB SSD",
-      display: '16" Mini-LED 240Hz',
-      chassis: "Magnesium Alloy"
-    },
-    specs: {
-      shortSpecs: {
-        cpu: "Intel Core i9-14900HX",
-        gpu: "NVIDIA RTX 4090 16GB",
-        ram: "32GB",
-        storage: "2TB SSD",
-        display: '16" Mini-LED 240Hz',
-        chassis: "Magnesium Alloy"
-      },
-      cpu: "Intel Core i9-14900HX (24C / 32T, up to 5.8GHz)",
-      gpu: "NVIDIA GeForce RTX 4090 16GB GDDR6 (175W TGP)",
-      ram: "32GB DDR5-5600MHz (Dual Channel)",
-      storage: "2TB PCIe 4.0 NVMe M.2 SSD",
-      display: '16" Mini-LED Dual-Mode (4K 120Hz / FHD+ 240Hz, 1100 nits)',
-      chassis: "Magnesium-Aluminum Alloy CNC Unibody",
-      battery: "99.9Wh (Up to 9 Hours Battery Life)",
-      weight: "2.45 kg",
-      os: "Windows 11 Pro",
-      ports: "2x Thunderbolt 4, 3x USB 3.2 Gen 2, HDMI 2.1, 2.5G LAN, SD Reader",
-      npuScore: "45 TOPS NPU AI Accelerator"
-    },
-    upgrades: {
-      ram: [
-        { name: "۳۲ گیگابایت (۲×۱۶) DDR5", price: 0 },
-        { name: "۶۴ گیگابایت (۲×۳۲) DDR5", price: 180 },
-        { name: "۹۶ گیگابایت (۲×۴۸) DDR5 فوق‌سریع", price: 380 }
-      ],
-      storage: [
-        { name: "۲ ترابایت PCIe 4.0 NVMe M.2", price: 0 },
-        { name: "۴ ترابایت (۲×۲ ترابایت RAID 0) NVMe", price: 240 },
-        { name: "۸ ترابایت درایو دوگانه سرور NVMe", price: 590 }
-      ],
-      display: [
-        { name: '۱۶ اینچ Mini-LED 4K/FHD+ دوگانه', price: 0 },
-        { name: '۱۶ اینچ OLED 240Hz 0.2ms کالیبره', price: 150 }
-      ]
-    },
-    highlights: [
-      "سیستم خنک‌کننده محفظه بخار با فلز مایع",
-      "کیبورد مکانیکی RGB با سوییچ‌های Cherry MX",
-      "بدنه یکپارچه منیزیم-آلومینیوم CNC",
-      "آماده برای Wi-Fi 7 و بلوتوث ۵.۴"
-    ]
-  },
-  {
-    id: "tink-book-pro-14",
-    name: "تک‌بوک پرو ۱۴ استودیو",
-    tagline: "قدرت بی‌چون‌وچرا برای تولیدکنندگان محتوا و برنامه‌نویسان",
+    id: "lenovo-thinkpad-t14",
+    name: "Lenovo ThinkPad T14 Gen 1",
+    brand: "Lenovo",
+    model: "ThinkPad T14 Gen 1",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "محبوب‌ترین لپ‌تاپ استوک ایران برای برنامه‌نویسی، ترید و تایپ با کیبورد ارگونومیک",
     category: "تولید محتوا",
-    series: "سری استودیو",
-    badge: "پرفروش‌ترین",
-    rating: 4.85,
-    reviewsCount: 208,
-    basePrice: 1999,
+    series: "سری ThinkPad",
+    badge: "پرفروش‌ترین استوک",
+    rating: 4.9,
+    reviewsCount: 188,
+    basePrice: 21800000,
+    oldPrice: 23500000,
     inStock: true,
-    stockCount: 25,
-    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80",
-    shortSpecs: {
-      cpu: "AMD Ryzen 9 8945HS",
-      gpu: "NVIDIA RTX 4070 8GB",
-      ram: "32GB",
-      storage: "1TB SSD",
-      display: '14.5" 3.2K OLED 120Hz',
-      chassis: "All-Aluminum"
-    },
-    specs: {
-      shortSpecs: {
-        cpu: "AMD Ryzen 9 8945HS",
-        gpu: "NVIDIA RTX 4070 8GB",
-        ram: "32GB",
-        storage: "1TB SSD",
-        display: '14.5" 3.2K OLED 120Hz',
-        chassis: "All-Aluminum"
-      },
-      cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz with Ryzen AI)",
-      gpu: "NVIDIA GeForce RTX 4070 8GB GDDR6 (115W TGP)",
-      ram: "32GB LPDDR5X-7500MHz High-Speed",
-      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
-      display: '14.5" 3.2K 120Hz OLED (100% DCI-P3, HDR 600)',
-      chassis: "All-Aluminum CNC Machined Unibody",
-      battery: "84Wh (Up to 14 Hours Battery Life)",
-      weight: "1.52 kg",
-      os: "Windows 11 Pro / Ubuntu Ready",
-      ports: "1x USB4 40Gbps, 1x USB-C 3.2, 2x USB-A 3.2, HDMI 2.1",
-      npuScore: "38 TOPS Neural AI Engine"
-    },
-    upgrades: {
-      ram: [
-        { name: "۳۲ گیگابایت LPDDR5X-7500", price: 0 },
-        { name: "۶۴ گیگابایت LPDDR5X-7500", price: 210 }
-      ],
-      storage: [
-        { name: "۱ ترابایت Gen4 NVMe M.2", price: 0 },
-        { name: "۲ ترابایت Gen4 NVMe M.2", price: 120 },
-        { name: "۴ ترابایت پرسرعت Gen4 NVMe", price: 310 }
-      ],
-      display: [
-        { name: '۱۴.۵ اینچ 3.2K 120Hz OLED لمسی', price: 0 },
-        { name: '۱۴.۵ اینچ 3.2K مات ضد تابش (غیرلمسی)', price: 50 }
-      ]
-    },
-    highlights: [
-      "کالیبراسیون رنگ کارخانه با Delta E < 1.0",
-      "تاچ‌پد شیشه‌ای هپتیک با کنترل ژست‌های حرکتی",
-      "چهار اسپیکر استودیویی با فناوری دالبی اتموس",
-      "وب‌کم 1080p IR همراه با شاتر سخت‌افزاری"
-    ]
-  },
-  {
-    id: "aeroslim-x13",
-    name: "ایرو‌اسلیم X13 فدر",
-    tagline: "فوق‌سبک (زیر ۱ کیلوگرم) با ۱۸ ساعت دوام باتری",
-    category: "فوق سبک",
-    series: "سری ایرو",
-    badge: "بسیار سبک",
-    rating: 4.78,
-    reviewsCount: 95,
-    basePrice: 1399,
-    inStock: true,
-    stockCount: 18,
-    image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80",
-    shortSpecs: {
-      cpu: "Intel Core Ultra 7 155H",
-      gpu: "Intel Arc Graphics",
-      ram: "16GB",
-      storage: "1TB SSD",
-      display: '13.3" 2.8K OLED 90Hz',
-      chassis: "Carbon Fiber"
-    },
-    specs: {
-      shortSpecs: {
-        cpu: "Intel Core Ultra 7 155H",
-        gpu: "Intel Arc Graphics",
-        ram: "16GB",
-        storage: "1TB SSD",
-        display: '13.3" 2.8K OLED 90Hz',
-        chassis: "Carbon Fiber"
-      },
-      cpu: "Intel Core Ultra 7 155H (16C / 22T, Intel AI Boost)",
-      gpu: "Intel Arc Graphics (8 Xe-Cores, 2.25GHz)",
-      ram: "16GB LPDDR5X-7467MHz Dual Channel",
-      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
-      display: '13.3" 2.8K 90Hz OLED (100% DCI-P3, 600 nits)',
-      chassis: "Ultra-Light Carbon Fiber & Magnesium Alloy",
-      battery: "75Wh (Up to 18.5 Hours Battery Life)",
-      weight: "0.98 kg",
-      os: "Windows 11 Home",
-      ports: "2x Thunderbolt 4, 1x USB-A 3.2, 3.5mm Audio Jack",
-      npuScore: "34 TOPS Intel AI Boost NPU"
-    },
-    upgrades: {
-      ram: [
-        { name: "۱۶ گیگابایت LPDDR5X", price: 0 },
-        { name: "۳۲ گیگابایت LPDDR5X", price: 140 }
-      ],
-      storage: [
-        { name: "۱ ترابایت NVMe M.2", price: 0 },
-        { name: "۲ ترابایت NVMe M.2", price: 110 }
-      ],
-      display: [
-        { name: '۱۳.۳ اینچ 2.8K OLED', price: 0 }
-      ]
-    },
-    highlights: [
-      "بدنه کامپوزیت فیبر کربن و آلیاژ منیزیم",
-      "شارژ سریع: ۰ تا ۶۰ درصد در ۳۵ دقیقه با 65W PD",
-      "سیستم خنک‌کننده فعال و بی‌صدای دو فن",
-      "نمایشگر بدون حاشیه با نسبت تصویر به بدنه ۹۲٪"
-    ]
-  },
-  {
-    id: "neuralcraft-18",
-    name: "نیورال‌کرفت ورک‌استیشن ۱۸",
-    tagline: "جایگزین دسکتاپ برای توسعه هوش مصنوعی و CAD",
-    category: "ایستگاه کاری",
-    series: "سری تایتان",
-    badge: "هیولای پردازشی",
-    rating: 4.95,
-    reviewsCount: 64,
-    basePrice: 3499,
-    inStock: true,
-    stockCount: 7,
-    image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1000&q=80",
-    shortSpecs: {
-      cpu: "Intel Core i9-14950HX",
-      gpu: "NVIDIA RTX 5000 16GB",
-      ram: "64GB",
-      storage: "4TB SSD",
-      display: '18" 4K 144Hz Mini-LED',
-      chassis: "All-Aluminum"
-    },
-    specs: {
-      shortSpecs: {
-        cpu: "Intel Core i9-14950HX",
-        gpu: "NVIDIA RTX 5000 16GB",
-        ram: "64GB",
-        storage: "4TB SSD",
-        display: '18" 4K 144Hz Mini-LED',
-        chassis: "All-Aluminum"
-      },
-      cpu: "Intel Core i9-14950HX (24C / 32T, up to 6.0GHz)",
-      gpu: "NVIDIA RTX 5000 Ada Generation 16GB ECC GDDR6",
-      ram: "64GB DDR5-5600MHz ECC Workstation Memory",
-      storage: "4TB (2x 2TB RAID 0) PCIe 4.0 NVMe SSD",
-      display: '18" 4K UHD+ 144Hz Mini-LED (HDR 1000, 100% DCI-P3)',
-      chassis: "All-Aluminum CNC Machined with Titanium Accents",
-      battery: "99.9Wh + 330W GaN Fast Charger",
-      weight: "3.10 kg",
-      os: "Windows 11 Pro for Workstations / Ubuntu 24.04",
-      ports: "2x Thunderbolt 4, 4x USB-A 3.2, 2.5G LAN, HDMI 2.1",
-      npuScore: "68 TOPS Dual Tensor AI Workstation Engine"
-    },
-    upgrades: {
-      ram: [
-        { name: "۶۴ گیگابایت ECC DDR5", price: 0 },
-        { name: "۱۲۸ گیگابایت ECC DDR5", price: 450 }
-      ],
-      storage: [
-        { name: "۴ ترابایت RAID 0 NVMe", price: 0 },
-        { name: "۸ ترابایت آرایه چهارگانه NVMe", price: 520 }
-      ],
-      display: [
-        { name: '۱۸ اینچ 4K 144Hz Mini-LED HDR 1000', price: 0 }
-      ]
-    },
-    highlights: [
-      "دارای گواهینامه ISV برای AutoCAD, Maya, Blender, PyTorch",
-      "سیستم خنک‌کننده سه فن با لوله‌های انتقال حرارت",
-      "پنل LED ماتریکس پویای قابل شخصی‌سازی",
-      "محافظت و تصحیح خطای حافظه (ECC)"
-    ]
-  },
-  {
-    id: "tink-blade-14",
-    name: "تک‌تینک بلید ۱۴ اپکس",
-    tagline: "غول پردازشی و گیمینگ ۱۴ اینچی فشرده",
-    category: "گیمینگ",
-    series: "سری بلید",
-    badge: "محبوب",
-    rating: 4.82,
-    reviewsCount: 112,
-    basePrice: 2199,
-    inStock: true,
-    stockCount: 15,
+    stockCount: 8,
     image: "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "Intel",
+    gpuBrand: "Intel",
+    chassis: "آلیاژ منیزیم و فیبر",
+    techTinkScore: {
+      overall: 89,
+      batteryLife: 84,
+      temperature: 88,
+      processingPower: 82,
+      usability: 96,
+      buildQuality: 93,
+      repairability: 90
+    },
     shortSpecs: {
-      cpu: "AMD Ryzen 9 8945HS",
-      gpu: "NVIDIA RTX 4080 12GB",
-      ram: "32GB",
-      storage: "1TB SSD",
-      display: '14" QHD+ 240Hz',
-      chassis: "All-Aluminum"
-    },
-    specs: {
-      shortSpecs: {
-        cpu: "AMD Ryzen 9 8945HS",
-        gpu: "NVIDIA RTX 4080 12GB",
-        ram: "32GB",
-        storage: "1TB SSD",
-        display: '14" QHD+ 240Hz',
-        chassis: "All-Aluminum"
-      },
-      cpu: "AMD Ryzen 9 8945HS (8C / 16T, up to 5.2GHz)",
-      gpu: "NVIDIA GeForce RTX 4080 12GB GDDR6 (140W TGP)",
-      ram: "32GB DDR5-5600MHz (Dual Channel)",
-      storage: "1TB PCIe 4.0 NVMe M.2 SSD",
-      display: '14" QHD+ 240Hz 3ms IPS (100% DCI-P3, G-Sync)',
-      chassis: "All-Aluminum CNC Machined Anodized Black",
-      battery: "76Wh (Up to 10 Hours Battery Life)",
-      weight: "1.78 kg",
-      os: "Windows 11 Home",
-      ports: "2x USB4 40Gbps, 2x USB-A 3.2, HDMI 2.1",
-      npuScore: "39 TOPS Ryzen AI Engine"
-    },
-    upgrades: {
-      ram: [
-        { name: "۳۲ گیگابایت DDR5", price: 0 },
-        { name: "۶۴ گیگابایت DDR5", price: 190 }
-      ],
-      storage: [
-        { name: "۱ ترابایت NVMe M.2", price: 0 },
-        { name: "۲ ترابایت NVMe M.2", price: 130 }
-      ],
-      display: [
-        { name: '۱۴ اینچ QHD+ 240Hz 3ms G-Sync', price: 0 }
-      ]
-    },
-    highlights: [
-      "بدنه آلومینیومی ماشین‌کاری شده با رنگ مشکی آنودایز",
-      "مدیریت حرارتی با محفظه بخار",
-      "صدای فراگیر تنظیم شده توسط THX",
-      "دوربین IR ویندوز هلو برای تشخیص چهره"
-    ]
-  },
-  {
-    id: "tink-student-15",
-    name: "تک‌تینک ایر ۱۵ اقتصادی",
-    tagline: "لپ‌تاپی مقرون‌به‌صرفه، مطمئن و بی‌صدا برای کارهای روزمره و دانشجویان",
-    category: "اقتصادی",
-    series: "سری ایر",
-    badge: "ارزش خرید بالا",
-    rating: 4.65,
-    reviewsCount: 310,
-    basePrice: 799,
-    inStock: true,
-    stockCount: 40,
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=80",
-    shortSpecs: {
-      cpu: "Intel Core Ultra 5 125H",
-      gpu: "Intel Arc Graphics",
-      ram: "16GB",
+      cpu: "Intel Core i7-10610U",
+      gpu: "Intel UHD Graphics",
+      ram: "16GB RAM",
       storage: "512GB SSD",
-      display: '15.6" FHD IPS',
-      chassis: "Polycarbonate"
+      display: '14" FHD IPS',
+      battery: "50Wh Battery",
+      chassis: "آلیاژ منیزیم"
     },
     specs: {
-      shortSpecs: {
-        cpu: "Intel Core Ultra 5 125H",
-        gpu: "Intel Arc Graphics",
-        ram: "16GB",
-        storage: "512GB SSD",
-        display: '15.6" FHD IPS',
-        chassis: "Polycarbonate"
+      brand: "Lenovo",
+      model: "ThinkPad T14 Gen 1",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 89,
+        batteryLife: 84,
+        temperature: 88,
+        processingPower: 82,
+        usability: 96,
+        buildQuality: 93,
+        repairability: 90
       },
-      cpu: "Intel Core Ultra 5 125H (14C / 18T, up to 4.5GHz)",
-      gpu: "Intel Arc Integrated Graphics (7 Xe-Cores)",
-      ram: "16GB LPDDR5-6400MHz",
+      shortSpecs: {
+        cpu: "Intel Core i7-10610U",
+        gpu: "Intel UHD Graphics",
+        ram: "16GB RAM",
+        storage: "512GB SSD",
+        display: '14" FHD IPS',
+        battery: "50Wh Battery",
+        chassis: "آلیاژ منیزیم"
+      },
+      cpu: "Intel Core i7-10610U (4C / 8T, up to 4.9GHz, 8MB Cache)",
+      gpu: "Intel UHD Graphics 620",
+      ram: "16GB DDR4-3200MHz (Dual Channel, Expandable to 48GB)",
       storage: "512GB PCIe NVMe M.2 SSD",
-      display: '15.6" FHD (1920x1080) IPS Anti-Glare 300 nits',
-      chassis: "Reinforced Polycarbonate & Recycled Aluminum Frame",
-      battery: "65Wh (Up to 12 Hours Battery Life)",
-      weight: "1.65 kg",
-      os: "Windows 11 Home",
-      ports: "1x Thunderbolt 4 / USB-C, 2x USB-A 3.2, HDMI 1.4, SD Reader",
-      npuScore: "28 TOPS Intel AI NPU"
+      display: '14.0" FHD (1920x1080) IPS Anti-Glare 300 nits',
+      chassis: "آلیاژ منیزیم و پلی‌فنول با استاندارد نظامی MIL-STD-810G",
+      battery: "50Wh با سلامت بالای ۸۵٪ و شارژر ۶۵ وات Type-C",
+      weight: "1.53 kg",
+      os: "Windows 11 Pro 64-bit",
+      ports: "2x USB-C Thunderbolt 3, 2x USB 3.2, HDMI 1.4b, LAN, MicroSD",
+      npuScore: "15 TOPS"
     },
     upgrades: {
       ram: [
-        { name: "۱۶ گیگابایت LPDDR5", price: 0 },
-        { name: "۳۲ گیگابایت LPDDR5", price: 90 }
+        { name: "۱۶ گیگابایت DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۳۲ گیگابایت DDR4 (ارتقا استوک)", price: 1600000 },
+        { name: "۴۸ گیگابایت DDR4 ماکزیمم", price: 3200000 }
       ],
       storage: [
         { name: "۵۱۲ گیگابایت NVMe SSD", price: 0 },
-        { name: "۱ ترابایت NVMe SSD", price: 70 }
+        { name: "۱ ترابایت NVMe SSD پرسرعت", price: 1800000 },
+        { name: "۲ ترابایت NVMe SSD سامسونگ", price: 4200000 }
       ],
       display: [
-        { name: '۱۵.۶ اینچ FHD IPS ضد انعکاس', price: 0 }
+        { name: '۱۴ اینچ FHD IPS مات استاندارد', price: 0 },
+        { name: '۱۴ اینچ FHD لمسی TouchScreen', price: 900000 }
       ]
     },
     highlights: [
-      "عملکرد کاملاً بی‌صدا و بدون فن (0dB)",
-      "بدنه ساخته شده از پلاستیک اقیانوسی و آلومینیوم بازیافتی",
-      "کیبورد ارگونومیک مقاوم در برابر نشت مایعات",
-      "آداپتور تایپ‌سی ۶۵ وات با قابلیت شارژ سریع"
+      "کیبورد ارگونومیک افسانه‌ای ThinkPad با ترک‌پوینت قرمز (TrackPoint)",
+      "گرید کیفی ++A استوک وارداتی تمیز بدون خط و خش به همراه شارژر اصلی",
+      "دارای استاندارد مقاومت فیزیکی نظامی ارتش آمریکا MIL-STD-810G",
+      "مهلت تست ۷ روزه سلامت فنی و باتری تضمین‌شده رایتاپ"
+    ]
+  },
+  {
+    id: "hp-elitebook-840-g7",
+    name: "HP EliteBook 840 G7",
+    brand: "HP",
+    model: "EliteBook 840 G7",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "الترابوک اداری و مدیریتی فوق‌العاده شیک با شاسی تمام آلومینیوم و وزن ۱.۳ کیلوگرم",
+    category: "فوق سبک",
+    series: "سری EliteBook",
+    badge: "شاسی تمام آلومینیوم",
+    rating: 4.85,
+    reviewsCount: 144,
+    basePrice: 19500000,
+    oldPrice: 21000000,
+    inStock: true,
+    stockCount: 12,
+    image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "Intel",
+    gpuBrand: "Intel",
+    chassis: "تمام آلومینیوم",
+    techTinkScore: {
+      overall: 88,
+      batteryLife: 88,
+      temperature: 86,
+      processingPower: 80,
+      usability: 92,
+      buildQuality: 95,
+      repairability: 87
+    },
+    shortSpecs: {
+      cpu: "Intel Core i5-10310U",
+      gpu: "Intel UHD Graphics",
+      ram: "16GB RAM",
+      storage: "256GB SSD",
+      display: '14" FHD IPS',
+      battery: "53Wh Battery",
+      chassis: "تمام آلومینیوم"
+    },
+    specs: {
+      brand: "HP",
+      model: "EliteBook 840 G7",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 88,
+        batteryLife: 88,
+        temperature: 86,
+        processingPower: 80,
+        usability: 92,
+        buildQuality: 95,
+        repairability: 87
+      },
+      shortSpecs: {
+        cpu: "Intel Core i5-10310U",
+        gpu: "Intel UHD Graphics",
+        ram: "16GB RAM",
+        storage: "256GB SSD",
+        display: '14" FHD IPS',
+        battery: "53Wh Battery",
+        chassis: "تمام آلومینیوم"
+      },
+      cpu: "Intel Core i5-10310U (4C / 8T, up to 4.4GHz, vPro)",
+      gpu: "Intel UHD Graphics 620",
+      ram: "16GB DDR4-2666MHz (قابل ارتقا تا ۶۴ گیگابایت)",
+      storage: "256GB PCIe NVMe M.2 SSD",
+      display: '14.0" FHD (1920x1080) IPS مات ضد انعکاس 400 nits',
+      chassis: "تمام آلومینیوم نقره‌ای ماشین‌کاری شده CNC",
+      battery: "53Wh سلامت باتری بالای ۸۵٪ با شارژر ۶۵ وات Type-C",
+      weight: "1.34 kg",
+      os: "Windows 11 Pro 64-bit",
+      ports: "2x USB-C Thunderbolt 3, 2x USB 3.1, HDMI 1.4, جک هدفون",
+      npuScore: "14 TOPS"
+    },
+    upgrades: {
+      ram: [
+        { name: "۱۶ گیگابایت DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۳۲ گیگابایت DDR4 دو کاناله", price: 1500000 }
+      ],
+      storage: [
+        { name: "۲۵۶ گیگابایت NVMe SSD", price: 0 },
+        { name: "۵۱۲ گیگابایت NVMe SSD نو", price: 1200000 },
+        { name: "۱ ترابایت NVMe SSD سامسونگ", price: 2800000 }
+      ],
+      display: [
+        { name: '۱۴ اینچ FHD IPS مات ۴۰۰ نیت', price: 0 }
+      ]
+    },
+    highlights: [
+      "بدنه آلومینیومی مات مدرن بدون جذب اثر انگشت و بسیار سبک",
+      "بلندگوهای استریوی Bang & Olufsen با خروجی صدای کریستالی",
+      "دارای شاتر امنیتی سخت‌افزاری وبکم و حسگر اثر انگشت سریع",
+      "تست فنی کامل تمام پورت‌ها، باتری و سلامت نمایشگر"
+    ]
+  },
+  {
+    id: "dell-precision-7530",
+    name: "Dell Precision 7530",
+    brand: "Dell",
+    model: "Precision 7530",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "ورک‌استیشن پرقدرت رندرینگ، تری‌دی مکس و سالیدورک با گرافیک ۶ گیگابایت کوادرو",
+    category: "ایستگاه کاری",
+    series: "سری Precision",
+    badge: "ورک‌استیشن قدرتمند",
+    rating: 4.95,
+    reviewsCount: 92,
+    basePrice: 34800000,
+    oldPrice: 37500000,
+    inStock: true,
+    stockCount: 5,
+    image: "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "Intel",
+    gpuBrand: "NVIDIA",
+    chassis: "آلیاژ منیزیم",
+    techTinkScore: {
+      overall: 91,
+      batteryLife: 78,
+      temperature: 89,
+      processingPower: 94,
+      usability: 88,
+      buildQuality: 96,
+      repairability: 98
+    },
+    shortSpecs: {
+      cpu: "Intel Core i7-8850H",
+      gpu: "NVIDIA Quadro 6GB",
+      ram: "32GB RAM",
+      storage: "1TB SSD",
+      display: '15.6" UltraSharp FHD',
+      battery: "97Wh Battery",
+      chassis: "آلیاژ منیزیم"
+    },
+    specs: {
+      brand: "Dell",
+      model: "Precision 7530",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 91,
+        batteryLife: 78,
+        temperature: 89,
+        processingPower: 94,
+        usability: 88,
+        buildQuality: 96,
+        repairability: 98
+      },
+      shortSpecs: {
+        cpu: "Intel Core i7-8850H",
+        gpu: "NVIDIA Quadro 6GB",
+        ram: "32GB RAM",
+        storage: "1TB SSD",
+        display: '15.6" UltraSharp FHD',
+        battery: "97Wh Battery",
+        chassis: "آلیاژ منیزیم"
+      },
+      cpu: "Intel Core i7-8850H (6C / 12T, up to 4.3GHz, 9MB Cache)",
+      gpu: "NVIDIA Quadro P3200 6GB GDDR5 (ISV Certified)",
+      ram: "32GB DDR4-2666MHz (۴ اسلات رم، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      storage: "1TB PCIe NVMe SSD (پشتیبانی از ۳ هارد همزمان)",
+      display: '15.6" UltraSharp FHD (1920x1080) IPS 72% NTSC',
+      chassis: "ترکیب آلیاژ منیزیم و آلومینیوم صنعتی مستحکم با لولاهای فولادی",
+      battery: "97Wh باتری ۶ سلولی با آداپتور پرقدرت ۱۸۰ وات اورجینال دل",
+      weight: "2.53 kg",
+      os: "Windows 11 Pro for Workstations",
+      ports: "2x Thunderbolt 3, 2x USB 3.1, HDMI 2.0, Mini DP, LAN, SD Card",
+      npuScore: "22 TOPS"
+    },
+    upgrades: {
+      ram: [
+        { name: "۳۲ گیگابایت DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۶۴ گیگابایت DDR4 چهار کاناله", price: 2900000 },
+        { name: "۱۲۸ گیگابایت DDR4 ورک‌استیشن", price: 6500000 }
+      ],
+      storage: [
+        { name: "۱ ترابایت NVMe SSD", price: 0 },
+        { name: "۲ ترابایت (دو هارد ۱ ترابایت RAID 0)", price: 2500000 }
+      ],
+      display: [
+        { name: '۱۵.۶ اینچ UltraSharp FHD IPS ضد انعکاس', price: 0 }
+      ]
+    },
+    highlights: [
+      "دارای گواهی رسمی ISV برای سازگاری کامل با 3ds Max, Maya, AutoCAD, SolidWorks",
+      "سیستم خنک‌کننده دوگانه صنعتی با پره‌های مسی برای رندرهای شبانه‌روزی",
+      "چهار اسلات حافظه رم و سه اسلات اس‌اس‌دی M.2 NVMe مجزا",
+      "استوک سفارش آمریکا با تضمین ۱۰۰٪ سلامت بورد و چیپ گرافیک"
+    ]
+  },
+  {
+    id: "hp-zbook-15-g6",
+    name: "HP ZBook 15 G6",
+    brand: "HP",
+    model: "ZBook 15 G6",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "دستگاه تخصصی مهندسی و تدوین ویدیو با پردازنده ۱۲ رشته‌ای و گرافیک کوادرو T2000",
+    category: "ایستگاه کاری",
+    series: "سری ZBook",
+    badge: "محبوب مهندسان",
+    rating: 4.9,
+    reviewsCount: 110,
+    basePrice: 32500000,
+    oldPrice: 35000000,
+    inStock: true,
+    stockCount: 7,
+    image: "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "Intel",
+    gpuBrand: "NVIDIA",
+    chassis: "تمام آلومینیوم",
+    techTinkScore: {
+      overall: 89,
+      batteryLife: 80,
+      temperature: 87,
+      processingPower: 91,
+      usability: 89,
+      buildQuality: 94,
+      repairability: 95
+    },
+    shortSpecs: {
+      cpu: "Intel Core i7-9850H",
+      gpu: "NVIDIA Quadro T2000 4GB",
+      ram: "32GB RAM",
+      storage: "512GB SSD",
+      display: '15.6" FHD IPS',
+      battery: "90Wh Battery",
+      chassis: "تمام آلومینیوم"
+    },
+    specs: {
+      brand: "HP",
+      model: "ZBook 15 G6",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 89,
+        batteryLife: 80,
+        temperature: 87,
+        processingPower: 91,
+        usability: 89,
+        buildQuality: 94,
+        repairability: 95
+      },
+      shortSpecs: {
+        cpu: "Intel Core i7-9850H",
+        gpu: "NVIDIA Quadro T2000 4GB",
+        ram: "32GB RAM",
+        storage: "512GB SSD",
+        display: '15.6" FHD IPS',
+        battery: "90Wh Battery",
+        chassis: "تمام آلومینیوم"
+      },
+      cpu: "Intel Core i7-9850H (6C / 12T, up to 4.6GHz, 12MB Cache)",
+      gpu: "NVIDIA Quadro T2000 4GB GDDR5 Turing",
+      ram: "32GB DDR4-2666MHz (قابل ارتقا تا ۶۴ گیگابایت)",
+      storage: "512GB PCIe NVMe M.2 SSD",
+      display: '15.6" FHD (1920x1080) IPS Anti-Glare 400 nits 100% sRGB',
+      chassis: "بدنه یکپارچه آلومینیوم CNC برس‌خورده با تست نظامی سقوط",
+      battery: "90Wh سلامت بالای ۸۰٪ با آداپتور ۱۵۰ وات اچ‌پی",
+      weight: "2.60 kg",
+      os: "Windows 11 Pro 64-bit",
+      ports: "2x Thunderbolt 3, 3x USB 3.0, HDMI 2.0, RJ45 LAN, Smart Card",
+      npuScore: "24 TOPS"
+    },
+    upgrades: {
+      ram: [
+        { name: "۳۲ گیگابایت DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۶۴ گیگابایت DDR4 فوق‌سریع", price: 2900000 }
+      ],
+      storage: [
+        { name: "۵۱۲ گیگابایت NVMe SSD", price: 0 },
+        { name: "۱ ترابایت NVMe SSD پرسرعت", price: 1700000 },
+        { name: "۲ ترابایت NVMe SSD سامسونگ", price: 4100000 }
+      ],
+      display: [
+        { name: '۱۵.۶ اینچ FHD IPS کالیبره ۱۰۰٪ sRGB', price: 0 }
+      ]
+    },
+    highlights: [
+      "سیستم صوتی سفارشی Bang & Olufsen با میکروفون مجهز به هوش مصنوعی حذف نویز",
+      "پردازنده سری H پرقدرت نسل ۹ با ۱۲ رشته پردازشی برای اجرای سریع رندرها",
+      "دسترسی بدون پیچ‌گوشتی به حافظه و قطعات داخلی با طراحی درب آسان‌بازشو",
+      "مهلت تست یک‌هفته‌ای و گارانتی اصالت قطعات فروشگاه"
+    ]
+  },
+  {
+    id: "lenovo-legion-5-15",
+    name: "Lenovo Legion 5 15ACH6",
+    brand: "Lenovo",
+    model: "Legion 5 15ACH6",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "گیمینگ پرطرفدار با پردازنده ۸ هسته‌ای رایزن، گرافیک ۱۳۰ وات و نمایشگر ۱۶۵ هرتز",
+    category: "گیمینگ",
+    series: "سری Legion",
+    badge: "گیمینگ پرچمدار",
+    rating: 4.92,
+    reviewsCount: 165,
+    basePrice: 44500000,
+    oldPrice: 47800000,
+    inStock: true,
+    stockCount: 6,
+    image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "AMD",
+    gpuBrand: "NVIDIA",
+    chassis: "پلی‌کربنات مقاوم",
+    techTinkScore: {
+      overall: 88,
+      batteryLife: 76,
+      temperature: 85,
+      processingPower: 97,
+      usability: 91,
+      buildQuality: 89,
+      repairability: 88
+    },
+    shortSpecs: {
+      cpu: "AMD Ryzen 7 5800H",
+      gpu: "NVIDIA RTX 3060 6GB",
+      ram: "16GB RAM",
+      storage: "512GB SSD",
+      display: '15.6" 165Hz IPS',
+      battery: "80Wh Battery",
+      chassis: "پلی‌کربنات مقاوم"
+    },
+    specs: {
+      brand: "Lenovo",
+      model: "Legion 5 15ACH6",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 88,
+        batteryLife: 76,
+        temperature: 85,
+        processingPower: 97,
+        usability: 91,
+        buildQuality: 89,
+        repairability: 88
+      },
+      shortSpecs: {
+        cpu: "AMD Ryzen 7 5800H",
+        gpu: "NVIDIA RTX 3060 6GB",
+        ram: "16GB RAM",
+        storage: "512GB SSD",
+        display: '15.6" 165Hz IPS',
+        battery: "80Wh Battery",
+        chassis: "پلی‌کربنات مقاوم"
+      },
+      cpu: "AMD Ryzen 7 5800H (8C / 16T, up to 4.4GHz, 16MB L3 Cache)",
+      gpu: "NVIDIA GeForce RTX 3060 6GB GDDR6 (130W Full Power TGP)",
+      ram: "16GB DDR4-3200MHz (Dual Channel, Expandable to 64GB)",
+      storage: "512GB PCIe NVMe M.2 SSD + یک اسلات خالی",
+      display: '15.6" FHD (1920x1080) 165Hz IPS 100% sRGB 300 nits FreeSync',
+      chassis: "پلی‌کربنات و ABS فشرده تقویت‌شده با تهویه ۴ جهته",
+      battery: "80Wh با پشتیبانی از شارژ سریع 230W با سلامت ۹۰٪",
+      weight: "2.40 kg",
+      os: "Windows 11 Home 64-bit",
+      ports: "2x USB-C 3.2, 4x USB 3.2 Gen 1, HDMI 2.1, RJ45 LAN, جک هدفون",
+      npuScore: "30 TOPS"
+    },
+    upgrades: {
+      ram: [
+        { name: "۱۶ گیگابایت (۲×۸) DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۳۲ گیگابایت (۲×۱۶) DDR4 گیمینگ", price: 1800000 }
+      ],
+      storage: [
+        { name: "۵۱۲ گیگابایت NVMe SSD", price: 0 },
+        { name: "۱ ترابایت NVMe SSD فوق‌سریع", price: 1800000 },
+        { name: "۱.۵ ترابایت (۵۱۲GB + ۱TB اضافه)", price: 2300000 }
+      ],
+      display: [
+        { name: '۱۵.۶ اینچ ۱۶۵ هرتز IPS با زمان ۳ میلی‌ثانیه', price: 0 }
+      ]
+    },
+    highlights: [
+      "گرافیک فول‌توان ۱۳۰ وات RTX 3060 با سوئیچ سخت‌افزاری MUX Switch",
+      "کیبورد گیمینگ Legion TrueStrike با نور پس‌زمینه سفید یکدست و کلیدهای کامل عددی",
+      "سیستم کولینگ Coldfront 3.0 با دو فن بزرگ توربو و چهار لوله هیت‌پایپ مسی",
+      "پنل نمایشگر فوق‌سریع ۱۶۵ هرتز با پشتیبانی از Dolby Vision و G-Sync"
+    ]
+  },
+  {
+    id: "dell-latitude-5490",
+    name: "Dell Latitude 5490",
+    brand: "Dell",
+    model: "Latitude 5490",
+    grade: "گرید ++A اروپایی (تمیز در حد نو)",
+    tagline: "اقتصادی‌ترین و کم‌استهلاک‌ترین لپ‌تاپ استوک بازار با استقامت بدنه بالا و شارژدهی مطلوب",
+    category: "اقتصادی",
+    series: "سری Latitude",
+    badge: "اقتصادی پرفروش",
+    rating: 4.75,
+    reviewsCount: 260,
+    basePrice: 13800000,
+    oldPrice: 15200000,
+    inStock: true,
+    stockCount: 20,
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1000&q=80",
+    cpuBrand: "Intel",
+    gpuBrand: "Intel",
+    chassis: "فیبر کربن",
+    techTinkScore: {
+      overall: 86,
+      batteryLife: 89,
+      temperature: 91,
+      processingPower: 75,
+      usability: 86,
+      buildQuality: 85,
+      repairability: 92
+    },
+    shortSpecs: {
+      cpu: "Intel Core i5-8350U",
+      gpu: "Intel UHD Graphics",
+      ram: "8GB RAM",
+      storage: "256GB SSD",
+      display: '14" HD/FHD',
+      battery: "68Wh Battery",
+      chassis: "فیبر کربن"
+    },
+    specs: {
+      brand: "Dell",
+      model: "Latitude 5490",
+      grade: "گرید ++A اروپایی (تمیز در حد نو)",
+      techTinkScore: {
+        overall: 86,
+        batteryLife: 89,
+        temperature: 91,
+        processingPower: 75,
+        usability: 86,
+        buildQuality: 85,
+        repairability: 92
+      },
+      shortSpecs: {
+        cpu: "Intel Core i5-8350U",
+        gpu: "Intel UHD Graphics",
+        ram: "8GB RAM",
+        storage: "256GB SSD",
+        display: '14" HD/FHD',
+        battery: "68Wh Battery",
+        chassis: "فیبر کربن"
+      },
+      cpu: "Intel Core i5-8350U (4C / 8T, up to 3.6GHz, 6MB Cache)",
+      gpu: "Intel UHD Graphics 620",
+      ram: "8GB DDR4-2400MHz (قابل ارتقا تا ۳۲ گیگابایت)",
+      storage: "256GB SSD پرسرعت SATA/NVMe",
+      display: '14.0" HD/FHD Anti-Glare مات ضد انعکاس',
+      chassis: "پلیمر کربن تقویت‌شده بادوام و مقاوم در برابر خط و خش",
+      battery: "68Wh سلامت باتری بالای ۸۰٪ با شارژدهی ۴ الی ۶ ساعت کار روزمره",
+      weight: "1.60 kg",
+      os: "Windows 10 / 11 Pro 64-bit",
+      ports: "1x USB-C (DisplayPort), 3x USB 3.1, HDMI, VGA, LAN RJ45, SD Card",
+      npuScore: "10 TOPS"
+    },
+    upgrades: {
+      ram: [
+        { name: "۸ گیگابایت DDR4 (پیش‌فرض)", price: 0 },
+        { name: "۱۶ گیگابایت DDR4 (پیشنهادی)", price: 900000 },
+        { name: "۳۲ گیگابایت DDR4 ماکزیمم", price: 2200000 }
+      ],
+      storage: [
+        { name: "۲۵۶ گیگابایت SSD (پیش‌فرض)", price: 0 },
+        { name: "۵۱۲ گیگابایت SSD نو با گارانتی", price: 1100000 },
+        { name: "۱ ترابایت SSD پرسرعت", price: 2400000 }
+      ],
+      display: [
+        { name: '۱۴ اینچ مات ضد انعکاس استاندارد', price: 0 }
+      ]
+    },
+    highlights: [
+      "استهلاک فوق‌العاده پایین و فراوانی تمام قطعات یدکی در بازار ایران",
+      "مجهز به پورت‌های کامل شامل پورت پروژکتور VGA، پورت HDMI و Type-C",
+      "بسیار مناسب برای حسابداری، تریدینگ، تایپ، وب‌گردی و آموزش آنلاین",
+      "گرید تمیز وارداتی با مهلت تست یک‌هفته‌ای رایتاپ و شارژر اورجینال"
     ]
   }
 ];
@@ -516,28 +700,28 @@ export const FAQS = [
 export const WARRANTY_DATABASE = {
   "TT-9082-X": {
     serialNumber: "TT-9082-X",
-    model: "تک‌تینک بلید ۱۶ الترا",
-    purchaseDate: "۱۴۰۴/۰۸/۲۱",
-    warrantyExpiry: "۱۴۰۶/۰۸/۲۱",
-    status: "فعال (گارانتی ۲ ساله استاندارد)",
+    model: "Lenovo ThinkPad T14 Gen 1",
+    purchaseDate: "۱۴۰۳/۰۸/۲۱",
+    warrantyExpiry: "۱۴۰۴/۰۲/۲۱",
+    status: "فعال (گارانتی ۶ ماهه طلایی تک‌تینک)",
     carePlus: true,
     owner: "امیر علی‌اکبری"
   },
   "TT-4112-S": {
     serialNumber: "TT-4112-S",
-    model: "تک‌بوک پرو ۱۴ استودیو",
-    purchaseDate: "۱۴۰۴/۱۱/۲۱",
-    warrantyExpiry: "۱۴۰۶/۱۱/۲۱",
-    status: "فعال (سرویس VIP تک‌تینک Care+)",
+    model: "HP EliteBook 840 G7",
+    purchaseDate: "۱۴۰۳/۱۱/۱۵",
+    warrantyExpiry: "۱۴۰۴/۰۵/۱۵",
+    status: "فعال (گارانتی طلایی تک‌تینک استوک)",
     carePlus: true,
     owner: "سارا حسینی"
   },
   "TT-1002-A": {
     serialNumber: "TT-1002-A",
-    model: "ایرو‌اسلیم X13 فدر",
+    model: "Dell Precision 7530",
     purchaseDate: "۱۴۰۲/۱۰/۱۵",
-    warrantyExpiry: "۱۴۰۴/۱۰/۱۵",
-    status: "منقضی شده (خارج از گارانتی)",
+    warrantyExpiry: "۱۴۰۳/۰۴/۱۵",
+    status: "منقضی شده (مهلت گارانتی استوک به اتمام رسیده)",
     carePlus: false,
     owner: "علی رضایی"
   }
@@ -545,30 +729,40 @@ export const WARRANTY_DATABASE = {
 
 export const DRIVER_DOWNLOADS = [
   {
-    modelId: "tink-blade-16",
-    modelName: "تک‌تینک بلید ۱۶ الترا",
+    modelId: "lenovo-thinkpad-t14",
+    modelName: "Lenovo ThinkPad T14 Gen 1",
     files: [
-      { name: "Tink Command Center v4.2.1", date: "۱۴۰۵/۰۶/۱۹", size: "۱۴۲ مگابایت", version: "4.2.1", category: "نرم‌افزار" },
-      { name: "NVIDIA GeForce Game Ready Driver 560.81", date: "۱۴۰۵/۰۷/۰۶", size: "۶۸۰ مگابایت", version: "560.81", category: "کارت گرافیک" },
-      { name: "Intel Chipset & NPU Neural Driver v12.1", date: "۱۴۰۵/۰۵/۲۴", size: "۸۵ مگابایت", version: "12.1.0", category: "چیپست" },
-      { name: "System BIOS v2.04 (اصلاح محفظه بخار)", date: "۱۴۰۵/۰۶/۱۰", size: "۱۶ مگابایت", version: "2.04", category: "بایوس" }
+      { name: "Lenovo Commercial Vantage v10.2", date: "۱۴۰۳/۰۹/۱۰", size: "۵۸ مگابایت", version: "10.2.1", category: "نرم‌افزار" },
+      { name: "Intel UHD Graphics & Display Driver", date: "۱۴۰۳/۰۸/۱۵", size: "۳۹۰ مگابایت", version: "31.0.101.2127", category: "کارت گرافیک" },
+      { name: "Synaptics TrackPoint & UltraNav Driver", date: "۱۴۰۳/۰۷/۰۲", size: "۳۲ مگابایت", version: "19.5.19", category: "تاچ‌پد" },
+      { name: "ThinkPad BIOS Update Utility v1.45", date: "۱۴۰۳/۰۶/۱۸", size: "۱۲ مگابایت", version: "1.45", category: "بایوس" }
     ]
   },
   {
-    modelId: "tink-book-pro-14",
-    modelName: "تک‌بوک پرو ۱۴ استودیو",
+    modelId: "hp-elitebook-840-g7",
+    modelName: "HP EliteBook 840 G7",
     files: [
-      { name: "Tink Studio Color Manager (پروفایل ICC)", date: "۱۴۰۵/۰۵/۲۹", size: "۴۵ مگابایت", version: "1.8.0", category: "نمایشگر" },
-      { name: "AMD Ryzen AI Driver Package v3.1", date: "۱۴۰۵/۰۶/۲۱", size: "۳۲۰ مگابایت", version: "3.1.2", category: "پردازنده" },
-      { name: "Realtek Audio Dolby Atmos Driver", date: "۱۴۰۵/۰۴/۱۳", size: "۱۱۰ مگابایت", version: "6.0.92", category: "صدا" }
+      { name: "HP Support Assistant & Audio Tuning", date: "۱۴۰۳/۰۹/۰۲", size: "۷۲ مگابایت", version: "9.25", category: "نرم‌افزار" },
+      { name: "Intel Management Engine & Chipset v2024", date: "۱۴۰۳/۰۸/۱۱", size: "۹۵ مگابایت", version: "2024.1", category: "چیپست" },
+      { name: "Bang & Olufsen Audio Driver", date: "۱۴۰۳/۰۵/۱۴", size: "۱۱۰ مگابایت", version: "6.0.91", category: "صدا" }
     ]
   },
   {
-    modelId: "aeroslim-x13",
-    modelName: "ایرو‌اسلیم X13 فدر",
+    modelId: "dell-precision-7530",
+    modelName: "Dell Precision 7530",
     files: [
-      { name: "Intel Arc Graphics Driver v31.0.101", date: "۱۴۰۵/۰۶/۳۱", size: "۶۲۰ مگابایت", version: "31.0.101", category: "کارت گرافیک" },
-      { name: "Battery Saver & Power Plan v2.0", date: "۱۴۰۵/۰۳/۲۸", size: "۱۲ مگابایت", version: "2.0.1", category: "نرم‌افزار" }
+      { name: "NVIDIA Quadro P3200 Production Driver", date: "۱۴۰۳/۰۸/۲۲", size: "۶۵۰ مگابایت", version: "552.86", category: "کارت گرافیک" },
+      { name: "Dell Precision Optimizer v6.0", date: "۱۴۰۳/۰۶/۰۵", size: "۴۵ مگابایت", version: "6.0.1", category: "نرم‌افزار" },
+      { name: "Dell Command Update v5.3", date: "۱۴۰۳/۰۷/۱8", size: "۲۸ مگابایت", version: "5.3.0", category: "سیستم" }
+    ]
+  },
+  {
+    modelId: "lenovo-legion-5-15",
+    modelName: "Lenovo Legion 5 15ACH6",
+    files: [
+      { name: "NVIDIA GeForce Game Ready Driver RTX 3060", date: "۱۴۰۳/۰۹/۱۴", size: "۶۸۵ مگابایت", version: "566.14", category: "کارت گرافیک" },
+      { name: "Lenovo Legion Toolkit & Power Plan", date: "۱۴۰۳/۰۸/۰۱", size: "۳۸ مگابایت", version: "2.21", category: "نرم‌افزار" },
+      { name: "AMD Ryzen Chipset Drivers", date: "۱۴۰۳/۰۶/۲۰", size: "۶۲ مگابایت", version: "6.07", category: "چیپست" }
     ]
   }
 ];

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink } from 'lucide-react';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import LaptopCatalog from './components/LaptopCatalog.jsx';
@@ -11,6 +12,8 @@ import BlogSection from './components/BlogSection.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import ProductPage from './components/ProductPage.jsx';
+import AboutUsModal from './components/AboutUsModal.jsx';
+import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './components/SocialLogos.jsx';
 
 function App() {
   const [activeTab, setActiveTab] = useState('store'); // 'store', 'product', 'compare', 'support', 'blog', 'admin'
@@ -19,6 +22,8 @@ function App() {
   
   const [selectedLaptop, setSelectedLaptop] = useState(null); // For Quick Customizer Modal
   const [compareList, setCompareList] = useState([]); // Array of laptop IDs
+  const [isAboutUsOpen, setIsAboutUsOpen] = useState(false);
+  const [storeAboutInfo, setStoreAboutInfo] = useState(null);
   
   // Persistent Cart
   const [cartItems, setCartItems] = useState(() => {
@@ -42,6 +47,8 @@ function App() {
     }
   });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authNotice, setAuthNotice] = useState(null);
+  const [pendingCheckout, setPendingCheckout] = useState(false);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +58,11 @@ function App() {
     fetch('/api/products')
       .then(res => res.json())
       .then(setLaptops)
+      .catch(() => {});
+
+    fetch('/api/about')
+      .then(res => res.json())
+      .then(data => { if (data && !data.error) setStoreAboutInfo(data); })
       .catch(() => {});
 
     // Parse URL on first load
@@ -112,9 +124,20 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleRequireAuthForCheckout = () => {
+    setAuthNotice('برای تکمیل سفارش و پرداخت، لطفاً ابتدا وارد حساب کاربری خود شوید یا حساب بسازید.');
+    setPendingCheckout(true);
+    setIsAuthModalOpen(true);
+  };
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     setIsAuthModalOpen(false);
+    setAuthNotice(null);
+    if (pendingCheckout) {
+      setPendingCheckout(false);
+      setIsCheckoutOpen(true);
+    }
   };
 
   const handleLogout = () => {
@@ -132,12 +155,14 @@ function App() {
         activeTab={activeTab} 
         setActiveTab={handleTabChange} 
         cartCount={cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+        compareCount={compareList.length}
         onCartClick={() => setIsCartOpen(true)}
         user={currentUser}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onOpenAbout={() => setIsAboutUsOpen(true)}
       />
 
       {/* 1. STORE VIEW */}
@@ -199,7 +224,7 @@ function App() {
 
       {/* 4. SUPPORT & BLOG VIEWS */}
       {activeTab === 'support' && <SupportSection />}
-      {activeTab === 'blog' && <BlogSection />}
+      {activeTab === 'blog' && <BlogSection onSelectProduct={handleSelectProduct} />}
 
       {/* 5. ADMIN PORTAL */}
       {activeTab === 'admin' && (
@@ -224,7 +249,15 @@ function App() {
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
         setCartItems={setCartItems}
-        onCheckoutClick={() => setIsCheckoutOpen(true)}
+        user={currentUser}
+        onOpenAuth={handleRequireAuthForCheckout}
+        onCheckoutClick={() => {
+          if (!currentUser) {
+            handleRequireAuthForCheckout();
+          } else {
+            setIsCheckoutOpen(true);
+          }
+        }}
       />
 
       {/* Iranian Checkout Modal */}
@@ -234,48 +267,210 @@ function App() {
           onClose={() => setIsCheckoutOpen(false)}
           onClearCart={() => setCartItems([])}
           user={currentUser}
+          onOpenAuth={handleRequireAuthForCheckout}
         />
       )}
 
       {/* Customer Login & Registration Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setAuthNotice(null);
+          setPendingCheckout(false);
+        }}
         onLogin={handleLoginSuccess}
+        notice={authNotice}
       />
 
+      {/* Floating Bottom Comparison Dock */}
+      {compareList.length > 0 && activeTab !== 'compare' && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 90,
+          background: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(239, 68, 68, 0.35)',
+          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.15), 0 0 20px rgba(239, 68, 68, 0.25)',
+          borderRadius: '50px',
+          padding: '8px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          maxWidth: '92vw',
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.875rem', fontWeight: 600 }}>
+            <span style={{ 
+              background: '#ef4444', 
+              color: 'white', 
+              borderRadius: '50%', 
+              width: '24px', 
+              height: '24px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)'
+            }}>
+              {compareList.length}
+            </span>
+            <span>دستگاه برای مقایسه انتخاب شده</span>
+          </div>
+          <button 
+            className="btn" 
+            style={{ 
+              background: '#ef4444', 
+              color: 'white',
+              border: 'none',
+              padding: '6px 16px', 
+              fontSize: '0.8125rem', 
+              borderRadius: '30px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              boxShadow: '0 0 14px rgba(239, 68, 68, 0.4)'
+            }}
+            onClick={() => handleTabChange('compare')}
+          >
+            <ArrowLeftRight size={14} /> مشاهده مقایسه
+          </button>
+          <button 
+            className="btn btn-glass" 
+            style={{ padding: '6px 12px', fontSize: '0.75rem', borderRadius: '30px' }}
+            onClick={() => setCompareList([])}
+          >
+            پاک کردن
+          </button>
+        </div>
+      )}
+
       {/* Global Footer */}
-      <footer className="glass-panel" style={{ borderRadius: 0, borderBottom: 'none', borderLeft: 'none', borderRight: 'none', padding: '60px 0', marginTop: 'auto' }}>
-        <div className="container grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px' }}>
+      <footer className="glass-panel" style={{ borderRadius: 0, borderBottom: 'none', borderLeft: 'none', borderRight: 'none', padding: '60px 0 40px', marginTop: 'auto' }}>
+        <div className="container grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '40px' }}>
+          
+          {/* Column 1: Store & Location */}
           <div>
             <h2 className="gradient-text" style={{ marginBottom: '16px' }}>تک‌تینک</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.8' }}>
-              پیشرو در عرضه لپ‌تاپ‌های مهندسی و گیمینگ با معماری هوش مصنوعی، قیمت‌گذاری شفاف به تومان و پشتیبانی از درگاه‌های عضو شتاب و موتور جستجوی ترب (Torob).
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.8', marginBottom: '16px' }}>
+              نخستین مرجع مهندسی بررسی سخت‌افزاری، تست بنچمارک و عرضه تخصصی لپ‌تاپ‌های گیمینگ و ورک‌استیشن در ایران.
             </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div className="flex" style={{ gap: '8px', alignItems: 'flex-start' }}>
+                <MapPin size={16} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span>{storeAboutInfo?.store_address || 'تهران، مجتمع تجاری نور، واحد ۸۰۲۴'}</span>
+              </div>
+              <div className="flex" style={{ gap: '8px', alignItems: 'center' }}>
+                <Phone size={16} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                <span style={{ direction: 'ltr' }}>{storeAboutInfo?.store_phone || '۰۲۱-۸۸۲۲۶۶۰۰'}</span>
+              </div>
+            </div>
+            <button 
+              type="button" 
+              className="btn btn-glass" 
+              style={{ marginTop: '16px', fontSize: '0.8rem', padding: '6px 14px', borderRadius: '8px' }}
+              onClick={() => setIsAboutUsOpen(true)}
+            >
+              مشاهده اطلاعات کامل و نقشه شوروم 📍
+            </button>
           </div>
+
+          {/* Column 2: Products */}
           <div>
             <h3 style={{ marginBottom: '16px', fontSize: '1.125rem' }}>فروشگاه و دسته‌ها</h3>
             <ul style={{ listStyle: 'none', padding: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های گیمینگ</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های تولید محتوا</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>ورک‌استیشن‌های هوش مصنوعی</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('compare')}>ابزار مقایسه مشخصات</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>لپ‌تاپ‌های مهندسی و معماری</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('store')}>ایستگاه‌های کاری هوش مصنوعی</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('compare')}>ابزار مقایسه مشخصات فنی</li>
             </ul>
           </div>
+
+          {/* Column 3: Customer Services */}
           <div>
-            <h3 style={{ marginBottom: '16px', fontSize: '1.125rem' }}>خدمات مشتریان</h3>
+            <h3 style={{ marginBottom: '16px', fontSize: '1.125rem' }}>خدمات، رزرو و گارانتی</h3>
             <ul style={{ listStyle: 'none', padding: 0, color: 'var(--text-secondary)', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>استعلام شماره سریال و گارانتی</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>دانلود درایورها و فرم‌ور</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>ثبت تیکت پشتیبانی فنی</li>
-              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('blog')}>وبلاگ و راهنمای خرید</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>رزرو وقت تست حضوری در شوروم</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>ثبت درخواست ارتقای سیستم و فن</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>استعلام شماره سریال و گارانتی طلایی</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('support')}>دانلود درایورها و فرم‌ور اختصاصی</li>
+              <li style={{ cursor: 'pointer' }} onClick={() => handleTabChange('blog')}>وبلاگ نقد و بررسی تخصصی</li>
             </ul>
           </div>
+
+          {/* Column 4: Official Social Channels */}
+          <div>
+            <h3 style={{ marginBottom: '16px', fontSize: '1.125rem' }}>شبکه‌های رسمی تک‌تینک</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '14px', lineHeight: 1.6 }}>
+              برای تماشای ویدیوهای بررسی، آنباکسینگ‌ها و اطلاعیه‌های روزانه:
+            </p>
+            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              
+              <a 
+                href={storeAboutInfo?.telegram_url || 'https://t.me/techtink'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-glass"
+                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                title="کانال رسمی تلگرام تک‌تینک"
+              >
+                <TelegramIcon size={16} color="#29a9ea" /> تلگرام
+              </a>
+
+              <a 
+                href={storeAboutInfo?.instagram_url || 'https://instagram.com/techtink'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-glass"
+                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                title="صفحه اینستاگرام تک‌تینک"
+              >
+                <InstagramIcon size={16} color="#e1306c" /> اینستاگرام
+              </a>
+
+              <a 
+                href={storeAboutInfo?.bale_url || 'https://ble.ir/techtink'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-glass"
+                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                title="کانال پیام‌رسان بله تک‌تینک"
+              >
+                <BaleIcon size={16} /> بله (Bale)
+              </a>
+
+              <a 
+                href={storeAboutInfo?.aparat_url || 'https://www.aparat.com/techtink'} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-glass"
+                style={{ padding: '8px 12px', fontSize: '0.775rem', display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: '#fff', justifyContent: 'center' }}
+                title="کانال ویدیوهای آپارات تک‌تینک"
+              >
+                <AparatIcon size={16} /> آپارات
+              </a>
+
+            </div>
+          </div>
+
         </div>
+
         <div className="container" style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid var(--border-glass)', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
           تمامی حقوق مادی و معنوی برای فروشگاه تخصصی لپ‌تاپ تک‌تینک محفوظ است. © ۱۴۰۵
         </div>
       </footer>
+
+      {/* About Us & Showroom Location Modal */}
+      <AboutUsModal
+        isOpen={isAboutUsOpen}
+        onClose={() => setIsAboutUsOpen(false)}
+        onOpenSupport={() => handleTabChange('support')}
+      />
     </div>
   );
 }

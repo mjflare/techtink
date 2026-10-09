@@ -2,7 +2,7 @@ import React from 'react';
 import { X, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
-export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, onCheckoutClick }) {
+export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, onCheckoutClick, user, onOpenAuth }) {
   if (!isOpen) return null;
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
@@ -100,9 +100,25 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
               <span className="gradient-text font-code">{formatPrice(total)}</span>
             </div>
             
-            <button className="btn btn-primary" style={{ width: '100%', padding: '16px', fontSize: '1.05rem' }} onClick={() => { onClose(); onCheckoutClick(); }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '16px', fontSize: '1.05rem' }} 
+              onClick={() => { 
+                onClose(); 
+                if (!user) {
+                  if (onOpenAuth) onOpenAuth();
+                } else {
+                  onCheckoutClick();
+                }
+              }}
+            >
               تکمیل سفارش و پرداخت <ArrowLeft size={18} />
             </button>
+            {!user && (
+              <div style={{ marginTop: '10px', fontSize: '0.8125rem', color: 'hsl(var(--accent-cyan))', textAlign: 'center', opacity: 0.9 }}>
+                جهت نهایی‌سازی خرید، ورود به حساب کاربری الزامی است
+              </div>
+            )}
           </div>
         )}
       </div>

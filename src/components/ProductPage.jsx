@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
-  Cpu, HardDrive, Monitor, Scale, Plus, ShoppingCart, MessageSquare, 
+  Cpu, HardDrive, Monitor, ArrowLeftRight, Plus, ShoppingCart, MessageSquare, 
   Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, 
-  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery
+  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
+import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 
 export default function ProductPage({ 
   productSlug, 
@@ -45,6 +46,24 @@ export default function ProductPage({
 
   // Related products
   const [relatedProducts, setRelatedProducts] = useState([]);
+
+  // Linked Blog Post Reader Modal
+  const [activeBlogReview, setActiveBlogReview] = useState(null);
+  const [loadingBlogReview, setLoadingBlogReview] = useState(false);
+
+  const handleOpenBlogReview = async (blogId) => {
+    setLoadingBlogReview(true);
+    try {
+      const res = await fetch(`/api/blog/${blogId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setActiveBlogReview(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setLoadingBlogReview(false);
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -309,10 +328,10 @@ export default function ProductPage({
               </div>
             </div>
             <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
-              <Sparkles size={24} color="hsl(var(--accent-cyan))" />
+              <CheckCircle size={24} color="hsl(var(--accent-cyan))" />
               <div style={{ fontSize: '0.8125rem' }}>
-                <div style={{ fontWeight: 'bold' }}>سازگار با ترب (Torob)</div>
-                <div style={{ color: 'var(--text-secondary)' }}>بهترین قیمت تضمینی</div>
+                <div style={{ fontWeight: 'bold' }}>تضمین اصالت و سلامت</div>
+                <div style={{ color: 'var(--text-secondary)' }}>تست فنی کامل سخت‌افزار</div>
               </div>
             </div>
           </div>
@@ -320,17 +339,67 @@ export default function ProductPage({
 
         {/* Left column: Info, Configurator & Purchase */}
         <div>
-          <div style={{ marginBottom: '8px' }}>
-            <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', marginLeft: '8px' }}>
+          <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+            <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
               {product.category}
             </span>
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
               {product.series}
             </span>
+            {/* Grade Badge - ONLY on product selection page */}
+            <span className="badge badge-glow" style={{ 
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%)', 
+              color: 'hsl(var(--accent-green))',
+              borderColor: 'hsl(var(--accent-green))',
+              fontWeight: 700,
+              fontSize: '0.8125rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <CheckCircle size={13} />
+              {product.grade || 'گرید ++A اروپایی (تمیز در حد نو)'}
+            </span>
           </div>
 
-          <h1 style={{ fontSize: '2.25rem', marginBottom: '8px' }}>{product.name}</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.125rem', marginBottom: '20px' }}>
+          {/* Two-Line Title Layout: Brand on top line, Model on line below */}
+          <div style={{ marginBottom: '12px', textAlign: 'left', direction: 'ltr' }}>
+            <div style={{ 
+              fontSize: '1rem', 
+              fontWeight: 800, 
+              letterSpacing: '0.12em', 
+              textTransform: 'uppercase', 
+              color: 'hsl(var(--accent-cyan))', 
+              fontFamily: 'var(--font-tech)',
+              marginBottom: '2px'
+            }}>
+              {product.brand || (product.name?.split(' ')[0] || '')}
+            </div>
+            <h1 style={{ 
+              fontSize: '2.4rem', 
+              fontWeight: 800, 
+              margin: 0, 
+              lineHeight: 1.25,
+              fontFamily: 'var(--font-tech)',
+              color: 'var(--text-primary)'
+            }}>
+              {product.model || (product.name?.replace(product.brand || '', '').trim() || product.name)}
+            </h1>
+          </div>
+
+          {/* Price Under Product Name */}
+          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
+            <div className="font-tech gradient-text" style={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1.2 }}>
+              {formatPrice(unitPrice)}
+            </div>
+            {product.oldPrice && product.oldPrice > product.basePrice && (
+              <span style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+                {formatPrice(product.oldPrice)}
+              </span>
+            )}
+          </div>
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '20px' }}>
             {product.tagline}
           </p>
 
@@ -390,10 +459,19 @@ export default function ProductPage({
 
             <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <HardDrive size={13} color="hsl(var(--accent-purple))" /> رم و حافظه
+                <HardDrive size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shortSpecs.ram} • {shortSpecs.storage}
+                {shortSpecs.ram} RAM
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <HardDrive size={13} color="hsl(var(--accent-cyan))" /> حافظه داخلی (SSD)
+              </div>
+              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {shortSpecs.storage}
               </div>
             </div>
 
@@ -408,9 +486,18 @@ export default function ProductPage({
 
             <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <ShieldCheck size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
+                <Battery size={13} color="hsl(var(--accent-green))" /> ظرفیت باتری
               </div>
               <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {shortSpecs.battery || '50Wh Battery'}
+              </div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                <Layers size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
+              </div>
+              <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {shortSpecs.chassis}
               </div>
             </div>
@@ -577,12 +664,12 @@ export default function ProductPage({
             </button>
 
             <button 
-              className="btn btn-glass" 
-              style={{ padding: '14px', background: isComparing ? 'hsla(var(--accent-purple), 0.15)' : 'transparent', flexShrink: 0 }}
+              className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
+              style={{ padding: '14px', flexShrink: 0 }}
               onClick={() => onCompare(product.id)}
               title={isComparing ? 'حذف از مقایسه' : 'افزودن به مقایسه'}
             >
-              <Scale size={20} color={isComparing ? 'hsl(var(--accent-purple))' : 'var(--text-secondary)'} />
+              <ArrowLeftRight size={20} className="compare-icon" />
             </button>
           </div>
         </div>
@@ -591,7 +678,7 @@ export default function ProductPage({
       {/* Navigation Tabs for Detailed Sections */}
       <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
         {[
-          { id: 'specs', label: 'مشخصات فنی و چارت بنچمارک', icon: BarChart2 },
+          { id: 'specs', label: 'مشخصات فنی و امتیاز تک‌تینک', icon: BarChart2 },
           { id: 'review', label: 'نقد و بررسی تخصصی', icon: BookOpen },
           { id: 'drivers', label: `درایورها (${drivers.length})`, icon: Download },
           { id: 'comments', label: `دیدگاه‌ها (${comments.length})`, icon: MessageSquare }
@@ -616,54 +703,80 @@ export default function ProductPage({
         ))}
       </div>
 
-      {/* 1. SPECS & VISUAL BENCHMARK CHART TAB */}
+      {/* 1. SPECS & TECHTINK SCORE TAB */}
       {activeTab === 'specs' && (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           
-          {/* Visual Benchmark Radar / Bar Chart (Like NotebookCheck / RTINGS) */}
-          <div className="glass-card" style={{ padding: '36px' }}>
-            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
-                  <Zap size={22} color="hsl(var(--accent-cyan))" />
-                  چارت عملکرد و نتایج بنچمارک سخت‌افزاری
-                </h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
-                  امتیازات بر اساس تست‌های استاندارد آزمایشگاه فنی تک‌تینک (مقیاس ۰ تا ۱۰۰)
-                </p>
-              </div>
-              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
-                تست‌شده در سناریوی سنگین
-              </span>
-            </div>
+          {/* TechTink Score (امتیاز تک‌تینک) */}
+          {(() => {
+            const score = product.techTinkScore || {
+              overall: 88,
+              batteryLife: 84,
+              temperature: 88,
+              processingPower: 86,
+              usability: 92,
+              buildQuality: 92,
+              repairability: 89
+            };
 
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-              {[
-                { label: 'پردازش چند‌هسته‌ای (CPU Performance)', val: bm.cpuScore, color: 'hsl(var(--accent-cyan))' },
-                { label: 'قدرت پردازش گرافیک و بازی (Gaming / GPU)', val: bm.gamingScore, color: 'hsl(var(--accent-green))' },
-                { label: 'کیفیت و دقت رنگ نمایشگر (Display Quality)', val: bm.displayScore, color: 'hsl(var(--accent-purple))' },
-                { label: 'راندمان باتری در کاربری روزانه (Battery Life)', val: bm.batteryScore, color: 'hsl(var(--accent-cyan))' },
-                { label: 'سیستم خنک‌کننده و کنترل حرارت (Cooling Tech)', val: bm.coolingScore, color: 'hsl(var(--accent-green))' },
-                { label: 'توان پردازش هوش مصنوعی (NPU AI TOPS)', val: bm.aiScore, color: 'hsl(var(--accent-purple))' }
-              ].map((item, idx) => (
-                <div key={idx} className="glass-panel" style={{ padding: '16px', borderRadius: '12px' }}>
-                  <div className="flex" style={{ justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 500 }}>{item.label}</span>
-                    <span className="font-tech" style={{ fontWeight: 700, color: item.color }}>{item.val} / ۱۰۰</span>
+            const scoreItems = [
+              { label: 'عمر باتری', key: 'batteryLife', val: score.batteryLife, color: 'hsl(var(--accent-green))' },
+              { label: 'دما', key: 'temperature', val: score.temperature, color: 'hsl(var(--accent-cyan))' },
+              { label: 'توان پردازشی', key: 'processingPower', val: score.processingPower, color: 'hsl(var(--accent-purple))' },
+              { label: 'سهولت استفاده', key: 'usability', val: score.usability, color: 'hsl(var(--accent-cyan))' },
+              { label: 'کیفیت ساخت و حس دستگاه', key: 'buildQuality', val: score.buildQuality, color: 'hsl(var(--accent-green))' },
+              { label: 'ارتقا پذیری و تعمیر پذیری', key: 'repairability', val: score.repairability, color: 'hsl(var(--accent-purple))' }
+            ];
+
+            return (
+              <div className="glass-card" style={{ padding: '36px' }}>
+                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                      <Sparkles size={24} color="hsl(var(--accent-cyan))" />
+                      امتیاز تک‌تینک
+                    </h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '6px' }}>
+                      ارزیابی کارشناسی ۶ پارامتر حیاتی سلامت، دوام و کارایی دستگاه (مقیاس ۰ تا ۱۰۰)
+                    </p>
                   </div>
-                  <div style={{ height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
-                    <div style={{ 
-                      height: '100%', 
-                      width: `${item.val}%`, 
-                      background: item.color,
-                      borderRadius: '6px',
-                      transition: 'width 0.8s ease'
-                    }}></div>
+
+                  {/* Overall Score Badge */}
+                  <div className="glass-panel flex" style={{ alignItems: 'center', gap: '14px', padding: '10px 18px', borderRadius: '14px', background: 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.1) 0%, hsla(var(--accent-purple), 0.1) 100%)' }}>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>امتیاز کلی تک‌تینک</div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-green))', fontWeight: 700 }}>تایید فنی کارشناسان</div>
+                    </div>
+                    <div className="font-tech gradient-text" style={{ fontSize: '2.25rem', fontWeight: 900, lineHeight: 1 }}>
+                      {score.overall}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                  {scoreItems.map((item, idx) => (
+                    <div key={idx} className="glass-panel" style={{ padding: '16px 20px', borderRadius: '12px' }}>
+                      <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.label}</span>
+                        <span className="font-tech" style={{ fontWeight: 700, fontSize: '0.9375rem', color: item.color }}>
+                          {item.val} <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>/ ۱۰۰</span>
+                        </span>
+                      </div>
+                      <div style={{ height: '8px', background: 'rgba(0,0,0,0.06)', borderRadius: '6px', overflow: 'hidden' }}>
+                        <div style={{ 
+                          height: '100%', 
+                          width: `${item.val}%`, 
+                          background: item.color,
+                          borderRadius: '6px',
+                          transition: 'width 0.8s ease'
+                        }}></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Detailed Categorized Specifications (Apple / ROG Style) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -795,7 +908,7 @@ export default function ProductPage({
                 <div className="spec-section-header">
                   <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
                     <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'hsla(var(--accent-green), 0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <ShieldCheck size={18} color="hsl(var(--accent-green))" />
+                      <Layers size={18} color="hsl(var(--accent-green))" />
                     </div>
                     <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>باتری، درگاه‌ها، اتصالات و بدنه</span>
                   </div>
@@ -840,14 +953,76 @@ export default function ProductPage({
       {/* 2. EXPERT REVIEW & PROS/CONS TAB */}
       {activeTab === 'review' && (
         <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
-          <h2 style={{ fontSize: '1.75rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BookOpen size={24} color="hsl(var(--accent-cyan))" />
-            نقد و بررسی تخصصی کارشناسان تک‌تینک
-          </h2>
-
-          <div style={{ lineHeight: '1.9', fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '36px', background: 'rgba(0,0,0,0.02)', padding: '24px', borderRadius: '12px', borderRight: '4px solid hsl(var(--accent-cyan))' }}>
-            {review.intro || product.description || `${product.name} یک محصول رده‌بالا با کارایی ممتاز است.`}
+          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <BookOpen size={24} color="hsl(var(--accent-cyan))" />
+                نقد و بررسی تخصصی کارشناسان تک‌تینک
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '6px' }}>
+                ارزیابی فنی، بنچمارک‌ها، کیفیت ساخت و تجربه کاربری تست‌شده در لابراتوار
+              </p>
+            </div>
           </div>
+
+          {/* Linked Blog Review Banner if available */}
+          {product.blogReview && (
+            <div 
+              className="glass-panel" 
+              style={{ 
+                marginBottom: '28px', 
+                padding: '24px', 
+                borderRadius: '16px', 
+                background: 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.08) 0%, hsla(var(--accent-purple), 0.08) 100%)', 
+                border: '1px solid hsla(var(--accent-cyan), 0.3)',
+                display: 'flex',
+                gap: '24px',
+                alignItems: 'center',
+                flexWrap: 'wrap'
+              }}
+            >
+              {product.blogReview.image && (
+                <img 
+                  src={product.blogReview.image} 
+                  alt={product.blogReview.title} 
+                  style={{ width: '200px', height: '125px', objectFit: 'cover', borderRadius: '12px', flexShrink: 0 }}
+                />
+              )}
+              <div style={{ flex: 1, minWidth: '260px' }}>
+                <div className="flex" style={{ alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#000', fontWeight: 'bold' }}>
+                    بررسی تخصصی کامل در وبلاگ
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    {product.blogReview.date} • مطالعه: {product.blogReview.readTime}
+                  </span>
+                </div>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary)', fontWeight: 700 }}>
+                  {product.blogReview.title}
+                </h3>
+                <p style={{ margin: '0 0 16px 0', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  {product.blogReview.excerpt}
+                </p>
+                <button 
+                  className="btn btn-primary" 
+                  style={{ padding: '8px 18px', fontSize: '0.875rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                  onClick={() => handleOpenBlogReview(product.blogReview.id)}
+                  disabled={loadingBlogReview}
+                >
+                  <BookOpen size={16} /> 
+                  {loadingBlogReview ? 'در حال بارگذاری...' : 'مطالعه بررسی جامع این محصول'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div 
+            className="blog-article-content"
+            style={{ lineHeight: '1.9', fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '36px', background: 'rgba(0,0,0,0.02)', padding: '24px', borderRadius: '12px', borderRight: '4px solid hsl(var(--accent-cyan))' }}
+            dangerouslySetInnerHTML={{ 
+              __html: renderMarkdownToHtml(review.fullReview || review.intro || product.description || `${product.name} یک محصول رده‌بالا با کارایی ممتاز است.`) 
+            }}
+          />
 
           {/* Pros & Cons Columns */}
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '28px', marginBottom: '36px' }}>
@@ -1142,6 +1317,63 @@ export default function ProductPage({
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Linked Blog Review Article Reader Modal */}
+      {activeBlogReview && (
+        <div className="modal-backdrop-wrapper" onClick={() => setActiveBlogReview(null)} style={{ zIndex: 120 }}>
+          <div 
+            className="glass-panel modal-card" 
+            style={{ maxWidth: '980px', maxHeight: '90vh', overflowY: 'auto', padding: 0, borderRadius: '20px' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ position: 'relative', height: '320px' }}>
+              <img src={activeBlogReview.image} alt={activeBlogReview.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent, rgba(15, 23, 42, 0.85))' }}></div>
+              <button 
+                className="btn btn-glass" 
+                style={{ position: 'absolute', top: '20px', left: '20px', padding: '10px', borderRadius: '50%', zIndex: 10, background: 'rgba(255,255,255,0.7)', color: 'black' }} 
+                onClick={() => setActiveBlogReview(null)}
+              >
+                <X size={20} />
+              </button>
+              <div style={{ position: 'absolute', bottom: '28px', left: '28px', right: '28px' }}>
+                <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#000', fontWeight: 'bold', marginBottom: '12px' }}>
+                  {activeBlogReview.category || 'نقد و بررسی تخصصی'}
+                </span>
+                <h1 style={{ fontSize: '2.1rem', margin: 0, color: 'white', textShadow: '0 2px 10px rgba(0,0,0,0.6)' }}>
+                  {activeBlogReview.title}
+                </h1>
+              </div>
+            </div>
+
+            <div style={{ padding: '36px', maxWidth: '820px', margin: '0 auto', width: '100%' }}>
+              <div className="flex" style={{ gap: '16px', alignItems: 'center', marginBottom: '32px', paddingBottom: '20px', borderBottom: '1px solid var(--border-glass)' }}>
+                {activeBlogReview.authorAvatar && (
+                  <img src={activeBlogReview.authorAvatar} alt={activeBlogReview.author} style={{ width: '50px', height: '50px', borderRadius: '50%', objectFit: 'cover' }} />
+                )}
+                <div>
+                  <div style={{ fontWeight: 'bold', fontSize: '1.05rem' }}>{activeBlogReview.author}</div>
+                  <div className="font-code" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    <span>{activeBlogReview.authorRole}</span> • <span>{activeBlogReview.date}</span> • <span>زمان مطالعه: {activeBlogReview.readTime}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className="blog-article-content"
+                style={{ lineHeight: 2 }}
+                dangerouslySetInnerHTML={{ __html: renderMarkdownToHtml(activeBlogReview.content) }} 
+              />
+              
+              <div style={{ marginTop: '40px', paddingTop: '24px', borderTop: '1px solid var(--border-glass)', textAlign: 'center' }}>
+                <button className="btn btn-primary" style={{ padding: '10px 24px' }} onClick={() => setActiveBlogReview(null)}>
+                  بازگشت به مشخصات و خرید {product.name}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -42,5 +42,5 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'خطای داخلی سرور' });
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`TechTink API running on http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`TechTink running on http://localhost:${PORT}`));
