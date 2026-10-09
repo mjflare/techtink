@@ -33,7 +33,7 @@ export default function ProductEditorModal({
     slug: '',
     brand: '',
     model: '',
-    grade: 'گرید ++A اروپایی (تمیز در حد نو)',
+    grade: 'A+',
     category: 'گیمینگ',
     series: 'سری بلید',
     basePrice: 50000000,
@@ -90,7 +90,7 @@ export default function ProductEditorModal({
         slug: initialData.slug || '',
         brand: initialData.brand || '',
         model: initialData.model || '',
-        grade: initialData.grade || 'گرید ++A اروپایی (تمیز در حد نو)',
+        grade: initialData.grade || 'A+',
         category: initialData.category || 'گیمینگ',
         series: initialData.series || '',
         basePrice: initialData.basePrice || 0,
@@ -772,12 +772,47 @@ export default function ProductEditorModal({
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>گرید دستگاه (Grade)</label>
+                      <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '0.8125rem' }}>گرید وضعیت ظاهری دستگاه (Grade)</label>
+                        <span style={{ fontSize: '0.72rem', color: 'hsl(var(--accent-cyan))' }}>گزینه‌های استاندارد:</span>
+                      </div>
+
+                      {/* Fixed Grade Presets */}
+                      <div className="flex" style={{ gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { id: 'A+', label: 'A+', desc: 'در حد نو' },
+                          { id: 'A', label: 'A', desc: 'بسیار تمیز' },
+                          { id: 'B+', label: 'B+', desc: 'تمیز با خط جزئی' },
+                          { id: 'A++', label: 'A++', desc: 'در حد آکبند' }
+                        ].map(g => {
+                          const isSelected = formData.grade === g.id || formData.grade === `گرید ${g.id}`;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, grade: g.id })}
+                              className="btn"
+                              style={{
+                                padding: '3px 8px',
+                                fontSize: '0.75rem',
+                                borderRadius: '6px',
+                                fontWeight: isSelected ? 700 : 500,
+                                background: isSelected ? 'hsla(var(--accent-cyan), 0.22)' : 'rgba(255,255,255,0.04)',
+                                borderColor: isSelected ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                                color: isSelected ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)'
+                              }}
+                            >
+                              {g.label} ({g.desc})
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       <input 
                         type="text" 
                         value={formData.grade} 
                         onChange={e => setFormData({ ...formData, grade: e.target.value })} 
-                        placeholder="گرید ++A اروپایی (تمیز در حد نو)" 
+                        placeholder="A+ یا گرید دلخواه" 
                       />
                     </div>
 

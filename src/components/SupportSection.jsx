@@ -34,6 +34,7 @@ export default function SupportSection() {
     delivery_method: 'in_person',
     notes: '',
     // specific options
+    custom_request_text: '',
     upgrade_items: [],
     device_model: '',
     device_serial: ''
@@ -102,15 +103,19 @@ export default function SupportSection() {
     // Compose rich notes
     let fullNotes = appointmentForm.notes || '';
     if (serviceType === 'upgrade') {
-      const upgradesText = appointmentForm.upgrade_items.length > 0 
-        ? `خدمات درخواستی: ${appointmentForm.upgrade_items.join('، ')}` 
+      const upgradesText = appointmentForm.custom_request_text 
+        ? `خدمات درخواستی ارتقا: ${appointmentForm.custom_request_text}` 
         : '';
       const deviceText = appointmentForm.device_model ? `مدل دستگاه: ${appointmentForm.device_model}` : '';
       fullNotes = [deviceText, upgradesText, fullNotes].filter(Boolean).join(' | ');
     } else if (serviceType === 'warranty') {
       const serialText = appointmentForm.device_serial ? `شماره سریال دستگاه: ${appointmentForm.device_serial}` : '';
       const modelText = appointmentForm.device_model ? `مدل دستگاه: ${appointmentForm.device_model}` : '';
-      fullNotes = [modelText, serialText, fullNotes].filter(Boolean).join(' | ');
+      const issueText = appointmentForm.custom_request_text ? `شرح ایراد/درخواست: ${appointmentForm.custom_request_text}` : '';
+      fullNotes = [modelText, serialText, issueText, fullNotes].filter(Boolean).join(' | ');
+    } else if (serviceType === 'showcase') {
+      const showcaseNotes = appointmentForm.custom_request_text ? `توضیحات آزمون یا درخواست: ${appointmentForm.custom_request_text}` : '';
+      fullNotes = [showcaseNotes, fullNotes].filter(Boolean).join(' | ');
     }
 
     try {
@@ -195,32 +200,33 @@ export default function SupportSection() {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex" style={{ justifyContent: 'center', marginBottom: '40px', gap: '12px', flexWrap: 'wrap' }}>
+      <div className="touch-scroll-x" style={{ justifyContent: 'center', marginBottom: '32px', gap: '10px', paddingBottom: '6px' }}>
         {[
-          { id: 'appointment', label: 'رزرو نوبت و خدمات مهندسی', icon: Calendar, badge: 'جدید' },
-          { id: 'warranty', label: 'استعلام گارانتی تک‌تینک', icon: ShieldCheck },
+          { id: 'appointment', label: 'رزرو نوبت و خدمات', icon: Calendar, badge: 'جدید' },
+          { id: 'warranty', label: 'استعلام گارانتی', icon: ShieldCheck },
           { id: 'drivers', label: 'درایورها و فرم‌ور', icon: Download },
-          { id: 'knowledgebase', label: 'پایگاه دانش سخت‌افزار', icon: FileText },
-          { id: 'contact', label: 'تیکت پشتیبانی فنی', icon: Headphones }
+          { id: 'knowledgebase', label: 'پایگاه دانش', icon: FileText },
+          { id: 'contact', label: 'تیکت پشتیبانی', icon: Headphones }
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className="btn glass-panel"
             style={{ 
-              padding: '14px 20px', 
+              padding: '12px 18px', 
               background: activeTab === tab.id ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
               borderColor: activeTab === tab.id ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
               borderRadius: '12px',
               cursor: 'pointer',
-              position: 'relative'
+              position: 'relative',
+              flexShrink: 0
             }}
           >
             <tab.icon size={18} color={activeTab === tab.id ? "hsl(var(--accent-cyan))" : "var(--text-secondary)"} />
-            <span style={{ color: activeTab === tab.id ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: activeTab === tab.id ? 700 : 500 }}>
+            <span style={{ color: activeTab === tab.id ? "var(--text-primary)" : "var(--text-secondary)", fontWeight: activeTab === tab.id ? 700 : 500, whiteSpace: 'nowrap' }}>
               {tab.label}
             </span>
             {tab.badge && (
@@ -234,10 +240,10 @@ export default function SupportSection() {
 
       {/* APPOINTMENT & SERVICES TAB */}
       {activeTab === 'appointment' && (
-        <div className="glass-card animate-fade-in" style={{ padding: '32px', maxWidth: '960px', margin: '0 auto' }}>
+        <div className="glass-card animate-fade-in" style={{ padding: 'clamp(16px, 4vw, 32px)', maxWidth: '960px', margin: '0 auto' }}>
           
           {/* Sub-modes navigation */}
-          <div className="flex" style={{ gap: '10px', marginBottom: '28px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '16px', flexWrap: 'wrap' }}>
+          <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '12px' }}>
             <button
               type="button"
               className="btn"
@@ -245,16 +251,18 @@ export default function SupportSection() {
                 background: serviceType === 'showcase' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(255,255,255,0.05)',
                 color: serviceType === 'showcase' ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border-glass)',
-                padding: '10px 18px',
+                padding: '10px 16px',
                 borderRadius: '10px',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap'
               }}
               onClick={() => { setServiceType('showcase'); setAppointmentResult(null); }}
             >
-              <Laptop size={17} /> تست و بررسی حضوری دستگاه (Showcase)
+              <Laptop size={17} /> تست حضوری دستگاه (Showcase)
             </button>
 
             <button
@@ -264,16 +272,18 @@ export default function SupportSection() {
                 background: serviceType === 'upgrade' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(255,255,255,0.05)',
                 color: serviceType === 'upgrade' ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border-glass)',
-                padding: '10px 18px',
+                padding: '10px 16px',
                 borderRadius: '10px',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap'
               }}
               onClick={() => { setServiceType('upgrade'); setAppointmentResult(null); }}
             >
-              <Wrench size={17} /> ارتقا و سرویس سیستم (Upgrade & Service)
+              <Wrench size={17} /> ارتقا و سرویس سیستم
             </button>
 
             <button
@@ -283,16 +293,18 @@ export default function SupportSection() {
                 background: serviceType === 'warranty' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(255,255,255,0.05)',
                 color: serviceType === 'warranty' ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border-glass)',
-                padding: '10px 18px',
+                padding: '10px 16px',
                 borderRadius: '10px',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap'
               }}
               onClick={() => { setServiceType('warranty'); setAppointmentResult(null); }}
             >
-              <ShieldCheck size={17} /> پذیرش تعمیرات و گارانتی (Warranty Claim)
+              <ShieldCheck size={17} /> پذیرش گارانتی و تعمیرات
             </button>
 
             <button
@@ -302,12 +314,14 @@ export default function SupportSection() {
                 background: serviceType === 'track' ? 'linear-gradient(135deg, #10b981, #06b6d4)' : 'rgba(255,255,255,0.05)',
                 color: serviceType === 'track' ? '#fff' : 'var(--text-secondary)',
                 border: '1px solid var(--border-glass)',
-                padding: '10px 18px',
+                padding: '10px 16px',
                 borderRadius: '10px',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '8px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap'
               }}
               onClick={() => { setServiceType('track'); }}
             >
@@ -388,6 +402,7 @@ export default function SupportSection() {
                       product_name: '',
                       delivery_method: 'in_person',
                       notes: '',
+                      custom_request_text: '',
                       upgrade_items: [],
                       device_model: '',
                       device_serial: ''
@@ -580,44 +595,16 @@ export default function SupportSection() {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}>
-                      خدمات مورد نیاز برای ارتقا (می‌توانید چند مورد را انتخاب کنید):
+                      شرح خدمات یا ارتقای مورد نظر شما <span style={{ color: '#ef4444' }}>*</span>
                     </label>
-                    <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                      {[
-                        'ارتقای رم به ۳۲ یا ۶۴ گیگابایت',
-                        'افزودن / تعویض SSD NVMe پرسرعت',
-                        'تعویض خمیر حرارتی به فلز مایع (Thermalright)',
-                        'سرویس دوره‌ای فن‌ها و رسوب‌زدایی هیت‌سینک',
-                        'تعویض باتری فرسوده با باتری اورجینال',
-                        'نصب ویندوز ۱۱ تخصصی و کالیبراسیون رنگ پنل'
-                      ].map((item, idx) => {
-                        const checked = appointmentForm.upgrade_items.includes(item);
-                        return (
-                          <label 
-                            key={idx} 
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px', 
-                              padding: '10px 14px', 
-                              borderRadius: '8px', 
-                              background: checked ? 'hsla(var(--accent-cyan), 0.12)' : 'rgba(255,255,255,0.02)',
-                              border: `1px solid ${checked ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)'}`,
-                              cursor: 'pointer',
-                              fontSize: '0.825rem'
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => handleUpgradeToggle(item)}
-                              style={{ width: '16px', height: '16px', accentColor: 'hsl(var(--accent-cyan))' }}
-                            />
-                            <span>{item}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
+                    <textarea
+                      rows="3"
+                      required
+                      placeholder="خدمات یا قطعات مورد نظر خود را بنویسید (مثلاً: ارتقای رم به ۳۲ یا ۶۴ گیگ، افزایش حافظه SSD، سرویس دوره‌ای فن‌ها و تعویض خمیر حرارتی سیلیکون، نصب ویندوز یا رفع ایراد خاص)..."
+                      value={appointmentForm.custom_request_text}
+                      onChange={e => setAppointmentForm({ ...appointmentForm, custom_request_text: e.target.value })}
+                      style={{ width: '100%', borderRadius: '10px', padding: '12px 14px', fontSize: '0.9rem', lineHeight: 1.6 }}
+                    />
                   </div>
                 </div>
               )}

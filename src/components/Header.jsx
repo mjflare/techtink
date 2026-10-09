@@ -233,7 +233,7 @@ export default function Header({
                   position: 'absolute',
                   top: 'calc(100% + 12px)',
                   right: 0,
-                  width: '380px',
+                  width: 'min(380px, calc(100vw - 28px))',
                   maxHeight: '440px',
                   overflowY: 'auto',
                   borderRadius: '18px',

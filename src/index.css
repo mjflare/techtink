@@ -338,6 +338,22 @@ h1, h2, h3, h4, h5, h6 {
   border-color: hsla(var(--accent-cyan), 0.45);
 }
 
+@media (max-width: 480px) {
+  .unified-glass-dock {
+    gap: 3px;
+    padding: 3px 6px;
+    border-radius: 20px;
+  }
+  .dock-btn {
+    width: 32px;
+    height: 32px;
+  }
+  .dock-divider {
+    height: 14px;
+    margin: 0 1px;
+  }
+}
+
 .search-preview-item:hover {
   background: var(--glass-bg-hover) !important;
 }

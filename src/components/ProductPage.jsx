@@ -358,7 +358,7 @@ export default function ProductPage({
               gap: '4px'
             }}>
               <CheckCircle size={13} />
-              {product.grade || 'گرید ++A اروپایی (تمیز در حد نو)'}
+              {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
             </span>
           </div>
 

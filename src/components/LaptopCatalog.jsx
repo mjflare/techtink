@@ -23,6 +23,7 @@ export default function LaptopCatalog({
   const [ramFilter, setRamFilter] = useState('all'); // 'all', '16', '32', '64+'
   const [screenFilter, setScreenFilter] = useState('all'); // 'all', '13-14', '15-16'
   const [chassisFilter, setChassisFilter] = useState('all'); // 'all', 'aluminum', 'magnesium', 'carbon', 'polycarbonate'
+  const [gradeFilter, setGradeFilter] = useState('all'); // 'all', 'A+', 'A', 'B+', 'A++'
   const [showFiltersMobile, setShowFiltersMobile] = useState(false);
 
   const categories = ['همه', 'گیمینگ', 'تولید محتوا', 'فوق سبک', 'ورک استیشن', 'اقتصادی'];
@@ -96,6 +97,18 @@ export default function LaptopCatalog({
         return true;
       });
     }
+
+    // Grade condition filter
+    if (gradeFilter !== 'all') {
+      result = result.filter(l => {
+        const g = (l.grade || '').toUpperCase();
+        if (gradeFilter === 'A+') return g.includes('A+') && !g.includes('A++');
+        if (gradeFilter === 'A++') return g.includes('A++');
+        if (gradeFilter === 'A') return g === 'A' || (g.includes('A') && !g.includes('A+') && !g.includes('A++'));
+        if (gradeFilter === 'B+') return g.includes('B+') || g.includes('B');
+        return true;
+      });
+    }
     
     // Search filter
     if (searchQuery.trim()) {
@@ -127,14 +140,15 @@ export default function LaptopCatalog({
       result = [...result].sort((a, b) => b.basePrice - a.basePrice);
     }
     return result;
-  }, [laptops, activeCategory, cpuMaker, gpuMaker, ramFilter, screenFilter, chassisFilter, priceSort, searchQuery]);
+  }, [laptops, activeCategory, cpuMaker, gpuMaker, ramFilter, screenFilter, chassisFilter, gradeFilter, priceSort, searchQuery]);
 
   const activeFiltersCount = 
     (cpuMaker !== 'all' ? 1 : 0) + 
     (gpuMaker !== 'all' ? 1 : 0) + 
     (ramFilter !== 'all' ? 1 : 0) + 
     (screenFilter !== 'all' ? 1 : 0) +
-    (chassisFilter !== 'all' ? 1 : 0);
+    (chassisFilter !== 'all' ? 1 : 0) +
+    (gradeFilter !== 'all' ? 1 : 0);
 
   const resetAllFilters = () => {
     setActiveCategory('همه');
@@ -143,6 +157,7 @@ export default function LaptopCatalog({
     setRamFilter('all');
     setScreenFilter('all');
     setChassisFilter('all');
+    setGradeFilter('all');
     setPriceSort('default');
   };
 
@@ -402,6 +417,39 @@ export default function LaptopCatalog({
             </div>
           </div>
 
+          {/* Grade Condition (New Filter!) */}
+          <div>
+            <div className="flex" style={{ alignItems: 'center', gap: '6px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+              <CheckCircle size={16} color="hsl(var(--accent-cyan))" />
+              <span>گرید و وضعیت ظاهری:</span>
+            </div>
+            <div className="flex" style={{ gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'همه' },
+                { id: 'A+', label: 'گرید A+ (در حد نو)' },
+                { id: 'A', label: 'گرید A (بسیار تمیز)' },
+                { id: 'B+', label: 'گرید B+ (تمیز)' },
+                { id: 'A++', label: 'گرید A++ (آکبند/اوپن)' }
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setGradeFilter(item.id)}
+                  className="btn"
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    borderRadius: '6px',
+                    background: gradeFilter === item.id ? 'hsla(var(--accent-cyan), 0.22)' : 'rgba(0,0,0,0.03)',
+                    borderColor: gradeFilter === item.id ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                    color: gradeFilter === item.id ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)'
+                  }}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* Clear Filters bar */}
@@ -447,8 +495,20 @@ export default function LaptopCatalog({
                   className="catalog-card-img"
                   style={{ width: '100%', height: '220px', objectFit: 'cover', transition: 'transform 0.3s ease' }} 
                 />
-                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '8px' }}>
+                <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {laptop.badge && <span className="badge badge-glow">{laptop.badge}</span>}
+                  {laptop.grade && (
+                    <span className="badge" style={{ 
+                      background: 'rgba(0, 0, 0, 0.72)', 
+                      color: 'hsl(var(--accent-cyan))', 
+                      border: '1px solid hsla(var(--accent-cyan), 0.4)', 
+                      backdropFilter: 'blur(6px)', 
+                      fontSize: '0.72rem', 
+                      fontWeight: 700 
+                    }}>
+                      {laptop.grade.startsWith('گرید') ? laptop.grade : `گرید ${laptop.grade}`}
+                    </span>
+                  )}
                 </div>
 
                 {/* Brand badges on card */}
