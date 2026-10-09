@@ -253,15 +253,89 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 12px hsla(var(--accent-cyan), 0.25);
 }
 
-/* Theme Toggle Switch Control (iOS Style) */
-.theme-switch-control {
-  border-radius: 24px;
-  transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+/* Unified Glass Dock (Dynamic Action Island) */
+.unified-glass-dock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 26px;
+  background: var(--glass-card-bg);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--glass-specular), 0 8px 24px rgba(0, 0, 0, 0.12);
+  position: relative;
+  transition: all var(--transition-smooth);
 }
 
-.theme-switch-control:hover {
-  border-color: hsla(var(--accent-cyan), 0.5);
-  box-shadow: 0 0 16px hsla(var(--accent-cyan), 0.25);
+.unified-glass-dock:hover {
+  border-color: var(--border-glass-hover);
+  box-shadow: var(--glass-specular), 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.dock-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.dock-btn:hover {
+  background: var(--btn-glass-hover);
+  border-color: var(--border-glass);
+  color: var(--text-primary);
+}
+
+.dock-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border-glass);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.dock-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dock-search-input {
+  background: var(--input-bg);
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  padding: 6px 32px 6px 12px;
+  border-radius: 18px;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  width: 120px;
+  outline: none;
+  transition: width 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.dock-search-input:focus,
+.dock-search-input.has-value {
+  width: 220px;
+  border-color: hsl(var(--accent-cyan));
+  background: var(--glass-bg-hover);
+  box-shadow: 0 0 0 2px hsla(var(--accent-cyan), 0.2);
+}
+
+.dock-theme-switch {
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.dock-theme-switch:hover {
+  border-color: hsla(var(--accent-cyan), 0.45);
 }
 
 .search-preview-item:hover {

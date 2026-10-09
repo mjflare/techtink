@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
 export default function Header({ 
@@ -22,9 +22,11 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const desktopSearchRef = useRef(null);
   const mobileSearchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const tabs = [
     { id: 'store', label: 'فروشگاه' },
@@ -61,7 +63,7 @@ export default function Header({
     });
   }, [laptops, searchQuery]);
 
-  // Click outside to close desktop search dropdown
+  // Click outside listener for dropdowns
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (desktopSearchRef.current && !desktopSearchRef.current.contains(e.target)) {
@@ -69,6 +71,9 @@ export default function Header({
       }
       if (mobileSearchRef.current && !mobileSearchRef.current.contains(e.target)) {
         setMobileSearchFocused(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -105,19 +110,19 @@ export default function Header({
   };
 
   return (
-    <header className="glass-panel" style={{ position: 'sticky', top: 0, zIndex: 100, borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none', padding: '14px 0' }}>
+    <header className="glass-panel" style={{ position: 'sticky', top: 0, zIndex: 100, borderRadius: 0, borderTop: 'none', borderLeft: 'none', borderRight: 'none', padding: '12px 0' }}>
       <div className="container flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
         
         {/* Logo */}
-        <div className="flex" style={{ alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => handleTabClick('store')}>
-          <div className="badge-glow" style={{ padding: '8px', borderRadius: '10px', display: 'flex' }}>
-            <MonitorSmartphone size={24} />
+        <div className="flex" style={{ alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={() => handleTabClick('store')}>
+          <div className="badge-glow" style={{ padding: '7px', borderRadius: '10px', display: 'flex' }}>
+            <MonitorSmartphone size={22} />
           </div>
-          <h2 style={{ margin: 0, letterSpacing: '-0.5px' }} className="gradient-text">تک‌تینک</h2>
+          <h2 style={{ margin: 0, letterSpacing: '-0.5px', fontSize: '1.35rem' }} className="gradient-text">تک‌تینک</h2>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex" style={{ gap: '8px', display: 'none' }} id="desktop-nav">
+        {/* Desktop Navigation Tabs */}
+        <nav className="flex" style={{ gap: '6px', display: 'none' }} id="desktop-nav">
           {tabs.map(tab => (
             <button 
               key={tab.id}
@@ -126,7 +131,9 @@ export default function Header({
               style={{
                 background: activeTab === tab.id ? 'var(--glass-bg-hover)' : 'transparent',
                 borderColor: activeTab === tab.id ? 'hsla(var(--accent-cyan), 0.5)' : 'transparent',
-                boxShadow: activeTab === tab.id ? '0 0 10px hsla(var(--accent-cyan), 0.2)' : 'none'
+                boxShadow: activeTab === tab.id ? '0 0 10px hsla(var(--accent-cyan), 0.2)' : 'none',
+                padding: '8px 16px',
+                fontSize: '0.875rem'
               }}
             >
               {tab.label}
@@ -138,49 +145,38 @@ export default function Header({
               className="btn btn-glass"
               style={{
                 background: 'transparent',
-                borderColor: 'transparent'
+                borderColor: 'transparent',
+                padding: '8px 16px',
+                fontSize: '0.875rem'
               }}
             >
               درباره ما
             </button>
           )}
-          {user?.role === 'admin' && (
-            <button 
-              onClick={() => handleTabClick('admin')}
-              className="btn"
-              style={{
-                background: activeTab === 'admin' ? 'hsl(var(--accent-cyan))' : 'hsla(var(--accent-cyan), 0.15)',
-                color: activeTab === 'admin' ? 'white' : 'hsl(var(--accent-cyan))',
-                borderColor: 'hsl(var(--accent-cyan))',
-                boxShadow: '0 0 10px hsla(var(--accent-cyan), 0.2)'
-              }}
-            >
-              <Shield size={16} /> پنل مدیریت
-            </button>
-          )}
         </nav>
         
         <style dangerouslySetInnerHTML={{__html: `
-          @media (min-width: 900px) {
+          @media (min-width: 960px) {
             #desktop-nav { display: flex !important; }
             #mobile-menu-btn { display: none !important; }
           }
         `}} />
 
-        {/* Actions Area */}
-        <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
+        {/* Unified Glass Dock (Dynamic Action Island) */}
+        <div className="unified-glass-dock">
           
-          {/* Desktop Search with Live Preview */}
+          {/* 1. Expandable Search Tool */}
           <div 
             ref={desktopSearchRef} 
-            style={{ position: 'relative', display: 'none' }} 
+            className="dock-search-wrapper"
+            style={{ display: 'none' }}
             id="desktop-search"
           >
             <Search 
-              size={17} 
+              size={16} 
               style={{ 
                 position: 'absolute', 
-                right: '12px', 
+                right: '10px', 
                 top: '50%', 
                 transform: 'translateY(-50%)', 
                 color: searchFocused ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)',
@@ -190,7 +186,7 @@ export default function Header({
             />
             <input 
               type="text" 
-              placeholder="جستجوی مدل، پردازنده، ورک‌استیشن..." 
+              placeholder="جستجو..." 
               value={searchQuery || ''}
               onChange={e => {
                 if (onSearchChange) onSearchChange(e.target.value);
@@ -198,14 +194,7 @@ export default function Header({
               }}
               onFocus={() => setSearchFocused(true)}
               onKeyDown={handleSearchKeyDown}
-              style={{ 
-                paddingRight: '38px', 
-                paddingLeft: searchQuery ? '32px' : '14px',
-                width: searchFocused ? '260px' : '190px', 
-                borderRadius: '22px', 
-                fontSize: '0.8125rem',
-                transition: 'width 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, box-shadow 0.2s'
-              }} 
+              className={`dock-search-input ${searchQuery ? 'has-value' : ''}`}
             />
 
             {/* Clear Button */}
@@ -218,7 +207,7 @@ export default function Header({
                 }}
                 style={{
                   position: 'absolute',
-                  left: '10px',
+                  left: '8px',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   background: 'none',
@@ -230,32 +219,32 @@ export default function Header({
                   alignItems: 'center',
                   borderRadius: '50%'
                 }}
-                title="پاک کردن جستجو"
+                title="پاک کردن"
               >
-                <X size={14} />
+                <X size={13} />
               </button>
             )}
 
-            {/* Desktop Live Search Preview Dropdown */}
+            {/* Live Search Preview Dropdown */}
             {searchFocused && searchQuery.trim().length > 0 && (
               <div 
                 className="glass-panel animate-fade-in"
                 style={{
                   position: 'absolute',
-                  top: 'calc(100% + 10px)',
+                  top: 'calc(100% + 12px)',
                   right: 0,
-                  width: '390px',
+                  width: '380px',
                   maxHeight: '440px',
                   overflowY: 'auto',
                   borderRadius: '18px',
                   padding: '10px',
-                  zIndex: 1000,
+                  zIndex: 1050,
                   boxShadow: 'var(--glass-specular), 0 24px 50px rgba(0, 0, 0, 0.45)'
                 }}
               >
-                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px 10px', borderBottom: '1px solid var(--border-glass)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px 10px', borderBottom: '1px solid var(--border-glass)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   <span>نتایج زنده ({searchMatches.length} مورد)</span>
-                  <span style={{ fontSize: '0.7rem', color: 'hsl(var(--accent-cyan))' }}>کلید Enter برای کاتالوگ کامل</span>
+                  <span style={{ fontSize: '0.7rem', color: 'hsl(var(--accent-cyan))' }}>Enter برای مشاهده کاتالوگ</span>
                 </div>
 
                 {searchMatches.length > 0 ? (
@@ -264,6 +253,7 @@ export default function Header({
                       <div
                         key={item.id || item.slug}
                         onClick={() => handleSelectSearchItem(item.slug)}
+                        className="search-preview-item"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -274,23 +264,21 @@ export default function Header({
                           transition: 'background 0.2s',
                           background: 'transparent'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'var(--glass-bg-hover)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                       >
                         <img 
                           src={item.images?.[0] || '/vite.svg'} 
                           alt={item.name} 
-                          style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', background: 'var(--table-stripe)', flexShrink: 0, padding: '2px', border: '1px solid var(--border-glass)' }}
+                          style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', background: 'var(--table-stripe)', flexShrink: 0, padding: '2px', border: '1px solid var(--border-glass)' }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.name}
                           </div>
                           <div className="font-tech" style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: 'ltr', textAlign: 'right' }}>
                             {item.specs?.cpu?.split('(')[0]?.trim()} | {item.specs?.gpu?.split('(')[0]?.trim()}
                           </div>
                           <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                            <span className="badge" style={{ padding: '1px 6px', fontSize: '0.65rem', background: 'hsla(var(--accent-cyan), 0.12)', color: 'hsl(var(--accent-cyan))' }}>
+                            <span className="badge" style={{ padding: '1px 6px', fontSize: '0.62rem', background: 'hsla(var(--accent-cyan), 0.12)', color: 'hsl(var(--accent-cyan))' }}>
                               {item.category}
                             </span>
                             <span className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 800, color: 'hsl(var(--accent-cyan))' }}>
@@ -303,7 +291,7 @@ export default function Header({
 
                     {searchMatches.length > 5 && (
                       <div style={{ textAlign: 'center', padding: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        + {searchMatches.length - 5} محصول منطبق دیگر
+                        + {searchMatches.length - 5} محصول دیگر
                       </div>
                     )}
 
@@ -313,16 +301,16 @@ export default function Header({
                       onClick={handleViewAllSearch}
                       style={{ width: '100%', marginTop: '6px', padding: '8px 12px', fontSize: '0.8rem', borderRadius: '10px' }}
                     >
-                      مشاهده همه در کاتالوگ فروشگاه <ArrowLeft size={14} />
+                      مشاهده در کاتالوگ فروشگاه <ArrowLeft size={14} />
                     </button>
                   </div>
                 ) : (
-                  <div style={{ padding: '22px 14px', textAlign: 'center' }}>
+                  <div style={{ padding: '20px 12px', textAlign: 'center' }}>
                     <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                       موردی برای «{searchQuery}» پیدا نشد
                     </p>
                     <p style={{ margin: '6px 0 0', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                      پیشنهاد: مدل پردازنده، برند (مثل ThinkPad، Legion، Dell) یا ورک‌استیشن را جستجو کنید.
+                      پیشنهاد: مدل پردازنده یا ورک‌استیشن را جستجو کنید.
                     </p>
                   </div>
                 )}
@@ -332,49 +320,69 @@ export default function Header({
 
           <style dangerouslySetInnerHTML={{__html: `
             @media (min-width: 1024px) {
-              #desktop-search { display: block !important; }
+              #desktop-search { display: flex !important; }
             }
           `}} />
 
-          {/* User Auth Portal Button */}
-          {user ? (
-            <div className="flex" style={{ alignItems: 'center', gap: '6px' }}>
-              <div 
-                className="glass-panel flex" 
-                style={{ alignItems: 'center', gap: '6px', padding: '6px 10px', borderRadius: '20px', fontSize: '0.8125rem' }}
-              >
-                <User size={16} color="hsl(var(--accent-cyan))" />
-                <span style={{ fontWeight: 'bold', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</span>
-                {user.role === 'admin' && (
-                  <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: 'white', padding: '2px 6px', fontSize: '0.65rem' }}>
-                    مدیر
-                  </span>
-                )}
-              </div>
-              <button 
-                className="btn btn-glass" 
-                onClick={onLogout}
-                title="خروج از حساب"
-                style={{ padding: '8px', borderRadius: '50%' }}
-              >
-                <LogOut size={16} color="hsl(var(--accent-red))" />
-              </button>
-            </div>
-          ) : (
-            <button className="btn btn-glass" style={{ padding: '8px 12px', fontSize: '0.8125rem' }} onClick={onOpenAuth}>
-              <User size={16} /> <span>ورود</span>
-            </button>
-          )}
+          {/* Divider */}
+          <div className="dock-divider" style={{ display: 'none' }} id="desktop-search-divider" />
+          <style dangerouslySetInnerHTML={{__html: `
+            @media (min-width: 1024px) {
+              #desktop-search-divider { display: block !important; }
+            }
+          `}} />
 
-          {/* iOS-Style Segmented Theme Toggle Switch */}
+          {/* 2. Compare Button */}
+          <button 
+            className={`dock-btn ${compareCount > 0 ? 'is-active' : ''}`}
+            onClick={() => handleTabClick('compare')} 
+            aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
+            title="مقایسه مشخصات لپ‌تاپ‌ها"
+          >
+            <ArrowLeftRight size={17} color={compareCount > 0 ? '#ef4444' : 'currentColor'} />
+            {compareCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '1px', right: '1px',
+                background: '#ef4444', color: 'white',
+                fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 8px rgba(239, 68, 68, 0.7)'
+              }}>
+                {compareCount}
+              </span>
+            )}
+          </button>
+
+          {/* 3. Cart Button */}
+          <button 
+            className="dock-btn" 
+            onClick={onCartClick} 
+            aria-label="سبد خرید"
+            title="سبد خرید"
+          >
+            <ShoppingCart size={17} />
+            {cartCount > 0 && (
+              <span style={{
+                position: 'absolute', top: '1px', right: '1px',
+                background: 'hsl(var(--accent-purple))', color: 'white',
+                fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
+                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                {cartCount}
+              </span>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div className="dock-divider" />
+
+          {/* 4. Compact iOS Theme Toggle */}
           {onToggleTheme && (
             <div 
-              className="theme-switch-control"
+              className="dock-theme-switch"
               onClick={onToggleTheme}
               role="switch"
               aria-checked={theme === 'dark'}
-              tabIndex={0}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggleTheme(); } }}
               title={theme === 'dark' ? 'حالت شب فعال است — کلیک برای حالت روز' : 'حالت روز فعال است — کلیک برای حالت شب'}
               style={{
                 display: 'inline-flex',
@@ -382,124 +390,147 @@ export default function Header({
                 position: 'relative',
                 background: 'var(--input-bg)',
                 border: '1px solid var(--border-glass)',
-                borderRadius: '24px',
-                padding: '3px',
+                borderRadius: '16px',
+                padding: '2px',
                 cursor: 'pointer',
-                userSelect: 'none',
-                boxShadow: 'var(--glass-specular)'
+                width: '54px',
+                height: '30px',
+                boxSizing: 'border-box',
+                userSelect: 'none'
               }}
             >
-              {/* Sliding Active Pill */}
+              {/* Sliding Pill Knob */}
               <div 
                 style={{
                   position: 'absolute',
-                  top: '3px',
-                  bottom: '3px',
-                  right: theme === 'dark' ? '3px' : 'calc(50% + 1px)',
-                  left: theme === 'dark' ? 'calc(50% + 1px)' : '3px',
-                  borderRadius: '18px',
-                  background: theme === 'dark'
-                    ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))'
-                    : '#ffffff',
-                  boxShadow: theme === 'dark'
-                    ? '0 2px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)'
-                    : '0 2px 8px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06)',
-                  transition: 'all 0.28s cubic-bezier(0.16, 1, 0.3, 1)',
+                  top: '2px',
+                  bottom: '2px',
+                  right: theme === 'dark' ? '2px' : 'calc(50% + 1px)',
+                  left: theme === 'dark' ? 'calc(50% + 1px)' : '2px',
+                  borderRadius: '13px',
+                  background: theme === 'dark' ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))' : '#ffffff',
+                  boxShadow: theme === 'dark' ? '0 1px 4px rgba(0,0,0,0.5)' : '0 1px 4px rgba(0,0,0,0.18)',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                   zIndex: 0
                 }}
               />
 
-              {/* Dark Option (شب) */}
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 8px',
-                  borderRadius: '16px',
-                  position: 'relative',
-                  zIndex: 1,
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  color: theme === 'dark' ? '#f8fafc' : 'var(--text-secondary)',
-                  opacity: theme === 'dark' ? 1 : 0.6,
-                  transition: 'all 0.25s ease'
-                }}
-              >
-                <Moon size={14} color={theme === 'dark' ? '#818cf8' : 'currentColor'} style={{ filter: theme === 'dark' ? 'drop-shadow(0 0 5px rgba(129, 140, 248, 0.7))' : 'none' }} />
-                <span>شب</span>
+              {/* Moon Icon */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                <Moon size={13} color={theme === 'dark' ? '#818cf8' : 'var(--text-secondary)'} style={{ filter: theme === 'dark' ? 'drop-shadow(0 0 4px rgba(129, 140, 248, 0.6))' : 'none', opacity: theme === 'dark' ? 1 : 0.45 }} />
               </div>
 
-              {/* Light Option (روز) */}
-              <div 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 8px',
-                  borderRadius: '16px',
-                  position: 'relative',
-                  zIndex: 1,
-                  fontSize: '0.72rem',
-                  fontWeight: 700,
-                  color: theme === 'light' ? '#0f172a' : 'var(--text-secondary)',
-                  opacity: theme === 'light' ? 1 : 0.6,
-                  transition: 'all 0.25s ease'
-                }}
-              >
-                <Sun size={14} color={theme === 'light' ? '#f59e0b' : 'currentColor'} style={{ filter: theme === 'light' ? 'drop-shadow(0 0 5px rgba(245, 158, 11, 0.7))' : 'none' }} />
-                <span>روز</span>
+              {/* Sun Icon */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+                <Sun size={13} color={theme === 'light' ? '#f59e0b' : 'var(--text-secondary)'} style={{ filter: theme === 'light' ? 'drop-shadow(0 0 4px rgba(245, 158, 11, 0.6))' : 'none', opacity: theme === 'light' ? 1 : 0.45 }} />
               </div>
             </div>
           )}
 
-          {/* Compare Button */}
-          <button 
-            className={`btn btn-glass btn-compare ${compareCount > 0 ? 'is-active' : ''}`}
-            style={{ position: 'relative', padding: '10px' }} 
-            onClick={() => handleTabClick('compare')} 
-            aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
-            title="مقایسه مشخصات لپ‌تاپ‌ها"
-          >
-            <ArrowLeftRight size={20} className="compare-icon" />
-            {compareCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '-5px', right: '-5px',
-                background: '#ef4444', color: 'white',
-                fontSize: '11px', fontWeight: 'bold', width: '18px', height: '18px',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 10px rgba(239, 68, 68, 0.7)'
-              }}>
-                {compareCount}
-              </span>
-            )}
-          </button>
+          {/* Divider */}
+          <div className="dock-divider" />
 
-          {/* Cart Button */}
-          <button className="btn btn-glass" style={{ position: 'relative', padding: '10px' }} onClick={onCartClick} aria-label="سبد خرید">
-            <ShoppingCart size={20} />
-            {cartCount > 0 && (
-              <span style={{
-                position: 'absolute', top: '-5px', right: '-5px',
-                background: 'hsl(var(--accent-purple))', color: 'white',
-                fontSize: '11px', fontWeight: 'bold', width: '18px', height: '18px',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                {cartCount}
-              </span>
-            )}
-          </button>
-          
-          {/* Mobile Menu Toggle */}
+          {/* 5. User Profile with Elegant Dropdown */}
+          {user ? (
+            <div ref={userMenuRef} style={{ position: 'relative' }}>
+              <button 
+                type="button"
+                className="btn btn-glass"
+                onClick={() => setUserMenuOpen(prev => !prev)}
+                style={{ 
+                  padding: '4px 8px', 
+                  borderRadius: '18px', 
+                  fontSize: '0.8rem', 
+                  gap: '5px',
+                  height: '32px',
+                  border: '1px solid var(--border-glass)',
+                  background: userMenuOpen ? 'var(--glass-bg-hover)' : 'transparent'
+                }}
+                title={user.name}
+              >
+                <User size={15} color="hsl(var(--accent-cyan))" />
+                <span style={{ fontWeight: 600, maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.name.split(' ')[0]}
+                </span>
+                <ChevronDown size={12} style={{ transform: userMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', opacity: 0.6 }} />
+              </button>
+
+              {/* User Menu Dropdown */}
+              {userMenuOpen && (
+                <div 
+                  className="glass-panel animate-fade-in"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 12px)',
+                    left: 0,
+                    width: '230px',
+                    borderRadius: '18px',
+                    padding: '12px',
+                    zIndex: 1050,
+                    boxShadow: 'var(--glass-specular), 0 20px 45px rgba(0, 0, 0, 0.35)',
+                    direction: 'rtl'
+                  }}
+                >
+                  <div style={{ paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)', marginBottom: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{user.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{user.email || user.mobile}</div>
+                    <div style={{ marginTop: '6px' }}>
+                      <span className="badge" style={{ background: user.role === 'admin' ? 'hsl(var(--accent-cyan))' : 'hsla(var(--accent-cyan), 0.15)', color: user.role === 'admin' ? '#fff' : 'hsl(var(--accent-cyan))', padding: '2px 8px', fontSize: '0.68rem' }}>
+                        {user.role === 'admin' ? 'مدیر فروشگاه' : 'حساب کاربری'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {user.role === 'admin' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setActiveTab('admin');
+                        }}
+                        className="btn btn-glass"
+                        style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: '0.8rem', borderRadius: '10px', gap: '8px' }}
+                      >
+                        <Shield size={16} color="hsl(var(--accent-cyan))" /> پنل مدیریت فروشگاه
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="btn btn-glass"
+                      style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: '0.8rem', borderRadius: '10px', color: 'hsl(var(--accent-red))', gap: '8px' }}
+                    >
+                      <LogOut size={16} /> خروج از حساب
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button 
+              className="btn btn-glass" 
+              style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '16px', height: '32px' }} 
+              onClick={onOpenAuth}
+            >
+              <User size={15} /> <span>ورود</span>
+            </button>
+          )}
+
+          {/* 6. Mobile Menu Toggle Button */}
           <button 
-            className="btn btn-glass" 
+            className="dock-btn" 
             id="mobile-menu-btn" 
-            style={{ padding: '10px' }}
             onClick={() => setMobileMenuOpen(prev => !prev)}
             aria-label="منوی سایت"
           >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
+
         </div>
 
       </div>
