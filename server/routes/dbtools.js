@@ -77,6 +77,40 @@ r.post('/query', (req, res) => {
 
 // ---- Backups ----
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+// ---- Database Info & Diagnostics ----
+r.get('/info', (_req, res) => {
+  try {
+    const stat = fs.statSync(DB_PATH);
+    const size = stat.size;
+    const sizeFormatted = size > 1024 * 1024 
+      ? (size / (1024 * 1024)).toFixed(2) + ' MB' 
+      : (size / 1024).toFixed(1) + ' KB';
+    const backupList = listBackups();
+    const allTables = tables();
+    let totalRecords = 0;
+    try {
+      for (const t of allTables) {
+        totalRecords += db.get(`SELECT COUNT(*) as c FROM "${t}"`).c;
+      }
+    } catch {}
+    res.json({
+      dbPath: DB_PATH,
+      dataDir: DATA_DIR,
+      size,
+      sizeFormatted,
+      driver: typeof globalThis.Bun !== 'undefined' ? 'bun:sqlite' : 'node:sqlite',
+      tablesCount: allTables.length,
+      totalRecords,
+      backupsCount: backupList.length,
+      walActive: fs.existsSync(DB_PATH + '-wal'),
+      lastModified: stat.mtime
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در دریافت اطلاعات دیتابیس: ' + err.message });
+  }
+});
+
+// ---- Backups ----
 const listBackups = () =>
   fs.readdirSync(BACKUP_DIR).filter((f) => f.endsWith('.db')).map((f) => ({ name: f, size: fs.statSync(path.join(BACKUP_DIR, f)).size, createdAt: fs.statSync(path.join(BACKUP_DIR, f)).mtime })).sort((a, b) => b.createdAt - a.createdAt);
 const safeBackup = (name) => (/^[\w.-]+\.db$/.test(name) && fs.existsSync(path.join(BACKUP_DIR, name)) ? path.join(BACKUP_DIR, name) : null);
@@ -86,6 +120,29 @@ function createBackup() {
   db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`);
   return path.basename(file);
 }
+
+// 1-Click Export of the current SQLite DB file
+r.get('/download', (req, res) => {
+  try {
+    db.exec('PRAGMA wal_checkpoint(FULL);');
+  } catch {}
+  const filename = `techtink_${stamp()}.db`;
+  const tmpSnapshot = path.join(BACKUP_DIR, filename);
+  try {
+    db.exec(`VACUUM INTO '${tmpSnapshot.replace(/'/g, "''")}'`);
+    res.setHeader('Content-Type', 'application/x-sqlite3');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.download(tmpSnapshot, filename);
+  } catch (err) {
+    res.setHeader('Content-Type', 'application/x-sqlite3');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.download(DB_PATH, filename);
+  }
+});
+
+r.get('/export-file', (req, res) => {
+  res.redirect('/api/admin/db/download' + (req.query.token ? `?token=${encodeURIComponent(req.query.token)}` : ''));
+});
 
 r.get('/backups', (_req, res) => res.json(listBackups()));
 r.post('/backups', (_req, res) => res.json({ name: createBackup() }));
@@ -103,27 +160,46 @@ r.post('/backups/:name/restore', (req, res) => {
   const f = safeBackup(req.params.name);
   if (!f) return res.status(404).json({ error: 'فایل یافت نشد.' });
   const safety = createBackup();
-  db.reopen(f);
-  res.json({ success: true, message: `بازیابی انجام شد. نسخه پشتیبان قبل از بازیابی: ${safety}` });
+  try {
+    db.reopen(f);
+    res.json({ success: true, message: `بازیابی انجام شد. نسخه پشتیبان قبل از بازیابی: ${safety}` });
+  } catch (e) {
+    res.status(500).json({ error: 'خطا در بازیابی نسخه پشتیبان: ' + e.message });
+  }
 });
 
-// Upload a .db file (raw body) and restore it.
-r.post('/restore-upload', rawBody({ type: '*/*', limit: '500mb' }), (req, res) => {
+// Upload and Import a .db file (raw body)
+const handleUploadRestore = (req, res) => {
   const buf = req.body;
-  if (!Buffer.isBuffer(buf) || buf.length < 100 || buf.subarray(0, 16).toString('latin1') !== 'SQLite format 3\u0000') {
-    return res.status(400).json({ error: 'فایل ارسالی یک پایگاه داده SQLite معتبر نیست.' });
+  if (!Buffer.isBuffer(buf) || buf.length < 100) {
+    return res.status(400).json({ error: 'محتوای فایل خالی یا نامعتبر است.' });
+  }
+  const header = buf.subarray(0, 16).toString('latin1');
+  if (header !== 'SQLite format 3\u0000') {
+    return res.status(400).json({ error: 'فایل ارسالی یک پایگاه داده SQLite معتبر نیست (هدر استاندارد یافت نشد).' });
   }
   const tmp = path.join(BACKUP_DIR, `uploaded-${stamp()}.db`);
   fs.writeFileSync(tmp, buf);
   const safety = createBackup();
   try {
     db.reopen(tmp);
-    res.json({ success: true, message: `بازیابی انجام شد. نسخه پشتیبان قبل از بازیابی: ${safety}` });
+    const stat = fs.statSync(DB_PATH);
+    res.json({ 
+      success: true, 
+      message: `پایگاه‌داده با موفقیت جایگزین شد. یک نسخه پشتیبان خودکار با نام ${safety} ذخیره گردید.`, 
+      safetyBackup: safety,
+      size: stat.size
+    });
   } catch (e) {
-    db.reopen(path.join(BACKUP_DIR, safety));
+    try {
+      db.reopen(path.join(BACKUP_DIR, safety));
+    } catch {}
     res.status(400).json({ error: 'بازیابی ناموفق بود و پایگاه داده قبلی برگردانده شد: ' + e.message });
   }
-});
+};
+
+r.post('/upload', rawBody({ type: '*/*', limit: '500mb' }), handleUploadRestore);
+r.post('/restore-upload', rawBody({ type: '*/*', limit: '500mb' }), handleUploadRestore);
 
 // ---- Maintenance ----
 r.post('/maintenance/:op', (req, res) => {

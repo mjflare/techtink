@@ -53,8 +53,12 @@ export const db = {
   },
   // Used by DB tools to restore a backup file.
   reopen(withFile) {
-    raw.close();
-    if (withFile) fs.copyFileSync(withFile, DB_PATH);
+    try { raw.close(); } catch {}
+    if (withFile) {
+      fs.copyFileSync(withFile, DB_PATH);
+      try { if (fs.existsSync(DB_PATH + '-wal')) fs.unlinkSync(DB_PATH + '-wal'); } catch {}
+      try { if (fs.existsSync(DB_PATH + '-shm')) fs.unlinkSync(DB_PATH + '-shm'); } catch {}
+    }
     openRaw();
     migrate();
   },

@@ -59,7 +59,8 @@ export const publicUser = (u) => {
 // Attaches req.user when a valid token is present (does not reject).
 export function attachUser(req, _res, next) {
   const header = req.headers.authorization || '';
-  const data = header.startsWith('Bearer ') ? readToken(header.slice(7)) : null;
+  const tokenStr = header.startsWith('Bearer ') ? header.slice(7) : (req.query?.token || null);
+  const data = tokenStr ? readToken(tokenStr) : null;
   if (data) {
     const u = db.get('SELECT * FROM users WHERE id = ?', data.uid);
     if (u && !u.blocked) req.user = u;

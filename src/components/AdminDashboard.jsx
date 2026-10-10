@@ -5,7 +5,8 @@ import {
   Plus, AlertTriangle, Shield, CheckCircle, ExternalLink, Copy, Search, Trash2,
   Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
-  ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard
+  ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
+  Upload, Terminal, Server, AlertOctagon
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -107,6 +108,14 @@ export default function AdminDashboard({ user, onLogout }) {
   const [tableData, setTableData] = useState(null);
   const [tablePage, setTablePage] = useState(1);
   const [dbMessage, setDbMessage] = useState(null);
+  const [dbInfo, setDbInfo] = useState(null);
+  const [dbBackups, setDbBackups] = useState([]);
+  const [loadingBackups, setLoadingBackups] = useState(false);
+  const [importingDb, setImportingDb] = useState(false);
+  const [importDbError, setImportDbError] = useState(null);
+  const [importDbSuccess, setImportDbSuccess] = useState(null);
+  const [creatingBackup, setCreatingBackup] = useState(false);
+  const [showVpsGuide, setShowVpsGuide] = useState(false);
 
   // Settings
   const [settings, setSettings] = useState(null);
@@ -238,6 +247,8 @@ export default function AdminDashboard({ user, onLogout }) {
     }
     if (activeSection === 'dbtools') {
       loadDbTables();
+      loadDbInfo();
+      loadDbBackups();
     }
     if (activeSection === 'blog') {
       loadBlogPosts();
@@ -510,6 +521,133 @@ export default function AdminDashboard({ user, onLogout }) {
       .then(res => res.json())
       .then(setTableData)
       .catch(() => {});
+  };
+
+  const loadDbInfo = () => {
+    fetch('/api/admin/db/info', { headers: authHeaders })
+      .then(r => r.json())
+      .then(d => { if (d && !d.error) setDbInfo(d); })
+      .catch(() => {});
+  };
+
+  const loadDbBackups = () => {
+    setLoadingBackups(true);
+    fetch('/api/admin/db/backups', { headers: authHeaders })
+      .then(r => r.json())
+      .then(data => {
+        setDbBackups(Array.isArray(data) ? data : []);
+        setLoadingBackups(false);
+      })
+      .catch(() => setLoadingBackups(false));
+  };
+
+  const handleCreateBackup = async () => {
+    setCreatingBackup(true);
+    setDbMessage(null);
+    try {
+      const res = await fetch('/api/admin/db/backups', { method: 'POST', headers: authHeaders });
+      const data = await res.json();
+      if (res.ok) {
+        setDbMessage(`نسخه پشتیبان جدید با نام ${data.name} در پوشه سرور ایجاد شد.`);
+        loadDbBackups();
+        loadDbInfo();
+      } else {
+        setDbMessage(data.error || 'خطا در ایجاد نسخه پشتیبان');
+      }
+    } catch {
+      setDbMessage('خطا در برقراری ارتباط با سرور');
+    }
+    setCreatingBackup(false);
+  };
+
+  const handleExportLiveDb = () => {
+    const url = `/api/admin/db/download?token=${encodeURIComponent(authToken)}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `techtink_${new Date().toISOString().slice(0, 10)}.db`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
+  const handleRestoreBackup = async (name) => {
+    if (!window.confirm(`آیا از بازگردانی نسخه پشتیبان «${name}» اطمینان دارید؟ تمام داده‌های فعلی با این فایل جایگزین خواهند شد.`)) return;
+    setDbMessage(null);
+    try {
+      const res = await fetch(`/api/admin/db/backups/${encodeURIComponent(name)}/restore`, { method: 'POST', headers: authHeaders });
+      const data = await res.json();
+      if (res.ok) {
+        setDbMessage(data.message || 'بازیابی با موفقیت انجام شد.');
+        loadDbTables();
+        loadDbInfo();
+        loadDbBackups();
+        fetchStats();
+        fetchProducts();
+      } else {
+        setDbMessage(data.error || 'خطا در بازیابی نسخه پشتیبان');
+      }
+    } catch {
+      setDbMessage('خطا در بازیابی');
+    }
+  };
+
+  const handleDeleteBackup = async (name) => {
+    if (!window.confirm(`آیا از حذف نسخه پشتیبان «${name}» اطمینان دارید؟`)) return;
+    try {
+      const res = await fetch(`/api/admin/db/backups/${encodeURIComponent(name)}`, { method: 'DELETE', headers: authHeaders });
+      if (res.ok) {
+        loadDbBackups();
+        loadDbInfo();
+      }
+    } catch {}
+  };
+
+  const handleImportDbFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.db') && !file.name.endsWith('.sqlite') && !file.name.endsWith('.sqlite3')) {
+      setImportDbError('لطفاً یک فایل پایگاه داده با پسوند .db یا .sqlite انتخاب نمایید.');
+      e.target.value = '';
+      return;
+    }
+
+    const confirmMsg = `هشدار مهم:\nشما در حال وارد کردن فایل «${file.name}» (${(file.size / (1024 * 1024)).toFixed(2)} مگابایت) هستید.\nاین عملیات کل دیتابیس فعلی وب‌سایت را با این فایل جایگزین می‌کند!\n(یک نسخه پشتیبان خودکار قبل از اعمال ایجاد خواهد شد).\n\nآیا تایید می‌کنید؟`;
+    if (!window.confirm(confirmMsg)) {
+      e.target.value = '';
+      return;
+    }
+
+    setImportingDb(true);
+    setImportDbError(null);
+    setImportDbSuccess(null);
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const res = await fetch('/api/admin/db/upload', {
+        method: 'POST',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/octet-stream'
+        },
+        body: arrayBuffer
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'خطا در آپلود و اعمال دیتابیس');
+      }
+      setImportDbSuccess(data.message || 'دیتابیس جدید با موفقیت وارد و فعال شد.');
+      loadDbTables();
+      loadDbInfo();
+      loadDbBackups();
+      fetchStats();
+      fetchProducts();
+    } catch (err) {
+      setImportDbError(err.message || 'خطا در بارگذاری فایل دیتابیس');
+    } finally {
+      setImportingDb(false);
+      e.target.value = '';
+    }
   };
 
   // Stock quick adjustment
@@ -2243,34 +2381,275 @@ export default function AdminDashboard({ user, onLogout }) {
       {activeSection === 'dbtools' && (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
-          {/* Quick Actions & Maintenance */}
-          <div className="glass-card" style={{ padding: '28px' }}>
-            <h3 style={{ fontSize: '1.25rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Database size={20} color="hsl(var(--accent-cyan))" />
-              ابزارهای مدیریت پایگاه داده SQLite
-            </h3>
+          {/* Main SQLite Export & Import Panel */}
+          <div className="glass-card" style={{ padding: '32px', borderRadius: '24px', border: '1px solid hsla(var(--accent-cyan), 0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Database size={24} color="hsl(var(--accent-cyan))" />
+                  مدیریت و انتقال پایگاه‌داده SQLite (خروجی و ورود کامل techtink.db)
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '6px 0 0 0' }}>
+                  پشتیبان‌گیری، دانلود فایل خام دیتابیس، جایگزینی (Import) و راهنمای انتقال مستقیم روی سرور (VPS)
+                </p>
+              </div>
+
+              {dbInfo && (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', padding: '6px 12px' }}>
+                    حجم فعلی: {dbInfo.sizeFormatted}
+                  </span>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-purple), 0.15)', color: 'hsl(var(--accent-purple))', padding: '6px 12px' }}>
+                    موتور: {dbInfo.driver}
+                  </span>
+                  <span className="badge" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '6px 12px' }}>
+                    {dbInfo.tablesCount} جدول • {dbInfo.totalRecords} رکورد
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Notifications */}
+            {importDbSuccess && (
+              <div className="animate-fade-in" style={{ padding: '14px 18px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#10b981', fontWeight: 600, fontSize: '0.9rem', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle size={20} />
+                <span>{importDbSuccess}</span>
+              </div>
+            )}
+
+            {importDbError && (
+              <div className="animate-fade-in" style={{ padding: '14px 18px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#ef4444', fontWeight: 600, fontSize: '0.9rem', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <AlertOctagon size={20} />
+                <span>{importDbError}</span>
+              </div>
+            )}
 
             {dbMessage && (
-              <div style={{ padding: '12px 16px', borderRadius: '8px', background: 'hsla(var(--accent-cyan), 0.1)', color: 'hsl(var(--accent-cyan))', marginBottom: '16px', fontWeight: 'bold' }}>
+              <div className="animate-fade-in" style={{ padding: '12px 16px', borderRadius: '10px', background: 'hsla(var(--accent-cyan), 0.1)', color: 'hsl(var(--accent-cyan))', marginBottom: '18px', fontWeight: 'bold' }}>
                 {dbMessage}
               </div>
             )}
 
-            <div className="flex" style={{ gap: '12px', flexWrap: 'wrap' }}>
-              <button className="btn btn-primary" onClick={() => triggerDbMaintenance('vacuum')}>
-                <RefreshCw size={16} /> اجرای یکپارچه‌سازی (VACUUM)
-              </button>
-              <button className="btn btn-glass" onClick={() => triggerDbMaintenance('integrity')}>
-                <Shield size={16} /> بررسی سلامت دیتابیس (Integrity Check)
-              </button>
-              <a href="/api/admin/db/export/products?format=csv" download className="btn btn-glass">
-                <Download size={16} /> خروجی اکسل محصولات (CSV)
-              </a>
-              <a href="/api/admin/db/export/orders?format=csv" download className="btn btn-glass">
-                <Download size={16} /> خروجی اکسل سفارشات (CSV)
-              </a>
+            {/* Action Cards: 1. Export, 2. Import */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+              
+              {/* Box 1: Export DB */}
+              <div className="glass-panel" style={{ padding: '22px', borderRadius: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'hsla(var(--accent-cyan), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Download size={20} color="hsl(var(--accent-cyan))" />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem' }}>خروجی و دانلود فایل دیتابیس (Export .db)</h4>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>دانلود نسخه کامل techtink.db با تمام جداول و داده‌ها</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.835rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '0 0 16px 0' }}>
+                    یک فایل استاندارد SQLite با فرمت <code className="font-code">.db</code> به صورت ایزوله و کامل (با اعمال VACUUM و ثبت تمام تراکنش‌ها) ایجاد و مستقیماً روی رایانه شما دانلود می‌شود.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={handleExportLiveDb}
+                    style={{ flex: 1, padding: '10px 16px', fontSize: '0.875rem', gap: '8px', justifyContent: 'center' }}
+                  >
+                    <Download size={16} /> دانلود مستقیم فایل techtink.db
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-glass"
+                    onClick={handleCreateBackup}
+                    disabled={creatingBackup}
+                    style={{ padding: '10px 14px', fontSize: '0.85rem', gap: '6px' }}
+                    title="ایجاد نسخه پشتیبان در پوشه سرور"
+                  >
+                    <Save size={15} /> {creatingBackup ? 'در حال ذخیره...' : 'پشتیبان در سرور'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Box 2: Import DB */}
+              <div className="glass-panel" style={{ padding: '22px', borderRadius: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(245, 158, 11, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Upload size={20} color="#f59e0b" />
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '1.05rem' }}>ورود و جایگزینی فایل دیتابیس (Import .db)</h4>
+                      <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>بارگذاری دیتابیس جدید و فعال‌سازی فوری</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.835rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: '0 0 16px 0' }}>
+                    فایل دیتابیس SQLite پشتیبان خود را انتخاب کنید. سیستم ابتدا یک نسخه پشتیبان ایمن از وضعیت فعلی ذخیره کرده و سپس دیتابیس جدید را فعال می‌نماید.
+                  </p>
+                </div>
+
+                <div>
+                  <label 
+                    className={`btn ${importingDb ? 'btn-glass' : 'btn-primary'}`}
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px 16px', 
+                      fontSize: '0.875rem', 
+                      gap: '8px', 
+                      justifyContent: 'center',
+                      background: importingDb ? undefined : 'linear-gradient(135deg, #f59e0b, #ea580c)',
+                      cursor: importingDb ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Upload size={16} />
+                    <span>{importingDb ? 'در حال آپلود و اعتبارسنجی دیتابیس...' : 'انتخاب و آپلود فایل .db'}</span>
+                    <input 
+                      type="file" 
+                      accept=".db,.sqlite,.sqlite3" 
+                      onChange={handleImportDbFile}
+                      disabled={importingDb}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                </div>
+              </div>
+
             </div>
+
+            {/* Quick Maintenance & CSV Export Bar */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', borderTop: '1px solid var(--border-glass)', paddingTop: '20px' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>نگهداری و گزارش‌گیری:</span>
+              <button className="btn btn-glass" onClick={() => triggerDbMaintenance('vacuum')} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                <RefreshCw size={14} /> فشرده‌سازی و بهینه‌سازی (VACUUM)
+              </button>
+              <button className="btn btn-glass" onClick={() => triggerDbMaintenance('integrity')} style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                <Shield size={14} /> تست سلامت ساختار (Integrity Check)
+              </button>
+              <a href={`/api/admin/db/export/products?format=csv&token=${encodeURIComponent(authToken)}`} download className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px', textDecoration: 'none' }}>
+                <Download size={14} /> اکسل کاتالوگ محصولات (CSV)
+              </a>
+              <a href={`/api/admin/db/export/orders?format=csv&token=${encodeURIComponent(authToken)}`} download className="btn btn-glass" style={{ fontSize: '0.8rem', padding: '6px 12px', textDecoration: 'none' }}>
+                <Download size={14} /> اکسل لیست سفارشات (CSV)
+              </a>
+              <button 
+                type="button" 
+                className="btn btn-glass"
+                onClick={() => setShowVpsGuide(prev => !prev)}
+                style={{ marginRight: 'auto', fontSize: '0.8rem', padding: '6px 12px', color: 'hsl(var(--accent-cyan))', gap: '6px' }}
+              >
+                <Terminal size={14} /> {showVpsGuide ? 'بستن راهنمای VPS' : 'دستورات ترمینال سرور (VPS Guide)'}
+              </button>
+            </div>
+
+            {/* VPS Terminal Helper Guide */}
+            {showVpsGuide && (
+              <div className="animate-fade-in" style={{ marginTop: '20px', padding: '20px', borderRadius: '16px', background: 'rgba(0,0,0,0.06)', border: '1px solid var(--border-glass)' }}>
+                <h4 style={{ fontSize: '0.95rem', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Server size={18} color="hsl(var(--accent-cyan))" />
+                  راهنمای مدیریت مستقیم فایل پایگاه‌داده روی سرور لینوکس (VPS / Ubuntu)
+                </h4>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.825rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>مسیر ذخیره‌سازی فایل اصلی دیتابیس روی سرور:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                      {dbInfo?.dbPath || '/var/www/techtink/data/techtink.db'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>۱. تهیه نسخه پشتیبان سریع در ترمینال سرور:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                      sqlite3 data/techtink.db &quot;.backup data/backups/manual_backup.db&quot;
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>۲. ارسال فایل دیتابیس از کامپیوتر شخصی به سرور VPS با SCP:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                      scp ./techtink.db root@YOUR_VPS_IP:/path/to/techtink/data/techtink.db
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>۳. ری‌استارت سرویس تک‌تینک در صورت نیاز:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                      systemctl restart techtink.service
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Server Backups Archive */}
+          {dbBackups.length > 0 && (
+            <div className="glass-card animate-fade-in" style={{ padding: '24px', borderRadius: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '1.15rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <HardDrive size={18} color="hsl(var(--accent-purple))" />
+                  آرشیو نسخه‌های پشتیبان موجود روی سرور ({dbBackups.length} نسخه)
+                </h3>
+                <button type="button" className="btn btn-glass" onClick={loadDbBackups} style={{ padding: '4px 10px', fontSize: '0.75rem', gap: '4px' }}>
+                  <RefreshCw size={12} className={loadingBackups ? 'spin' : ''} /> به‌روزرسانی لیست
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.825rem' }}>
+                  <thead>
+                    <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                      <th style={{ padding: '10px' }}>نام فایل نسخه پشتیبان</th>
+                      <th style={{ padding: '10px' }}>حجم فایل</th>
+                      <th style={{ padding: '10px' }}>تاریخ ایجاد</th>
+                      <th style={{ padding: '10px', textAlign: 'center' }}>عملیات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dbBackups.map((b) => (
+                      <tr key={b.name} style={{ borderBottom: '1px solid var(--border-glass)' }}>
+                        <td style={{ padding: '10px' }} className="font-code">{b.name}</td>
+                        <td style={{ padding: '10px' }} className="font-code">{(b.size / (1024 * 1024)).toFixed(2)} MB</td>
+                        <td style={{ padding: '10px' }}>{new Date(b.createdAt).toLocaleString('fa-IR')}</td>
+                        <td style={{ padding: '10px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
+                            <a 
+                              href={`/api/admin/db/backups/${encodeURIComponent(b.name)}?token=${encodeURIComponent(authToken)}`} 
+                              download 
+                              className="btn btn-glass"
+                              style={{ padding: '4px 10px', fontSize: '0.75rem', gap: '4px', textDecoration: 'none' }}
+                              title="دانلود این نسخه"
+                            >
+                              <Download size={13} /> دانلود
+                            </a>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => handleRestoreBackup(b.name)}
+                              style={{ padding: '4px 10px', fontSize: '0.75rem', gap: '4px' }}
+                              title="بازیابی این فایل به عنوان دیتابیس فعال"
+                            >
+                              <RefreshCw size={13} /> بازیابی
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-glass"
+                              onClick={() => handleDeleteBackup(b.name)}
+                              style={{ padding: '4px 8px', fontSize: '0.75rem', color: '#ef4444' }}
+                              title="حذف نسخه پشتیبان"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Tables browser */}
           <div className="glass-card" style={{ padding: '28px' }}>
