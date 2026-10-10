@@ -152,7 +152,8 @@ function App() {
   // Automatic Viewer Analytics Tracking & Dynamic SEO Title
   useEffect(() => {
     let currentPath = '/';
-    let title = '24125751';
+    const defaultTitle = siteSettings?.seo_meta_title || storeAboutInfo?.seo_meta_title || 'تک‌تینک | مرجع تخصصی خرید لپ‌تاپ‌های مهندسی، گیمینگ و اداری';
+    let title = defaultTitle;
 
     if (activeTab === 'product' && selectedProductSlug) {
       currentPath = `/product/${selectedProductSlug}`;
@@ -162,7 +163,7 @@ function App() {
       }
     } else if (activeTab === 'store') {
       currentPath = '/';
-      title = '24125751';
+      title = defaultTitle;
     } else if (activeTab === 'compare') {
       currentPath = '/compare';
       title = 'مقایسه هوشمند سخت‌افزار و مشخصات فنی لپ‌تاپ‌ها | تک‌تینک';
@@ -182,7 +183,7 @@ function App() {
 
     try { document.title = title; } catch {}
     trackPageView(currentPath, title);
-  }, [activeTab, selectedProductSlug, laptops, siteSettings]);
+  }, [activeTab, selectedProductSlug, laptops, siteSettings, storeAboutInfo]);
 
   // Save cart to localStorage
   useEffect(() => {
