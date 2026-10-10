@@ -19,6 +19,7 @@ import ProductPage from './components/ProductPage.jsx';
 import AboutUsModal from './components/AboutUsModal.jsx';
 import UserDashboard from './components/UserDashboard.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
+import DemoNoticeModal from './components/DemoNoticeModal.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './components/SocialLogos.jsx';
 
 function App() {
@@ -31,6 +32,8 @@ function App() {
   const [isAboutUsOpen, setIsAboutUsOpen] = useState(false);
   const [storeAboutInfo, setStoreAboutInfo] = useState(null);
   const [homepageConfig, setHomepageConfig] = useState(null);
+  const [siteSettings, setSiteSettings] = useState(null);
+  const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
 
   // Compute compared laptop objects
   const comparedLaptops = useMemo(() => {
@@ -103,6 +106,21 @@ function App() {
     fetch('/api/homepage')
       .then(res => res.json())
       .then(data => { if (data && !data.error) setHomepageConfig(data); })
+      .catch(() => {});
+
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) {
+          setSiteSettings(data);
+          const isDemo = (data.site_mode ?? 'demo') === 'demo';
+          const noticeActive = (data.demo_notice_active ?? '1') === '1';
+          const dismissed = sessionStorage.getItem('techtink_demo_notice_dismissed');
+          if (isDemo && noticeActive && !dismissed) {
+            setIsDemoNoticeOpen(true);
+          }
+        }
+      })
       .catch(() => {});
 
     // Parse URL on first load
@@ -246,6 +264,8 @@ function App() {
         onToggleTheme={toggleTheme}
         laptops={laptops}
         onSelectProduct={handleSelectProduct}
+        siteSettings={siteSettings}
+        onOpenDemoNotice={() => setIsDemoNoticeOpen(true)}
       />
 
       {/* 1. STORE VIEW */}
@@ -334,7 +354,12 @@ function App() {
       {/* 5. ADMIN PORTAL */}
       {(activeTab === 'admin' || (activeTab === 'account' && currentUser?.role === 'admin')) && (
         <main>
-          <AdminDashboard user={currentUser} onLogout={handleLogout} />
+          <AdminDashboard 
+            user={currentUser} 
+            onLogout={handleLogout} 
+            siteSettings={siteSettings}
+            onSettingsUpdated={(updated) => setSiteSettings(prev => ({ ...prev, ...updated }))}
+          />
         </main>
       )}
 
@@ -590,6 +615,17 @@ function App() {
         isOpen={isAboutUsOpen}
         onClose={() => setIsAboutUsOpen(false)}
         onOpenSupport={() => handleTabChange('support')}
+      />
+
+      {/* Demo Mode Notice Modal */}
+      <DemoNoticeModal
+        settings={siteSettings}
+        isOpen={isDemoNoticeOpen}
+        onClose={() => {
+          try { sessionStorage.setItem('techtink_demo_notice_dismissed', '1'); } catch {}
+          setIsDemoNoticeOpen(false);
+        }}
+        onOpenAdmin={() => handleTabChange('admin')}
       />
     </div>
   );

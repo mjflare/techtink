@@ -250,6 +250,14 @@ export const DEFAULT_SETTINGS = {
   shipping_fee: '0',
   zarinpal_merchant_id: '00000000-0000-0000-0000-000000000000',
   zarinpal_sandbox: '1',
+  // Site Status & Demo Mode
+  site_mode: 'demo', // 'demo' | 'operational'
+  demo_notice_active: '1', // '1' | '0'
+  demo_notice_title: 'نسخه آزمایشی وب‌سایت تک‌تینک (Demo Mode)',
+  demo_notice_badge: 'حالت آزمایشی / در حال تست',
+  demo_notice_body: 'به فروشگاه تخصصی لپ‌تاپ تک‌تینک خوش آمدید! وب‌سایت در حال حاضر در فاز آزمایشی و ارزیابی عملکرد (Demo Mode) قرار دارد. تمامی مشخصات فنی، مقایسه سخت‌افزاری و تست مراحل ثبت سفارش فعال بوده و تراکنش‌ها جنبه آزمایشی دارند.',
+  demo_notice_btn: 'متوجه شدم، ورود به وب‌سایت',
+  demo_notice_badge_header: '1',
   // Payment Gateways & Methods
   gateway_zarinpal_active: '1',
   gateway_mellat_active: '1',
@@ -515,5 +523,8 @@ export async function initDb() {
 }
 
 export const getSetting = (key) => db.get('SELECT value FROM settings WHERE key = ?', key)?.value ?? DEFAULT_SETTINGS[key] ?? null;
-export const getSettings = () => Object.fromEntries(db.all('SELECT key, value FROM settings').map((r) => [r.key, r.value]));
+export const getSettings = () => {
+  const fromDb = Object.fromEntries(db.all('SELECT key, value FROM settings').map((r) => [r.key, r.value]));
+  return { ...DEFAULT_SETTINGS, ...fromDb };
+};
 export const setSetting = (key, value) => db.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', key, String(value ?? ''));

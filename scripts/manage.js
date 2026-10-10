@@ -1517,6 +1517,7 @@ async function handleEnv(args) {
 }
 
 // ==============================================================================
+// ==============================================================================
 // 9. QUICK DEPLOYMENT / RESTART RUNNER
 // ==============================================================================
 function handleDeploy() {
@@ -1530,6 +1531,117 @@ function handleDeploy() {
     }
   } else {
     console.log(`${TAG_WARN} deploy.sh not found at ${deployScript}`);
+  }
+}
+
+// ==============================================================================
+// 10. WEBSITE DEPLOYMENT MODE & DEMO NOTICE TOGGLE
+// ==============================================================================
+async function getDbInstance() {
+  if (!fs.existsSync(DB_PATH)) {
+    return null;
+  }
+  try {
+    if (typeof globalThis.Bun !== 'undefined') {
+      const { Database } = await import('bun:sqlite');
+      return new Database(DB_PATH);
+    } else {
+      const { DatabaseSync } = await import('node:sqlite');
+      return new DatabaseSync(DB_PATH);
+    }
+  } catch {
+    return null;
+  }
+}
+
+async function handleSiteMode(args) {
+  const sub = (args[0] || '').toLowerCase();
+  const db = await getDbInstance();
+  if (!db) {
+    console.error(`${TAG_ERR} SQLite database file not found at ${DB_PATH}.`);
+    console.log(`${TAG_INFO} Start the backend server once to create and initialize the database.`);
+    return;
+  }
+
+  const getSettingVal = (key, fallback = '') => {
+    try {
+      let row;
+      if (typeof db.prepare === 'function') {
+        row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      }
+      return row?.value ?? fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const setSettingVal = (key, val) => {
+    try {
+      if (typeof db.prepare === 'function') {
+        db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, String(val));
+      }
+      return true;
+    } catch (e) {
+      console.error(`${TAG_ERR} Failed to update setting ${key}: ${e.message}`);
+      return false;
+    }
+  };
+
+  if (sub === 'demo') {
+    setSettingVal('site_mode', 'demo');
+    setSettingVal('demo_notice_active', '1');
+    console.log(`\n${TAG_OK} Website mode switched to ${c.bold(c.yellow('DEMO MODE'))}!`);
+    console.log(`  - Visitors will see the Demo Mode Popup Modal on entry.`);
+    console.log(`  - Header will display the Demo Mode indicator pill.`);
+    console.log(`  - Visitors are notified that orders and prices are for testing/evaluation.\n`);
+    return;
+  }
+
+  if (sub === 'operational' || sub === 'live' || sub === 'prod') {
+    setSettingVal('site_mode', 'operational');
+    console.log(`\n${TAG_OK} Website mode switched to ${c.bold(c.green('OPERATIONAL / LIVE MODE'))}!`);
+    console.log(`  - The Demo Mode Popup Modal is deactivated.`);
+    console.log(`  - The Demo Header Badge is deactivated.`);
+    console.log(`  - Store is live for real customer transactions.\n`);
+    return;
+  }
+
+  if (sub === 'status') {
+    const currentMode = getSettingVal('site_mode', 'demo');
+    const noticeActive = getSettingVal('demo_notice_active', '1');
+    console.log(`\n${c.bold('--- TechTink Website Deployment Status ---')}`);
+    console.log(`Current Mode      : ${currentMode === 'demo' ? c.yellow('DEMO MODE (Testing & Preview)') : c.green('OPERATIONAL (Live Store)')}`);
+    console.log(`Demo Popup Notice : ${noticeActive === '1' ? c.green('Active (1)') : c.yellow('Inactive (0)')}`);
+    console.log(`Popup Title       : ${getSettingVal('demo_notice_title', 'Default')}`);
+    console.log(`Header Badge      : ${getSettingVal('demo_notice_badge_header', '1') === '1' ? 'Visible' : 'Hidden'}\n`);
+    return;
+  }
+
+  // Interactive Menu
+  const prompter = createPrompter();
+  const currentMode = getSettingVal('site_mode', 'demo');
+  console.log(`\n${c.bold('--- Website Deployment Mode Management ---')}`);
+  console.log(`Current Status: ${currentMode === 'demo' ? c.yellow('DEMO MODE (Under testing/evaluation)') : c.green('OPERATIONAL (Live store)')}\n`);
+  console.log(`[1] Switch to DEMO MODE (Enable popup notice & demo badges)`);
+  console.log(`[2] Switch to OPERATIONAL MODE (Official launch, disable demo popup)`);
+  console.log(`[3] View Current Mode Details & Settings`);
+  console.log(`[0] Back to main menu`);
+
+  const choice = (await prompter.ask('\nSelect an option [0-3]: ')).trim();
+  prompter.close();
+
+  switch (choice) {
+    case '1':
+      await handleSiteMode(['demo']);
+      break;
+    case '2':
+      await handleSiteMode(['operational']);
+      break;
+    case '3':
+      await handleSiteMode(['status']);
+      break;
+    default:
+      break;
   }
 }
 
@@ -1558,11 +1670,12 @@ async function startInteractiveMenu() {
     console.log(`  [7] Administrator Accounts (Create Admin / List Admins)`);
     console.log(`  [8] Environment Variables (.env viewer & editor)`);
     console.log(`  [9] Quick Deployment & Pull (deploy.sh)`);
+    console.log(`  [10] Website Deployment Mode (Toggle Demo Mode vs Operational Mode)`);
     console.log(`  [0] Exit`);
     console.log(`------------------------------------------------------------`);
 
     const prompter = createPrompter();
-    const choice = (await prompter.ask('Enter your selection [0-9]: ')).trim();
+    const choice = (await prompter.ask('Enter your selection [0-10]: ')).trim();
     prompter.close();
 
     switch (choice) {
@@ -1593,13 +1706,16 @@ async function startInteractiveMenu() {
       case '9':
         handleDeploy();
         break;
+      case '10':
+        await handleSiteMode([]);
+        break;
       case '0':
       case 'q':
       case 'exit':
         console.log(`\nGoodbye!\n`);
         process.exit(0);
       default:
-        console.log(`\n${TAG_WARN} Invalid option "${choice}". Please choose 0 to 9.`);
+        console.log(`\n${TAG_WARN} Invalid option "${choice}". Please choose 0 to 10.`);
         break;
     }
   }
@@ -1643,6 +1759,7 @@ Commands:
                               check     : Run PRAGMA integrity_check
                               info      : View tables and record counts
   admin [list|create]       List admin users or launch admin creation wizard
+  mode [demo|operational|status] Toggle website mode (Demo Mode vs Operational Mode)
   env [show|set <K> <V>]    Inspect or modify .env variables
   deploy                    Run deploy.sh script
   help, --help, -h          Show this help message
@@ -1650,6 +1767,9 @@ Commands:
 Running with NO arguments starts the interactive console menu (TUI).
 
 Examples:
+  node scripts/manage.js mode demo
+  node scripts/manage.js mode operational
+  node scripts/manage.js mode status
   node scripts/manage.js ssl cert-dir /etc/letsencrypt/live/techtink.ir
   node scripts/manage.js ssl-dir ./certs techtink.ir
   node scripts/manage.js nginx fix
@@ -1704,6 +1824,10 @@ async function main() {
       break;
     case 'admin':
       await handleAdmin(subArgs);
+      break;
+    case 'mode':
+    case 'sitemode':
+      await handleSiteMode(subArgs);
       break;
     case 'env':
       await handleEnv(subArgs);

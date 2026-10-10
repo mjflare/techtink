@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown, Package } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { DemoHeaderBadge } from './DemoNoticeModal.jsx';
 
 export default function Header({ 
   activeTab, 
@@ -17,7 +18,9 @@ export default function Header({
   theme = 'dark',
   onToggleTheme,
   laptops = [],
-  onSelectProduct
+  onSelectProduct,
+  siteSettings,
+  onOpenDemoNotice
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -119,6 +122,13 @@ export default function Header({
             <MonitorSmartphone size={22} />
           </div>
           <h2 style={{ margin: 0, letterSpacing: '-0.5px', fontSize: '1.35rem' }} className="gradient-text">تک‌تینک</h2>
+          <DemoHeaderBadge 
+            settings={siteSettings} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDemoNotice?.();
+            }} 
+          />
         </div>
 
         {/* Desktop Navigation Tabs */}

@@ -16,9 +16,10 @@ import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
 import HomeCustomizer from './HomeCustomizer.jsx';
 import WarrantyManager from './WarrantyManager.jsx';
 import CouponManager from './CouponManager.jsx';
+import DemoNoticeModal from './DemoNoticeModal.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
-export default function AdminDashboard({ user, onLogout }) {
+export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token') || '');
 
@@ -122,12 +123,21 @@ export default function AdminDashboard({ user, onLogout }) {
   const [showVpsGuide, setShowVpsGuide] = useState(false);
 
   // Settings
-  const [settings, setSettings] = useState(null);
+  const [settings, setSettings] = useState(() => siteSettings || null);
   const [settingsLoading, setSettingsLoading] = useState(false);
-  const [settingsForm, setSettingsForm] = useState({});
+  const [settingsForm, setSettingsForm] = useState(() => siteSettings || {});
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [torobCopied, setTorobCopied] = useState(false);
+  const [previewDemoModalOpen, setPreviewDemoModalOpen] = useState(false);
+  const [modeSwitchLoading, setModeSwitchLoading] = useState(false);
+
+  useEffect(() => {
+    if (siteSettings && (!settings || Object.keys(settingsForm).length === 0)) {
+      setSettings(siteSettings);
+      setSettingsForm(siteSettings);
+    }
+  }, [siteSettings]);
 
   // Blog Management
   const [blogPosts, setBlogPosts] = useState([]);
@@ -930,8 +940,35 @@ export default function AdminDashboard({ user, onLogout }) {
     }
   };
 
+  const handleSwitchSiteMode = async (targetMode) => {
+    setModeSwitchLoading(true);
+    try {
+      const payload = {
+        ...settingsForm,
+        site_mode: targetMode
+      };
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: authHeaders,
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSettings(updated);
+        setSettingsForm(updated);
+        onSettingsUpdated?.(updated);
+        setSettingsSaved(true);
+        setTimeout(() => setSettingsSaved(false), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModeSwitchLoading(false);
+    }
+  };
+
   const saveSettings = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
     setSavingSettings(true);
     setSettingsSaved(false);
     try {
@@ -943,6 +980,8 @@ export default function AdminDashboard({ user, onLogout }) {
       if (res.ok) {
         const updated = await res.json();
         setSettings(updated);
+        setSettingsForm(updated);
+        onSettingsUpdated?.(updated);
         setSettingsSaved(true);
         setTimeout(() => setSettingsSaved(false), 3000);
       }
@@ -1100,7 +1139,36 @@ export default function AdminDashboard({ user, onLogout }) {
           </p>
         </div>
 
-        <div className="flex" style={{ gap: '12px' }}>
+        <div className="flex" style={{ gap: '12px', alignItems: 'center' }}>
+          {/* Quick Site Mode Indicator Button */}
+          <button 
+            type="button"
+            onClick={() => setActiveSection('settings')}
+            className="btn btn-glass"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              fontSize: '0.825rem',
+              fontWeight: '600',
+              borderColor: (settingsForm.site_mode ?? 'demo') === 'demo' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(16, 185, 129, 0.4)',
+              background: (settingsForm.site_mode ?? 'demo') === 'demo' ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+              color: (settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : '#10b981'
+            }}
+            title="برای مشاهده و تغییر وضعیت استقرار سایت کلیک کنید"
+          >
+            <span style={{
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: (settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : '#10b981',
+              boxShadow: (settingsForm.site_mode ?? 'demo') === 'demo' ? '0 0 8px #f59e0b' : '0 0 8px #10b981'
+            }} />
+            <span>وضعیت: {(settingsForm.site_mode ?? 'demo') === 'demo' ? 'آزمایشی (Demo)' : 'عملیاتی (Live)'}</span>
+          </button>
+
           {activeSection === 'blog' ? (
             <button className="btn btn-primary" onClick={handleOpenAddBlogPost}>
               <Plus size={18} /> افزودن مقاله جدید
@@ -2738,6 +2806,285 @@ export default function AdminDashboard({ user, onLogout }) {
       {activeSection === 'settings' && (
         <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          {/* Site Status & Demo Mode Management Card */}
+          <div className="glass-card" style={{ 
+            padding: '32px', 
+            position: 'relative',
+            overflow: 'hidden',
+            border: (settingsForm.site_mode ?? 'demo') === 'demo'
+              ? '1px solid rgba(245, 158, 11, 0.45)'
+              : '1px solid rgba(16, 185, 129, 0.45)',
+            boxShadow: (settingsForm.site_mode ?? 'demo') === 'demo'
+              ? '0 10px 40px rgba(245, 158, 11, 0.12)'
+              : '0 10px 40px rgba(16, 185, 129, 0.12)'
+          }}>
+            {/* Ambient accent top bar */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: (settingsForm.site_mode ?? 'demo') === 'demo'
+                ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
+                : 'linear-gradient(90deg, #10b981, #06b6d4)'
+            }} />
+
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <ShieldCheck size={26} color={(settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : '#10b981'} />
+                  <h2 style={{ fontSize: '1.45rem', margin: 0 }}>وضعیت استقرار و فاز اجرایی سایت</h2>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    background: (settingsForm.site_mode ?? 'demo') === 'demo' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(16, 185, 129, 0.18)',
+                    color: (settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : '#10b981',
+                    border: (settingsForm.site_mode ?? 'demo') === 'demo' ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)'
+                  }}>
+                    <span style={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: (settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : '#10b981',
+                      boxShadow: (settingsForm.site_mode ?? 'demo') === 'demo' ? '0 0 8px #f59e0b' : '0 0 8px #10b981'
+                    }} />
+                    {(settingsForm.site_mode ?? 'demo') === 'demo' ? 'حالت آزمایشی فعال (Demo Mode)' : 'حالت عملیاتی و زنده (Operational Mode)'}
+                  </span>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+                  از این بخش می‌توانید تعیین کنید سایت به عنوان نسخه آزمایشی به همراه پیام هشدار پاپ‌آپ برای کاربران نمایش داده شود یا به عنوان فروشگاه زنده و عملیاتی فعال باشد.
+                </p>
+              </div>
+
+              {/* Fast Switch Button */}
+              <button 
+                type="button"
+                className="btn btn-glass"
+                disabled={modeSwitchLoading}
+                onClick={() => handleSwitchSiteMode((settingsForm.site_mode ?? 'demo') === 'demo' ? 'operational' : 'demo')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 18px',
+                  borderRadius: '12px',
+                  fontWeight: '600',
+                  fontSize: '0.875rem'
+                }}
+              >
+                <RefreshCw size={16} className={modeSwitchLoading ? 'spin' : ''} />
+                {(settingsForm.site_mode ?? 'demo') === 'demo' ? 'تغییر فوری به حالت عملیاتی (Live)' : 'تغییر فوری به حالت آزمایشی (Demo)'}
+              </button>
+            </div>
+
+            {/* 2 Big Mode Option Cards */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              
+              {/* Option A: Demo Mode */}
+              <div 
+                onClick={() => setSettingsForm(prev => ({ ...prev, site_mode: 'demo' }))}
+                style={{
+                  padding: '20px',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  border: (settingsForm.site_mode ?? 'demo') === 'demo' ? '2px solid #f59e0b' : '1px solid var(--border-glass)',
+                  background: (settingsForm.site_mode ?? 'demo') === 'demo' ? 'rgba(245, 158, 11, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      background: 'rgba(245, 158, 11, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#f59e0b'
+                    }}>
+                      <Sparkles size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: '1rem', color: (settingsForm.site_mode ?? 'demo') === 'demo' ? '#f59e0b' : 'var(--text-primary)' }}>
+                        حالت آزمایشی (Demo Mode)
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>تست قابلیت‌ها و پیش‌نمایش</div>
+                    </div>
+                  </div>
+                  {(settingsForm.site_mode ?? 'demo') === 'demo' && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#f59e0b', background: 'rgba(245, 158, 11, 0.2)', padding: '2px 8px', borderRadius: '8px' }}>
+                      انتخاب شده ✓
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                  در این حالت، پاپ‌آپ اطلاع‌رسانی مدرن با ورود کاربر ظاهر می‌شود، نشان آزمایشی در هدر قرار می‌گیرد و کاربران از تستی بودن سفارش‌ها و قیمت‌ها مطلع خواهند شد.
+                </p>
+              </div>
+
+              {/* Option B: Operational Mode */}
+              <div 
+                onClick={() => setSettingsForm(prev => ({ ...prev, site_mode: 'operational' }))}
+                style={{
+                  padding: '20px',
+                  borderRadius: '16px',
+                  cursor: 'pointer',
+                  border: (settingsForm.site_mode ?? 'demo') === 'operational' ? '2px solid #10b981' : '1px solid var(--border-glass)',
+                  background: (settingsForm.site_mode ?? 'demo') === 'operational' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  transition: 'all 0.2s ease',
+                  position: 'relative'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#10b981'
+                    }}>
+                      <CheckCircle size={20} />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: '1rem', color: (settingsForm.site_mode ?? 'demo') === 'operational' ? '#10b981' : 'var(--text-primary)' }}>
+                        حالت عملیاتی و زنده (Operational)
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>فروشگاه رسمی و خریدهای واقعی</div>
+                    </div>
+                  </div>
+                  {(settingsForm.site_mode ?? 'demo') === 'operational' && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#10b981', background: 'rgba(16, 185, 129, 0.2)', padding: '2px 8px', borderRadius: '8px' }}>
+                      انتخاب شده ✓
+                    </span>
+                  )}
+                </div>
+                <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                  سایت آماده فروش رسمی می‌شود. تمامی پیام‌ها و پاپ‌آپ‌های حالت دمو پنهان می‌شوند و درگاه پرداخت و تسویه‌حساب به شکل زنده در خدمت خریداران خواهد بود.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Demo Notice Configuration Panel */}
+            <div className="glass-panel" style={{ padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Terminal size={18} color="hsl(var(--accent-cyan))" />
+                  شخصی‌سازی متن و ظاهر پاپ‌آپ آزمایشی (Demo Notice Modal)
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox"
+                      checked={(settingsForm.demo_notice_active ?? '1') === '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, demo_notice_active: e.target.checked ? '1' : '0' })}
+                    />
+                    نمایش پاپ‌آپ هنگام ورود به سایت
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}>
+                    <input 
+                      type="checkbox"
+                      checked={(settingsForm.demo_notice_badge_header ?? '1') === '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, demo_notice_badge_header: e.target.checked ? '1' : '0' })}
+                    />
+                    نشان وضعیت در نوار بالای سایت (Header)
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '14px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                    عنوان پاپ‌آپ
+                  </label>
+                  <input 
+                    type="text"
+                    value={settingsForm.demo_notice_title ?? ''}
+                    placeholder="نسخه آزمایشی وب‌سایت تک‌تینک (Demo Mode)"
+                    onChange={e => setSettingsForm({ ...settingsForm, demo_notice_title: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                    برچسب نشان بالای پاپ‌آپ
+                  </label>
+                  <input 
+                    type="text"
+                    value={settingsForm.demo_notice_badge ?? ''}
+                    placeholder="حالت آزمایشی / در حال تست"
+                    onChange={e => setSettingsForm({ ...settingsForm, demo_notice_badge: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                    متن دکمه تأیید و ورود
+                  </label>
+                  <input 
+                    type="text"
+                    value={settingsForm.demo_notice_btn ?? ''}
+                    placeholder="متوجه شدم، ورود به وب‌سایت"
+                    onChange={e => setSettingsForm({ ...settingsForm, demo_notice_btn: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+                  متن کامل توضیحات پاپ‌آپ برای مراجعین
+                </label>
+                <textarea 
+                  rows={3}
+                  value={settingsForm.demo_notice_body ?? ''}
+                  placeholder="به فروشگاه تخصصی لپ‌تاپ تک‌تینک خوش آمدید!..."
+                  onChange={e => setSettingsForm({ ...settingsForm, demo_notice_body: e.target.value })}
+                  style={{ width: '100%', resize: 'vertical' }}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Actions for Site Status */}
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <button
+                type="button"
+                className="btn btn-glass"
+                onClick={() => setPreviewDemoModalOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Eye size={16} />
+                مشاهده پیش‌نمایش پاپ‌آپ آزمایشی
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={savingSettings}
+                onClick={saveSettings}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px' }}
+              >
+                <Save size={16} />
+                {savingSettings ? 'در حال ذخیره‌سازی...' : 'ذخیره تنظیمات وضعیت سایت'}
+              </button>
+            </div>
+
+          </div>
+          
           {/* Torob API Integration Card */}
           <div className="glass-card" style={{ padding: '32px', borderColor: 'hsla(var(--accent-cyan), 0.3)' }}>
             <div className="flex" style={{ alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -3269,6 +3616,14 @@ export default function AdminDashboard({ user, onLogout }) {
         onClose={() => { setBarcodeModalOpen(false); setBarcodeProduct(null); }}
         product={barcodeProduct}
         allProducts={products}
+      />
+
+      {/* 5. Modal Preview: Demo Mode Notice Modal (Admin Live Preview) */}
+      <DemoNoticeModal
+        settings={settingsForm}
+        isOpen={previewDemoModalOpen}
+        onClose={() => setPreviewDemoModalOpen(false)}
+        onOpenAdmin={() => setPreviewDemoModalOpen(false)}
       />
 
     </div>
