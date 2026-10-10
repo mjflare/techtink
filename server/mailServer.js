@@ -607,6 +607,9 @@ export function startSmtpServer(portToUse = null) {
 
     socket.setTimeout(60000); // 1 minute timeout
 
+    const clientInfo = `${socket.remoteAddress || 'unknown'}:${socket.remotePort || ''}`;
+    console.log(`[MailServer] Incoming SMTP connection from ${clientInfo}`);
+
     const send = (code, msg) => {
       try {
         socket.write(`${code} ${msg}\r\n`);
@@ -647,7 +650,7 @@ export function startSmtpServer(portToUse = null) {
             verificationCode: parsed.verificationCode,
           });
 
-          console.log(`[MailServer] ✓ New Email Received! ID: ${emailId} | From: ${parsed.from} | To: ${parsed.to} | Subject: "${parsed.subject}" ${parsed.verificationCode ? `| Code: [${parsed.verificationCode}]` : ''}`);
+          console.log(`[MailServer] ✓ New Email Received from ${clientInfo}! ID: ${emailId} | From: ${parsed.from} | To: ${parsed.to} | Subject: "${parsed.subject}" ${parsed.verificationCode ? `| Code: [${parsed.verificationCode}]` : ''}`);
 
           send(250, `2.0.0 Ok: queued as tt-${Date.now()}`);
           mailFrom = '';
@@ -674,7 +677,7 @@ export function startSmtpServer(portToUse = null) {
         switch (verb) {
           case 'HELO':
           case 'EHLO':
-            send(250, `techtink.ir Hello ${arg || 'client'}, pleased to meet you\r\n250-8BITMIME\r\n250-SIZE 20971520\r\n250 OK`);
+            send(250, `techtink.ir Hello ${arg || 'client'}, pleased to meet you\r\n250-8BITMIME\r\n250-SIZE 20971520\r\n250-VRFY\r\n250 OK`);
             state = 'COMMAND';
             break;
 
@@ -707,6 +710,22 @@ export function startSmtpServer(portToUse = null) {
             }
             break;
 
+          case 'STARTTLS':
+            send(454, '4.7.0 TLS not available, please proceed in plain text');
+            break;
+
+          case 'VRFY':
+            send(252, '2.0.0 Cannot VRFY user, but will accept message and attempt delivery');
+            break;
+
+          case 'EXPN':
+            send(502, '5.5.2 EXPN not supported');
+            break;
+
+          case 'HELP':
+            send(214, '2.0.0 TechTink Mail Commands: HELO, EHLO, MAIL, RCPT, DATA, RSET, NOOP, QUIT, VRFY');
+            break;
+
           case 'RSET':
             mailFrom = '';
             rcptTo = [];
@@ -731,7 +750,9 @@ export function startSmtpServer(portToUse = null) {
       }
     });
 
-    socket.on('error', () => {});
+    socket.on('error', (err) => {
+      console.log(`[MailServer] Socket error from ${clientInfo}: ${err.message}`);
+    });
     socket.on('timeout', () => {
       send(421, '4.4.2 Timeout connection');
       socket.destroy();
