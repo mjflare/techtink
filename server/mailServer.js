@@ -18,43 +18,81 @@ let isListening = false;
 let lastError = null;
 
 // --- MIME & Header Helpers ---
+export function extractCharset(contentType = '') {
+  if (!contentType) return 'utf-8';
+  const match = contentType.match(/charset=["']?([^"';\s]+)["']?/i);
+  return match ? match[1].toLowerCase() : 'utf-8';
+}
+
+export function decodeQuotedPrintable(str, charset = 'utf-8') {
+  if (!str) return '';
+  const cleaned = str.replace(/=\r?\n/g, ''); // Remove soft line breaks
+  const bytes = [];
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === '=' && i + 2 < cleaned.length && /^[0-9A-Fa-f]{2}$/.test(cleaned.slice(i + 1, i + 3))) {
+      bytes.push(parseInt(cleaned.slice(i + 1, i + 3), 16));
+      i += 2;
+    } else {
+      bytes.push(cleaned.charCodeAt(i));
+    }
+  }
+  const buf = Buffer.from(bytes);
+  try {
+    return new TextDecoder(charset || 'utf-8', { fatal: false }).decode(buf);
+  } catch {
+    return buf.toString('utf8');
+  }
+}
+
+export function decodeBase64(str, charset = 'utf-8') {
+  if (!str) return '';
+  try {
+    const buf = Buffer.from(str.replace(/\s+/g, ''), 'base64');
+    return new TextDecoder(charset || 'utf-8', { fatal: false }).decode(buf);
+  } catch {
+    return str;
+  }
+}
+
 export function decodeMimeHeader(header) {
   if (!header) return '';
   return header.replace(/=\?([^?]+)\?([BQbq])\?([^?]+)\?=/g, (_, charset, encoding, text) => {
     try {
       if (encoding.toUpperCase() === 'B') {
-        return Buffer.from(text, 'base64').toString('utf8');
+        return decodeBase64(text, charset);
       } else if (encoding.toUpperCase() === 'Q') {
-        const qp = text.replace(/_/g, ' ').replace(/=([0-9A-Fa-f]{2})/g, (__, hex) => String.fromCharCode(parseInt(hex, 16)));
-        return Buffer.from(qp, 'binary').toString('utf8');
+        return decodeQuotedPrintable(text.replace(/_/g, ' '), charset);
       }
     } catch {}
     return text;
   });
 }
 
-function decodeQuotedPrintable(str) {
-  if (!str) return '';
-  return str
-    .replace(/=\r?\n/g, '') // Soft line breaks
-    .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => {
-      try {
-        return String.fromCharCode(parseInt(hex, 16));
-      } catch {
-        return _;
+export function sanitizeMojibake(text) {
+  if (!text || typeof text !== 'string') return text;
+  // If the text contains typical UTF-8 mojibake patterns when decoded as latin1/windows-1252:
+  // (e.g. Ø±, Øª, Ù, etc.)
+  if (/[ØÙÚÛ]/.test(text)) {
+    try {
+      const fixed = Buffer.from(text, 'latin1').toString('utf8');
+      if (/[\u0600-\u06FF]/.test(fixed)) {
+        return fixed;
       }
-    });
+    } catch {}
+  }
+  return text;
 }
 
 export function extractVerificationCode(text) {
   if (!text) return null;
+  const sanitized = sanitizeMojibake(text);
   // Look for explicit Persian/English keywords: کد تایید: 123456 or code: 123456
-  const explicitMatch = text.match(/(?:کد\s*تایید|کد\s*فعالسازی|کد|کد\s*ورود|code|verification\s*code|pin|token)\s*[:：=-]?\s*([0-9]{4,8})/i);
+  const explicitMatch = sanitized.match(/(?:کد\s*تایید|کد\s*فعالسازی|کد|کد\s*ورود|code|verification\s*code|pin|token)\s*[:：=-]?\s*([0-9]{4,8})/i);
   if (explicitMatch && explicitMatch[1]) {
     return explicitMatch[1];
   }
   // Fallback: look for 5 to 8 digit numbers surrounded by boundaries
-  const digitsMatch = text.match(/\b([0-9]{5,8})\b/);
+  const digitsMatch = sanitized.match(/\b([0-9]{5,8})\b/);
   return digitsMatch ? digitsMatch[1] : null;
 }
 
@@ -90,11 +128,12 @@ export function parseRawEmail(raw) {
     }
   }
 
-  const subject = decodeMimeHeader(headers['subject'] || '(بدون عنوان)');
-  const from = decodeMimeHeader(headers['from'] || '');
-  const to = decodeMimeHeader(headers['to'] || 'info@techtink.ir');
+  const subject = sanitizeMojibake(decodeMimeHeader(headers['subject'] || '(بدون عنوان)'));
+  const from = sanitizeMojibake(decodeMimeHeader(headers['from'] || ''));
+  const to = sanitizeMojibake(decodeMimeHeader(headers['to'] || 'info@techtink.ir'));
   const contentType = headers['content-type'] || 'text/plain';
   const transferEncoding = (headers['content-transfer-encoding'] || '').toLowerCase();
+  const mainCharset = extractCharset(contentType);
 
   let bodyText = '';
   let bodyHtml = '';
@@ -110,19 +149,21 @@ export function parseRawEmail(raw) {
         if (part.trim() === '--' || !part.trim()) continue;
         const subHeaderEnd = part.indexOf('\n\n');
         if (subHeaderEnd !== -1) {
-          const subHeaders = part.slice(0, subHeaderEnd).toLowerCase();
+          const subHeaders = part.slice(0, subHeaderEnd);
+          const subHeadersLower = subHeaders.toLowerCase();
+          const partCharset = extractCharset(subHeaders) || mainCharset;
           let subBody = part.slice(subHeaderEnd + 2);
 
-          if (subHeaders.includes('base64')) {
-            try { subBody = Buffer.from(subBody.replace(/\s+/g, ''), 'base64').toString('utf8'); } catch {}
-          } else if (subHeaders.includes('quoted-printable')) {
-            subBody = decodeQuotedPrintable(subBody);
+          if (subHeadersLower.includes('base64')) {
+            subBody = decodeBase64(subBody, partCharset);
+          } else if (subHeadersLower.includes('quoted-printable')) {
+            subBody = decodeQuotedPrintable(subBody, partCharset);
           }
 
-          if (subHeaders.includes('text/html')) {
-            bodyHtml = subBody.trim();
-          } else if (subHeaders.includes('text/plain')) {
-            bodyText = subBody.trim();
+          if (subHeadersLower.includes('text/html')) {
+            bodyHtml = sanitizeMojibake(subBody.trim());
+          } else if (subHeadersLower.includes('text/plain')) {
+            bodyText = sanitizeMojibake(subBody.trim());
           }
         }
       }
@@ -133,10 +174,12 @@ export function parseRawEmail(raw) {
   if (!bodyText && !bodyHtml) {
     let decoded = bodyPart;
     if (transferEncoding.includes('base64')) {
-      try { decoded = Buffer.from(decoded.replace(/\s+/g, ''), 'base64').toString('utf8'); } catch {}
+      decoded = decodeBase64(decoded, mainCharset);
     } else if (transferEncoding.includes('quoted-printable')) {
-      decoded = decodeQuotedPrintable(decoded);
+      decoded = decodeQuotedPrintable(decoded, mainCharset);
     }
+
+    decoded = sanitizeMojibake(decoded);
 
     if (contentType.toLowerCase().includes('text/html')) {
       bodyHtml = decoded.trim();
@@ -163,16 +206,21 @@ export function parseRawEmail(raw) {
 // --- Database Operations ---
 export function saveIncomingEmail({ from, to, subject, bodyText, bodyHtml, rawMessage, verificationCode }) {
   try {
+    const cleanSubject = sanitizeMojibake(subject) || '(بدون عنوان)';
+    const cleanBodyText = sanitizeMojibake(bodyText) || '';
+    const cleanBodyHtml = sanitizeMojibake(bodyHtml) || '';
+    const code = verificationCode || extractVerificationCode(`${cleanSubject}\n${cleanBodyText}`);
+
     const res = db.run(
       `INSERT INTO inbox_emails (from_address, to_address, subject, body_text, body_html, raw_message, verification_code)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       from || 'unknown',
       to || 'info@techtink.ir',
-      subject || '(بدون عنوان)',
-      bodyText || '',
-      bodyHtml || '',
+      cleanSubject,
+      cleanBodyText,
+      cleanBodyHtml,
       rawMessage || '',
-      verificationCode || null
+      code || null
     );
     return res.lastId;
   } catch (err) {
@@ -199,7 +247,11 @@ export function listEmails({ limit = 50, offset = 0, search = '', unreadOnly = f
     sql += ' ORDER BY id DESC LIMIT ? OFFSET ?';
     params.push(Number(limit), Number(offset));
 
-    const items = db.all(sql, ...params);
+    const rawItems = db.all(sql, ...params);
+    const items = rawItems.map((item) => ({
+      ...item,
+      subject: sanitizeMojibake(item.subject),
+    }));
     const totalCount = db.get('SELECT COUNT(*) as c FROM inbox_emails')?.c || 0;
     const unreadCount = db.get('SELECT COUNT(*) as c FROM inbox_emails WHERE is_read = 0')?.c || 0;
 
@@ -216,7 +268,14 @@ export function listEmails({ limit = 50, offset = 0, search = '', unreadOnly = f
 
 export function getEmailById(id) {
   try {
-    return db.get('SELECT * FROM inbox_emails WHERE id = ?', id);
+    const row = db.get('SELECT * FROM inbox_emails WHERE id = ?', id);
+    if (!row) return null;
+    return {
+      ...row,
+      subject: sanitizeMojibake(row.subject),
+      body_text: sanitizeMojibake(row.body_text),
+      body_html: sanitizeMojibake(row.body_html),
+    };
   } catch {
     return null;
   }
@@ -843,7 +902,7 @@ export function getMailServerStatus() {
     lastEmail: lastEmail ? {
       id: lastEmail.id,
       from: lastEmail.from_address,
-      subject: lastEmail.subject,
+      subject: sanitizeMojibake(lastEmail.subject),
       verificationCode: lastEmail.verification_code,
       receivedAt: lastEmail.created_at,
     } : null,

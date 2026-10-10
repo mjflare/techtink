@@ -34,7 +34,6 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
   const [showDnsGuide, setShowDnsGuide] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [simulating, setSimulating] = useState(false);
 
   // Compose / Send Email Modal State
   const [composeOpen, setComposeOpen] = useState(false);
@@ -180,40 +179,6 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
     navigator.clipboard.writeText(code);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 3000);
-  };
-
-  // Simulate eNamad email test
-  const handleSimulateEmail = async () => {
-    setSimulating(true);
-    setActionMessage(null);
-    try {
-      const res = await fetch('/api/admin/emails/simulate', {
-        method: 'POST',
-        headers: authHeaders,
-        body: JSON.stringify({
-          from: 'noreply@enamad.ir',
-          to: 'info@techtink.ir',
-          code: '24125751'
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setActionMessage({
-          type: 'success',
-          text: `ایمیل آزمایشی اینماد به صندوق دریافتی اضافه شد (کد تایید: ${data.verificationCode || '24125751'})`
-        });
-        setCurrentFolder('inbox');
-        await fetchEmailList();
-        if (data.id) setSelectedEmailId(data.id);
-        fetchStatus();
-      } else {
-        setActionMessage({ type: 'error', text: data.error || 'خطا در شبیه‌سازی ایمیل' });
-      }
-    } catch {
-      setActionMessage({ type: 'error', text: 'خطا در برقراری ارتباط با سرور' });
-    } finally {
-      setSimulating(false);
-    }
   };
 
   // Delete single email
@@ -460,10 +425,10 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
               </div>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800 }}>
-                  سیستم ایمیل و مکاتبات سازمانی <span className="gradient-text">info@techtink.ir</span>
+                  صندوق ایمیل و مکاتبات سازمانی <span className="gradient-text">info@techtink.ir</span>
                 </h2>
                 <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                  دریافت مستقیم تاییدیه اینماد و ترب + قابلیت ارسال مستقیم ایمیل به مشتریان و همکاران
+                  صندوق رسمی دریافت و ارسال پیام‌ها و استعلامات سازمانی دامنه techtink.ir
                 </p>
               </div>
             </div>
@@ -525,26 +490,6 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
             >
               <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
               <span>بروزرسانی</span>
-            </button>
-
-            {/* Simulate test email */}
-            <button
-              type="button"
-              onClick={handleSimulateEmail}
-              disabled={simulating}
-              className="btn btn-glass"
-              style={{
-                padding: '8px 14px',
-                borderRadius: '10px',
-                fontSize: '0.825rem',
-                borderColor: 'rgba(234, 179, 8, 0.4)',
-                background: 'rgba(234, 179, 8, 0.08)',
-                color: '#eab308'
-              }}
-              title="ایجاد ایمیل تست اینماد"
-            >
-              <Sparkles size={15} />
-              <span>{simulating ? 'در حال ساخت...' : 'شبیه‌سازی اینماد'}</span>
             </button>
           </div>
         </div>

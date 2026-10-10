@@ -25,6 +25,8 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
   const [activeSection, setActiveSection] = useState('dashboard');
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token') || '');
   const [unreadEmailCount, setUnreadEmailCount] = useState(0);
+  const [latestEmailToast, setLatestEmailToast] = useState(null);
+  const [lastKnownEmailId, setLastKnownEmailId] = useState(null);
 
   // Admin login fallback if not authenticated as admin
   const [adminEmail, setAdminEmail] = useState('');
@@ -299,9 +301,60 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       .then(res => res.json())
       .then(data => {
         if (typeof data.unreadEmails === 'number') setUnreadEmailCount(data.unreadEmails);
+        if (data.lastEmail?.id) setLastKnownEmailId(data.lastEmail.id);
       })
       .catch(() => {});
   }, [activeSection, authToken]);
+
+  // Dedicated background polling for incoming corporate emails & sound notifications
+  useEffect(() => {
+    if (!authToken) return;
+
+    let mounted = true;
+    const pollEmailStatus = async () => {
+      try {
+        const res = await fetch('/api/admin/emails/status', { headers: authHeaders });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+
+        if (typeof data.unreadEmails === 'number') {
+          setUnreadEmailCount(data.unreadEmails);
+        }
+
+        if (data.lastEmail && data.lastEmail.id) {
+          const currentId = data.lastEmail.id;
+          setLastKnownEmailId((prevId) => {
+            if (prevId !== null && currentId > prevId) {
+              setLatestEmailToast(data.lastEmail);
+              try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+              } catch {}
+            }
+            return currentId;
+          });
+        }
+      } catch {}
+    };
+
+    pollEmailStatus();
+    const interval = setInterval(pollEmailStatus, 10000);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, [authToken]);
 
   const loadAppointments = () => {
     setAppointmentsLoading(true);
@@ -1073,13 +1126,24 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       ]
     },
     {
+      id: 'corporate_email',
+      title: 'صندوق ایمیل و وب‌میل سازمانی',
+      enTitle: 'Corporate Webmail & Inbox',
+      desc: 'مدیریت ایمیل‌های دریافتی و ارسالی info@techtink.ir و مکاتبات',
+      icon: Mail,
+      badge: unreadEmailCount > 0 ? `${unreadEmailCount} پیام جدید` : null,
+      badgeColor: '#ef4444',
+      tabs: [
+        { id: 'webmail', label: 'صندوق وب‌میل (info@techtink.ir)', icon: Mail, badge: unreadEmailCount > 0 ? `${unreadEmailCount} جدید` : null }
+      ]
+    },
+    {
       id: 'developers',
       title: 'توسعه‌دهندگان و سیستم',
       enTitle: 'Developers & System',
-      desc: 'پایگاه داده SQLite، وب‌سرویس ترب، ایمیل سازمانی و اینماد',
+      desc: 'پایگاه داده SQLite، کنسول SQL، وب‌سرویس ترب و نشانی',
       icon: Database,
       tabs: [
-        { id: 'webmail', label: 'صندوق ایمیل و اینماد (info@techtink.ir)', icon: Mail, badge: unreadEmailCount > 0 ? `${unreadEmailCount} جدید` : 'eNamad' },
         { id: 'dbtools', label: 'پایگاه داده (SQLite Console)', icon: Database, badge: 'SQL' },
         { id: 'settings', label: 'تنظیمات، وب‌سرویس ترب و نشانی', icon: Settings, badge: 'API' }
       ]
@@ -1139,8 +1203,78 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
   }
 
   return (
-    <div className="container" style={{ paddingTop: '40px', paddingBottom: '80px' }}>
+    <div className="container" style={{ paddingTop: '40px', paddingBottom: '80px', position: 'relative' }}>
       
+      {/* Floating Incoming Email Notification Toast */}
+      {latestEmailToast && (
+        <div style={{
+          position: 'fixed',
+          top: '24px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 99999,
+          background: 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(56, 189, 248, 0.4)',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.25)',
+          borderRadius: '16px',
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          maxWidth: '560px',
+          width: '90%'
+        }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
+            background: 'rgba(56, 189, 248, 0.15)',
+            color: '#38bdf8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0
+          }}>
+            <Mail size={22} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 800, color: '#f8fafc', fontSize: '0.95rem' }}>ایمیل جدید دریافت شد! 📬</span>
+              {latestEmailToast.verificationCode && (
+                <span style={{ background: '#10b981', color: '#fff', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 800 }}>
+                  کد: {latestEmailToast.verificationCode}
+                </span>
+              )}
+            </div>
+            <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              از: {latestEmailToast.from} | موضوع: {latestEmailToast.subject || '(بدون عنوان)'}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveSection('webmail');
+                setLatestEmailToast(null);
+              }}
+              className="btn btn-primary"
+              style={{ padding: '8px 14px', borderRadius: '10px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+            >
+              مشاهده پیام
+            </button>
+            <button
+              type="button"
+              onClick={() => setLatestEmailToast(null)}
+              className="btn btn-glass"
+              style={{ padding: '8px 10px', borderRadius: '10px', fontSize: '0.8rem' }}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
@@ -1153,6 +1287,41 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         </div>
 
         <div className="flex" style={{ gap: '12px', alignItems: 'center' }}>
+          {/* Quick Webmail Notification Pill */}
+          <button 
+            type="button"
+            onClick={() => setActiveSection('webmail')}
+            className="btn btn-glass"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              fontSize: '0.825rem',
+              fontWeight: '600',
+              borderColor: unreadEmailCount > 0 ? 'rgba(239, 68, 68, 0.4)' : 'var(--border-glass)',
+              background: unreadEmailCount > 0 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+              color: unreadEmailCount > 0 ? '#ef4444' : 'var(--text-secondary)'
+            }}
+            title="مشاهده صندوق ایمیل و وب‌میل سازمانی"
+          >
+            <Mail size={16} />
+            <span>وب‌میل سازمانی</span>
+            {unreadEmailCount > 0 && (
+              <span style={{
+                background: '#ef4444',
+                color: '#ffffff',
+                padding: '2px 7px',
+                borderRadius: '8px',
+                fontSize: '0.725rem',
+                fontWeight: 800
+              }}>
+                {unreadEmailCount} جدید
+              </span>
+            )}
+          </button>
+
           {/* Quick Site Mode Indicator Button */}
           <button 
             type="button"
@@ -1243,9 +1412,23 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: isCatActive ? '#ffffff' : 'var(--text-primary)' }}>
                     {cat.title}
                   </h3>
-                  <span style={{ fontSize: '0.65rem', color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', fontWeight: 700 }}>
-                    {cat.tabs.length} بخش
-                  </span>
+                  {cat.badge ? (
+                    <span style={{
+                      fontSize: '0.7rem',
+                      background: cat.badgeColor || '#ef4444',
+                      color: '#ffffff',
+                      fontWeight: 800,
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      boxShadow: '0 0 12px rgba(239, 68, 68, 0.4)'
+                    }}>
+                      {cat.badge}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.65rem', color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', fontWeight: 700 }}>
+                      {cat.tabs.length} بخش
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {cat.enTitle}
