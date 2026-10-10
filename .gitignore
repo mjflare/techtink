@@ -38,3 +38,12 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# SSL Certificates & Server Configuration files
+certs/
+*.crt
+*.key
+*.pem
+techtink.service
+techtink.nginx.conf
+techtink.service.tmp

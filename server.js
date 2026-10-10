@@ -13,6 +13,26 @@ import adminRoutes from './server/routes/admin.js';
 import dbToolRoutes from './server/routes/dbtools.js';
 import torobRoutes from './server/routes/torob.js';
 
+// Auto-load .env configuration if present
+const envPath = path.resolve('.env');
+if (fs.existsSync(envPath)) {
+  try {
+    const raw = fs.readFileSync(envPath, 'utf8');
+    for (const line of raw.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+        if (process.env[key] === undefined) {
+          process.env[key] = val;
+        }
+      }
+    }
+  } catch {}
+}
+
 await initDb();
 ensureAdmin();
 

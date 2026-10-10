@@ -12,7 +12,13 @@
     "bun:dev": "bun --watch server.js",
     "bun:start": "bun server.js",
     "create-admin": "node scripts/create-admin.js",
-    "admin": "node scripts/create-admin.js"
+    "admin": "node scripts/create-admin.js",
+    "manage": "node scripts/manage.js",
+    "port": "node scripts/manage.js port",
+    "systemd": "node scripts/manage.js systemd",
+    "ssl": "node scripts/manage.js ssl",
+    "status": "node scripts/manage.js status",
+    "db": "node scripts/manage.js db"
   },
   "dependencies": {
     "cors": "^2.8.5",
