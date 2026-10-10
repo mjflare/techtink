@@ -1,32 +1,16 @@
 #!/usr/bin/env node
 // ==============================================================================
-// TechTink VPS & Backend Management CLI Tool
+// TechTink VPS & Backend Management CLI Tool (v2.0 Beta)
 // Runtime: Node.js (>= 20) or Bun (>= 1.0)
 //
-// Capabilities:
-//   - Port selection, availability testing & .env configuration
-//   - Systemd (systemctl) unit generator, installer & service management
-//   - SSL certificate automation (Let's Encrypt / Certbot / Self-Signed)
-//   - Production Nginx Reverse Proxy generator with SSL & WebSocket support
-//   - Backend service health checks, latency tests & process monitoring
-//   - Live log inspection (systemd journalctl, PM2, or log files)
-//   - SQLite database maintenance (backups, vacuum, integrity check)
-//   - Administrator account management & listing
-//
-// Usage:
-//   Interactive Mode:
-//     node scripts/manage.js
-//     bun scripts/manage.js
-//
-//   Non-Interactive Commands:
-//     node scripts/manage.js port [number]
-//     node scripts/manage.js systemd [generate|install|start|stop|restart|status|reload]
-//     node scripts/manage.js ssl [letsencrypt|self-signed|nginx-config|test-renew]
-//     node scripts/manage.js status
-//     node scripts/manage.js logs [-n lines] [-f]
-//     node scripts/manage.js db [backup|vacuum|check|info]
-//     node scripts/manage.js admin [list|create]
-//     node scripts/manage.js env [show|set <KEY> <VALUE>]
+// Architecture & SSL Engine modeled after MHSanaei/3x-ui:
+//   - Automated acme.sh standalone SSL certificate issuance & renewal
+//   - Cloudflare DNS-01 API challenge support
+//   - Smart Certificate Directory & Path Auto-Resolution
+//   - Production Nginx Reverse Proxy generator & Default Page collision fix
+//   - Systemd Service management (x-ui style: start, stop, restart, status, logs)
+//   - Beta & Investor Demo Mode switcher
+//   - Database maintenance & Docker Compose stack management
 // ==============================================================================
 
 import fs from 'node:fs';
@@ -67,6 +51,7 @@ const c = {
   yellow: (t) => `${colors.yellow}${t}${colors.reset}`,
   red: (t) => `${colors.red}${t}${colors.reset}`,
   magenta: (t) => `${colors.magenta}${t}${colors.reset}`,
+  blue: (t) => `${colors.blue}${t}${colors.reset}`,
   bold: (t) => `${colors.bold}${t}${colors.reset}`,
   gray: (t) => `${colors.gray}${t}${colors.reset}`,
   dim: (t) => `${colors.dim}${t}${colors.reset}`,
@@ -87,6 +72,16 @@ function runCmd(cmd, options = {}) {
   }
 }
 
+function runCmdInherit(cmd, options = {}) {
+  try {
+    execSync(cmd, { stdio: 'inherit', ...options });
+    return true;
+  } catch (err) {
+    if (options.throwOnError) throw err;
+    return false;
+  }
+}
+
 function commandExists(cmd) {
   try {
     const checkCmd = os.platform() === 'win32' ? `where ${cmd}` : `command -v ${cmd}`;
@@ -95,6 +90,14 @@ function commandExists(cmd) {
   } catch {
     return false;
   }
+}
+
+function isLinux() {
+  return os.platform() === 'linux';
+}
+
+function isRoot() {
+  return typeof process.getuid === 'function' && process.getuid() === 0;
 }
 
 function detectRuntime() {
@@ -160,7 +163,6 @@ function setEnvVar(key, val) {
     return true;
   } catch (err) {
     console.error(`${TAG_ERR} Failed to write to ${ENV_PATH}: ${err.message}`);
-    console.log(`Please ensure the user has write permissions to .env (e.g. chmod u+w .env).`);
     return false;
   }
 }
@@ -177,11 +179,7 @@ function checkPortFree(port) {
   return new Promise((resolve) => {
     const srv = net.createServer();
     srv.once('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        resolve(false);
-      } else {
-        resolve(false);
-      }
+      resolve(false);
     });
     srv.once('listening', () => {
       srv.close(() => resolve(true));
@@ -190,7 +188,6 @@ function checkPortFree(port) {
   });
 }
 
-// --- HTTP API Health Ping ---
 function pingServerHealth(port) {
   return new Promise((resolve) => {
     const startTime = Date.now();
@@ -241,85 +238,32 @@ function createPrompter() {
   };
 }
 
-// ==============================================================================
-// 1. PORT MANAGEMENT
-// ==============================================================================
-async function handlePort(args) {
-  console.log(`\n${c.bold('--- TechTink Port Configuration ---')}`);
-  const currentPort = getCurrentPort();
-  console.log(`${TAG_INFO} Current active port: ${c.cyan(currentPort)}`);
-
-  let targetPort = args[0] ? parseInt(args[0], 10) : null;
-
-  if (!targetPort) {
-    const prompter = createPrompter();
-    const ans = await prompter.ask(`Enter new port number [current: ${currentPort}]: `);
-    prompter.close();
-    if (!ans.trim()) {
-      console.log(`${TAG_INFO} Port unchanged.`);
-      return;
-    }
-    targetPort = parseInt(ans.trim(), 10);
-  }
-
-  if (isNaN(targetPort) || targetPort < 1 || targetPort > 65535) {
-    console.error(`${TAG_ERR} Invalid port number "${targetPort}". Must be between 1 and 65535.`);
-    return;
-  }
-
-  console.log(`${TAG_INFO} Testing availability of port ${targetPort}...`);
-  const isFree = await checkPortFree(targetPort);
-
-  if (!isFree) {
-    if (targetPort === currentPort) {
-      console.log(`${TAG_WARN} Port ${targetPort} is currently in use (likely by your running TechTink process).`);
+// --- SQLite Database Access ---
+async function getDbInstance() {
+  if (!fs.existsSync(DB_PATH)) return null;
+  try {
+    if (typeof globalThis.Bun !== 'undefined') {
+      const { Database } = await import('bun:sqlite');
+      return new Database(DB_PATH);
     } else {
-      console.log(`${TAG_WARN} Port ${targetPort} is currently occupied by another process!`);
-      const prompter = createPrompter();
-      const cont = await prompter.ask(`Do you still want to assign port ${targetPort}? [y/N]: `);
-      prompter.close();
-      if (!cont.trim().toLowerCase().startsWith('y')) {
-        console.log(`${TAG_INFO} Aborted.`);
-        return;
-      }
+      const { DatabaseSync } = await import('node:sqlite');
+      return new DatabaseSync(DB_PATH);
     }
-  } else {
-    console.log(`${TAG_OK} Port ${targetPort} is available and free.`);
+  } catch {
+    return null;
   }
-
-  setEnvVar('PORT', targetPort);
-  console.log(`${TAG_OK} Updated ${c.bold('.env')}: PORT=${targetPort}`);
-
-  // Check if systemd service exists and offer update
-  if (fs.existsSync(SYSTEMD_FILE_PATH)) {
-    console.log(`${TAG_INFO} Found existing systemd service at ${SYSTEMD_FILE_PATH}`);
-    try {
-      const content = fs.readFileSync(SYSTEMD_FILE_PATH, 'utf8');
-      if (content.includes('Environment=PORT=')) {
-        const updated = content.replace(/Environment=PORT=\d+/, `Environment=PORT=${targetPort}`);
-        fs.writeFileSync('techtink.service.tmp', updated, 'utf8');
-        runCmd(`sudo cp techtink.service.tmp ${SYSTEMD_FILE_PATH} && rm -f techtink.service.tmp`);
-        runCmd('sudo systemctl daemon-reload');
-        console.log(`${TAG_OK} Updated systemd service unit with new PORT=${targetPort} and ran daemon-reload.`);
-      }
-    } catch (e) {
-      console.log(`${TAG_WARN} Could not automatically update ${SYSTEMD_FILE_PATH}: ${e.message}`);
-    }
-  }
-
-  console.log(`\n${c.green('Port update successful!')}`);
-  console.log(`Restart your backend for changes to take effect:`);
-  console.log(`  sudo systemctl restart techtink  ${c.gray('(if running via systemd)')}`);
-  console.log(`  bun server.js                    ${c.gray('(if running manually)')}\n`);
 }
 
 // ==============================================================================
-// 2. SYSTEMD (SYSTEMCTL) CONFIGURATION & MANAGEMENT
+// 1. SERVICE CONTROLLER (x-ui Style: start, stop, restart, status, logs)
 // ==============================================================================
 function buildSystemdUnit({ user, cwd, execPath, port }) {
   return `[Unit]
-Description=TechTink E-Commerce Backend Service
+Description=TechTink E-Commerce Platform
 After=network.target
+Wants=network.target
+StartLimitIntervalSec=180
+StartLimitBurst=10
 
 [Service]
 Type=simple
@@ -329,138 +273,721 @@ Environment=NODE_ENV=production
 Environment=PORT=${port}
 EnvironmentFile=-${path.join(cwd, '.env')}
 ExecStart=${execPath} server.js
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=techtink
-
-# Resource limits and security hardening
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5s
 LimitNOFILE=65535
-TimeoutStopSec=15
 
 [Install]
 WantedBy=multi-user.target
 `;
 }
 
-async function handleSystemd(args) {
-  const sub = args[0] || 'menu';
+async function handleServiceStart() {
+  console.log(`${TAG_INFO} Starting TechTink server service...`);
+  if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    runCmd('sudo systemctl start techtink');
+    await new Promise((r) => setTimeout(r, 1500));
+    const active = runCmd('systemctl is-active techtink')?.trim() === 'active';
+    if (active) {
+      console.log(`${TAG_OK} TechTink service started successfully!`);
+    } else {
+      console.log(`${TAG_WARN} Service started, but check status with: node scripts/manage.js status`);
+    }
+  } else {
+    // Non-systemd or local dev: check if already running
+    const port = getCurrentPort();
+    const isFree = await checkPortFree(port);
+    if (!isFree) {
+      console.log(`${TAG_WARN} Port ${port} is already in use. Server is already running!`);
+      return;
+    }
+    const runtime = detectRuntime();
+    console.log(`${TAG_INFO} Launching server in background via ${runtime.name}...`);
+    const logFile = path.join(PROJECT_ROOT, 'server.log');
+    const out = fs.openSync(logFile, 'a');
+    const child = spawnSync('nohup', [runtime.path, 'server.js'], {
+      cwd: PROJECT_ROOT,
+      detached: true,
+      stdio: ['ignore', out, out],
+    });
+    console.log(`${TAG_OK} Started in background. Logs routed to: ${c.cyan(logFile)}`);
+  }
+}
+
+async function handleServiceStop() {
+  console.log(`${TAG_INFO} Stopping TechTink server service...`);
+  if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    runCmd('sudo systemctl stop techtink');
+    console.log(`${TAG_OK} TechTink systemd service stopped.`);
+  } else {
+    // Kill processes listening on current port
+    const port = getCurrentPort();
+    const pids = runCmd(`lsof -t -iTCP:${port} -sTCP:LISTEN`)?.trim().split('\n').filter(Boolean);
+    if (pids && pids.length > 0) {
+      for (const pid of pids) {
+        try {
+          process.kill(parseInt(pid, 10), 'SIGTERM');
+          console.log(`${TAG_OK} Stopped process PID ${pid} listening on port ${port}.`);
+        } catch {}
+      }
+    } else {
+      console.log(`${TAG_OK} No active process was listening on port ${port}.`);
+    }
+  }
+}
+
+async function handleServiceRestart() {
+  console.log(`${TAG_INFO} Restarting TechTink server service...`);
+  if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    runCmd('sudo systemctl restart techtink');
+    await new Promise((r) => setTimeout(r, 1500));
+    console.log(`${TAG_OK} TechTink systemd service restarted!`);
+  } else {
+    await handleServiceStop();
+    await new Promise((r) => setTimeout(r, 1000));
+    await handleServiceStart();
+  }
+}
+
+function handleServiceInstall() {
+  if (!isLinux()) {
+    console.log(`${TAG_WARN} Systemd is only supported on Linux VPS systems.`);
+    return;
+  }
   const port = getCurrentPort();
   const runtime = detectRuntime();
-  const currentUser = process.env.USER || os.userInfo()?.username || 'root';
+  const user = process.env.SUDO_USER || (isRoot() ? 'root' : os.userInfo().username);
+  const unit = buildSystemdUnit({
+    user,
+    cwd: PROJECT_ROOT,
+    execPath: runtime.path,
+    port,
+  });
 
-  if (os.platform() !== 'linux') {
-    console.log(`${TAG_WARN} Your current operating system is ${os.platform()} (not Linux).`);
-    console.log(`${TAG_INFO} systemd service units are only natively supported on Linux systems (Ubuntu, Debian, CentOS, AlmaLinux, etc.).`);
-    console.log(`${TAG_INFO} However, we can still generate and preview the production service file for your VPS.\n`);
+  console.log(`${TAG_INFO} Generating ${SYSTEMD_FILE_PATH}...`);
+  const tmpFile = path.join(PROJECT_ROOT, 'techtink.service');
+  fs.writeFileSync(tmpFile, unit, 'utf8');
+
+  try {
+    runCmd(`sudo cp "${tmpFile}" "${SYSTEMD_FILE_PATH}"`);
+    runCmd(`sudo chmod 644 "${SYSTEMD_FILE_PATH}"`);
+    runCmd(`sudo systemctl daemon-reload`);
+    runCmd(`sudo systemctl enable techtink`);
+    runCmd(`sudo systemctl start techtink`);
+    console.log(`${TAG_OK} TechTink service installed, enabled and started!`);
+    console.log(`${TAG_INFO} Service unit: ${c.cyan(SYSTEMD_FILE_PATH)}`);
+  } catch (err) {
+    console.error(`${TAG_ERR} Installation failed: ${err.message}`);
   }
+}
 
-  if (sub === 'generate') {
-    const unitContent = buildSystemdUnit({
-      user: currentUser,
-      cwd: PROJECT_ROOT,
-      execPath: runtime.path,
-      port,
-    });
-    const outFile = path.join(PROJECT_ROOT, 'techtink.service');
-    fs.writeFileSync(outFile, unitContent, 'utf8');
-    console.log(`${TAG_OK} Generated unit file at: ${c.cyan(outFile)}`);
-    console.log(`\n${c.bold('--- Preview techtink.service ---')}\n${unitContent}`);
-    console.log(`To install on your Linux VPS:`);
-    console.log(`  sudo cp techtink.service /etc/systemd/system/`);
-    console.log(`  sudo systemctl daemon-reload`);
-    console.log(`  sudo systemctl enable --now techtink\n`);
-    return;
-  }
+function handleLogs(args = []) {
+  const follow = args.includes('-f') || args.includes('--follow');
+  const linesIdx = args.indexOf('-n');
+  const lines = linesIdx !== -1 && args[linesIdx + 1] ? args[linesIdx + 1] : '50';
 
-  if (sub === 'install') {
-    const unitContent = buildSystemdUnit({
-      user: currentUser,
-      cwd: PROJECT_ROOT,
-      execPath: runtime.path,
-      port,
-    });
-    const tempFile = path.join(PROJECT_ROOT, 'techtink.service');
-    fs.writeFileSync(tempFile, unitContent, 'utf8');
-
-    console.log(`${TAG_INFO} Installing unit file to ${SYSTEMD_FILE_PATH}...`);
-    try {
-      execSync(`sudo cp "${tempFile}" "${SYSTEMD_FILE_PATH}"`, { stdio: 'inherit' });
-      execSync('sudo systemctl daemon-reload', { stdio: 'inherit' });
-      execSync('sudo systemctl enable techtink', { stdio: 'inherit' });
-      console.log(`${TAG_OK} Successfully installed and enabled ${c.green('techtink.service')}!`);
-      console.log(`Start the service anytime with:`);
-      console.log(`  sudo systemctl start techtink\n`);
-    } catch (err) {
-      console.error(`${TAG_ERR} Failed to install systemd service: ${err.message}`);
-      console.log(`You can manually copy ${tempFile} to /etc/systemd/system/ using sudo.`);
+  if (isLinux() && commandExists('journalctl') && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    console.log(`${TAG_INFO} Viewing systemd journal for ${c.cyan('techtink.service')}...`);
+    const fFlag = follow ? '-f' : '';
+    runCmdInherit(`journalctl -u techtink -n ${lines} ${fFlag} --no-pager`);
+  } else {
+    const logFile = path.join(PROJECT_ROOT, 'server.log');
+    if (fs.existsSync(logFile)) {
+      console.log(`${TAG_INFO} Viewing server log file: ${c.cyan(logFile)}`);
+      runCmdInherit(`tail -n ${lines} ${follow ? '-f' : ''} "${logFile}"`);
+    } else {
+      console.log(`${TAG_INFO} No detached log file found at ${logFile}.`);
+      console.log(`If running in a live terminal, server output appears in that active console.`);
     }
-    return;
-  }
-
-  if (['start', 'stop', 'restart', 'reload', 'status'].includes(sub)) {
-    console.log(`${TAG_INFO} Executing: sudo systemctl ${sub} techtink`);
-    try {
-      execSync(`sudo systemctl ${sub} techtink`, { stdio: 'inherit' });
-    } catch (err) {
-      console.error(`${TAG_ERR} Failed to execute systemctl ${sub}: ${err.message}`);
-    }
-    return;
-  }
-
-  // Interactive Systemd Menu
-  const prompter = createPrompter();
-  console.log(`\n${c.bold('--- TechTink Systemd (systemctl) Manager ---')}`);
-  console.log(`Detected Runtime : ${c.cyan(runtime.name)} (${runtime.path})`);
-  console.log(`Working Directory: ${c.cyan(PROJECT_ROOT)}`);
-  console.log(`Configured Port  : ${c.cyan(port)}`);
-  console.log(`Target User      : ${c.cyan(currentUser)}`);
-  console.log(`Service File     : ${fs.existsSync(SYSTEMD_FILE_PATH) ? c.green('Installed at ' + SYSTEMD_FILE_PATH) : c.yellow('Not installed')}`);
-  console.log('');
-  console.log(`[1] Generate techtink.service file in project root`);
-  console.log(`[2] Install & Enable techtink.service (requires sudo)`);
-  console.log(`[3] Start Service   (sudo systemctl start techtink)`);
-  console.log(`[4] Stop Service    (sudo systemctl stop techtink)`);
-  console.log(`[5] Restart Service (sudo systemctl restart techtink)`);
-  console.log(`[6] Check Status    (sudo systemctl status techtink)`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = await prompter.ask('\nSelect an option [0-6]: ');
-  prompter.close();
-
-  switch (choice.trim()) {
-    case '1':
-      await handleSystemd(['generate']);
-      break;
-    case '2':
-      await handleSystemd(['install']);
-      break;
-    case '3':
-      await handleSystemd(['start']);
-      break;
-    case '4':
-      await handleSystemd(['stop']);
-      break;
-    case '5':
-      await handleSystemd(['restart']);
-      break;
-    case '6':
-      await handleSystemd(['status']);
-      break;
-    default:
-      break;
   }
 }
 
 // ==============================================================================
-// 3. SSL CERTIFICATE & NGINX REVERSE PROXY
+// 2. STATUS & DIAGNOSTICS (Comprehensive Health Report)
+// ==============================================================================
+async function handleStatus() {
+  const port = getCurrentPort();
+  const runtime = detectRuntime();
+  const isFree = await checkPortFree(port);
+  const health = isFree ? null : await pingServerHealth(port);
+
+  let systemdStatus = 'Not Installed';
+  if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    const active = runCmd('systemctl is-active techtink')?.trim();
+    const enabled = runCmd('systemctl is-enabled techtink')?.trim();
+    systemdStatus = `${active === 'active' ? c.green('ACTIVE (Running)') : c.red(active || 'inactive')} | Autostart: ${enabled === 'enabled' ? c.green('Enabled') : c.yellow('Disabled')}`;
+  }
+
+  let dbStatus = c.red('Database Not Found');
+  let productCount = 0;
+  let orderCount = 0;
+  let siteMode = 'demo';
+  const dbInst = await getDbInstance();
+  if (dbInst) {
+    try {
+      if (typeof dbInst.query === 'function') {
+        productCount = dbInst.query('SELECT count(*) as count FROM products').get()?.count || 0;
+        orderCount = dbInst.query('SELECT count(*) as count FROM orders').get()?.count || 0;
+        const modeRow = dbInst.query("SELECT value FROM settings WHERE key = 'site_mode'").get();
+        if (modeRow?.value) siteMode = modeRow.value;
+      } else if (typeof dbInst.prepare === 'function') {
+        productCount = dbInst.prepare('SELECT count(*) as count FROM products').get()?.count || 0;
+        orderCount = dbInst.prepare('SELECT count(*) as count FROM orders').get()?.count || 0;
+        const modeRow = dbInst.prepare("SELECT value FROM settings WHERE key = 'site_mode'").get();
+        if (modeRow?.value) siteMode = modeRow.value;
+      }
+      dbStatus = `${c.green('ONLINE')} (${c.cyan(productCount)} Products, ${c.cyan(orderCount)} Orders)`;
+    } catch (e) {
+      dbStatus = c.yellow(`Connected (${e.message})`);
+    }
+  }
+
+  // Nginx Status
+  const hasNginx = commandExists('nginx');
+  const defaultEnabled = fs.existsSync('/etc/nginx/sites-enabled/default');
+  const techtinkEnabled = fs.existsSync('/etc/nginx/sites-enabled/techtink');
+  let nginxStatus = 'Not Installed';
+  if (hasNginx) {
+    const running = isLinux() ? runCmd('systemctl is-active nginx')?.trim() === 'active' : true;
+    nginxStatus = `${running ? c.green('Running') : c.red('Stopped')} | Site: ${techtinkEnabled ? c.green('Active') : c.yellow('Not Linked')} | Default collision: ${defaultEnabled ? c.red('YES (Blocks site!)') : c.green('No (Clean)')}`;
+  }
+
+  console.log(`\n${c.bold('======================================================================')}`);
+  console.log(`  ${c.bold(c.cyan('TechTink VPS & Backend Status Report'))}`);
+  console.log(`${c.bold('======================================================================')}`);
+  console.log(`  OS Platform       : ${c.bold(os.type())} ${os.release()} (${os.arch()})`);
+  console.log(`  Server Hostname   : ${c.cyan(os.hostname())}`);
+  console.log(`  Runtime Engine    : ${c.green(runtime.name)} (${runtime.path})`);
+  console.log(`  Backend Port      : ${c.cyan(port)} (${isFree ? c.yellow('Idle / Free') : c.green('Listening')})`);
+  console.log(`  Systemd Service   : ${systemdStatus}`);
+  console.log(`  Nginx Proxy       : ${nginxStatus}`);
+  console.log(`  Database (SQLite) : ${dbStatus}`);
+  console.log(`  Website Mode      : ${siteMode === 'demo' ? c.yellow('Demo Mode (Investor Notice Active)') : c.green('Operational / Live Mode')}`);
+  if (health) {
+    console.log(`  API Health Ping   : ${health.ok ? c.green(`OK (HTTP ${health.statusCode}, ${health.latency}ms)`) : c.red(`Failed: ${health.error}`)}`);
+  }
+  console.log(`${c.bold('======================================================================')}\n`);
+}
+
+// ==============================================================================
+// 3. PORT CONFIGURATION
+// ==============================================================================
+async function handlePort(args = []) {
+  const currentPort = getCurrentPort();
+  let targetPort = args[0] ? parseInt(args[0], 10) : null;
+
+  if (!targetPort && process.stdin.isTTY) {
+    console.log(`\n${c.bold('--- TechTink Port Configuration ---')}`);
+    console.log(`Current Port: ${c.cyan(currentPort)}`);
+    const prompter = createPrompter();
+    const input = (await prompter.ask(`Enter new port number (1-65535) [current: ${currentPort}]: `)).trim();
+    prompter.close();
+    if (!input) {
+      console.log(`${TAG_INFO} Port left unchanged (${currentPort}).`);
+      return;
+    }
+    targetPort = parseInt(input, 10);
+  }
+
+  if (!targetPort || isNaN(targetPort) || targetPort < 1 || targetPort > 65535) {
+    console.error(`${TAG_ERR} Invalid port number "${args[0]}". Must be between 1 and 65535.`);
+    return;
+  }
+
+  const isFree = await checkPortFree(targetPort);
+  if (!isFree && targetPort !== currentPort) {
+    console.log(`${TAG_WARN} Warning: Port ${targetPort} is currently occupied by another process!`);
+  }
+
+  setEnvVar('PORT', targetPort);
+  console.log(`${TAG_OK} Port updated to ${c.green(targetPort)} in .env`);
+
+  if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+    console.log(`${TAG_INFO} Updating systemd unit file and restarting service...`);
+    handleServiceInstall();
+  } else {
+    console.log(`${TAG_INFO} Please restart TechTink to apply the new port.`);
+  }
+}
+
+// ==============================================================================
+// 4. MHSANAEI/3X-UI STYLE SSL CERTIFICATE MANAGEMENT
+// ==============================================================================
+const ACME_SH_PATH = path.join(os.homedir(), '.acme.sh', 'acme.sh');
+const CERT_BASE_DIR = isRoot() ? '/root/cert' : path.join(PROJECT_ROOT, 'certs');
+
+function isDomain(domain) {
+  return /^([A-Za-z0-9](-*[A-Za-z0-9])*\.)+(xn--[a-z0-9]{2,}|[a-zA-Z]{2,})$/.test(domain);
+}
+
+function hasAcme() {
+  return fs.existsSync(ACME_SH_PATH) || commandExists('acme.sh');
+}
+
+function getAcmeBin() {
+  if (fs.existsSync(ACME_SH_PATH)) return ACME_SH_PATH;
+  const sysAcme = runCmd('which acme.sh')?.trim();
+  if (sysAcme) return sysAcme;
+  return ACME_SH_PATH;
+}
+
+function installAcme(email = 'admin@techtink.ir') {
+  console.log(`${TAG_INFO} acme.sh not detected. Installing official acme.sh...`);
+  try {
+    runCmdInherit(`curl -fsSL https://get.acme.sh | sh -s email=${email}`);
+    if (fs.existsSync(ACME_SH_PATH)) {
+      console.log(`${TAG_OK} acme.sh installed successfully at ${c.cyan(ACME_SH_PATH)}`);
+      return true;
+    }
+  } catch (e) {
+    console.error(`${TAG_ERR} Failed to install acme.sh: ${e.message}`);
+  }
+  return false;
+}
+
+function ensureSocat() {
+  if (commandExists('socat')) return true;
+  if (!isLinux()) return false;
+  console.log(`${TAG_INFO} Installing socat for standalone ACME HTTP verification...`);
+  try {
+    if (commandExists('apt-get')) runCmd('sudo apt-get update -y && sudo apt-get install -y socat curl openssl');
+    else if (commandExists('dnf')) runCmd('sudo dnf -y install socat curl openssl');
+    else if (commandExists('yum')) runCmd('sudo yum -y install socat curl openssl');
+    else if (commandExists('pacman')) runCmd('sudo pacman -Sy --noconfirm socat curl openssl');
+    else if (commandExists('apk')) runCmd('sudo apk add socat curl openssl');
+    return commandExists('socat');
+  } catch {
+    return false;
+  }
+}
+
+// Smart Certificate Finder (resolves directories like /cert/techtink.ir gracefully)
+function resolveCertLocation(inputPath) {
+  const raw = (inputPath || '').trim().replace(/^["']|["']$/g, '');
+  if (!raw) return null;
+
+  const basename = path.basename(raw);
+  const candidates = [
+    raw,
+    path.resolve(process.cwd(), raw),
+    path.resolve(PROJECT_ROOT, raw),
+    path.resolve(PROJECT_ROOT, raw.replace(/^\/+/, '')),
+    path.resolve(PROJECT_ROOT, 'certs', basename),
+    path.resolve(PROJECT_ROOT, 'cert', basename),
+    `/root/cert/${basename}`,
+    `/root/certs/${basename}`,
+    `/root/cert`,
+    `/etc/letsencrypt/live/${basename}`,
+    `/etc/ssl/${basename}`,
+    `/etc/ssl/certs`,
+    path.join(os.homedir(), '.acme.sh', `${basename}_ecc`),
+    path.join(os.homedir(), '.acme.sh', basename),
+  ];
+
+  for (const cand of candidates) {
+    try {
+      if (fs.existsSync(cand)) {
+        const stats = fs.statSync(cand);
+        if (stats.isDirectory()) {
+          const files = fs.readdirSync(cand);
+          const hasCert = files.some((f) => f.endsWith('.pem') || f.endsWith('.crt') || f.endsWith('.cer'));
+          const hasKey = files.some((f) => f.endsWith('.key') || (f.endsWith('.pem') && f.includes('key')));
+          if (hasCert) {
+            return { dir: cand, files, hasCert, hasKey };
+          }
+        }
+      }
+    } catch {}
+  }
+  return null;
+}
+
+function findCertAndKeyFiles(dirPath) {
+  if (!fs.existsSync(dirPath)) return null;
+  const files = fs.readdirSync(dirPath);
+
+  // Preference order for fullchain / cert
+  const certOrder = ['fullchain.pem', 'fullchain.cer', 'cert.pem', 'bundle.crt', 'certificate.crt', 'cert.crt'];
+  let bestCert = null;
+  for (const name of certOrder) {
+    if (files.includes(name)) {
+      bestCert = path.join(dirPath, name);
+      break;
+    }
+  }
+  if (!bestCert) {
+    const cand = files.find((f) => (f.endsWith('.pem') || f.endsWith('.crt') || f.endsWith('.cer')) && !f.toLowerCase().includes('key'));
+    if (cand) bestCert = path.join(dirPath, cand);
+  }
+
+  // Preference order for private key
+  const keyOrder = ['privkey.pem', 'private.key', 'privatekey.key', 'key.pem', 'cert.key'];
+  let bestKey = null;
+  for (const name of keyOrder) {
+    if (files.includes(name)) {
+      bestKey = path.join(dirPath, name);
+      break;
+    }
+  }
+  if (!bestKey) {
+    const cand = files.find((f) => f.endsWith('.key') || (f.endsWith('.pem') && (f.toLowerCase().includes('key') || f.toLowerCase().includes('priv'))));
+    if (cand) bestKey = path.join(dirPath, cand);
+  }
+
+  return { bestCert, bestKey, dir: dirPath, files };
+}
+
+// Option 1: Issue SSL for Domain via acme.sh standalone (3x-ui standard)
+async function sslIssueDomain(domainArg, portArg) {
+  let domain = (domainArg || '').trim();
+  let webPort = portArg ? parseInt(portArg, 10) : 80;
+
+  if (!domain && process.stdin.isTTY) {
+    const prompter = createPrompter();
+    while (!domain) {
+      domain = (await prompter.ask('Enter your domain name (e.g. techtink.ir): ')).trim();
+      if (!isDomain(domain)) {
+        console.log(`${TAG_ERR} Invalid domain format "${domain}". Please enter a valid domain (e.g. yourdomain.com).`);
+        domain = '';
+      }
+    }
+    const pInput = (await prompter.ask('Enter verification port (default: 80): ')).trim();
+    prompter.close();
+    if (pInput && !isNaN(parseInt(pInput, 10))) webPort = parseInt(pInput, 10);
+  }
+
+  if (!domain || !isDomain(domain)) {
+    console.error(`${TAG_ERR} Valid domain name is required.`);
+    return false;
+  }
+
+  console.log(`\n${c.bold('--- 3x-ui ACME SSL Issuance Engine ---')}`);
+  console.log(`Target Domain : ${c.cyan(domain)}`);
+  console.log(`ACME Port     : ${c.cyan(webPort)}`);
+
+  // Ensure acme.sh & socat
+  if (!hasAcme()) {
+    installAcme(`admin@${domain}`);
+  }
+  ensureSocat();
+  const acmeBin = getAcmeBin();
+
+  // If port 80 is used by Nginx, temporarily free it for standalone HTTP-01
+  let stoppedNginx = false;
+  if (webPort === 80 && commandExists('nginx') && isLinux()) {
+    console.log(`${TAG_INFO} Port 80 selected for ACME verification. Temporarily stopping Nginx to free port 80...`);
+    runCmd('sudo systemctl stop nginx');
+    stoppedNginx = true;
+  }
+
+  const outDir = path.join(CERT_BASE_DIR, domain);
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const certPath = path.join(outDir, 'fullchain.pem');
+  const keyPath = path.join(outDir, 'privkey.pem');
+
+  console.log(`${TAG_INFO} Requesting Let's Encrypt certificate via acme.sh standalone...`);
+  try {
+    runCmdInherit(`${acmeBin} --set-default-ca --server letsencrypt --force`);
+    const issueCmd = `${acmeBin} --issue -d ${domain} --standalone --httpport ${webPort} --force`;
+    console.log(`${TAG_INFO} Running: ${c.gray(issueCmd)}`);
+    const issueOk = runCmdInherit(issueCmd);
+
+    if (!issueOk) {
+      console.error(`${TAG_ERR} acme.sh issuance failed. Restoring Nginx if stopped.`);
+      if (stoppedNginx) runCmd('sudo systemctl start nginx');
+      return false;
+    }
+
+    console.log(`${TAG_INFO} Installing certificate files to ${c.cyan(outDir)}...`);
+    const installCmd = `${acmeBin} --installcert --force -d ${domain} --key-file "${keyPath}" --fullchain-file "${certPath}" --reloadcmd "systemctl reload nginx 2>/dev/null || true"`;
+    runCmdInherit(installCmd);
+
+    // Auto renew
+    runCmdInherit(`${acmeBin} --upgrade --auto-upgrade`);
+
+    console.log(`\n${TAG_OK} SSL Certificate successfully issued and installed!`);
+    console.log(`  Fullchain Certificate : ${c.green(certPath)}`);
+    console.log(`  Private Key           : ${c.green(keyPath)}`);
+
+    // Also mirror to project certs folder for easy reference
+    const projectCertDir = path.join(PROJECT_ROOT, 'certs', domain);
+    try {
+      fs.mkdirSync(projectCertDir, { recursive: true });
+      fs.copyFileSync(certPath, path.join(projectCertDir, 'fullchain.pem'));
+      fs.copyFileSync(keyPath, path.join(projectCertDir, 'privkey.pem'));
+      console.log(`  Project Mirror        : ${c.cyan(projectCertDir)}`);
+    } catch {}
+
+    // Restore Nginx
+    if (stoppedNginx) {
+      console.log(`${TAG_INFO} Restarting Nginx reverse proxy...`);
+      runCmd('sudo systemctl start nginx');
+    }
+
+    // Auto-configure Nginx reverse proxy
+    if (process.stdin.isTTY) {
+      const prompter = createPrompter();
+      const applyNginx = (await prompter.ask('\nApply this certificate to Nginx Reverse Proxy now? [Y/n]: ')).trim().toLowerCase();
+      prompter.close();
+      if (!applyNginx || applyNginx.startsWith('y')) {
+        await handleNginxConfigure({ domain, certPath, keyPath });
+      }
+    }
+    return true;
+  } catch (err) {
+    console.error(`${TAG_ERR} SSL Issuance error: ${err.message}`);
+    if (stoppedNginx) runCmd('sudo systemctl start nginx');
+    return false;
+  }
+}
+
+// Option 4: Show existing domains and certificates
+function sslShowList() {
+  console.log(`\n${c.bold('--- Existing SSL Certificates ---')}`);
+  const rawSearchDirs = [
+    CERT_BASE_DIR,
+    path.join(PROJECT_ROOT, 'certs'),
+    '/root/cert',
+    '/etc/letsencrypt/live',
+    path.join(os.homedir(), '.acme.sh'),
+  ];
+
+  const searchDirs = [...new Set(rawSearchDirs.map((d) => path.resolve(d)))];
+  const seenCerts = new Set();
+  let found = 0;
+
+  for (const base of searchDirs) {
+    if (!fs.existsSync(base)) continue;
+    try {
+      const entries = fs.readdirSync(base);
+      for (const ent of entries) {
+        const full = path.join(base, ent);
+        if (fs.statSync(full).isDirectory()) {
+          const pair = findCertAndKeyFiles(full);
+          if (pair?.bestCert && pair?.bestKey) {
+            const canonicalCert = path.resolve(pair.bestCert);
+            if (seenCerts.has(canonicalCert)) continue;
+            seenCerts.add(canonicalCert);
+
+            found++;
+            let expiry = 'Unknown';
+            try {
+              expiry = runCmd(`openssl x509 -enddate -noout -in "${pair.bestCert}"`)?.replace('notAfter=', '').trim() || 'Valid';
+            } catch {}
+            console.log(`\n[${found}] ${c.bold(c.cyan(ent))} (${c.gray(full)})`);
+            console.log(`    Certificate : ${c.green(pair.bestCert)}`);
+            console.log(`    Private Key : ${c.green(pair.bestKey)}`);
+            console.log(`    Expires     : ${c.yellow(expiry)}`);
+          }
+        }
+      }
+    } catch {}
+  }
+
+  if (found === 0) {
+    console.log(`${TAG_INFO} No existing SSL certificates detected.`);
+  }
+  console.log('');
+}
+
+// Option 5: Set Certificate Paths / Directory (Smart Resolver)
+async function sslSetCertDir(inputPathArg, domainArg) {
+  let inputPath = (inputPathArg || '').trim();
+  let domain = (domainArg || '').trim();
+
+  if (!inputPath && process.stdin.isTTY) {
+    console.log(`\n${c.bold('--- Configure SSL Certificate Directory ---')}`);
+    const prompter = createPrompter();
+    inputPath = (await prompter.ask('Enter path to certificate directory (e.g. /cert/techtink.ir, ./certs): ')).trim();
+    if (!domain) {
+      domain = (await prompter.ask('Enter domain name (press Enter to auto-detect): ')).trim();
+    }
+    prompter.close();
+  }
+
+  if (!inputPath) {
+    console.error(`${TAG_ERR} Certificate path is required.`);
+    return;
+  }
+
+  console.log(`${TAG_INFO} Resolving certificate path for: "${c.cyan(inputPath)}"...`);
+  const resolved = resolveCertLocation(inputPath);
+
+  if (!resolved) {
+    console.error(`\n${TAG_ERR} Could not find valid certificate files in "${inputPath}" or standard VPS folders.`);
+    console.log(`${TAG_INFO} Searched paths:`);
+    console.log(`  - ${path.resolve(process.cwd(), inputPath)}`);
+    console.log(`  - /root/cert/${path.basename(inputPath)}`);
+    console.log(`  - /etc/letsencrypt/live/${path.basename(inputPath)}`);
+    console.log(`  - ${path.join(PROJECT_ROOT, 'certs', path.basename(inputPath))}`);
+    console.log(`\nTip: You can issue a brand new free Let's Encrypt certificate with:`);
+    console.log(`  ${c.green(`node scripts/manage.js ssl issue ${domain || path.basename(inputPath)}`)}\n`);
+    return;
+  }
+
+  const pair = findCertAndKeyFiles(resolved.dir);
+  if (!pair?.bestCert || !pair?.bestKey) {
+    console.error(`${TAG_ERR} Directory "${resolved.dir}" is missing a private key or certificate file.`);
+    console.log(`Files found: ${resolved.files.join(', ')}`);
+    return;
+  }
+
+  console.log(`\n${TAG_OK} Successfully detected SSL certificate files:`);
+  console.log(`  Certificate : ${c.green(pair.bestCert)}`);
+  console.log(`  Private Key : ${c.green(pair.bestKey)}`);
+
+  const effectiveDomain = domain || path.basename(resolved.dir).replace(/_ecc$/, '');
+  await handleNginxConfigure({
+    domain: effectiveDomain,
+    certPath: pair.bestCert,
+    keyPath: pair.bestKey,
+  });
+}
+
+// Option 6: Cloudflare DNS SSL
+async function sslIssueCloudflare(domainArg, emailArg, keyArg) {
+  let domain = domainArg || '';
+  let email = emailArg || '';
+  let key = keyArg || '';
+
+  if ((!domain || !email || !key) && process.stdin.isTTY) {
+    console.log(`\n${c.bold('--- Cloudflare DNS-01 SSL Issuance ---')}`);
+    console.log(`Useful if port 80 is blocked by your ISP or firewall.\n`);
+    const prompter = createPrompter();
+    if (!domain) domain = (await prompter.ask('Enter domain name (e.g. techtink.ir): ')).trim();
+    if (!email) email = (await prompter.ask('Enter Cloudflare account email: ')).trim();
+    if (!key) key = (await prompter.ask('Enter Cloudflare Global API Key or API Token: ')).trim();
+    prompter.close();
+  }
+
+  if (!domain || !email || !key) {
+    console.error(`${TAG_ERR} Domain, email, and Cloudflare API key are required.`);
+    return;
+  }
+
+  if (!hasAcme()) installAcme(email);
+  const acmeBin = getAcmeBin();
+
+  console.log(`${TAG_INFO} Issuing wildcard & root certificate for ${c.cyan(domain)} via Cloudflare DNS...`);
+  const envPrefix = key.length > 37 ? `CF_Token="${key}"` : `CF_Key="${key}" CF_Email="${email}"`;
+  const outDir = path.join(CERT_BASE_DIR, domain);
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const certPath = path.join(outDir, 'fullchain.pem');
+  const keyPath = path.join(outDir, 'privkey.pem');
+
+  try {
+    runCmdInherit(`${envPrefix} ${acmeBin} --issue --dns dns_cf -d ${domain} -d *.${domain} --force`);
+    runCmdInherit(`${acmeBin} --installcert --force -d ${domain} --key-file "${keyPath}" --fullchain-file "${certPath}" --reloadcmd "systemctl reload nginx 2>/dev/null || true"`);
+    console.log(`${TAG_OK} Cloudflare DNS SSL issued successfully!`);
+    await handleNginxConfigure({ domain, certPath, keyPath });
+  } catch (e) {
+    console.error(`${TAG_ERR} Cloudflare SSL failed: ${e.message}`);
+  }
+}
+
+// Option 8: Self-Signed SSL Certificate
+function sslSelfSigned() {
+  const certDir = path.join(PROJECT_ROOT, 'certs', 'localhost');
+  fs.mkdirSync(certDir, { recursive: true });
+  const crtFile = path.join(certDir, 'fullchain.pem');
+  const keyFile = path.join(certDir, 'privkey.pem');
+
+  console.log(`${TAG_INFO} Generating 2048-bit self-signed SSL certificate using openssl...`);
+  try {
+    execSync(
+      `openssl req -x509 -nodes -days 365 -newkey rsa:2048 ` +
+        `-keyout "${keyFile}" -out "${crtFile}" ` +
+        `-subj "/C=IR/ST=Tehran/L=Tehran/O=TechTink/CN=localhost"`,
+      { stdio: 'inherit' }
+    );
+    console.log(`\n${TAG_OK} Self-signed SSL certificate generated!`);
+    console.log(`  Certificate: ${c.cyan(crtFile)}`);
+    console.log(`  Private Key: ${c.cyan(keyFile)}\n`);
+    return { certPath: crtFile, keyPath: keyFile };
+  } catch (e) {
+    console.error(`${TAG_ERR} OpenSSL generation failed: ${e.message}`);
+    return null;
+  }
+}
+
+// Interactive SSL Menu (modeled on 3x-ui ssl_cert_issue_main)
+async function startSSLMenu() {
+  while (true) {
+    console.log(`\n${c.bold('======================================================================')}`);
+    console.log(`  ${c.bold(c.cyan('TechTink SSL Certificate Management (3x-ui Engine)'))}`);
+    console.log(`${c.bold('======================================================================')}`);
+    console.log(`  [1] Issue SSL Certificate for Domain (Let's Encrypt / acme.sh standalone)`);
+    console.log(`  [2] Configure Nginx with Certificate Directory or Custom Paths (/cert/...)`);
+    console.log(`  [3] Show Existing Certificates & Expiry Dates`);
+    console.log(`  [4] Issue SSL via Cloudflare DNS (DNS-01 Challenge, bypasses port 80 blocks)`);
+    console.log(`  [5] Force Renew Domain Certificate`);
+    console.log(`  [6] Revoke & Remove Certificate`);
+    console.log(`  [7] Generate Self-Signed Certificate (Development / Testing)`);
+    console.log(`  [0] Back to Main Menu`);
+    console.log(`----------------------------------------------------------------------`);
+
+    const prompter = createPrompter();
+    const choice = (await prompter.ask('Choose an option [0-7]: ')).trim();
+    prompter.close();
+
+    switch (choice) {
+      case '1':
+        await sslIssueDomain();
+        break;
+      case '2':
+        await sslSetCertDir();
+        break;
+      case '3':
+        sslShowList();
+        break;
+      case '4':
+        await sslIssueCloudflare();
+        break;
+      case '5': {
+        const p = createPrompter();
+        const d = (await p.ask('Enter domain name to force renew: ')).trim();
+        p.close();
+        if (d && hasAcme()) runCmdInherit(`${getAcmeBin()} --renew -d ${d} --force`);
+        break;
+      }
+      case '6': {
+        const p = createPrompter();
+        const d = (await p.ask('Enter domain name to revoke & remove: ')).trim();
+        p.close();
+        if (d && hasAcme()) {
+          runCmdInherit(`${getAcmeBin()} --revoke -d ${d}`);
+          runCmdInherit(`${getAcmeBin()} --remove -d ${d}`);
+          const pDir = path.join(CERT_BASE_DIR, d);
+          if (fs.existsSync(pDir)) runCmd(`rm -rf "${pDir}"`);
+          console.log(`${TAG_OK} Revoked and removed certificate for ${d}`);
+        }
+        break;
+      }
+      case '7':
+        sslSelfSigned();
+        break;
+      case '0':
+      case 'q':
+        return;
+      default:
+        console.log(`${TAG_WARN} Invalid choice.`);
+        break;
+    }
+  }
+}
+
+// ==============================================================================
+// 5. NGINX REVERSE PROXY & DEFAULT PAGE COLLISION FIX
 // ==============================================================================
 function buildNginxConfig({ domain = '', port = 3000, sslCert = '', sslKey = '', useSSL = false }) {
-  const domainStr = domain && domain !== '_' ? `${domain} _` : '_';
+  const domainStr = domain && domain !== '_' ? `${domain} www.${domain} _` : '_';
+
   if (!useSSL) {
     return `# TechTink Nginx Reverse Proxy Configuration (HTTP Only)
-# Configured with default_server catch-all to prevent default welcome page collisions
+# default_server directive prevents "Welcome to nginx!" collisions
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -497,7 +1024,7 @@ server {
 `;
   }
 
-  return `# TechTink Nginx Reverse Proxy Configuration with HTTPS & SSL
+  return `# TechTink Nginx Reverse Proxy Configuration (HTTPS + SSL)
 # 1. HTTP to HTTPS Redirection
 server {
     listen 80 default_server;
@@ -512,11 +1039,10 @@ server {
     listen [::]:443 ssl default_server;
     server_name ${domainStr};
 
-    # SSL Certificates
     ssl_certificate ${sslCert};
     ssl_certificate_key ${sslKey};
 
-    # Modern SSL Security Protocols & Ciphers
+    # Modern TLS Security Protocols & Ciphers
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
@@ -561,758 +1087,155 @@ server {
 `;
 }
 
-async function handleNginxFix(args = []) {
-  console.log(`\n${c.bold('============================================================')}`);
-  console.log(`  ${c.bold(c.cyan('TechTink Automated Nginx Configuration & Fix'))}`);
-  console.log(`${c.bold('============================================================')}`);
-
+async function handleNginxConfigure({ domain = '', certPath = '', keyPath = '' } = {}) {
   const port = getCurrentPort();
-  console.log(`${TAG_INFO} Target Backend Port: ${c.cyan(port)}`);
+  const absCertPath = certPath ? path.resolve(certPath) : '';
+  const absKeyPath = keyPath ? path.resolve(keyPath) : '';
+  const useSSL = Boolean(absCertPath && absKeyPath && fs.existsSync(absCertPath) && fs.existsSync(absKeyPath));
 
-  // 1. Check if Nginx is installed
-  const hasNginx = commandExists('nginx');
-  if (!hasNginx) {
-    console.log(`${TAG_WARN} Nginx binary was not detected in PATH.`);
-    console.log(`To install Nginx on Ubuntu/Debian:`);
-    console.log(`  sudo apt update && sudo apt install -y nginx\n`);
+  console.log(`\n${c.bold('--- Nginx Reverse Proxy Setup ---')}`);
+  console.log(`Backend Port : ${c.cyan(port)}`);
+  console.log(`Domain       : ${c.cyan(domain || 'All Domains / IP (_)')}`);
+  console.log(`SSL Mode     : ${useSSL ? c.green('Active (HTTPS 443)') : c.yellow('Disabled (HTTP 80)')}`);
+  if (useSSL) {
+    console.log(`Certificate  : ${c.green(absCertPath)}`);
+    console.log(`Private Key  : ${c.green(absKeyPath)}`);
   }
 
-  // 2. Remove default site collision
-  const defaultEnabled = '/etc/nginx/sites-enabled/default';
-  if (fs.existsSync(defaultEnabled)) {
-    console.log(`${TAG_INFO} Detected default site symlink: ${c.yellow(defaultEnabled)}`);
-    console.log(`${TAG_INFO} Removing default site to eliminate "Welcome to nginx!" collision...`);
-    try {
-      runCmd(`sudo rm -f "${defaultEnabled}"`);
-      console.log(`${TAG_OK} Successfully removed ${defaultEnabled}`);
-    } catch (e) {
-      console.error(`${TAG_WARN} Could not remove ${defaultEnabled}: ${e.message}`);
-    }
-  } else {
-    console.log(`${TAG_OK} Default site is already removed or disabled.`);
-  }
-
-  // 3. Determine domain
-  let domain = args[0] || '';
-  if (!domain && process.stdin.isTTY && !args.includes('--yes') && !args.includes('-y')) {
-    const prompter = createPrompter();
-    const answer = await prompter.ask('Enter domain name (press Enter to accept VPS IP and any domain): ');
-    prompter.close();
-    domain = answer.trim();
-  }
-
-  // 4. Generate config
-  const conf = buildNginxConfig({
+  const confContent = buildNginxConfig({
     domain,
     port,
-    useSSL: false,
+    sslCert: absCertPath,
+    sslKey: absKeyPath,
+    useSSL,
   });
 
   const rootConf = path.join(PROJECT_ROOT, 'techtink.nginx.conf');
-  fs.writeFileSync(rootConf, conf, 'utf8');
-  console.log(`${TAG_OK} Generated Nginx configuration file: ${c.cyan(rootConf)}`);
+  fs.writeFileSync(rootConf, confContent, 'utf8');
+  console.log(`${TAG_OK} Generated configuration at ${c.cyan(rootConf)}`);
+
+  // Remove default collision
+  const defaultSite = '/etc/nginx/sites-enabled/default';
+  if (fs.existsSync(defaultSite)) {
+    console.log(`${TAG_INFO} Removing default Nginx site symlink (${defaultSite}) to eliminate "Welcome to nginx!" collisions...`);
+    runCmd(`sudo rm -f "${defaultSite}"`);
+  }
 
   const targetAvail = '/etc/nginx/sites-available/techtink';
   const targetEnabled = '/etc/nginx/sites-enabled/techtink';
 
-  const isLinux = os.platform() === 'linux';
-  if (isLinux && (fs.existsSync('/etc/nginx/sites-available') || fs.existsSync('/etc/nginx'))) {
-    console.log(`${TAG_INFO} Installing configuration into Nginx...`);
+  if (isLinux() && (fs.existsSync('/etc/nginx/sites-available') || fs.existsSync('/etc/nginx'))) {
+    console.log(`${TAG_INFO} Installing configuration to Nginx...`);
     try {
       runCmd(`sudo cp "${rootConf}" "${targetAvail}"`);
-      console.log(`${TAG_OK} Copied config to ${c.cyan(targetAvail)}`);
-
       runCmd(`sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
-      console.log(`${TAG_OK} Created symlink at ${c.cyan(targetEnabled)}`);
-
-      console.log(`${TAG_INFO} Verifying Nginx syntax with "sudo nginx -t"...`);
-      runCmd('sudo nginx -t');
-      console.log(`${TAG_OK} Nginx syntax validation successful!`);
-
+      console.log(`${TAG_INFO} Verifying Nginx configuration syntax (sudo nginx -t)...`);
+      runCmdInherit('sudo nginx -t');
       console.log(`${TAG_INFO} Reloading Nginx service...`);
       runCmd('sudo systemctl reload nginx || sudo systemctl restart nginx');
-      console.log(`${TAG_OK} Nginx successfully reloaded! Port 80 now proxies to TechTink (127.0.0.1:${port}).`);
+      console.log(`\n${TAG_OK} Nginx successfully updated and reloaded!`);
+      console.log(`${TAG_OK} TechTink is now LIVE at:`);
+      console.log(`  ${c.green(`${useSSL ? 'https' : 'http'}://${domain || 'YOUR_VPS_IP'}/`)}\n`);
     } catch (err) {
-      console.error(`${TAG_ERR} Auto-installation failed: ${err.message}`);
-      console.log(`Please run the following commands manually with sudo:`);
-      console.log(`  sudo cp "${rootConf}" "${targetAvail}"`);
-      console.log(`  sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
-      console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
-      console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+      console.error(`${TAG_ERR} Nginx auto-reload failed: ${err.message}`);
     }
   } else {
-    console.log(`\n${TAG_INFO} Configuration saved to: ${c.cyan(rootConf)}`);
-    console.log(`Run the following on your Linux VPS:`);
-    console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
-    console.log(`  sudo cp "${rootConf}" /etc/nginx/sites-available/techtink`);
-    console.log(`  sudo ln -sf /etc/nginx/sites-available/techtink /etc/nginx/sites-enabled/`);
-    console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
-  }
-
-  // 5. Backend health check
-  const isFree = await checkPortFree(port);
-  if (isFree) {
-    console.log(`\n${TAG_WARN} NOTICE: TechTink backend is NOT currently listening on port ${port}!`);
-    console.log(`Visitors will receive a "502 Bad Gateway" until the backend service is started.`);
-    console.log(`To start the backend right now, run:`);
-    console.log(`  sudo systemctl restart techtink   (or: bun server.js)\n`);
-  } else {
-    console.log(`\n${TAG_OK} TechTink backend is running and listening on port ${port}!`);
-    console.log(`${TAG_OK} TechTink is now LIVE at:`);
-    console.log(`  ${c.cyan(`http://${domain || 'YOUR_VPS_IP'}/`)}\n`);
+    console.log(`${TAG_INFO} Local development mode: configuration saved to ${rootConf}`);
   }
 }
 
-function scanCertDirectory(dirPath) {
-  if (!fs.existsSync(dirPath)) {
-    return { error: `Directory "${dirPath}" does not exist.` };
-  }
-
-  let stats;
-  try {
-    stats = fs.statSync(dirPath);
-  } catch (e) {
-    return { error: `Cannot access "${dirPath}": ${e.message}` };
-  }
-
-  let targetDir = dirPath;
-  if (!stats.isDirectory()) {
-    targetDir = path.dirname(dirPath);
-  }
-
-  let files = [];
-  try {
-    files = fs.readdirSync(targetDir);
-  } catch (e) {
-    return { error: `Failed to read directory "${targetDir}": ${e.message}` };
-  }
-
-  if (files.length === 0) {
-    return { error: `Directory "${targetDir}" is empty.` };
-  }
-
-  const isCertFile = (f) => {
-    const lower = f.toLowerCase();
-    if (lower.includes('key') || lower.includes('priv')) return false;
-    return lower.endsWith('.pem') || lower.endsWith('.crt') || lower.endsWith('.cer');
-  };
-
-  const isKeyFile = (f) => {
-    const lower = f.toLowerCase();
-    return lower.endsWith('.key') || (lower.endsWith('.pem') && (lower.includes('key') || lower.includes('priv')));
-  };
-
-  // Sort candidate certs by preference
-  const certCandidates = [];
-  const priorityCertNames = ['fullchain.pem', 'bundle.crt', 'bundle.pem', 'chain.pem', 'cert.pem', 'certificate.crt', 'cert.crt'];
-  for (const name of priorityCertNames) {
-    if (files.includes(name)) certCandidates.push(name);
-  }
-  for (const f of files) {
-    if (isCertFile(f) && !certCandidates.includes(f)) {
-      certCandidates.push(f);
-    }
-  }
-
-  // Sort candidate keys by preference
-  const keyCandidates = [];
-  const priorityKeyNames = ['privkey.pem', 'private.key', 'privatekey.key', 'key.pem', 'cert.key'];
-  for (const name of priorityKeyNames) {
-    if (files.includes(name)) keyCandidates.push(name);
-  }
-  for (const f of files) {
-    if (isKeyFile(f) && !keyCandidates.includes(f)) {
-      keyCandidates.push(f);
-    }
-  }
-
-  return {
-    dir: targetDir,
-    files,
-    certCandidates,
-    keyCandidates,
-    bestCert: certCandidates[0] ? path.join(targetDir, certCandidates[0]) : null,
-    bestKey: keyCandidates[0] ? path.join(targetDir, keyCandidates[0]) : null,
-  };
-}
-
-function findPossibleCertDirs(nameOrPath) {
-  const clean = (nameOrPath || '').trim().replace(/^["']|["']$/g, '');
-  const basename = path.basename(clean);
-  const candidates = [];
-
-  // Direct paths
-  candidates.push(path.resolve(process.cwd(), clean));
-  candidates.push(path.resolve(PROJECT_ROOT, clean));
-
-  // Stripped leading slash (e.g. /cert/techtink.ir -> ./cert/techtink.ir or ./certs/techtink.ir)
-  if (clean.startsWith('/')) {
-    const relativePart = clean.replace(/^\/+/, '');
-    candidates.push(path.resolve(process.cwd(), relativePart));
-    candidates.push(path.resolve(PROJECT_ROOT, relativePart));
-    candidates.push(path.resolve(PROJECT_ROOT, 'certs', basename));
-    candidates.push(path.resolve(PROJECT_ROOT, 'cert', basename));
-  }
-
-  // Common Linux VPS & Certbot locations
-  const systemLocations = [
-    `/etc/letsencrypt/live/${basename}`,
-    `/etc/letsencrypt/live`,
-    `/etc/ssl/${basename}`,
-    `/etc/ssl/certs`,
-    `/etc/nginx/ssl/${basename}`,
-    `/etc/nginx/ssl`,
-    `/root/certs/${basename}`,
-    `/root/cert/${basename}`,
-    `/root/certs`,
-    `/root/cert`,
-    path.join(PROJECT_ROOT, 'certs'),
-    path.join(PROJECT_ROOT, 'cert'),
-  ];
-
-  for (const sys of systemLocations) {
-    if (!candidates.includes(sys)) {
-      candidates.push(sys);
-    }
-  }
-
-  const existingWithCerts = [];
-  for (const cand of candidates) {
-    try {
-      if (fs.existsSync(cand) && fs.statSync(cand).isDirectory()) {
-        const files = fs.readdirSync(cand);
-        const hasCert = files.some(
-          (f) =>
-            f.endsWith('.pem') ||
-            f.endsWith('.crt') ||
-            f.endsWith('.key') ||
-            f.endsWith('.cer')
-        );
-        if (hasCert && !existingWithCerts.includes(cand)) {
-          existingWithCerts.push(cand);
-        }
-      }
-    } catch {}
-  }
-
-  return existingWithCerts;
-}
-
-async function handleCertDir(args = []) {
-  console.log(`\n${c.bold('============================================================')}`);
-  console.log(`  ${c.bold(c.cyan('Configure Nginx with SSL Certificate Directory'))}`);
-  console.log(`${c.bold('============================================================')}`);
-
-  const positional = args.filter((a) => a !== '-y' && a !== '--yes');
-  let inputDir = positional[0] || '';
-  let domain = positional[1] || '';
-
-  if (!inputDir && process.stdin.isTTY) {
-    const prompter = createPrompter();
-    inputDir = (await prompter.ask('Enter path to directory containing certificate files (e.g. /etc/letsencrypt/live/yourdomain or ./certs): ')).trim();
-    prompter.close();
-  }
-
-  if (!inputDir) {
-    console.error(`${TAG_ERR} No certificate directory provided.`);
-    console.log(`Usage: node scripts/manage.js ssl cert-dir <directory_path> [domain]\n`);
-    return;
-  }
-
-  const resolvedDir = path.resolve(process.cwd(), inputDir);
-  console.log(`${TAG_INFO} Checking directory: ${c.cyan(resolvedDir)}`);
-
-  let scan = scanCertDirectory(resolvedDir);
-  if (scan.error) {
-    const discovered = findPossibleCertDirs(inputDir);
-    if (discovered.length > 0) {
-      console.log(`\n${TAG_WARN} "${c.yellow(resolvedDir)}" was not found directly.`);
-      console.log(`${TAG_INFO} Discovered SSL certificate directories on your server:`);
-      for (let i = 0; i < discovered.length; i++) {
-        console.log(`  [${i + 1}] ${c.green(discovered[i])}`);
-      }
-
-      if (process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
-        const prompter = createPrompter();
-        const choice = (await prompter.ask(`\nSelect a discovered directory [1-${discovered.length}] (or press Enter to exit): `)).trim();
-        prompter.close();
-        const idx = parseInt(choice, 10) - 1;
-        if (!isNaN(idx) && discovered[idx]) {
-          console.log(`\n${TAG_INFO} Using selected directory: ${c.cyan(discovered[idx])}`);
-          scan = scanCertDirectory(discovered[idx]);
-        }
-      } else if (discovered.length === 1) {
-        console.log(`\n${TAG_INFO} Auto-selecting discovered directory: ${c.cyan(discovered[0])}`);
-        scan = scanCertDirectory(discovered[0]);
-      }
-    }
-  }
-
-  if (scan.error) {
-    console.error(`\n${TAG_ERR} ${scan.error}`);
-    console.log(`\n${c.bold('Common SSL Certificate Locations on Linux VPS:')}`);
-    console.log(`  - Let's Encrypt / Certbot : ${c.cyan('/etc/letsencrypt/live/techtink.ir')}`);
-    console.log(`  - Local Project Folder   : ${c.cyan('./certs')}`);
-    console.log(`  - Standard SSL Directory : ${c.cyan('/etc/ssl/certs')}`);
-    console.log(`\nTo find where your certificates are stored on your VPS, run:`);
-    console.log(`  ${c.yellow('sudo ls -la /etc/letsencrypt/live/')}`);
-    console.log(`  ${c.yellow('sudo find / -name "*techtink*" 2>/dev/null')}\n`);
-    return;
-  }
-
-  console.log(`${TAG_INFO} Found ${scan.files.length} file(s) in directory: ${scan.files.join(', ')}`);
-
-  let certPath = scan.bestCert;
-  let keyPath = scan.bestKey;
-
-  if (certPath && keyPath && process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
-    console.log(`\nAuto-Detected SSL Files:`);
-    console.log(`  Certificate : ${c.green(certPath)}`);
-    console.log(`  Private Key : ${c.green(keyPath)}`);
-
-    const prompter = createPrompter();
-    const confirm = (await prompter.ask('\nUse these detected certificate files? [Y/n]: ')).trim().toLowerCase();
-    prompter.close();
-    if (confirm && confirm.startsWith('n')) {
-      certPath = null;
-      keyPath = null;
-    }
-  }
-
-  if (!certPath) {
-    if (scan.certCandidates.length > 0) {
-      console.log(`Available certificate files: ${scan.certCandidates.join(', ')}`);
-    } else {
-      console.log(`Available files in directory: ${scan.files.join(', ')}`);
-    }
-    const prompter = createPrompter();
-    const cInput = (await prompter.ask('Enter certificate filename (e.g. fullchain.pem or techtink.crt): ')).trim();
-    prompter.close();
-    if (!cInput) {
-      console.error(`${TAG_ERR} Certificate filename is required.`);
-      return;
-    }
-    certPath = path.isAbsolute(cInput) ? cInput : path.join(scan.dir, cInput);
-  }
-
-  if (!keyPath) {
-    if (scan.keyCandidates.length > 0) {
-      console.log(`Available private key files: ${scan.keyCandidates.join(', ')}`);
-    } else {
-      console.log(`Available files in directory: ${scan.files.join(', ')}`);
-    }
-    const prompter = createPrompter();
-    const kInput = (await prompter.ask('Enter private key filename (e.g. privkey.pem or techtink.key): ')).trim();
-    prompter.close();
-    if (!kInput) {
-      console.error(`${TAG_ERR} Private key filename is required.`);
-      return;
-    }
-    keyPath = path.isAbsolute(kInput) ? kInput : path.join(scan.dir, kInput);
-  }
-
-  if (!fs.existsSync(certPath)) {
-    console.error(`${TAG_ERR} Certificate file does not exist: ${certPath}`);
-    return;
-  }
-  if (!fs.existsSync(keyPath)) {
-    console.error(`${TAG_ERR} Private key file does not exist: ${keyPath}`);
-    return;
-  }
-
-  if (!domain && process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
-    const prompter = createPrompter();
-    domain = (await prompter.ask('Enter domain name (press Enter to accept VPS IP and all domains): ')).trim();
-    prompter.close();
-  }
-
-  const port = getCurrentPort();
-  console.log(`\n${TAG_INFO} Generating Nginx HTTPS reverse proxy configuration:`);
-  console.log(`  Backend Port : ${c.cyan(port)}`);
-  console.log(`  Certificate  : ${c.cyan(certPath)}`);
-  console.log(`  Private Key  : ${c.cyan(keyPath)}`);
-  console.log(`  Server Name  : ${c.cyan(domain || 'All Domains / VPS IP (_)')}`);
-
-  const conf = buildNginxConfig({
-    domain,
-    port,
-    sslCert: certPath,
-    sslKey: keyPath,
-    useSSL: true,
-  });
-
-  const rootConf = path.join(PROJECT_ROOT, 'techtink.nginx.conf');
-  fs.writeFileSync(rootConf, conf, 'utf8');
-  console.log(`${TAG_OK} Saved configuration to: ${c.cyan(rootConf)}`);
-
-  // Remove default site collision
-  const defaultEnabled = '/etc/nginx/sites-enabled/default';
-  if (fs.existsSync(defaultEnabled)) {
-    try {
-      runCmd(`sudo rm -f "${defaultEnabled}"`);
-      console.log(`${TAG_OK} Removed default Nginx site symlink (${defaultEnabled})`);
-    } catch (e) {
-      console.warn(`${TAG_WARN} Could not remove ${defaultEnabled}: ${e.message}`);
-    }
-  }
-
-  const targetAvail = '/etc/nginx/sites-available/techtink';
-  const targetEnabled = '/etc/nginx/sites-enabled/techtink';
-  const isLinux = os.platform() === 'linux';
-
-  if (isLinux && (fs.existsSync('/etc/nginx/sites-available') || fs.existsSync('/etc/nginx'))) {
-    console.log(`${TAG_INFO} Installing configuration into Nginx...`);
-    try {
-      runCmd(`sudo cp "${rootConf}" "${targetAvail}"`);
-      console.log(`${TAG_OK} Copied config to ${c.cyan(targetAvail)}`);
-
-      runCmd(`sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
-      console.log(`${TAG_OK} Symlinked to ${c.cyan(targetEnabled)}`);
-
-      console.log(`${TAG_INFO} Verifying Nginx syntax with "sudo nginx -t"...`);
-      runCmd('sudo nginx -t');
-      console.log(`${TAG_OK} Nginx syntax validation successful!`);
-
-      console.log(`${TAG_INFO} Reloading Nginx service...`);
-      runCmd('sudo systemctl reload nginx || sudo systemctl restart nginx');
-      console.log(`${TAG_OK} Nginx successfully reloaded! HTTPS is now active on port 443.`);
-      console.log(`${TAG_OK} HTTP traffic on port 80 will automatically redirect to HTTPS.`);
-    } catch (err) {
-      console.error(`${TAG_ERR} Nginx auto-installation failed: ${err.message}`);
-      console.log(`Please run the following commands manually with sudo:`);
-      console.log(`  sudo cp "${rootConf}" "${targetAvail}"`);
-      console.log(`  sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
-      console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
-      console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
-    }
+async function handleNginxFix() {
+  console.log(`\n${c.bold('--- Automated Nginx Collision Fix ---')}`);
+  const defaultSite = '/etc/nginx/sites-enabled/default';
+  if (fs.existsSync(defaultSite)) {
+    console.log(`${TAG_INFO} Removing ${defaultSite}...`);
+    runCmd(`sudo rm -f "${defaultSite}"`);
+    console.log(`${TAG_OK} Removed default site symlink.`);
   } else {
-    console.log(`\n${TAG_INFO} Configuration ready at: ${c.cyan(rootConf)}`);
-    console.log(`Run the following on your Linux VPS:`);
-    console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
-    console.log(`  sudo cp "${rootConf}" /etc/nginx/sites-available/techtink`);
-    console.log(`  sudo ln -sf /etc/nginx/sites-available/techtink /etc/nginx/sites-enabled/`);
-    console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+    console.log(`${TAG_OK} Default site is already removed.`);
   }
-
-  // Backend check
-  const isFree = await checkPortFree(port);
-  if (isFree) {
-    console.log(`\n${TAG_WARN} NOTICE: TechTink backend is NOT currently listening on port ${port}!`);
-    console.log(`Visitors will receive a "502 Bad Gateway" until the backend service is started.`);
-    console.log(`To start the backend right now, run:`);
-    console.log(`  sudo systemctl restart techtink   (or: bun server.js)\n`);
-  } else {
-    console.log(`\n${TAG_OK} TechTink backend is running and listening on port ${port}!`);
-    console.log(`${TAG_OK} Secure website is now LIVE at:`);
-    console.log(`  ${c.cyan(`https://${domain || 'YOUR_VPS_IP'}/`)}\n`);
-  }
-}
-
-async function handleNginx(args) {
-  const sub = args[0]?.toLowerCase() || 'fix';
-  if (sub === 'fix' || sub === 'setup' || sub === 'install') {
-    await handleNginxFix(args.slice(1));
-  } else if (sub === 'cert-dir' || sub === 'certs' || sub === 'ssl-dir' || sub === 'ssl') {
-    await handleCertDir(args.slice(1));
-  } else if (sub === 'reload' || sub === 'restart') {
-    try {
-      console.log(`${TAG_INFO} Testing Nginx configuration...`);
-      runCmd('sudo nginx -t');
-      console.log(`${TAG_INFO} Reloading Nginx service...`);
-      runCmd('sudo systemctl reload nginx');
-      console.log(`${TAG_OK} Nginx reloaded successfully!`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Reload failed: ${e.message}`);
-    }
-  } else if (sub === 'status') {
-    console.log(`\n${c.bold('--- Nginx Status & Diagnostics ---')}`);
-    const defaultExists = fs.existsSync('/etc/nginx/sites-enabled/default');
-    const techtinkExists = fs.existsSync('/etc/nginx/sites-enabled/techtink');
-    console.log(`Default site enabled : ${defaultExists ? c.yellow('YES (warning: may override TechTink)') : c.green('No (clean)')}`);
-    console.log(`TechTink site enabled: ${techtinkExists ? c.green('YES') : c.red('NO')}`);
-    try {
-      const res = runCmd('sudo nginx -t') || 'ok';
-      console.log(`${TAG_OK} Syntax test: ${res}`);
-    } catch (e) {
-      console.log(`${TAG_ERR} Syntax test error: ${e.message}`);
-    }
-  } else {
-    await handleNginxFix(args);
-  }
-}
-
-
-async function handleSSL(args) {
-  const sub = args[0] || 'menu';
-  const port = getCurrentPort();
-
-  if (sub === 'cert-dir' || sub === 'certs' || sub === 'ssl-dir' || sub === 'dir') {
-    await handleCertDir(args.slice(1));
-    return;
-  }
-
-  if (sub === 'self-signed') {
-    const certDir = path.join(PROJECT_ROOT, 'certs');
-    fs.mkdirSync(certDir, { recursive: true });
-    const crtFile = path.join(certDir, 'techtink.crt');
-    const keyFile = path.join(certDir, 'techtink.key');
-
-    console.log(`${TAG_INFO} Generating 2048-bit self-signed SSL certificate using openssl...`);
-    try {
-      execSync(
-        `openssl req -x509 -nodes -days 365 -newkey rsa:2048 ` +
-          `-keyout "${keyFile}" -out "${crtFile}" ` +
-          `-subj "/C=IR/ST=Tehran/L=Tehran/O=TechTink/CN=localhost"`,
-        { stdio: 'inherit' }
-      );
-      console.log(`\n${TAG_OK} Self-signed SSL certificate generated!`);
-      console.log(`  Certificate: ${c.cyan(crtFile)}`);
-      console.log(`  Private Key: ${c.cyan(keyFile)}\n`);
-    } catch (e) {
-      console.error(`${TAG_ERR} OpenSSL generation failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'letsencrypt') {
-    if (!commandExists('certbot')) {
-      console.error(`${TAG_ERR} certbot command not found!`);
-      console.log(`To install Certbot on Ubuntu/Debian, run:`);
-      console.log(`  sudo apt update && sudo apt install -y certbot python3-certbot-nginx\n`);
-      return;
-    }
-
-    const prompter = createPrompter();
-    const domain = (await prompter.ask('Enter your domain name (e.g. techtink.ir): ')).trim();
-    if (!domain) {
-      console.log(`${TAG_ERR} Domain cannot be empty.`);
-      prompter.close();
-      return;
-    }
-
-    const mode = (await prompter.ask('Use Nginx automatic certbot plugin? [Y/n]: ')).trim().toLowerCase();
-    prompter.close();
-
-    const isNginx = !mode || mode.startsWith('y');
-    const certbotCmd = isNginx
-      ? `sudo certbot --nginx -d ${domain}`
-      : `sudo certbot certonly --standalone -d ${domain}`;
-
-    console.log(`${TAG_INFO} Running: ${certbotCmd}`);
-    try {
-      execSync(certbotCmd, { stdio: 'inherit' });
-      console.log(`\n${TAG_OK} Let's Encrypt certificate generated successfully for ${c.cyan(domain)}!`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Certbot error: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'test-renew') {
-    if (!commandExists('certbot')) {
-      console.error(`${TAG_ERR} certbot is not installed.`);
-      return;
-    }
-    console.log(`${TAG_INFO} Testing certificate auto-renewal dry run...`);
-    try {
-      execSync('sudo certbot renew --dry-run', { stdio: 'inherit' });
-      console.log(`\n${TAG_OK} Certificate auto-renewal dry run completed!`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Auto-renewal test failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'nginx-config') {
-    const prompter = createPrompter();
-    const domain = (await prompter.ask('Enter server domain or IP [default: techtink.ir]: ')).trim() || 'techtink.ir';
-    const sslChoice = (await prompter.ask('Enable HTTPS / SSL block? [Y/n]: ')).trim().toLowerCase();
-    const useSSL = !sslChoice || sslChoice.startsWith('y');
-
-    let sslCert = `/etc/letsencrypt/live/${domain}/fullchain.pem`;
-    let sslKey = `/etc/letsencrypt/live/${domain}/privkey.pem`;
-
-    if (useSSL) {
-      const customCerts = (await prompter.ask(`Use standard Let's Encrypt paths for ${domain}? [Y/n]: `)).trim().toLowerCase();
-      if (customCerts && !customCerts.startsWith('y')) {
-        sslCert = (await prompter.ask('Enter full path to ssl_certificate: ')).trim();
-        sslKey = (await prompter.ask('Enter full path to ssl_certificate_key: ')).trim();
-      }
-    }
-    prompter.close();
-
-    const conf = buildNginxConfig({
-      domain,
-      port,
-      sslCert,
-      sslKey,
-      useSSL,
-    });
-
-    const outFile = path.join(PROJECT_ROOT, 'techtink.nginx.conf');
-    fs.writeFileSync(outFile, conf, 'utf8');
-    console.log(`\n${TAG_OK} Generated Nginx configuration file: ${c.cyan(outFile)}`);
-    console.log(`\n${c.bold('--- Preview techtink.nginx.conf ---')}\n${conf}`);
-
-    console.log(`To activate on your Nginx server:`);
-    console.log(`  sudo cp techtink.nginx.conf /etc/nginx/sites-available/techtink`);
-    console.log(`  sudo ln -sf /etc/nginx/sites-available/techtink /etc/nginx/sites-enabled/`);
-    console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
-    return;
-  }
-
-  // Interactive SSL Menu
-  const prompter = createPrompter();
-  console.log(`\n${c.bold('--- TechTink SSL & Nginx Reverse Proxy Setup ---')}`);
-  console.log(`Current App Port: ${c.cyan(port)}`);
-  console.log(`Certbot Installed: ${commandExists('certbot') ? c.green('Yes') : c.yellow('No')}`);
-  console.log(`Nginx Installed  : ${commandExists('nginx') ? c.green('Yes') : c.yellow('No')}`);
-  console.log('');
-  console.log(`[1] Fix Nginx Default Page Collision (Automated One-Click Fix)`);
-  console.log(`[2] Configure Nginx with SSL Certificate Directory (Custom SSL / Let's Encrypt dir)`);
-  console.log(`[3] Issue Let's Encrypt Free SSL Certificate (Certbot)`);
-  console.log(`[4] Generate Self-Signed SSL Certificate (Development / Staging)`);
-  console.log(`[5] Generate Production Nginx Reverse Proxy Config (Manual)`);
-  console.log(`[6] Test SSL Auto-Renewal (certbot renew --dry-run)`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = await prompter.ask('\nSelect an option [0-6]: ');
-  prompter.close();
-
-  switch (choice.trim()) {
-    case '1':
-      await handleNginxFix([]);
-      break;
-    case '2':
-      await handleCertDir([]);
-      break;
-    case '3':
-      await handleSSL(['letsencrypt']);
-      break;
-    case '4':
-      await handleSSL(['self-signed']);
-      break;
-    case '5':
-      await handleSSL(['nginx-config']);
-      break;
-    case '6':
-      await handleSSL(['test-renew']);
-      break;
-    default:
-      break;
-  }
+  await handleNginxConfigure({});
 }
 
 // ==============================================================================
-// 4. BACKEND HEALTH & STATUS
+// 6. WEBSITE BETA & INVESTOR DEMO MODE TOGGLE
 // ==============================================================================
-async function handleStatus() {
-  console.log(`\n${c.bold('============================================================')}`);
-  console.log(`  ${c.bold(c.cyan('TechTink Backend Health & VPS Status Report'))}`);
-  console.log(`${c.bold('============================================================')}`);
+async function handleSiteMode(args = []) {
+  const target = (args[0] || '').toLowerCase();
+  const dbInst = await getDbInstance();
 
-  const port = getCurrentPort();
-  const runtime = detectRuntime();
-
-  console.log(`Operating System : ${c.bold(os.type())} ${os.release()} (${os.arch()})`);
-  console.log(`Server Hostname  : ${c.cyan(os.hostname())}`);
-  console.log(`Runtime Engine   : ${c.green(runtime.name)} (${runtime.path})`);
-  console.log(`Configured Port  : ${c.cyan(port)}`);
-
-  // Port free check
-  const isFree = await checkPortFree(port);
-  console.log(`Port ${port} Status : ${isFree ? c.yellow('No active listener on this port') : c.green('Listening (Active Process Detected)')}`);
-
-  // HTTP API Health
-  process.stdout.write(`HTTP Health Ping : `);
-  const ping = await pingServerHealth(port);
-  if (ping.ok) {
-    console.log(`${c.green('OK 200')} - Latency: ${c.cyan(ping.latency + 'ms')}`);
-  } else {
-    console.log(`${c.red('FAILED')} (${ping.error || 'Status ' + ping.statusCode})`);
+  if (!dbInst) {
+    console.error(`${TAG_ERR} Database techtink.db not accessible.`);
+    return;
   }
 
-  // Systemd service check
-  if (os.platform() === 'linux') {
+  const getSetting = (key) => {
     try {
-      const activeStatus = runCmd('systemctl is-active techtink')?.trim();
-      const enabledStatus = runCmd('systemctl is-enabled techtink')?.trim();
-      console.log(`Systemd Service  : ${activeStatus === 'active' ? c.green('active (running)') : c.yellow(activeStatus || 'inactive')} | enabled: ${enabledStatus || 'no'}`);
+      if (typeof dbInst.query === 'function') {
+        return dbInst.query('SELECT value FROM settings WHERE key = ?').get(key)?.value;
+      }
+      return dbInst.prepare('SELECT value FROM settings WHERE key = ?').get(key)?.value;
     } catch {
-      console.log(`Systemd Service  : ${c.gray('techtink.service not installed or inactive')}`);
+      return null;
     }
+  };
+
+  const setSetting = (key, val) => {
+    try {
+      if (typeof dbInst.query === 'function') {
+        dbInst.query('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, val);
+      } else {
+        dbInst.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, val);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const currentMode = getSetting('site_mode') || 'demo';
+  const noticeActive = getSetting('demo_notice_active') ?? '1';
+
+  if (!target || target === 'status') {
+    console.log(`\n${c.bold('--- Website Deployment & Beta Mode ---')}`);
+    console.log(`Active Mode      : ${currentMode === 'demo' ? c.yellow('DEMO MODE (Beta Presentation Active)') : c.green('OPERATIONAL MODE (Live Production)')}`);
+    console.log(`Demo Popup Notice: ${noticeActive === '1' ? c.green('Enabled') : c.gray('Disabled')}`);
+    console.log(`Notice Title     : ${c.cyan(getSetting('demo_notice_title') || 'Default')}`);
+    console.log(`\nTo switch modes:`);
+    console.log(`  node scripts/manage.js mode demo         (Activate investor demo modal)`);
+    console.log(`  node scripts/manage.js mode operational  (Switch to live operational mode)\n`);
+    return;
   }
 
-  // Database status
-  if (fs.existsSync(DB_PATH)) {
-    const stats = fs.statSync(DB_PATH);
-    const sizeKb = (stats.size / 1024).toFixed(1);
-    console.log(`SQLite Database  : ${c.green('OK')} (${DB_PATH}) - Size: ${c.cyan(sizeKb + ' KB')}`);
+  if (target === 'demo') {
+    setSetting('site_mode', 'demo');
+    setSetting('demo_notice_active', '1');
+    setSetting('demo_notice_badge_header', '1');
+    console.log(`\n${TAG_OK} Switched to ${c.yellow('DEMO MODE')}!`);
+    console.log(`  - Demo Notice modal is ACTIVE on initial page load.`);
+    console.log(`  - Header shows "نسخه آزمایشی (Demo)" badge.`);
+    console.log(`  - All features ready for investor showcase.\n`);
+  } else if (target === 'operational' || target === 'live' || target === 'prod') {
+    setSetting('site_mode', 'operational');
+    setSetting('demo_notice_active', '0');
+    setSetting('demo_notice_badge_header', '0');
+    console.log(`\n${TAG_OK} Switched to ${c.green('OPERATIONAL / LIVE MODE')}!`);
+    console.log(`  - Demo modal notice is deactivated.`);
+    console.log(`  - Live e-commerce store is operational.\n`);
   } else {
-    console.log(`SQLite Database  : ${c.red('Missing')} (${DB_PATH})`);
+    console.error(`${TAG_ERR} Unknown mode "${target}". Use "demo" or "operational".`);
   }
-
-  // SSL status check
-  const certDir = path.join(PROJECT_ROOT, 'certs');
-  const hasSelfSigned = fs.existsSync(path.join(certDir, 'techtink.crt'));
-  console.log(`SSL Certificates : ${hasSelfSigned ? c.green('Self-signed present in certs/') : c.gray('Standard / Nginx managed')}`);
-
-  console.log(`${c.bold('============================================================')}\n`);
 }
 
 // ==============================================================================
-// 5. APPLICATION LOG VIEWER
+// 7. DATABASE MAINTENANCE
 // ==============================================================================
-function handleLogs(args) {
-  const follow = args.includes('-f') || args.includes('--follow');
-  const linesArg = args.find((a, i) => args[i - 1] === '-n') || '50';
-
-  if (os.platform() === 'linux' && commandExists('journalctl')) {
-    console.log(`${TAG_INFO} Viewing systemd journal logs for ${c.cyan('techtink.service')}...`);
-    const fFlag = follow ? '-f' : '';
-    const cmd = `journalctl -u techtink -n ${linesArg} ${fFlag} --no-pager`;
-    try {
-      execSync(cmd, { stdio: 'inherit' });
-    } catch {}
-    return;
-  }
-
-  const logFile = path.join(PROJECT_ROOT, 'techtink.log');
-  if (fs.existsSync(logFile)) {
-    console.log(`${TAG_INFO} Viewing file log: ${logFile}`);
-    try {
-      execSync(`tail -n ${linesArg} ${follow ? '-f' : ''} "${logFile}"`, { stdio: 'inherit' });
-    } catch {}
-    return;
-  }
-
-  console.log(`${TAG_WARN} No systemd journalctl or techtink.log found.`);
-  console.log(`If running with Bun/Node directly in terminal, logs appear in that session.`);
-}
-
-// ==============================================================================
-// 6. DATABASE MAINTENANCE
-// ==============================================================================
-async function handleDatabase(args) {
-  const sub = args[0] || 'menu';
+async function handleDatabase(args = []) {
+  const sub = (args[0] || 'backup').toLowerCase();
+  console.log(`\n${c.bold('--- SQLite Database Maintenance ---')}`);
 
   if (!fs.existsSync(DB_PATH)) {
-    console.error(`${TAG_ERR} Database file does not exist at ${DB_PATH}`);
-    return;
-  }
-
-  // Load SQLite driver
-  let dbInstance;
-  try {
-    if (typeof globalThis.Bun !== 'undefined') {
-      const { Database } = await import('bun:sqlite');
-      dbInstance = new Database(DB_PATH);
-    } else {
-      const { DatabaseSync } = await import('node:sqlite');
-      dbInstance = new DatabaseSync(DB_PATH);
-    }
-  } catch (err) {
-    console.error(`${TAG_ERR} Failed to open SQLite database: ${err.message}`);
+    console.error(`${TAG_ERR} Database file not found at ${DB_PATH}`);
     return;
   }
 
@@ -1321,440 +1244,69 @@ async function handleDatabase(args) {
     fs.mkdirSync(backupDir, { recursive: true });
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const backupFile = path.join(backupDir, `techtink_backup_${timestamp}.db`);
-
     try {
       fs.copyFileSync(DB_PATH, backupFile);
-      const sizeMb = (fs.statSync(backupFile).size / (1024 * 1024)).toFixed(2);
-      console.log(`\n${TAG_OK} Database backup created successfully!`);
-      console.log(`  Path: ${c.cyan(backupFile)}`);
-      console.log(`  Size: ${c.cyan(sizeMb + ' MB')}\n`);
+      const sizeMB = (fs.statSync(backupFile).size / (1024 * 1024)).toFixed(2);
+      console.log(`${TAG_OK} Backup created successfully: ${c.green(backupFile)} (${sizeMB} MB)`);
     } catch (e) {
       console.error(`${TAG_ERR} Backup failed: ${e.message}`);
     }
-    return;
-  }
-
-  if (sub === 'vacuum') {
-    console.log(`${TAG_INFO} Running SQLite VACUUM and PRAGMA optimize...`);
-    try {
-      dbInstance.exec('VACUUM;');
-      dbInstance.exec('PRAGMA optimize;');
-      console.log(`${TAG_OK} Database defragmented, vacuumed, and optimized!\n`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Vacuum failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'check') {
-    console.log(`${TAG_INFO} Checking SQLite structural integrity (PRAGMA integrity_check)...`);
-    try {
-      let result;
-      if (typeof dbInstance.prepare === 'function') {
-        result = dbInstance.prepare('PRAGMA integrity_check;').all();
-      }
-      console.log(`${TAG_OK} Integrity check result:`);
-      console.dir(result, { depth: null });
-      console.log('');
-    } catch (e) {
-      console.error(`${TAG_ERR} Integrity check failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'info') {
-    console.log(`\n${c.bold('--- SQLite Database Details ---')}`);
-    const stats = fs.statSync(DB_PATH);
-    console.log(`File Path : ${c.cyan(DB_PATH)}`);
-    console.log(`File Size : ${c.cyan((stats.size / 1024).toFixed(1) + ' KB')}`);
-    console.log(`Modified  : ${stats.mtime.toLocaleString()}`);
-
-    try {
-      const tables = dbInstance.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';").all();
-      console.log(`\nTables (${tables.length}):`);
-      for (const t of tables) {
-        const countRow = dbInstance.prepare(`SELECT COUNT(*) as count FROM "${t.name}";`).get();
-        console.log(`  - ${c.bold(t.name.padEnd(20))} : ${c.cyan(countRow.count)} records`);
-      }
-      console.log('');
-    } catch (e) {
-      console.log(`${TAG_WARN} Could not list tables: ${e.message}`);
-    }
-    return;
-  }
-
-  // Interactive DB Menu
-  const prompter = createPrompter();
-  console.log(`\n${c.bold('--- TechTink Database Maintenance ---')}`);
-  console.log(`[1] Create Instant Database Backup (data/backups/)`);
-  console.log(`[2] Run VACUUM & Optimize (Defragment & reclaim disk space)`);
-  console.log(`[3] Perform Integrity Check (PRAGMA integrity_check)`);
-  console.log(`[4] View Database Details & Record Counts`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = await prompter.ask('\nSelect an option [0-4]: ');
-  prompter.close();
-
-  switch (choice.trim()) {
-    case '1':
-      await handleDatabase(['backup']);
-      break;
-    case '2':
-      await handleDatabase(['vacuum']);
-      break;
-    case '3':
-      await handleDatabase(['check']);
-      break;
-    case '4':
-      await handleDatabase(['info']);
-      break;
-    default:
-      break;
-  }
-}
-
-// ==============================================================================
-// 7. ADMINISTRATOR USER MANAGEMENT
-// ==============================================================================
-async function handleAdmin(args) {
-  const sub = args[0] || 'menu';
-
-  if (sub === 'create') {
-    const adminScript = path.join(PROJECT_ROOT, 'scripts', 'create-admin.js');
-    console.log(`${TAG_INFO} Launching TechTink Administrator Creation Tool...\n`);
-    const runtime = detectRuntime();
-    spawnSync(runtime.path, [adminScript], { stdio: 'inherit' });
-    return;
-  }
-
-  if (sub === 'list') {
-    if (!fs.existsSync(DB_PATH)) {
-      console.error(`${TAG_ERR} Database file not found.`);
-      return;
-    }
-    try {
-      let dbInstance;
-      if (typeof globalThis.Bun !== 'undefined') {
-        const { Database } = await import('bun:sqlite');
-        dbInstance = new Database(DB_PATH);
-      } else {
-        const { DatabaseSync } = await import('node:sqlite');
-        dbInstance = new DatabaseSync(DB_PATH);
-      }
-
-      const rows = dbInstance.prepare("SELECT id, name, email, mobile, role, created_at FROM users WHERE role = 'admin';").all();
-      console.log(`\n${c.bold(`Configured Administrator Accounts (${rows.length}):`)}`);
-      if (rows.length === 0) {
-        console.log(`  ${c.yellow('No administrator accounts found.')}`);
-      } else {
-        for (const u of rows) {
-          console.log(`  - [ID #${u.id}] ${c.bold(u.name || 'Admin')} | Email: ${c.cyan(u.email || '—')} | Mobile: ${c.cyan(u.mobile || '—')}`);
-        }
-      }
-      console.log('');
-    } catch (e) {
-      console.error(`${TAG_ERR} Failed to list admin accounts: ${e.message}`);
-    }
-    return;
-  }
-
-  // Interactive Admin Menu
-  const prompter = createPrompter();
-  console.log(`\n${c.bold('--- TechTink Administrator Management ---')}`);
-  console.log(`[1] List All Administrator Accounts`);
-  console.log(`[2] Create / Update Administrator (Interactive Wizard)`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = await prompter.ask('\nSelect an option [0-2]: ');
-  prompter.close();
-
-  switch (choice.trim()) {
-    case '1':
-      await handleAdmin(['list']);
-      break;
-    case '2':
-      await handleAdmin(['create']);
-      break;
-    default:
-      break;
-  }
-}
-
-// ==============================================================================
-// 8. ENVIRONMENT (.ENV) EDITOR
-// ==============================================================================
-async function handleEnv(args) {
-  const sub = args[0] || 'show';
-
-  if (sub === 'show') {
-    const env = readEnv();
-    console.log(`\n${c.bold(`--- Active .env Variables (${ENV_PATH}) ---`)}`);
-    const keys = Object.keys(env);
-    if (keys.length === 0) {
-      console.log(`${c.yellow('No .env file found or file is empty.')}`);
-    } else {
-      for (const k of keys) {
-        const isSecret = k.toLowerCase().includes('pass') || k.toLowerCase().includes('secret') || k.toLowerCase().includes('key');
-        const displayVal = isSecret ? '********' : env[k];
-        console.log(`  ${c.bold(k.padEnd(20))} = ${c.cyan(displayVal)}`);
-      }
-    }
-    console.log('');
-    return;
-  }
-
-  if (sub === 'set') {
-    const key = args[1];
-    const val = args[2];
-    if (!key || val === undefined) {
-      console.error(`${TAG_ERR} Usage: manage.js env set <KEY> <VALUE>`);
-      return;
-    }
-    setEnvVar(key, val);
-    console.log(`${TAG_OK} Set ${c.bold(key)}=${c.cyan(val)} in ${ENV_PATH}\n`);
-    return;
-  }
-}
-
-// ==============================================================================
-// ==============================================================================
-// 9. QUICK DEPLOYMENT / RESTART RUNNER
-// ==============================================================================
-function handleDeploy() {
-  const deployScript = path.join(PROJECT_ROOT, 'deploy.sh');
-  if (fs.existsSync(deployScript)) {
-    console.log(`${TAG_INFO} Launching deploy.sh script...\n`);
-    try {
-      execSync(`bash "${deployScript}"`, { stdio: 'inherit' });
-    } catch (e) {
-      console.error(`${TAG_ERR} Deploy failed: ${e.message}`);
-    }
-  } else {
-    console.log(`${TAG_WARN} deploy.sh not found at ${deployScript}`);
-  }
-}
-
-// ==============================================================================
-// 10. WEBSITE DEPLOYMENT MODE & DEMO NOTICE TOGGLE
-// ==============================================================================
-async function getDbInstance() {
-  if (!fs.existsSync(DB_PATH)) {
-    return null;
-  }
-  try {
-    if (typeof globalThis.Bun !== 'undefined') {
-      const { Database } = await import('bun:sqlite');
-      return new Database(DB_PATH);
-    } else {
-      const { DatabaseSync } = await import('node:sqlite');
-      return new DatabaseSync(DB_PATH);
-    }
-  } catch {
-    return null;
-  }
-}
-
-async function handleSiteMode(args) {
-  const sub = (args[0] || '').toLowerCase();
-  const db = await getDbInstance();
-  if (!db) {
-    console.error(`${TAG_ERR} SQLite database file not found at ${DB_PATH}.`);
-    console.log(`${TAG_INFO} Start the backend server once to create and initialize the database.`);
-    return;
-  }
-
-  const getSettingVal = (key, fallback = '') => {
-    try {
-      let row;
-      if (typeof db.prepare === 'function') {
-        row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
-      }
-      return row?.value ?? fallback;
-    } catch {
-      return fallback;
-    }
-  };
-
-  const setSettingVal = (key, val) => {
-    try {
-      if (typeof db.prepare === 'function') {
-        db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value').run(key, String(val));
-      }
-      return true;
-    } catch (e) {
-      console.error(`${TAG_ERR} Failed to update setting ${key}: ${e.message}`);
-      return false;
-    }
-  };
-
-  if (sub === 'demo') {
-    setSettingVal('site_mode', 'demo');
-    setSettingVal('demo_notice_active', '1');
-    console.log(`\n${TAG_OK} Website mode switched to ${c.bold(c.yellow('DEMO MODE'))}!`);
-    console.log(`  - Visitors will see the Demo Mode Popup Modal on entry.`);
-    console.log(`  - Header will display the Demo Mode indicator pill.`);
-    console.log(`  - Visitors are notified that orders and prices are for testing/evaluation.\n`);
-    return;
-  }
-
-  if (sub === 'operational' || sub === 'live' || sub === 'prod') {
-    setSettingVal('site_mode', 'operational');
-    console.log(`\n${TAG_OK} Website mode switched to ${c.bold(c.green('OPERATIONAL / LIVE MODE'))}!`);
-    console.log(`  - The Demo Mode Popup Modal is deactivated.`);
-    console.log(`  - The Demo Header Badge is deactivated.`);
-    console.log(`  - Store is live for real customer transactions.\n`);
-    return;
-  }
-
-  if (sub === 'status') {
-    const currentMode = getSettingVal('site_mode', 'demo');
-    const noticeActive = getSettingVal('demo_notice_active', '1');
-    console.log(`\n${c.bold('--- TechTink Website Deployment Status ---')}`);
-    console.log(`Current Mode      : ${currentMode === 'demo' ? c.yellow('DEMO MODE (Testing & Preview)') : c.green('OPERATIONAL (Live Store)')}`);
-    console.log(`Demo Popup Notice : ${noticeActive === '1' ? c.green('Active (1)') : c.yellow('Inactive (0)')}`);
-    console.log(`Popup Title       : ${getSettingVal('demo_notice_title', 'Default')}`);
-    console.log(`Header Badge      : ${getSettingVal('demo_notice_badge_header', '1') === '1' ? 'Visible' : 'Hidden'}\n`);
-    return;
-  }
-
-  // Interactive Menu
-  const prompter = createPrompter();
-  const currentMode = getSettingVal('site_mode', 'demo');
-  console.log(`\n${c.bold('--- Website Deployment Mode Management ---')}`);
-  console.log(`Current Status: ${currentMode === 'demo' ? c.yellow('DEMO MODE (Under testing/evaluation)') : c.green('OPERATIONAL (Live store)')}\n`);
-  console.log(`[1] Switch to DEMO MODE (Enable popup notice & demo badges)`);
-  console.log(`[2] Switch to OPERATIONAL MODE (Official launch, disable demo popup)`);
-  console.log(`[3] View Current Mode Details & Settings`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = (await prompter.ask('\nSelect an option [0-3]: ')).trim();
-  prompter.close();
-
-  switch (choice) {
-    case '1':
-      await handleSiteMode(['demo']);
-      break;
-    case '2':
-      await handleSiteMode(['operational']);
-      break;
-    case '3':
-      await handleSiteMode(['status']);
-      break;
-    default:
-      break;
-  }
-}
-
-// ==============================================================================
-// 11. DOCKER & CONTAINER MANAGEMENT
-// ==============================================================================
-async function handleDocker(args) {
-  const sub = (args[0] || '').toLowerCase();
-
-  const isDockerAvailable = commandExists('docker');
-  if (!isDockerAvailable) {
-    console.log(`\n${TAG_ERR} Docker is not installed or not in PATH.`);
-    console.log(`${TAG_INFO} To install Docker on your VPS:`);
-    console.log(`  curl -fsSL https://get.docker.com | sh`);
-    console.log(`  sudo usermod -aG docker $USER\n`);
-    return;
-  }
-
-  const composeCmd = runCmd('docker compose version') ? 'docker compose' : 'docker-compose';
-
-  if (sub === 'build') {
-    console.log(`\n${TAG_INFO} Building TechTink Docker images (${composeCmd} build)...`);
-    try {
-      execSync(`${composeCmd} build`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-      console.log(`\n${TAG_OK} Docker build complete!\n`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Build failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'up' || sub === 'start') {
-    console.log(`\n${TAG_INFO} Starting TechTink Docker containers (${composeCmd} up -d)...`);
-    try {
-      execSync(`${composeCmd} up -d --build`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-      console.log(`\n${TAG_OK} Containers started successfully!`);
-      execSync(`${composeCmd} ps`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-      console.log('');
-    } catch (e) {
-      console.error(`${TAG_ERR} Start failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'down' || sub === 'stop') {
-    console.log(`\n${TAG_INFO} Stopping TechTink containers (${composeCmd} down)...`);
-    try {
-      execSync(`${composeCmd} down`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-      console.log(`\n${TAG_OK} Containers stopped.\n`);
-    } catch (e) {
-      console.error(`${TAG_ERR} Stop failed: ${e.message}`);
-    }
-    return;
-  }
-
-  if (sub === 'status' || sub === 'ps') {
-    console.log(`\n${c.bold('--- TechTink Docker Container Status ---')}`);
-    try {
-      execSync(`${composeCmd} ps`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-    } catch (e) {
-      console.error(`${TAG_ERR} Could not query containers: ${e.message}`);
-    }
-    console.log('');
-    return;
-  }
-
-  if (sub === 'logs') {
-    console.log(`\n${TAG_INFO} Streaming container logs (${composeCmd} logs -f)...`);
-    try {
-      execSync(`${composeCmd} logs -f --tail=100`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-    } catch {}
-    return;
-  }
-
-  // Interactive menu
-  const prompter = createPrompter();
-  console.log(`\n${c.bold('--- TechTink Docker Container Management ---')}`);
-  console.log(`Compose Engine: ${c.cyan(composeCmd)}\n`);
-  console.log(`[1] Start / Update Containers (Build & Run in background)`);
-  console.log(`[2] View Container Status (docker compose ps)`);
-  console.log(`[3] View Live Container Logs (docker compose logs -f)`);
-  console.log(`[4] Stop All Containers (docker compose down)`);
-  console.log(`[5] Rebuild Images Cleanly (docker compose build --no-cache)`);
-  console.log(`[0] Back to main menu`);
-
-  const choice = (await prompter.ask('\nSelect an option [0-5]: ')).trim();
-  prompter.close();
-
-  switch (choice) {
-    case '1':
-      await handleDocker(['up']);
-      break;
-    case '2':
-      await handleDocker(['status']);
-      break;
-    case '3':
-      await handleDocker(['logs']);
-      break;
-    case '4':
-      await handleDocker(['down']);
-      break;
-    case '5':
+  } else if (sub === 'vacuum') {
+    console.log(`${TAG_INFO} Running VACUUM to defragment database...`);
+    const dbInst = await getDbInstance();
+    if (dbInst) {
       try {
-        execSync(`${composeCmd} build --no-cache`, { stdio: 'inherit', cwd: PROJECT_ROOT });
-      } catch {}
-      break;
-    default:
-      break;
+        if (typeof dbInst.query === 'function') dbInst.query('VACUUM').run();
+        else dbInst.prepare('VACUUM').run();
+        console.log(`${TAG_OK} VACUUM completed successfully.`);
+      } catch (e) {
+        console.error(`${TAG_ERR} VACUUM failed: ${e.message}`);
+      }
+    }
+  } else if (sub === 'check' || sub === 'integrity') {
+    console.log(`${TAG_INFO} Checking PRAGMA integrity_check...`);
+    const dbInst = await getDbInstance();
+    if (dbInst) {
+      try {
+        const res = typeof dbInst.query === 'function' ? dbInst.query('PRAGMA integrity_check').get() : dbInst.prepare('PRAGMA integrity_check').get();
+        console.log(`${TAG_OK} Integrity status: ${c.green(JSON.stringify(res))}`);
+      } catch (e) {
+        console.error(`${TAG_ERR} Integrity check failed: ${e.message}`);
+      }
+    }
   }
 }
 
 // ==============================================================================
-// MAIN INTERACTIVE MENU (TUI)
+// 8. DOCKER STACK MANAGEMENT
+// ==============================================================================
+function handleDocker(args = []) {
+  const sub = (args[0] || 'status').toLowerCase();
+  if (!commandExists('docker')) {
+    console.log(`${TAG_WARN} Docker is not installed on this system.`);
+    return;
+  }
+
+  console.log(`\n${c.bold('--- TechTink Docker Stack ---')}`);
+  if (sub === 'up') {
+    console.log(`${TAG_INFO} Starting containers via docker compose up -d...`);
+    runCmdInherit('docker compose up -d');
+  } else if (sub === 'down') {
+    console.log(`${TAG_INFO} Stopping containers via docker compose down...`);
+    runCmdInherit('docker compose down');
+  } else if (sub === 'restart') {
+    console.log(`${TAG_INFO} Restarting containers...`);
+    runCmdInherit('docker compose restart');
+  } else if (sub === 'logs') {
+    runCmdInherit('docker compose logs -f --tail 100');
+  } else {
+    console.log(`${TAG_INFO} Container status:`);
+    runCmdInherit('docker compose ps');
+  }
+}
+
+// ==============================================================================
+// 9. MAIN INTERACTIVE CONSOLE MENU (x-ui Style)
 // ==============================================================================
 async function startInteractiveMenu() {
   while (true) {
@@ -1762,131 +1314,140 @@ async function startInteractiveMenu() {
     const runtime = detectRuntime();
     const isFree = await checkPortFree(port);
 
-    console.log(`\n${c.bold('============================================================')}`);
-    console.log(`  ${c.bold(c.cyan('TechTink VPS & Backend Management Console'))}`);
-    console.log(`${c.bold('============================================================')}`);
-    console.log(`  Runtime : ${c.green(runtime.name)} (${runtime.path})`);
-    console.log(`  Port    : ${c.cyan(port)} (${isFree ? c.yellow('Idle / Free') : c.green('Listening / In Use')})`);
-    console.log(`  Root    : ${c.gray(PROJECT_ROOT)}`);
-    console.log(`------------------------------------------------------------`);
-    console.log(`  [1] Port Configuration (View / Change / Check Availability)`);
-    console.log(`  [2] Systemd Service (Generate / Install / Start / Restart / Status)`);
-    console.log(`  [3] Nginx Reverse Proxy & SSL (Fix default page / Reverse Proxy / SSL certs)`);
-    console.log(`  [4] Backend Health & Status (Ping / Latency / Diagnostics)`);
-    console.log(`  [5] Application Logs (systemd journalctl / file logs)`);
-    console.log(`  [6] Database Maintenance (Backup / Vacuum / Integrity Check)`);
-    console.log(`  [7] Administrator Accounts (Create Admin / List Admins)`);
-    console.log(`  [8] Environment Variables (.env viewer & editor)`);
-    console.log(`  [9] Quick Deployment & Pull (deploy.sh)`);
-    console.log(`  [10] Website Deployment Mode (Toggle Demo Mode vs Operational Mode)`);
-    console.log(`  [11] Docker Containers (Docker Compose Up / Down / Status / Logs)`);
-    console.log(`  [0] Exit`);
-    console.log(`------------------------------------------------------------`);
+    console.log(`\n${c.bold('======================================================================')}`);
+    console.log(`  ${c.bold(c.cyan('TechTink VPS & Backend Management Console (v2.0 Beta)'))}`);
+    console.log(`${c.bold('======================================================================')}`);
+    console.log(`  OS Platform       : ${c.bold(os.type())} ${os.release()} (${os.arch()})`);
+    console.log(`  Runtime Engine    : ${c.green(runtime.name)} (${runtime.path})`);
+    console.log(`  Backend Port      : ${c.cyan(port)} (${isFree ? c.yellow('Idle / Free') : c.green('Listening / In Use')})`);
+    console.log(`  TechTink Root     : ${c.gray(PROJECT_ROOT)}`);
+    console.log(`----------------------------------------------------------------------`);
+    console.log(`  ${c.bold('[1]')}  Start TechTink Server`);
+    console.log(`  ${c.bold('[2]')}  Stop TechTink Server`);
+    console.log(`  ${c.bold('[3]')}  Restart TechTink Server`);
+    console.log(`  ${c.bold('[4]')}  Server Status & Diagnostics`);
+    console.log(`  ${c.bold('[5]')}  View Live Logs (journalctl / console)`);
+    console.log(`  ${c.bold('[6]')}  Change Server Port (Current: ${port})`);
+    console.log(`  ${c.bold('[7]')}  ${c.green('SSL Certificate Manager (3x-ui acme.sh Engine)')}`);
+    console.log(`  ${c.bold('[8]')}  Nginx Reverse Proxy & Default Page Fix`);
+    console.log(`  ${c.bold('[9]')}  Switch Website Mode (Demo vs Operational)`);
+    console.log(`  ${c.bold('[10]')} Database Maintenance (Backup / Vacuum / Check)`);
+    console.log(`  ${c.bold('[11]')} Docker Stack Management (Compose Up / Down / Status)`);
+    console.log(`  ${c.bold('[12]')} Create / Manage Admin Account`);
+    console.log(`  ${c.bold('[0]')}  Exit`);
+    console.log(`----------------------------------------------------------------------`);
 
     const prompter = createPrompter();
-    const choice = (await prompter.ask('Enter your selection [0-11]: ')).trim();
+    const choice = (await prompter.ask('Enter your choice [0-12]: ')).trim();
     prompter.close();
 
     switch (choice) {
       case '1':
-        await handlePort([]);
+        await handleServiceStart();
         break;
       case '2':
-        await handleSystemd([]);
+        await handleServiceStop();
         break;
       case '3':
-        await handleSSL([]);
+        await handleServiceRestart();
         break;
       case '4':
         await handleStatus();
         break;
       case '5':
-        handleLogs([]);
+        handleLogs(['-f', '-n', '50']);
         break;
       case '6':
-        await handleDatabase([]);
+        await handlePort([]);
         break;
       case '7':
-        await handleAdmin([]);
+        await startSSLMenu();
         break;
       case '8':
-        await handleEnv(['show']);
+        await handleNginxFix();
         break;
-      case '9':
-        handleDeploy();
+      case '9': {
+        const p = createPrompter();
+        console.log(`\nSelect Website Mode:`);
+        console.log(`  [1] Demo Mode (Investor Showcase Notice Active)`);
+        console.log(`  [2] Operational Mode (Live Production Store)`);
+        const m = (await p.ask('Choice [1/2]: ')).trim();
+        p.close();
+        if (m === '1') await handleSiteMode(['demo']);
+        else if (m === '2') await handleSiteMode(['operational']);
         break;
+      }
       case '10':
-        await handleSiteMode([]);
+        await handleDatabase(['backup']);
         break;
       case '11':
-        await handleDocker([]);
+        handleDocker(['status']);
         break;
+      case '12': {
+        const adminScript = path.join(PROJECT_ROOT, 'scripts', 'create-admin.js');
+        if (fs.existsSync(adminScript)) {
+          runCmdInherit(`${runtime.path} "${adminScript}"`);
+        }
+        break;
+      }
       case '0':
       case 'q':
       case 'exit':
         console.log(`\nGoodbye!\n`);
         process.exit(0);
       default:
-        console.log(`\n${TAG_WARN} Invalid option "${choice}". Please choose 0 to 11.`);
+        console.log(`${TAG_WARN} Invalid option "${choice}". Choose 0 to 12.`);
         break;
     }
   }
 }
 
 // ==============================================================================
-// CLI ARGUMENT PARSER / DISPATCHER
+// 10. CLI ARGUMENT DISPATCHER
 // ==============================================================================
 function printHelp() {
   console.log(`
-============================================================
-  TechTink VPS & Backend Management CLI Tool
-============================================================
+======================================================================
+  TechTink VPS & Backend Management CLI Tool (v2.0 Beta)
+======================================================================
 
 Usage:
-  node scripts/manage.js [command] [options]
-  bun scripts/manage.js [command] [options]
+  node scripts/manage.js [command] [arguments...]
+  bun scripts/manage.js [command] [arguments...]
 
-Commands:
-  port [number]             Check port availability or change active port in .env
-  systemd [subcommand]      Manage systemd service:
-                              generate  : Create techtink.service unit file
-                              install   : Install to /etc/systemd/system/ and enable
-                              start     : Start techtink systemd service
-                              stop      : Stop techtink systemd service
-                              restart   : Restart techtink systemd service
-                              status    : View systemctl status
-  ssl [subcommand]          SSL & Reverse proxy management:
-                              cert-dir <dir> [domain] : Configure Nginx using cert files in directory
-                              letsencrypt             : Run certbot for domain
-                              self-signed             : Generate 2048-bit dev certificate
-                              nginx-config            : Generate production Nginx config
-                              test-renew              : Test certbot auto-renewal dry run
-  ssl-dir <dir> [domain]    Shortcut: configure Nginx with certificate directory
-  nginx [fix|cert-dir|status|reload] Nginx reverse proxy management & default site fix
-  status                    Show comprehensive backend health report & diagnostics
-  logs [-n <lines>] [-f]    Inspect live service logs (journalctl or file)
-  db [subcommand]           SQLite database maintenance:
-                              backup    : Create timestamped backup file
-                              vacuum    : Defragment & optimize database
-                              check     : Run PRAGMA integrity_check
-                              info      : View tables and record counts
-  admin [list|create]       List admin users or launch admin creation wizard
-  mode [demo|operational|status] Toggle website mode (Demo Mode vs Operational Mode)
-  docker [up|down|build|status|logs] Docker Compose container stack management
-  env [show|set <K> <V>]    Inspect or modify .env variables
-  deploy                    Run deploy.sh script
-  help, --help, -h          Show this help message
+Server Commands (x-ui Style):
+  start                     Start TechTink backend server / service
+  stop                      Stop TechTink backend server / service
+  restart                   Restart TechTink backend server / service
+  status                    View complete health report & diagnostics
+  logs [-f] [-n <num>]      View live application logs (journalctl / file)
+  port [number]             Check port availability or change port in .env
+  install-service           Install & enable systemd service (techtink.service)
 
-Running with NO arguments starts the interactive console menu (TUI).
+SSL Management Commands (3x-ui Engine):
+  ssl                       Launch interactive SSL Management menu
+  ssl issue [domain] [port] Issue Let's Encrypt certificate via acme.sh standalone
+  ssl cert-dir <path> [dom] Configure Nginx with certificate folder or custom paths
+  ssl list                  Show all existing SSL certificates & expiry dates
+  ssl cf <dom> <email> <k>  Issue SSL via Cloudflare DNS-01 API
+  ssl self-signed           Generate 2048-bit dev certificate
+  ssl renew [domain]        Force renew SSL certificate
+  ssl revoke [domain]       Revoke and remove domain certificate
 
-Examples:
-  node scripts/manage.js docker up
-  node scripts/manage.js docker status
-  node scripts/manage.js mode demo
-  node scripts/manage.js ssl cert-dir /etc/letsencrypt/live/techtink.ir
-  node scripts/manage.js nginx fix
-  node scripts/manage.js port 8080
-  node scripts/manage.js
+Nginx Reverse Proxy:
+  nginx [fix|setup|reload]  Install / repair Nginx reverse proxy & remove default page
+
+Website Mode & Beta Showcase:
+  mode [demo|operational]   Switch website mode (Demo Notice Modal vs Live)
+  mode status               Show current website deployment mode
+
+Database & Docker:
+  db [backup|vacuum|check]  SQLite database backup & maintenance
+  docker [up|down|status]   Manage Docker Compose container stack
+  admin [create|list]       Create or manage admin accounts
+  help, -h, --help          Show this manual
+
+No arguments launches the Interactive Console Menu (TUI).
 `);
 }
 
@@ -1901,23 +1462,14 @@ async function main() {
   }
 
   switch (cmd) {
-    case 'port':
-      await handlePort(subArgs);
+    case 'start':
+      await handleServiceStart();
       break;
-    case 'systemd':
-    case 'systemctl':
-      await handleSystemd(subArgs);
+    case 'stop':
+      await handleServiceStop();
       break;
-    case 'nginx':
-      await handleNginx(subArgs);
-      break;
-    case 'ssl-dir':
-    case 'cert-dir':
-      await handleCertDir(subArgs);
-      break;
-    case 'ssl':
-    case 'cert':
-      await handleSSL(subArgs);
+    case 'restart':
+      await handleServiceRestart();
       break;
     case 'status':
     case 'health':
@@ -1927,27 +1479,64 @@ async function main() {
     case 'log':
       handleLogs(subArgs);
       break;
-    case 'db':
-    case 'database':
-      await handleDatabase(subArgs);
+    case 'port':
+      await handlePort(subArgs);
       break;
-    case 'admin':
-      await handleAdmin(subArgs);
+    case 'service':
+    case 'install-service':
+    case 'systemd':
+      handleServiceInstall();
+      break;
+    case 'ssl':
+    case 'cert': {
+      const sub = subArgs[0]?.toLowerCase();
+      if (!sub || sub === 'menu') await startSSLMenu();
+      else if (sub === 'issue' || sub === 'create') await sslIssueDomain(subArgs[1], subArgs[2]);
+      else if (sub === 'cert-dir' || sub === 'dir') await sslSetCertDir(subArgs[1], subArgs[2]);
+      else if (sub === 'list' || sub === 'show') sslShowList();
+      else if (sub === 'cf' || sub === 'cloudflare') await sslIssueCloudflare(subArgs[1], subArgs[2], subArgs[3]);
+      else if (sub === 'self-signed') sslSelfSigned();
+      else if (sub === 'renew') {
+        const acme = getAcmeBin();
+        if (subArgs[1] && hasAcme()) runCmdInherit(`${acme} --renew -d ${subArgs[1]} --force`);
+      } else if (sub === 'revoke') {
+        const acme = getAcmeBin();
+        if (subArgs[1] && hasAcme()) {
+          runCmdInherit(`${acme} --revoke -d ${subArgs[1]}`);
+          runCmdInherit(`${acme} --remove -d ${subArgs[1]}`);
+        }
+      } else {
+        // Fallback: check if subArg is actually a directory (like `manage.js ssl /cert/techtink.ir`)
+        await sslSetCertDir(sub, subArgs[1]);
+      }
+      break;
+    }
+    case 'ssl-dir':
+    case 'cert-dir':
+      await sslSetCertDir(subArgs[0], subArgs[1]);
+      break;
+    case 'nginx':
+      if (subArgs[0] === 'fix') await handleNginxFix();
+      else await handleNginxConfigure({});
       break;
     case 'mode':
     case 'sitemode':
       await handleSiteMode(subArgs);
       break;
+    case 'db':
+    case 'database':
+      await handleDatabase(subArgs);
+      break;
     case 'docker':
     case 'compose':
-      await handleDocker(subArgs);
+      handleDocker(subArgs);
       break;
-    case 'env':
-      await handleEnv(subArgs);
+    case 'admin': {
+      const adminScript = path.join(PROJECT_ROOT, 'scripts', 'create-admin.js');
+      const runtime = detectRuntime();
+      runCmdInherit(`${runtime.path} "${adminScript}" ${subArgs.join(' ')}`);
       break;
-    case 'deploy':
-      handleDeploy();
-      break;
+    }
     case 'help':
     case '--help':
     case '-h':
