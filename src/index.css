@@ -867,4 +867,33 @@ details[open] summary ~ * {
   .benchmark-row-track {
     width: 100%;
   }
+
+  /* Comparison Modal Mobile Optimization */
+  .compare-modal-card {
+    max-height: 94vh !important;
+    border-radius: 22px !important;
+  }
+  .compare-modal-body {
+    padding: 14px 10px !important;
+    gap: 18px !important;
+  }
+  .compare-chart-card {
+    padding: 14px 10px !important;
+  }
+  .compare-metric-box {
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+  }
+  .compare-device-bar-card {
+    padding: 8px 10px !important;
+  }
+  .device-color-legend {
+    padding: 10px !important;
+    gap: 6px !important;
+  }
+}
+
+.compare-device-bar-card:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.03);
 }
