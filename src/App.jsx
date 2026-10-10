@@ -3,6 +3,9 @@ import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink, ShoppingCart, X } f
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
+import AnnouncementBar from './components/AnnouncementBar.jsx';
+import PromotionBanner from './components/PromotionBanner.jsx';
+import ProductShowcase from './components/ProductShowcase.jsx';
 import LaptopCatalog from './components/LaptopCatalog.jsx';
 import LaptopCustomizerModal from './components/LaptopCustomizerModal.jsx';
 import SpecCompareModal from './components/SpecCompareModal.jsx';
@@ -27,6 +30,7 @@ function App() {
   const [compareList, setCompareList] = useState([]); // Array of laptop IDs
   const [isAboutUsOpen, setIsAboutUsOpen] = useState(false);
   const [storeAboutInfo, setStoreAboutInfo] = useState(null);
+  const [homepageConfig, setHomepageConfig] = useState(null);
 
   // Compute compared laptop objects
   const comparedLaptops = useMemo(() => {
@@ -94,6 +98,11 @@ function App() {
     fetch('/api/about')
       .then(res => res.json())
       .then(data => { if (data && !data.error) setStoreAboutInfo(data); })
+      .catch(() => {});
+
+    fetch('/api/homepage')
+      .then(res => res.json())
+      .then(data => { if (data && !data.error) setHomepageConfig(data); })
       .catch(() => {});
 
     // Parse URL on first load
@@ -171,6 +180,10 @@ function App() {
     setActiveTab(targetTab);
     if (targetTab === 'store') {
       window.history.pushState(null, '', '/');
+      fetch('/api/homepage')
+        .then(res => res.json())
+        .then(data => { if (data && !data.error) setHomepageConfig(data); })
+        .catch(() => {});
     } else if (targetTab === 'admin') {
       window.history.pushState(null, '', '/admin');
     } else {
@@ -208,6 +221,15 @@ function App() {
 
   return (
     <div>
+      {/* 0. DYNAMIC ANNOUNCEMENT BAR */}
+      <AnnouncementBar 
+        config={homepageConfig?.announcement} 
+        onExploreClick={() => {
+          const el = document.getElementById('catalog');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
+
       <Header 
         activeTab={activeTab} 
         setActiveTab={handleTabChange} 
@@ -229,10 +251,29 @@ function App() {
       {/* 1. STORE VIEW */}
       {activeTab === 'store' && (
         <main>
-          <Hero onExploreClick={() => {
-            const el = document.getElementById('catalog');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }} />
+          <Hero 
+            config={homepageConfig?.hero}
+            onExploreClick={() => {
+              const el = document.getElementById('catalog');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            onSecondaryClick={() => handleTabChange('blog')}
+          />
+
+          <PromotionBanner 
+            config={homepageConfig?.promotion}
+            onExploreClick={() => {
+              const el = document.getElementById('catalog');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+          />
+
+          <ProductShowcase 
+            config={homepageConfig?.showcase}
+            onSelectProduct={handleSelectProduct}
+            onAddToCart={handleAddToCart}
+          />
+
           <LaptopCatalog 
             laptops={laptops} 
             onCustomize={setSelectedLaptop}

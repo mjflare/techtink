@@ -350,7 +350,8 @@ const EDITABLE = [
   'gateway_zarinpal_active', 'gateway_mellat_active', 'gateway_saman_active', 'gateway_parsian_active',
   'gateway_card_active', 'gateway_cod_active', 'card_number', 'card_holder',
   'store_address', 'store_phone', 'store_mobile', 'store_hours', 'store_map_link', 'store_about',
-  'telegram_url', 'instagram_url', 'bale_url', 'aparat_url'
+  'telegram_url', 'instagram_url', 'bale_url', 'aparat_url',
+  'homepage_announcement', 'homepage_hero', 'homepage_promotion', 'homepage_showcase'
 ];
 r.get('/settings', (_req, res) => {
   const all = getSettings();
@@ -364,6 +365,41 @@ r.patch('/settings', (req, res) => {
     }
   }
   res.json(getSettings());
+});
+
+// ---------- Homepage Customizer API ----------
+r.get('/homepage', (_req, res) => {
+  const getJson = (key, fallback) => {
+    try {
+      const v = getSetting(key);
+      return v ? JSON.parse(v) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const announcement = getJson('homepage_announcement', {});
+  const hero = getJson('homepage_hero', {});
+  const promotion = getJson('homepage_promotion', {});
+  const showcase = getJson('homepage_showcase', { productSlugs: [] });
+  const products = db.all('SELECT id, slug, name, brand, model, base_price, old_price, image, category, grade, stock FROM products WHERE active = 1 ORDER BY id DESC');
+
+  res.json({
+    announcement,
+    hero,
+    promotion,
+    showcase,
+    availableProducts: products
+  });
+});
+
+r.put('/homepage', (req, res) => {
+  const { announcement, hero, promotion, showcase } = req.body || {};
+  if (announcement !== undefined) setSetting('homepage_announcement', typeof announcement === 'string' ? announcement : JSON.stringify(announcement));
+  if (hero !== undefined) setSetting('homepage_hero', typeof hero === 'string' ? hero : JSON.stringify(hero));
+  if (promotion !== undefined) setSetting('homepage_promotion', typeof promotion === 'string' ? promotion : JSON.stringify(promotion));
+  if (showcase !== undefined) setSetting('homepage_showcase', typeof showcase === 'string' ? showcase : JSON.stringify(showcase));
+  res.json({ success: true, message: 'تنظیمات صفحه اصلی با موفقیت ذخیره شد.' });
 });
 
 // ---------- Product Drivers Management ----------

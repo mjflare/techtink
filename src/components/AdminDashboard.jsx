@@ -6,12 +6,13 @@ import {
   Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
-  Upload, Terminal, Server, AlertOctagon
+  Upload, Terminal, Server, AlertOctagon, Layout
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
 import ProductEditorModal from './ProductEditorModal.jsx';
 import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
+import HomeCustomizer from './HomeCustomizer.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout }) {
@@ -982,6 +983,16 @@ export default function AdminDashboard({ user, onLogout }) {
       ]
     },
     {
+      id: 'storefront',
+      title: 'طراحی و ویترین صفحه اصلی',
+      enTitle: 'Storefront & Homepage',
+      desc: 'سفارشی‌ساز ویترین، اخبار فوری، هیرو و پروموشن‌ها',
+      icon: Layout,
+      tabs: [
+        { id: 'home_customizer', label: 'سفارشی‌ساز صفحه اصلی (Home Customizer)', icon: Sparkles, badge: 'ویترین' }
+      ]
+    },
+    {
       id: 'logistics',
       title: 'لجستیک و مدیریت انبار',
       enTitle: 'Logistics & Supply',
@@ -1436,6 +1447,11 @@ export default function AdminDashboard({ user, onLogout }) {
             </>
           ) : null}
         </div>
+      )}
+
+      {/* HOME PAGE CUSTOMIZER */}
+      {activeSection === 'home_customizer' && (
+        <HomeCustomizer authToken={authToken} />
       )}
 
       {/* 2. PRODUCTS & STOCK MANAGEMENT */}

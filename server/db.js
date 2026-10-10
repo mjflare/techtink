@@ -255,7 +255,58 @@ export const DEFAULT_SETTINGS = {
   telegram_url: 'https://t.me/techtink',
   instagram_url: 'https://instagram.com/techtink',
   bale_url: 'https://ble.ir/techtink',
-  aparat_url: 'https://aparat.com/techtink'
+  aparat_url: 'https://aparat.com/techtink',
+  // Homepage Customizer Defaults
+  homepage_announcement: JSON.stringify({
+    active: true,
+    badge: 'خبر ویژه',
+    text: 'تخفیف ویژه آغاز فصل و سفارش‌های مهندسی - ارسال رایگان با پست پیشتاز به سراسر کشور',
+    linkText: 'مشاهده لپ‌تاپ‌ها',
+    linkUrl: '#catalog',
+    style: 'cyan'
+  }),
+  homepage_hero: JSON.stringify({
+    active: true,
+    badge: 'مدل‌های نسل جدید وارداتی با گارانتی ۶ ماهه',
+    title: 'آینده پردازش را تجربه کنید.',
+    highlightWord: 'آینده',
+    subtitle: 'عملکرد در سطح دسکتاپ، موتورهای هوش مصنوعی پردازش عصبی، و سلامت سخت‌افزاری تضمین‌شده در مجهزترین مرجع لپ‌تاپ‌های مهندسی و استوک اروپا و آمریکا.',
+    primaryBtnText: 'مشاهده مدل‌ها و خرید',
+    primaryBtnLink: '#catalog',
+    secondaryBtnText: 'تماشای بررسی ویدیویی',
+    secondaryBtnLink: '/blog',
+    imageUrl: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1000&q=80',
+    stats: [
+      { val: '۶۸ ترافلاپس', label: 'توان موتور عصبی (NPU)' },
+      { val: '۱۷۵ وات', label: 'حداکثر توان گرافیک (TGP)' },
+      { val: '۱۸ ساعت', label: 'دوام شارژ باتری' }
+    ],
+    chips: [
+      { icon: 'Cpu', label: 'Intel Ultra' },
+      { icon: 'Zap', label: 'RTX 5090' },
+      { icon: 'Battery', label: '99.9Wh' }
+    ]
+  }),
+  homepage_promotion: JSON.stringify({
+    active: true,
+    badge: 'کمپین تخفیف شگفت‌انگیز',
+    title: 'جشنواره ورک‌استیشن‌های رندرینگ و طراحی مهندسی',
+    subtitle: 'تا ۱۵٪ تخفیف ویژه برای لپ‌تاپ‌های برگزیده سری ThinkPad و Precision همراه با تست ۳۰ روزه',
+    promoCode: 'TECHTINK2026',
+    discountPercent: '۱۵٪',
+    expireDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    btnText: 'مشاهده محصولات جشنواره',
+    btnLink: '#catalog',
+    theme: 'fiery'
+  }),
+  homepage_showcase: JSON.stringify({
+    active: true,
+    title: 'ویترین محصولات برگزیده و پیشنهادات ویژه',
+    subtitle: 'دستچین تخصصی کارشناسان سخت‌افزار با بالاترین امتیاز عملکرد و سلامت قطعات',
+    badge: 'پیشنهاد کارشناسان',
+    bannerText: 'تحویل اکسپرس در تهران و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
+    productSlugs: ['lenovo-thinkpad-t14', 'dell-precision-7530', 'hp-zbook-15-g6']
+  })
 };
 
 // USD seed prices -> Toman, or direct Toman prices >= 10000

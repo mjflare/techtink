@@ -13,6 +13,39 @@ r.get('/settings', (_req, res) => {
   res.json(getSettings());
 });
 
+r.get('/homepage', (_req, res) => {
+  const getJson = (key, fallback) => {
+    try {
+      const v = getSetting(key);
+      return v ? JSON.parse(v) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const announcement = getJson('homepage_announcement', { active: false });
+  const hero = getJson('homepage_hero', { active: true });
+  const promotion = getJson('homepage_promotion', { active: false });
+  const showcase = getJson('homepage_showcase', { active: false, productSlugs: [] });
+
+  let showcaseProducts = [];
+  if (showcase.productSlugs && Array.isArray(showcase.productSlugs) && showcase.productSlugs.length > 0) {
+    const placeholders = showcase.productSlugs.map(() => '?').join(',');
+    const rows = db.all(`SELECT * FROM products WHERE slug IN (${placeholders}) AND active = 1`, ...showcase.productSlugs);
+    showcaseProducts = rows.map((p) => serializeProduct(p));
+  }
+
+  res.json({
+    announcement,
+    hero,
+    promotion,
+    showcase: {
+      ...showcase,
+      products: showcaseProducts
+    }
+  });
+});
+
 const getProductsHandler = (req, res) => {
   const rows = db.all('SELECT * FROM products WHERE active = 1 ORDER BY id');
   res.json(rows.map((p) => serializeProduct(p)));
