@@ -21,7 +21,7 @@ import UserDashboard from './components/UserDashboard.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
 import DemoNoticeModal from './components/DemoNoticeModal.jsx';
 import { trackPageView } from './utils/analytics.js';
-import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './components/SocialLogos.jsx';
+import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './components/SocialLogos.jsx';
 
 function App() {
   const [activeTab, setActiveTab] = useState('store'); // 'store', 'product', 'compare', 'support', 'blog', 'admin'
@@ -605,6 +605,57 @@ function App() {
               </a>
 
             </div>
+
+            {/* Official eNamad Trust Seal Badge */}
+            {(storeAboutInfo?.enamad_active !== '0' && storeAboutInfo?.enamad_active !== 0 && storeAboutInfo?.enamad_active !== false) && (
+              <div style={{ marginTop: '20px' }}>
+                <a 
+                  href={storeAboutInfo?.enamad_url || 'https://trustseal.enamad.ir/?id=24125751'} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="glass-card"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '8px 14px',
+                    borderRadius: '14px',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    border: '1px solid var(--border-glass)',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 18px rgba(0, 0, 0, 0.15)'
+                  }}
+                  title="مشاهده تاییدیه و گواهی نماد اعتماد الکترونیکی (اینماد)"
+                >
+                  <div style={{
+                    width: '50px',
+                    height: '50px',
+                    borderRadius: '12px',
+                    background: '#ffffff',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    <EnamadLogo size={42} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      نماد اعتماد الکترونیکی
+                    </div>
+                    <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      وزارت صنعت، معدن و تجارت
+                    </div>
+                    <div style={{ fontSize: '0.675rem', color: '#10b981', fontWeight: 700, marginTop: '2px' }}>
+                      تایید اصالت کسب‌وکار ✓
+                    </div>
+                  </div>
+                </a>
+              </div>
+            )}
           </div>
 
         </div>

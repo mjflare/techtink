@@ -327,6 +327,10 @@ export const DEFAULT_SETTINGS = {
   instagram_url: 'https://instagram.com/techtink',
   bale_url: 'https://ble.ir/techtink',
   aparat_url: 'https://aparat.com/techtink',
+  // Official eNamad Trust Seal
+  enamad_active: '1',
+  enamad_url: 'https://trustseal.enamad.ir/?id=24125751',
+  enamad_code: '24125751',
   // Google Search Console & SEO Optimization
   google_site_verification: '',
   google_analytics_id: '',

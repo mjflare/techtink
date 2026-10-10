@@ -83,3 +83,44 @@ export function AparatIcon({ size = 20, color = 'currentColor', className = '' }
     </svg>
   );
 }
+
+// Official eNamad Trust Seal Emblem (نماد اعتماد الکترونیکی)
+export function EnamadLogo({ size = 56, className = '' }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 100 100" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="enamadGold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#f59e0b" />
+          <stop offset="50%" stopColor="#d97706" />
+          <stop offset="100%" stopColor="#b45309" />
+        </linearGradient>
+        <linearGradient id="enamadBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0284c7" />
+          <stop offset="100%" stopColor="#0369a1" />
+        </linearGradient>
+      </defs>
+      
+      {/* Outer Seal Ring */}
+      <circle cx="50" cy="50" r="46" stroke="url(#enamadGold)" strokeWidth="3" fill="#ffffff" />
+      <circle cx="50" cy="50" r="41" stroke="#cbd5e1" strokeWidth="1" strokeDasharray="3 3" />
+      
+      {/* Stylized "e" emblem of eNamad */}
+      <path 
+        d="M50 20C33.43 20 20 33.43 20 50C20 66.57 33.43 80 50 80C62.45 80 73.12 72.44 77.63 61.67H64.88C61.42 67.2 55.45 70.83 50 70.83C38.5 70.83 29.17 61.5 29.17 50C29.17 38.5 38.5 29.17 50 29.17C57.65 29.17 64.3 33.31 67.88 39.58H50V47.92H79.52C79.83 46.48 80 44.99 80 43.46C80 30.5 66.57 20 50 20Z" 
+        fill="url(#enamadBlue)" 
+      />
+      
+      {/* Golden Rating Stars */}
+      <polygon points="50,6 52,12 58,12 53,16 55,22 50,18 45,22 47,16 42,12 48,12" fill="url(#enamadGold)" />
+      <polygon points="35,11 36.5,15.5 41,15.5 37.5,18.5 39,23 35,20 31,23 32.5,18.5 29,15.5 33.5,15.5" fill="url(#enamadGold)" />
+      <polygon points="65,11 66.5,15.5 71,15.5 67.5,18.5 69,23 65,20 61,23 62.5,18.5 59,15.5 63.5,15.5" fill="url(#enamadGold)" />
+    </svg>
+  );
+}

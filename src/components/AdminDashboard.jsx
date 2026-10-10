@@ -19,7 +19,7 @@ import CouponManager from './CouponManager.jsx';
 import DemoNoticeModal from './DemoNoticeModal.jsx';
 import ViewerAnalytics from './ViewerAnalytics.jsx';
 import AdminWebmail from './AdminWebmail.jsx';
-import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
+import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -3582,7 +3582,65 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                 </div>
               </div>
 
-              <div style={{ marginTop: '16px' }}>
+              {/* eNamad Trust Seal Settings */}
+              <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-glass)', paddingTop: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <div style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: '#ffffff',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    <EnamadLogo size={30} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 800 }}>نماد اعتماد الکترونیکی (اینماد - eNamad)</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      تنظیمات نمایش لوگو و لینک گواهی تایید صلاحیت کسب‌وکار در فوتر وب‌سایت
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={settingsForm.enamad_active === '1' || settingsForm.enamad_active === 1 || settingsForm.enamad_active === true}
+                        onChange={e => setSettingsForm({ ...settingsForm, enamad_active: e.target.checked ? '1' : '0' })}
+                      />
+                      <span style={{ fontWeight: 600 }}>نمایش نشان اینماد در فوتر سایت</span>
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      با فعال بودن این گزینه، کادر نشان اینماد در انتهای تمامی صفحات فروشگاه نمایش داده می‌شود.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                      لینک اختصاصی پروفایل اینماد (URL):
+                    </label>
+                    <input
+                      type="text"
+                      className="font-code"
+                      value={settingsForm.enamad_url || ''}
+                      onChange={e => setSettingsForm({ ...settingsForm, enamad_url: e.target.value })}
+                      placeholder="https://trustseal.enamad.ir/?id=24125751"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                    <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                      لینک اعتبارسنجی ارائه‌شده توسط سامانه اینماد (با کلیک کاربر، صفحه تاییدیه اینماد باز می‌شود).
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '20px' }}>
                 <button type="submit" className="btn btn-primary" disabled={savingSettings}>
                   {savingSettings ? 'در حال ذخیره...' : 'ذخیره تنظیمات فروشگاه'}
                 </button>
