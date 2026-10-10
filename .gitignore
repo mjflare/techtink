@@ -45,5 +45,4 @@ certs/
 *.key
 *.pem
 techtink.service
-techtink.nginx.conf
 techtink.service.tmp

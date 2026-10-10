@@ -456,13 +456,15 @@ async function handleSystemd(args) {
 // ==============================================================================
 // 3. SSL CERTIFICATE & NGINX REVERSE PROXY
 // ==============================================================================
-function buildNginxConfig({ domain, port, sslCert, sslKey, useSSL }) {
+function buildNginxConfig({ domain = '', port = 3000, sslCert = '', sslKey = '', useSSL = false }) {
+  const domainStr = domain && domain !== '_' ? `${domain} _` : '_';
   if (!useSSL) {
     return `# TechTink Nginx Reverse Proxy Configuration (HTTP Only)
+# Configured with default_server catch-all to prevent default welcome page collisions
 server {
-    listen 80;
-    listen [::]:80;
-    server_name ${domain};
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name ${domainStr};
 
     client_max_body_size 50M;
 
@@ -498,17 +500,17 @@ server {
   return `# TechTink Nginx Reverse Proxy Configuration with HTTPS & SSL
 # 1. HTTP to HTTPS Redirection
 server {
-    listen 80;
-    listen [::]:80;
-    server_name ${domain};
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name ${domainStr};
     return 301 https://$host$request_uri;
 }
 
 # 2. Main HTTPS Server Block
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-    server_name ${domain};
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name ${domainStr};
 
     # SSL Certificates
     ssl_certificate ${sslCert};
@@ -558,6 +560,140 @@ server {
 }
 `;
 }
+
+async function handleNginxFix(args = []) {
+  console.log(`\n${c.bold('============================================================')}`);
+  console.log(`  ${c.bold(c.cyan('TechTink Automated Nginx Configuration & Fix'))}`);
+  console.log(`${c.bold('============================================================')}`);
+
+  const port = getCurrentPort();
+  console.log(`${TAG_INFO} Target Backend Port: ${c.cyan(port)}`);
+
+  // 1. Check if Nginx is installed
+  const hasNginx = commandExists('nginx');
+  if (!hasNginx) {
+    console.log(`${TAG_WARN} Nginx binary was not detected in PATH.`);
+    console.log(`To install Nginx on Ubuntu/Debian:`);
+    console.log(`  sudo apt update && sudo apt install -y nginx\n`);
+  }
+
+  // 2. Remove default site collision
+  const defaultEnabled = '/etc/nginx/sites-enabled/default';
+  if (fs.existsSync(defaultEnabled)) {
+    console.log(`${TAG_INFO} Detected default site symlink: ${c.yellow(defaultEnabled)}`);
+    console.log(`${TAG_INFO} Removing default site to eliminate "Welcome to nginx!" collision...`);
+    try {
+      runCmd(`sudo rm -f "${defaultEnabled}"`);
+      console.log(`${TAG_OK} Successfully removed ${defaultEnabled}`);
+    } catch (e) {
+      console.error(`${TAG_WARN} Could not remove ${defaultEnabled}: ${e.message}`);
+    }
+  } else {
+    console.log(`${TAG_OK} Default site is already removed or disabled.`);
+  }
+
+  // 3. Determine domain
+  let domain = args[0] || '';
+  if (!domain && process.stdin.isTTY && !args.includes('--yes') && !args.includes('-y')) {
+    const prompter = createPrompter();
+    const answer = await prompter.ask('Enter domain name (press Enter to accept VPS IP and any domain): ');
+    prompter.close();
+    domain = answer.trim();
+  }
+
+  // 4. Generate config
+  const conf = buildNginxConfig({
+    domain,
+    port,
+    useSSL: false,
+  });
+
+  const rootConf = path.join(PROJECT_ROOT, 'techtink.nginx.conf');
+  fs.writeFileSync(rootConf, conf, 'utf8');
+  console.log(`${TAG_OK} Generated Nginx configuration file: ${c.cyan(rootConf)}`);
+
+  const targetAvail = '/etc/nginx/sites-available/techtink';
+  const targetEnabled = '/etc/nginx/sites-enabled/techtink';
+
+  const isLinux = os.platform() === 'linux';
+  if (isLinux && (fs.existsSync('/etc/nginx/sites-available') || fs.existsSync('/etc/nginx'))) {
+    console.log(`${TAG_INFO} Installing configuration into Nginx...`);
+    try {
+      runCmd(`sudo cp "${rootConf}" "${targetAvail}"`);
+      console.log(`${TAG_OK} Copied config to ${c.cyan(targetAvail)}`);
+
+      runCmd(`sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
+      console.log(`${TAG_OK} Created symlink at ${c.cyan(targetEnabled)}`);
+
+      console.log(`${TAG_INFO} Verifying Nginx syntax with "sudo nginx -t"...`);
+      runCmd('sudo nginx -t');
+      console.log(`${TAG_OK} Nginx syntax validation successful!`);
+
+      console.log(`${TAG_INFO} Reloading Nginx service...`);
+      runCmd('sudo systemctl reload nginx || sudo systemctl restart nginx');
+      console.log(`${TAG_OK} Nginx successfully reloaded! Port 80 now proxies to TechTink (127.0.0.1:${port}).`);
+    } catch (err) {
+      console.error(`${TAG_ERR} Auto-installation failed: ${err.message}`);
+      console.log(`Please run the following commands manually with sudo:`);
+      console.log(`  sudo cp "${rootConf}" "${targetAvail}"`);
+      console.log(`  sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
+      console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
+      console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+    }
+  } else {
+    console.log(`\n${TAG_INFO} Configuration saved to: ${c.cyan(rootConf)}`);
+    console.log(`Run the following on your Linux VPS:`);
+    console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
+    console.log(`  sudo cp "${rootConf}" /etc/nginx/sites-available/techtink`);
+    console.log(`  sudo ln -sf /etc/nginx/sites-available/techtink /etc/nginx/sites-enabled/`);
+    console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+  }
+
+  // 5. Backend health check
+  const isFree = await checkPortFree(port);
+  if (isFree) {
+    console.log(`\n${TAG_WARN} NOTICE: TechTink backend is NOT currently listening on port ${port}!`);
+    console.log(`Visitors will receive a "502 Bad Gateway" until the backend service is started.`);
+    console.log(`To start the backend right now, run:`);
+    console.log(`  sudo systemctl restart techtink   (or: bun server.js)\n`);
+  } else {
+    console.log(`\n${TAG_OK} TechTink backend is running and listening on port ${port}!`);
+    console.log(`${TAG_OK} TechTink is now LIVE at:`);
+    console.log(`  ${c.cyan(`http://${domain || 'YOUR_VPS_IP'}/`)}\n`);
+  }
+}
+
+async function handleNginx(args) {
+  const sub = args[0]?.toLowerCase() || 'fix';
+  if (sub === 'fix' || sub === 'setup' || sub === 'install') {
+    await handleNginxFix(args.slice(1));
+  } else if (sub === 'reload' || sub === 'restart') {
+    try {
+      console.log(`${TAG_INFO} Testing Nginx configuration...`);
+      runCmd('sudo nginx -t');
+      console.log(`${TAG_INFO} Reloading Nginx service...`);
+      runCmd('sudo systemctl reload nginx');
+      console.log(`${TAG_OK} Nginx reloaded successfully!`);
+    } catch (e) {
+      console.error(`${TAG_ERR} Reload failed: ${e.message}`);
+    }
+  } else if (sub === 'status') {
+    console.log(`\n${c.bold('--- Nginx Status & Diagnostics ---')}`);
+    const defaultExists = fs.existsSync('/etc/nginx/sites-enabled/default');
+    const techtinkExists = fs.existsSync('/etc/nginx/sites-enabled/techtink');
+    console.log(`Default site enabled : ${defaultExists ? c.yellow('YES (warning: may override TechTink)') : c.green('No (clean)')}`);
+    console.log(`TechTink site enabled: ${techtinkExists ? c.green('YES') : c.red('NO')}`);
+    try {
+      const res = runCmd('sudo nginx -t') || 'ok';
+      console.log(`${TAG_OK} Syntax test: ${res}`);
+    } catch (e) {
+      console.log(`${TAG_ERR} Syntax test error: ${e.message}`);
+    }
+  } else {
+    await handleNginxFix(args);
+  }
+}
+
 
 async function handleSSL(args) {
   const sub = args[0] || 'menu';
@@ -680,26 +816,30 @@ async function handleSSL(args) {
   console.log(`Certbot Installed: ${commandExists('certbot') ? c.green('Yes') : c.yellow('No')}`);
   console.log(`Nginx Installed  : ${commandExists('nginx') ? c.green('Yes') : c.yellow('No')}`);
   console.log('');
-  console.log(`[1] Issue Let's Encrypt Free SSL Certificate (Certbot)`);
-  console.log(`[2] Generate Self-Signed SSL Certificate (Development / Staging)`);
-  console.log(`[3] Generate Production Nginx Reverse Proxy Config (with SSL & WebSockets)`);
-  console.log(`[4] Test SSL Auto-Renewal (certbot renew --dry-run)`);
+  console.log(`[1] Fix Nginx Default Page Collision (Automated One-Click Fix)`);
+  console.log(`[2] Generate Production Nginx Reverse Proxy Config`);
+  console.log(`[3] Issue Let's Encrypt Free SSL Certificate (Certbot)`);
+  console.log(`[4] Generate Self-Signed SSL Certificate (Development / Staging)`);
+  console.log(`[5] Test SSL Auto-Renewal (certbot renew --dry-run)`);
   console.log(`[0] Back to main menu`);
 
-  const choice = await prompter.ask('\nSelect an option [0-4]: ');
+  const choice = await prompter.ask('\nSelect an option [0-5]: ');
   prompter.close();
 
   switch (choice.trim()) {
     case '1':
-      await handleSSL(['letsencrypt']);
+      await handleNginxFix([]);
       break;
     case '2':
-      await handleSSL(['self-signed']);
-      break;
-    case '3':
       await handleSSL(['nginx-config']);
       break;
+    case '3':
+      await handleSSL(['letsencrypt']);
+      break;
     case '4':
+      await handleSSL(['self-signed']);
+      break;
+    case '5':
       await handleSSL(['test-renew']);
       break;
     default:
@@ -1055,7 +1195,7 @@ async function startInteractiveMenu() {
     console.log(`------------------------------------------------------------`);
     console.log(`  [1] Port Configuration (View / Change / Check Availability)`);
     console.log(`  [2] Systemd Service (Generate / Install / Start / Restart / Status)`);
-    console.log(`  [3] SSL & Nginx Reverse Proxy (Let's Encrypt / Self-Signed / Nginx)`);
+    console.log(`  [3] Nginx Reverse Proxy & SSL (Fix default page / Reverse Proxy / SSL certs)`);
     console.log(`  [4] Backend Health & Status (Ping / Latency / Diagnostics)`);
     console.log(`  [5] Application Logs (systemd journalctl / file logs)`);
     console.log(`  [6] Database Maintenance (Backup / Vacuum / Integrity Check)`);
@@ -1136,6 +1276,7 @@ Commands:
                               self-signed : Generate 2048-bit dev certificate
                               nginx-config: Generate production Nginx config
                               test-renew  : Test certbot auto-renewal dry run
+  nginx [fix|status|reload] Fix Nginx default page collision & route traffic to TechTink
   status                    Show comprehensive backend health report & diagnostics
   logs [-n <lines>] [-f]    Inspect live service logs (journalctl or file)
   db [subcommand]           SQLite database maintenance:
@@ -1177,6 +1318,9 @@ async function main() {
     case 'systemd':
     case 'systemctl':
       await handleSystemd(subArgs);
+      break;
+    case 'nginx':
+      await handleNginx(subArgs);
       break;
     case 'ssl':
     case 'cert':
