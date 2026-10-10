@@ -7,7 +7,7 @@ import {
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
-  Megaphone, Ticket, Globe
+  Megaphone, Ticket, Globe, Mail
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -18,11 +18,13 @@ import WarrantyManager from './WarrantyManager.jsx';
 import CouponManager from './CouponManager.jsx';
 import DemoNoticeModal from './DemoNoticeModal.jsx';
 import ViewerAnalytics from './ViewerAnalytics.jsx';
+import AdminWebmail from './AdminWebmail.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token') || '');
+  const [unreadEmailCount, setUnreadEmailCount] = useState(0);
 
   // Admin login fallback if not authenticated as admin
   const [adminEmail, setAdminEmail] = useState('');
@@ -291,6 +293,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         })
         .catch(() => setSettingsLoading(false));
     }
+
+    // Check mail server & unread emails count
+    fetch('/api/admin/emails/status', { headers: authHeaders })
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data.unreadEmails === 'number') setUnreadEmailCount(data.unreadEmails);
+      })
+      .catch(() => {});
   }, [activeSection, authToken]);
 
   const loadAppointments = () => {
@@ -1066,9 +1076,10 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       id: 'developers',
       title: 'توسعه‌دهندگان و سیستم',
       enTitle: 'Developers & System',
-      desc: 'پایگاه داده SQLite، وب‌سرویس ترب و نشانی',
+      desc: 'پایگاه داده SQLite، وب‌سرویس ترب، ایمیل سازمانی و اینماد',
       icon: Database,
       tabs: [
+        { id: 'webmail', label: 'صندوق ایمیل و اینماد (info@techtink.ir)', icon: Mail, badge: unreadEmailCount > 0 ? `${unreadEmailCount} جدید` : 'eNamad' },
         { id: 'dbtools', label: 'پایگاه داده (SQLite Console)', icon: Database, badge: 'SQL' },
         { id: 'settings', label: 'تنظیمات، وب‌سرویس ترب و نشانی', icon: Settings, badge: 'API' }
       ]
@@ -3579,6 +3590,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
             </form>
           </div>
         </div>
+      )}
+
+      {/* 7. INBOX & CORPORATE WEBMAIL (info@techtink.ir & eNamad Verification) */}
+      {activeSection === 'webmail' && (
+        <AdminWebmail
+          authHeaders={authHeaders}
+          onUnreadCountChange={setUnreadEmailCount}
+        />
       )}
 
       {/* 1. Modal: Comprehensive Product Editor & Expert Review with Live Split View */}

@@ -4,6 +4,7 @@ import { db, getSettings, setSetting, getSetting } from '../db.js';
 import { requireAdmin, publicUser, hashPassword } from '../auth.js';
 import { serializeProduct } from '../products.js';
 import { orderWithItems } from './account.js';
+import { listEmails, getEmailById, markEmailRead, deleteEmail, saveIncomingEmail, getMailServerStatus, extractVerificationCode } from '../mailServer.js';
 
 const r = Router();
 r.use(requireAdmin);
@@ -812,6 +813,78 @@ r.post('/analytics/clear', (_req, res) => {
     res.json({ success: true, message: 'لاگ‌های بازدید قدیمی‌تر از ۳۰ روز پاکسازی شدند.' });
   } catch (err) {
     res.status(500).json({ error: 'خطا در پاکسازی لاگ‌ها' });
+  }
+});
+
+// ---------- Corporate Webmail & Inbound Email Endpoints (info@techtink.ir) ----------
+r.get('/emails', (req, res) => {
+  try {
+    const { limit = 50, offset = 0, search = '', unreadOnly = 'false' } = req.query;
+    const result = listEmails({
+      limit: Number(limit) || 50,
+      offset: Number(offset) || 0,
+      search: String(search || '').trim(),
+      unreadOnly: unreadOnly === 'true',
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در بارگذاری ایمیل‌ها' });
+  }
+});
+
+r.get('/emails/status', (_req, res) => {
+  try {
+    res.json(getMailServerStatus());
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در دریافت وضعیت سرور ایمیل' });
+  }
+});
+
+r.get('/emails/:id', (req, res) => {
+  try {
+    const email = getEmailById(req.params.id);
+    if (!email) return res.status(404).json({ error: 'ایمیل یافت نشد' });
+    markEmailRead(req.params.id);
+    res.json(email);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در دریافت اطلاعات ایمیل' });
+  }
+});
+
+r.patch('/emails/:id/read', (req, res) => {
+  try {
+    markEmailRead(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در تغییر وضعیت ایمیل' });
+  }
+});
+
+r.delete('/emails/:id', (req, res) => {
+  try {
+    deleteEmail(req.params.id);
+    res.json({ success: true, message: 'ایمیل با موفقیت حذف شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در حذف ایمیل' });
+  }
+});
+
+r.post('/emails/simulate', (req, res) => {
+  try {
+    const { from = 'noreply@enamad.ir', to = 'info@techtink.ir', subject = 'کد تایید اینماد', body = 'کد تایید درخواست اینماد شما 24125751 می‌باشد.' } = req.body || {};
+    const code = extractVerificationCode(`${subject}\n${body}`);
+    const id = saveIncomingEmail({
+      from,
+      to,
+      subject,
+      bodyText: body,
+      bodyHtml: `<p>${body}</p>`,
+      rawMessage: `From: ${from}\nTo: ${to}\nSubject: ${subject}\n\n${body}`,
+      verificationCode: code,
+    });
+    res.json({ success: true, id, verificationCode: code, message: 'ایمیل با موفقیت ثبت شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در شبیه‌سازی ایمیل' });
   }
 });
 

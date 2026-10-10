@@ -36,6 +36,10 @@ if (fs.existsSync(envPath)) {
 await initDb();
 ensureAdmin();
 
+// Launch Inbound SMTP Mail Receiver (port 25 / 2525) for info@techtink.ir
+import { startSmtpServer } from './server/mailServer.js';
+startSmtpServer();
+
 const app = express();
 app.disable('x-powered-by');
 app.use(cors());

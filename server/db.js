@@ -258,6 +258,21 @@ CREATE INDEX IF NOT EXISTS idx_pageviews_created ON pageviews(created_at);
 CREATE INDEX IF NOT EXISTS idx_pageviews_path ON pageviews(path);
 CREATE INDEX IF NOT EXISTS idx_pageviews_ip_hash ON pageviews(ip_hash);
 CREATE INDEX IF NOT EXISTS idx_pageviews_device ON pageviews(device_type);
+CREATE TABLE IF NOT EXISTS inbox_emails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_address TEXT NOT NULL,
+  to_address TEXT NOT NULL,
+  subject TEXT,
+  body_text TEXT,
+  body_html TEXT,
+  raw_message TEXT,
+  verification_code TEXT,
+  is_read INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_emails_to ON inbox_emails(to_address);
+CREATE INDEX IF NOT EXISTS idx_inbox_emails_read ON inbox_emails(is_read);
+CREATE INDEX IF NOT EXISTS idx_inbox_emails_created ON inbox_emails(created_at);
 `;
 
 export const DEFAULT_SETTINGS = {
