@@ -373,7 +373,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 3px 6px;
+  padding: 4px 8px;
   border-radius: 20px;
   transition: background 0.2s ease;
 }
@@ -382,11 +382,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--glass-bg-hover);
 }
 
-.floating-island-popover {
-  animation: islandFlyoutEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes islandFlyoutEnter {
+@keyframes islandFlyoutEnterDesktop {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(8px) scale(0.97);
@@ -395,6 +391,21 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(1);
   }
+}
+
+@keyframes islandFlyoutEnterMobile {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.floating-island-popover {
+  animation: islandFlyoutEnterDesktop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .island-action-btn {
@@ -415,39 +426,10 @@ h1, h2, h3, h4, h5, h6 {
   color: #ef4444 !important;
 }
 
-@media (max-width: 768px) {
-  .floating-action-island {
-    bottom: 12px !important;
-    padding: 4px 8px !important;
-    gap: 6px !important;
-    border-radius: 24px !important;
-    max-width: calc(100vw - 16px) !important;
-  }
-  .floating-island-desktop-label {
-    display: none !important;
-  }
-  .floating-island-capsule {
-    gap: 5px !important;
-    padding: 2px 4px !important;
-  }
-  .island-action-btn {
-    padding: 4px 8px !important;
-    font-size: 0.74rem !important;
-    border-radius: 14px !important;
-  }
-  .island-clear-btn {
-    width: 22px !important;
-    height: 22px !important;
-    min-height: 22px !important;
-    padding: 2px !important;
-  }
-  .island-divider {
-    height: 16px !important;
-  }
+@media (max-width: 639px) {
   .floating-island-popover {
-    width: min(340px, calc(100vw - 20px)) !important;
-    padding: 12px !important;
-    border-radius: 18px !important;
+    animation: islandFlyoutEnterMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transform: none !important;
   }
 }
 

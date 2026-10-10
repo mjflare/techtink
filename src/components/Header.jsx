@@ -332,49 +332,7 @@ export default function Header({
             }
           `}} />
 
-          {/* 2. Compare Button - ONLY shown when compareCount > 0 */}
-          {compareCount > 0 && (
-            <button 
-              className="dock-btn is-active"
-              onClick={() => handleTabClick('compare')} 
-              aria-label="مقایسه مشخصات لپ‌تاپ‌ها"
-              title="مشاهده مقایسه لپ‌تاپ‌ها"
-            >
-              <ArrowLeftRight size={17} color="#ef4444" />
-              <span style={{
-                position: 'absolute', top: '1px', right: '1px',
-                background: '#ef4444', color: 'white',
-                fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 0 8px rgba(239, 68, 68, 0.7)'
-              }}>
-                {compareCount}
-              </span>
-            </button>
-          )}
 
-          {/* 3. Cart Button - ONLY shown when cartCount > 0 */}
-          {cartCount > 0 && (
-            <button 
-              className="dock-btn" 
-              onClick={onCartClick} 
-              aria-label="سبد خرید"
-              title="سبد خرید"
-            >
-              <ShoppingCart size={17} color="hsl(var(--accent-purple))" />
-              <span style={{
-                position: 'absolute', top: '1px', right: '1px',
-                background: 'hsl(var(--accent-purple))', color: 'white',
-                fontSize: '10px', fontWeight: 'bold', width: '16px', height: '16px',
-                borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}>
-                {cartCount}
-              </span>
-            </button>
-          )}
-
-          {/* Divider (only if compare or cart buttons are present) */}
-          {(compareCount > 0 || cartCount > 0) && <div className="dock-divider" />}
 
           {/* 5. User Profile with Elegant Dropdown */}
           {user ? (
