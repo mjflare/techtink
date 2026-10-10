@@ -1,0 +1,18 @@
+# TechTink Robots.txt for Googlebot, Bingbot & Search Engine Crawlers
+User-agent: *
+Allow: /
+Allow: /catalog
+Allow: /product/
+Allow: /compare
+Allow: /blog
+Allow: /support
+Disallow: /api/admin/
+Disallow: /api/torob/
+Disallow: /account
+Disallow: /cart
+
+# Crawl Delay
+Crawl-delay: 1
+
+# XML Sitemap Location
+Sitemap: https://techtink.ir/sitemap.xml
