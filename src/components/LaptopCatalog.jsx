@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Filter, Star, CheckCircle, SlidersHorizontal, ArrowLeftRight, Eye, Wrench, 
-  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, Layers, Battery 
+  Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, Layers, Battery, ShoppingCart 
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
@@ -12,6 +12,7 @@ export default function LaptopCatalog({
   onCompare, 
   compareList = [],
   onSelectProduct,
+  onAddToCart,
   searchQuery = ''
 }) {
   const [activeCategory, setActiveCategory] = useState('همه');
@@ -553,7 +554,7 @@ export default function LaptopCatalog({
 
                 {/* Price Under Product Name */}
                 <div style={{ marginBottom: '12px', display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                  <div className="font-tech gradient-text" style={{ fontWeight: 800, fontSize: '1.35rem', lineHeight: 1.2 }}>
+                  <div className="font-tech price-gradient-text" style={{ fontWeight: 800, fontSize: '1.35rem', lineHeight: 1.2 }}>
                     {formatPrice(laptop.basePrice)}
                   </div>
                   {laptop.oldPrice && laptop.oldPrice > laptop.basePrice && (
@@ -675,24 +676,72 @@ export default function LaptopCatalog({
                 {/* Actions */}
                 <div className="flex" style={{ marginTop: 'auto', gap: '8px' }}>
                   <button 
-                    className="btn btn-primary" 
-                    style={{ flexGrow: 1, padding: '10px 14px', fontSize: '0.875rem' }} 
+                    type="button"
+                    className="btn btn-glass" 
+                    style={{ 
+                      flex: 1, 
+                      minWidth: 0, 
+                      padding: '10px 8px', 
+                      fontSize: '0.875rem', 
+                      justifyContent: 'center', 
+                      gap: '6px' 
+                    }} 
                     onClick={handleProductClick}
+                    title="مشاهده جزئیات کامل لپ‌تاپ"
                   >
-                    <Eye size={16} /> مشاهده کامل و خرید
+                    <Eye size={16} color="hsl(var(--accent-cyan))" />
+                    <span>مشاهده</span>
                   </button>
                   <button 
+                    type="button"
+                    className="btn btn-primary" 
+                    style={{ 
+                      flex: 1, 
+                      minWidth: 0, 
+                      padding: '10px 8px', 
+                      fontSize: '0.875rem', 
+                      justifyContent: 'center', 
+                      gap: '6px' 
+                    }} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onAddToCart) {
+                        onAddToCart({
+                          productId: laptop.id,
+                          laptopId: laptop.id,
+                          slug: laptop.slug,
+                          name: laptop.name,
+                          basePrice: laptop.basePrice,
+                          totalPrice: laptop.basePrice,
+                          image: laptop.image,
+                          configuration: {
+                            ram: laptop.specs?.ram || 'پیش‌فرض',
+                            storage: laptop.specs?.storage || 'پیش‌فرض',
+                            display: laptop.specs?.display || 'پیش‌فرض'
+                          },
+                          variantIds: []
+                        });
+                      }
+                    }}
+                    title="افزودن مستقیم به سبد خرید"
+                  >
+                    <ShoppingCart size={16} />
+                    <span>خرید</span>
+                  </button>
+                  <button 
+                    type="button"
                     className="btn btn-glass" 
                     onClick={() => onCustomize(laptop)}
-                    style={{ padding: '10px' }}
+                    style={{ padding: '10px', flexShrink: 0 }}
                     title="شخصی‌سازی سریع قطعات"
                   >
                     <Wrench size={18} color="hsl(var(--accent-cyan))" />
                   </button>
                   <button 
+                    type="button"
                     className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
                     onClick={() => onCompare(laptop.id)}
-                    style={{ padding: '10px' }}
+                    style={{ padding: '10px', flexShrink: 0 }}
                     title={isComparing ? "حذف از مقایسه" : "افزودن به مقایسه"}
                   >
                     <ArrowLeftRight size={18} className="compare-icon" />

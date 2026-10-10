@@ -389,7 +389,7 @@ export default function ProductPage({
 
           {/* Price Under Product Name */}
           <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
-            <div className="font-tech gradient-text" style={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1.2 }}>
+            <div className="font-tech price-gradient-text" style={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1.2 }}>
               {formatPrice(unitPrice)}
             </div>
             {product.oldPrice && product.oldPrice > product.basePrice && (
@@ -515,7 +515,7 @@ export default function ProductPage({
                     {formatPrice(product.oldPrice)}
                   </div>
                 )}
-                <div className="gradient-text font-tech" style={{ fontSize: '2rem', fontWeight: 800 }}>
+                <div className="price-gradient-text font-tech" style={{ fontSize: '2rem', fontWeight: 800 }}>
                   {formatPrice(unitPrice)}
                 </div>
               </div>

@@ -212,6 +212,7 @@ function App() {
             onCompare={toggleCompare}
             compareList={compareList}
             onSelectProduct={handleSelectProduct}
+            onAddToCart={handleAddToCart}
             searchQuery={searchQuery}
           />
         </main>
@@ -251,6 +252,8 @@ function App() {
               compareList={compareList} 
               laptops={laptops} 
               onClose={() => handleTabChange('store')} 
+              onAddToCart={handleAddToCart}
+              onSelectProduct={handleSelectProduct}
             />
           )}
         </main>

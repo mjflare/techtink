@@ -1,8 +1,8 @@
 import React from 'react';
-import { X, BarChart2, Sparkles, HelpCircle, Layers, ArrowLeftRight } from 'lucide-react';
+import { X, BarChart2, Sparkles, HelpCircle, Layers, ArrowLeftRight, Eye, ShoppingCart } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
-export default function SpecCompareModal({ compareList, laptops, onClose }) {
+export default function SpecCompareModal({ compareList, laptops, onClose, onAddToCart, onSelectProduct }) {
   if (compareList.length === 0) return null;
 
   const compareLaptops = (laptops || []).filter(l => compareList.includes(l.id));
@@ -82,13 +82,13 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
         <div className="compare-modal-body" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
           {/* 1. TECHTINK SCORE COMPARISON CHART */}
-          <div className="glass-card compare-chart-card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Sparkles size={20} color="hsl(var(--accent-cyan))" />
+          <div className="glass-card compare-chart-card" style={{ padding: '20px' }}>
+            <div className="compare-chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
+              <h3 className="compare-chart-title" style={{ fontSize: '1.15rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={18} color="hsl(var(--accent-cyan))" />
                 چارت مقایسه‌ای امتیاز تک‌تینک (مقیاس ۰ تا ۱۰۰)
               </h3>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              <span className="compare-chart-subtitle" style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                 * بر اساس تست‌های بنچمارک آزمایشگاه سخت‌افزار تک‌تینک
               </span>
             </div>
@@ -98,17 +98,17 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
               className="device-color-legend"
               style={{
                 display: 'flex',
-                gap: '10px',
+                gap: '8px',
                 flexWrap: 'wrap',
-                marginBottom: '22px',
-                padding: '12px 14px',
-                borderRadius: '14px',
+                marginBottom: '14px',
+                padding: '10px 12px',
+                borderRadius: '12px',
                 background: 'var(--glass-bg-hover)',
                 border: '1px solid var(--border-glass)',
                 alignItems: 'center'
               }}
             >
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
                 راهنمای رنگ دستگاه‌ها:
               </span>
               {compareLaptops.map((laptop, idx) => {
@@ -120,21 +120,21 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      padding: '5px 12px',
+                      gap: '6px',
+                      padding: '4px 10px',
                       borderRadius: '20px',
                       background: palette.faint,
                       border: `1px solid ${palette.border}`,
-                      fontSize: '0.8rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600
                     }}
                   >
                     <span style={{
-                      width: '10px',
-                      height: '10px',
+                      width: '8px',
+                      height: '8px',
                       borderRadius: '50%',
                       background: palette.solid,
-                      boxShadow: `0 0 8px ${palette.solid}`
+                      boxShadow: `0 0 6px ${palette.solid}`
                     }} />
                     <span style={{ color: palette.solid, fontWeight: 700 }}>دستگاه {idx + 1}:</span>
                     <span style={{ direction: 'ltr', color: 'var(--text-primary)' }}>{displayName}</span>
@@ -144,30 +144,30 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
             </div>
 
             {/* METRIC ROWS */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {metrics.map((metric, mi) => (
                 <div 
                   key={mi} 
                   className="compare-metric-box"
                   style={{ 
                     background: 'rgba(0,0,0,0.02)', 
-                    padding: '16px 18px', 
-                    borderRadius: '16px',
+                    padding: '12px 14px', 
+                    borderRadius: '14px',
                     border: '1px solid var(--border-glass)'
                   }}
                 >
                   {/* Metric Title and Explanation */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div className="compare-metric-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                    <div className="compare-metric-title" style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>{metric.label}</span>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    <div className="compare-metric-desc" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       {metric.desc}
                     </div>
                   </div>
 
                   {/* Device Rows for This Metric */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {compareLaptops.map((laptop, li) => {
                       const palette = deviceColorPalettes[li % deviceColorPalettes.length];
                       const scoreObj = laptop.techTinkScore || {
@@ -188,31 +188,31 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                           style={{
                             background: palette.faint,
                             border: `1px solid ${palette.border}`,
-                            borderRadius: '12px',
-                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            padding: '7px 12px',
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '8px',
+                            gap: '6px',
                             transition: 'all 0.2s ease'
                           }}
                         >
                           {/* Row 1: Badge + Model Name + Score */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
-                              <span style={{
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                              <span className="compare-device-badge" style={{
                                 background: palette.solid,
                                 color: 'white',
-                                fontSize: '0.72rem',
+                                fontSize: '0.7rem',
                                 fontWeight: 800,
-                                padding: '2px 8px',
-                                borderRadius: '12px',
+                                padding: '2px 7px',
+                                borderRadius: '10px',
                                 flexShrink: 0,
                                 boxShadow: `0 0 8px ${palette.solid}60`
                               }}>
                                 دستگاه {li + 1}
                               </span>
-                              <span style={{
-                                fontSize: '0.825rem',
+                              <span className="compare-device-name" style={{
+                                fontSize: '0.8rem',
                                 fontWeight: 600,
                                 direction: 'ltr',
                                 textAlign: 'left',
@@ -225,8 +225,8 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                               </span>
                             </div>
 
-                            <div style={{
-                              fontSize: '0.9rem',
+                            <div className="compare-device-score" style={{
+                              fontSize: '0.85rem',
                               fontWeight: 800,
                               fontFamily: 'var(--font-tech)',
                               color: palette.solid,
@@ -237,18 +237,18 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                           </div>
 
                           {/* Row 2: Full-width Tinted Progress Track */}
-                          <div style={{
+                          <div className="compare-track" style={{
                             width: '100%',
-                            height: '9px',
+                            height: '7px',
                             background: palette.track,
-                            borderRadius: '6px',
+                            borderRadius: '5px',
                             overflow: 'hidden'
                           }}>
                             <div style={{ 
                               height: '100%', 
                               width: `${score}%`, 
                               background: palette.solid, 
-                              borderRadius: '6px',
+                              borderRadius: '5px',
                               transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
                               boxShadow: `0 0 10px ${palette.solid}80`
                             }} />
@@ -308,8 +308,53 @@ export default function SpecCompareModal({ compareList, laptops, onClose }) {
                                 {laptop.model || (laptop.name?.replace(laptop.brand || '', '').trim() || laptop.name)}
                               </div>
                             </div>
-                            <div className="font-tech gradient-text" style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '8px', textAlign: 'right', direction: 'rtl' }}>
+                            <div className="font-tech price-gradient-text" style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '10px', textAlign: 'right', direction: 'rtl' }}>
                               {formatPrice(laptop.basePrice)}
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button 
+                                type="button"
+                                className="btn btn-glass" 
+                                style={{ flex: 1, minWidth: 0, padding: '7px 4px', fontSize: '0.78rem', justifyContent: 'center', gap: '4px' }}
+                                onClick={() => {
+                                  if (onSelectProduct) {
+                                    onSelectProduct(laptop.slug || laptop.id);
+                                    if (onClose) onClose();
+                                  }
+                                }}
+                                title="مشاهده مشخصات کامل لپ‌تاپ"
+                              >
+                                <Eye size={14} color="hsl(var(--accent-cyan))" />
+                                <span>مشاهده</span>
+                              </button>
+                              <button 
+                                type="button"
+                                className="btn btn-primary" 
+                                style={{ flex: 1, minWidth: 0, padding: '7px 4px', fontSize: '0.78rem', justifyContent: 'center', gap: '4px' }}
+                                onClick={() => {
+                                  if (onAddToCart) {
+                                    onAddToCart({
+                                      productId: laptop.id,
+                                      laptopId: laptop.id,
+                                      slug: laptop.slug,
+                                      name: laptop.name,
+                                      basePrice: laptop.basePrice,
+                                      totalPrice: laptop.basePrice,
+                                      image: laptop.image,
+                                      configuration: {
+                                        ram: laptop.specs?.ram || 'پیش‌فرض',
+                                        storage: laptop.specs?.storage || 'پیش‌فرض',
+                                        display: laptop.specs?.display || 'پیش‌فرض'
+                                      },
+                                      variantIds: []
+                                    });
+                                  }
+                                }}
+                                title="افزودن مستقیم به سبد خرید"
+                              >
+                                <ShoppingCart size={14} />
+                                <span>خرید</span>
+                              </button>
                             </div>
                           </div>
                         </th>

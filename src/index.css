@@ -191,6 +191,15 @@ h1, h2, h3, h4, h5, h6 {
   background-clip: text;
 }
 
+/* Price Gradient Text (Fiery Red-Orange) */
+.price-gradient-text {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 55%, #fb923c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: #ef4444; /* fallback */
+}
+
 /* Custom Buttons */
 .btn {
   display: inline-flex;
@@ -868,28 +877,63 @@ details[open] summary ~ * {
     width: 100%;
   }
 
-  /* Comparison Modal Mobile Optimization */
+  /* Comparison Modal Mobile Dense Optimization */
   .compare-modal-card {
     max-height: 94vh !important;
-    border-radius: 22px !important;
+    border-radius: 20px !important;
   }
   .compare-modal-body {
-    padding: 14px 10px !important;
-    gap: 18px !important;
+    padding: 10px 8px !important;
+    gap: 12px !important;
   }
   .compare-chart-card {
-    padding: 14px 10px !important;
+    padding: 10px 8px !important;
+  }
+  .compare-chart-header {
+    margin-bottom: 10px !important;
+  }
+  .compare-chart-title {
+    font-size: 1rem !important;
+  }
+  .compare-chart-subtitle {
+    display: none !important;
   }
   .compare-metric-box {
-    padding: 12px 10px !important;
-    border-radius: 14px !important;
+    padding: 6px 8px !important;
+    border-radius: 10px !important;
+    gap: 4px !important;
+  }
+  .compare-metric-header {
+    margin-bottom: 4px !important;
+  }
+  .compare-metric-title {
+    font-size: 0.82rem !important;
+  }
+  .compare-metric-desc {
+    display: none !important;
   }
   .compare-device-bar-card {
-    padding: 8px 10px !important;
+    padding: 4px 6px !important;
+    gap: 3px !important;
+    border-radius: 8px !important;
+  }
+  .compare-device-badge {
+    font-size: 0.65rem !important;
+    padding: 1px 6px !important;
+  }
+  .compare-device-name {
+    font-size: 0.75rem !important;
+  }
+  .compare-device-score {
+    font-size: 0.78rem !important;
+  }
+  .compare-track {
+    height: 5px !important;
   }
   .device-color-legend {
-    padding: 10px !important;
-    gap: 6px !important;
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    margin-bottom: 10px !important;
   }
 }
 

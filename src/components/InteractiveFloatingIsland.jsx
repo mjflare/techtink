@@ -298,7 +298,7 @@ export default function InteractiveFloatingIsland({
           {/* Total & CTA */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border-glass)', marginBottom: '10px', fontSize: '0.85rem', fontWeight: 700 }}>
             <span>مبلغ کل سبد:</span>
-            <span style={{ color: 'hsl(var(--accent-cyan))' }}>{formatPrice(cartSubtotal)}</span>
+            <span className="price-gradient-text font-tech">{formatPrice(cartSubtotal)}</span>
           </div>
 
           <button 
