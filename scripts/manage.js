@@ -1646,6 +1646,114 @@ async function handleSiteMode(args) {
 }
 
 // ==============================================================================
+// 11. DOCKER & CONTAINER MANAGEMENT
+// ==============================================================================
+async function handleDocker(args) {
+  const sub = (args[0] || '').toLowerCase();
+
+  const isDockerAvailable = commandExists('docker');
+  if (!isDockerAvailable) {
+    console.log(`\n${TAG_ERR} Docker is not installed or not in PATH.`);
+    console.log(`${TAG_INFO} To install Docker on your VPS:`);
+    console.log(`  curl -fsSL https://get.docker.com | sh`);
+    console.log(`  sudo usermod -aG docker $USER\n`);
+    return;
+  }
+
+  const composeCmd = runCmd('docker compose version') ? 'docker compose' : 'docker-compose';
+
+  if (sub === 'build') {
+    console.log(`\n${TAG_INFO} Building TechTink Docker images (${composeCmd} build)...`);
+    try {
+      execSync(`${composeCmd} build`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+      console.log(`\n${TAG_OK} Docker build complete!\n`);
+    } catch (e) {
+      console.error(`${TAG_ERR} Build failed: ${e.message}`);
+    }
+    return;
+  }
+
+  if (sub === 'up' || sub === 'start') {
+    console.log(`\n${TAG_INFO} Starting TechTink Docker containers (${composeCmd} up -d)...`);
+    try {
+      execSync(`${composeCmd} up -d --build`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+      console.log(`\n${TAG_OK} Containers started successfully!`);
+      execSync(`${composeCmd} ps`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+      console.log('');
+    } catch (e) {
+      console.error(`${TAG_ERR} Start failed: ${e.message}`);
+    }
+    return;
+  }
+
+  if (sub === 'down' || sub === 'stop') {
+    console.log(`\n${TAG_INFO} Stopping TechTink containers (${composeCmd} down)...`);
+    try {
+      execSync(`${composeCmd} down`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+      console.log(`\n${TAG_OK} Containers stopped.\n`);
+    } catch (e) {
+      console.error(`${TAG_ERR} Stop failed: ${e.message}`);
+    }
+    return;
+  }
+
+  if (sub === 'status' || sub === 'ps') {
+    console.log(`\n${c.bold('--- TechTink Docker Container Status ---')}`);
+    try {
+      execSync(`${composeCmd} ps`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+    } catch (e) {
+      console.error(`${TAG_ERR} Could not query containers: ${e.message}`);
+    }
+    console.log('');
+    return;
+  }
+
+  if (sub === 'logs') {
+    console.log(`\n${TAG_INFO} Streaming container logs (${composeCmd} logs -f)...`);
+    try {
+      execSync(`${composeCmd} logs -f --tail=100`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+    } catch {}
+    return;
+  }
+
+  // Interactive menu
+  const prompter = createPrompter();
+  console.log(`\n${c.bold('--- TechTink Docker Container Management ---')}`);
+  console.log(`Compose Engine: ${c.cyan(composeCmd)}\n`);
+  console.log(`[1] Start / Update Containers (Build & Run in background)`);
+  console.log(`[2] View Container Status (docker compose ps)`);
+  console.log(`[3] View Live Container Logs (docker compose logs -f)`);
+  console.log(`[4] Stop All Containers (docker compose down)`);
+  console.log(`[5] Rebuild Images Cleanly (docker compose build --no-cache)`);
+  console.log(`[0] Back to main menu`);
+
+  const choice = (await prompter.ask('\nSelect an option [0-5]: ')).trim();
+  prompter.close();
+
+  switch (choice) {
+    case '1':
+      await handleDocker(['up']);
+      break;
+    case '2':
+      await handleDocker(['status']);
+      break;
+    case '3':
+      await handleDocker(['logs']);
+      break;
+    case '4':
+      await handleDocker(['down']);
+      break;
+    case '5':
+      try {
+        execSync(`${composeCmd} build --no-cache`, { stdio: 'inherit', cwd: PROJECT_ROOT });
+      } catch {}
+      break;
+    default:
+      break;
+  }
+}
+
+// ==============================================================================
 // MAIN INTERACTIVE MENU (TUI)
 // ==============================================================================
 async function startInteractiveMenu() {
@@ -1671,11 +1779,12 @@ async function startInteractiveMenu() {
     console.log(`  [8] Environment Variables (.env viewer & editor)`);
     console.log(`  [9] Quick Deployment & Pull (deploy.sh)`);
     console.log(`  [10] Website Deployment Mode (Toggle Demo Mode vs Operational Mode)`);
+    console.log(`  [11] Docker Containers (Docker Compose Up / Down / Status / Logs)`);
     console.log(`  [0] Exit`);
     console.log(`------------------------------------------------------------`);
 
     const prompter = createPrompter();
-    const choice = (await prompter.ask('Enter your selection [0-10]: ')).trim();
+    const choice = (await prompter.ask('Enter your selection [0-11]: ')).trim();
     prompter.close();
 
     switch (choice) {
@@ -1709,13 +1818,16 @@ async function startInteractiveMenu() {
       case '10':
         await handleSiteMode([]);
         break;
+      case '11':
+        await handleDocker([]);
+        break;
       case '0':
       case 'q':
       case 'exit':
         console.log(`\nGoodbye!\n`);
         process.exit(0);
       default:
-        console.log(`\n${TAG_WARN} Invalid option "${choice}". Please choose 0 to 10.`);
+        console.log(`\n${TAG_WARN} Invalid option "${choice}". Please choose 0 to 11.`);
         break;
     }
   }
@@ -1760,6 +1872,7 @@ Commands:
                               info      : View tables and record counts
   admin [list|create]       List admin users or launch admin creation wizard
   mode [demo|operational|status] Toggle website mode (Demo Mode vs Operational Mode)
+  docker [up|down|build|status|logs] Docker Compose container stack management
   env [show|set <K> <V>]    Inspect or modify .env variables
   deploy                    Run deploy.sh script
   help, --help, -h          Show this help message
@@ -1767,16 +1880,12 @@ Commands:
 Running with NO arguments starts the interactive console menu (TUI).
 
 Examples:
+  node scripts/manage.js docker up
+  node scripts/manage.js docker status
   node scripts/manage.js mode demo
-  node scripts/manage.js mode operational
-  node scripts/manage.js mode status
   node scripts/manage.js ssl cert-dir /etc/letsencrypt/live/techtink.ir
-  node scripts/manage.js ssl-dir ./certs techtink.ir
   node scripts/manage.js nginx fix
   node scripts/manage.js port 8080
-  node scripts/manage.js systemd generate
-  node scripts/manage.js status
-  node scripts/manage.js db backup
   node scripts/manage.js
 `);
 }
@@ -1828,6 +1937,10 @@ async function main() {
     case 'mode':
     case 'sitemode':
       await handleSiteMode(subArgs);
+      break;
+    case 'docker':
+    case 'compose':
+      await handleDocker(subArgs);
       break;
     case 'env':
       await handleEnv(subArgs);
