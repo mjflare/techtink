@@ -152,7 +152,7 @@ function App() {
   // Automatic Viewer Analytics Tracking & Dynamic SEO Title
   useEffect(() => {
     let currentPath = '/';
-    let title = siteSettings?.seo_meta_title || 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های گیمینگ، رندرینگ و مهندسی';
+    let title = '24125751';
 
     if (activeTab === 'product' && selectedProductSlug) {
       currentPath = `/product/${selectedProductSlug}`;
@@ -162,7 +162,7 @@ function App() {
       }
     } else if (activeTab === 'store') {
       currentPath = '/';
-      title = siteSettings?.seo_meta_title || 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های گیمینگ، رندرینگ و مهندسی';
+      title = '24125751';
     } else if (activeTab === 'compare') {
       currentPath = '/compare';
       title = 'مقایسه هوشمند سخت‌افزار و مشخصات فنی لپ‌تاپ‌ها | تک‌تینک';

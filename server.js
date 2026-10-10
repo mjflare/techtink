@@ -65,6 +65,12 @@ app.get('/robots.txt', (req, res) => {
   res.send(generateRobotsTxt(dynamicBase));
 });
 
+// eNamad (Electronic Trust Symbol) Verification Endpoint
+app.get('/24125751.txt', (_req, res) => {
+  res.header('Content-Type', 'text/plain; charset=utf-8');
+  res.send('');
+});
+
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Production: serve the built SPA and fall back to index.html for client-side routes (e.g. /product/:slug).
