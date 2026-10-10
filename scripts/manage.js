@@ -1036,12 +1036,30 @@ server {
   }
 
   return `# TechTink Nginx Reverse Proxy Configuration (HTTPS + SSL)
-# 1. HTTP to HTTPS Redirection
+# 1. HTTP Server Block (Serves eNamad verification paths directly & redirects others to HTTPS)
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name ${domainStr};
-    return 301 https://$host$request_uri;
+
+    # eNamad verification file over plain HTTP (bypasses any SSL cert mismatch)
+    location = /24125751.txt {
+        proxy_pass http://127.0.0.1:${port};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Homepage meta-tag and title probe over plain HTTP
+    location = / {
+        proxy_pass http://127.0.0.1:${port};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    # Redirect all other general traffic to HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }
 
 # 2. Main HTTPS Server Block
