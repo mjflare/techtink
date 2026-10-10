@@ -30,7 +30,7 @@ const zpError = (json) => {
 
 // In-app checkout simulation compatible with Iranian payment gateways (ZarinPal, Mellat, Saman, Parsian)
 r.post('/checkout/init', (req, res) => {
-  const { items, total, userId, shipping, gateway } = req.body || {};
+  const { items, total, userId, shipping, gateway, couponCode, discountAmount } = req.body || {};
   if (!items || !items.length) return res.status(400).json({ error: 'سبد خرید خالی است.' });
 
   // Resolve user - Strictly enforce registered & authenticated user
@@ -49,11 +49,13 @@ r.post('/checkout/init', (req, res) => {
   const gw = gateway || 'zarinpal';
   const subtotal = items.reduce((s, it) => s + (it.totalPrice || it.unitPrice || 0) * (it.quantity || it.qty || 1), 0);
   const tot = total || subtotal;
+  const discountVal = Number(discountAmount) || 0;
+  const cleanCoupon = couponCode ? String(couponCode).trim().toUpperCase() : null;
 
   const orderId = db.tx(() => {
     const { lastId } = db.run(
-      'INSERT INTO orders (user_id, subtotal, total, shipping_info, status) VALUES (?, ?, ?, ?, ?)',
-      uid, subtotal, tot, JSON.stringify(shipping || {}), 'pending_payment'
+      'INSERT INTO orders (user_id, subtotal, total, discount, coupon_code, shipping_info, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      uid, subtotal, tot, discountVal, cleanCoupon, JSON.stringify(shipping || {}), 'pending_payment'
     );
     for (const it of items) {
       db.run(
@@ -93,6 +95,12 @@ r.post('/checkout/verify', (req, res) => {
       db.run('INSERT INTO stock_log (product_id, delta, reason) VALUES (?, ?, ?)', it.product_id, -it.qty, `فروش - سفارش #${pay.order_id}`);
     }
     db.run("UPDATE orders SET status = 'paid' WHERE id = ?", pay.order_id);
+
+    // Increment coupon usage count if coupon applied
+    const order = db.get('SELECT coupon_code FROM orders WHERE id = ?', pay.order_id);
+    if (order?.coupon_code) {
+      db.run('UPDATE coupons SET usage_count = usage_count + 1 WHERE UPPER(code) = ?', order.coupon_code.toUpperCase());
+    }
   });
 
   res.json({ success: true, orderId: pay.order_id, refId, message: 'پرداخت با موفقیت انجام شد.' });

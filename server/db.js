@@ -219,11 +219,28 @@ CREATE TABLE IF NOT EXISTS inventory_shipments (
   created_by TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS coupons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  discount_type TEXT NOT NULL DEFAULT 'percentage',
+  discount_value REAL NOT NULL,
+  min_order_value REAL DEFAULT 0,
+  max_discount REAL DEFAULT 0,
+  usage_limit INTEGER DEFAULT 0,
+  usage_count INTEGER DEFAULT 0,
+  valid_from TEXT,
+  valid_until TEXT,
+  is_active INTEGER DEFAULT 1,
+  is_promoted INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS idx_comments_product ON comments(product_id, status);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory_shipments(product_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
 `;
 
 export const DEFAULT_SETTINGS = {
@@ -327,6 +344,59 @@ function migrate() {
   try { db.exec("ALTER TABLE blog_posts ADD COLUMN product_slug TEXT;"); } catch {}
   try { db.exec("ALTER TABLE warranties ADD COLUMN phone TEXT;"); } catch {}
   try { db.exec("ALTER TABLE warranties ADD COLUMN notes TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE orders ADD COLUMN coupon_code TEXT;"); } catch {}
+
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS coupons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        title TEXT NOT NULL,
+        discount_type TEXT NOT NULL DEFAULT 'percentage',
+        discount_value REAL NOT NULL,
+        min_order_value REAL DEFAULT 0,
+        max_discount REAL DEFAULT 0,
+        usage_limit INTEGER DEFAULT 0,
+        usage_count INTEGER DEFAULT 0,
+        valid_from TEXT,
+        valid_until TEXT,
+        is_active INTEGER DEFAULT 1,
+        is_promoted INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+    `);
+  } catch {}
+
+  // Seed default coupons if table is empty
+  try {
+    const couponCount = db.get("SELECT COUNT(*) AS c FROM coupons")?.c || 0;
+    if (couponCount === 0) {
+      db.tx(() => {
+        db.run(
+          `INSERT INTO coupons (code, title, discount_type, discount_value, min_order_value, max_discount, usage_limit, usage_count, valid_until, is_active, is_promoted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          'TECHTINK2026', 'جشنواره ورک‌استیشن‌های رندرینگ و طراحی مهندسی', 'percentage', 15, 30000000, 5000000, 100, 8, '۱۴۰۵/۱۲/۲۹', 1, 1
+        );
+        db.run(
+          `INSERT INTO coupons (code, title, discount_type, discount_value, min_order_value, max_discount, usage_limit, usage_count, valid_until, is_active, is_promoted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          'TINK-SPRING', 'تخفیف بهاره ویژه لپ‌تاپ‌های گیمینگ', 'percentage', 10, 25000000, 3000000, 200, 15, '۱۴۰۵/۰۳/۳۱', 1, 0
+        );
+        db.run(
+          `INSERT INTO coupons (code, title, discount_type, discount_value, min_order_value, max_discount, usage_limit, usage_count, valid_until, is_active, is_promoted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          'WELCOME', 'هدیه اولین خرید کاربران جدید تک‌تینک', 'fixed', 500000, 15000000, 0, 0, 24, '۱۴۰۶/۰۱/۰۱', 1, 0
+        );
+        db.run(
+          `INSERT INTO coupons (code, title, discount_type, discount_value, min_order_value, max_discount, usage_limit, usage_count, valid_until, is_active, is_promoted)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          'VIP-PRO', 'تخفیف ویژه مهندسان و سازمان‌ها', 'fixed', 2000000, 60000000, 0, 50, 4, '۱۴۰۵/۱۱/۳۰', 1, 0
+        );
+      });
+    }
+  } catch {}
   
   // Sync clean Iranian stock laptop inventory & clean Persian chassis
   try {
@@ -382,7 +452,7 @@ function migrate() {
       });
     }
     for (const w of Object.values(WARRANTY_DATABASE)) {
-      db.run('INSERT OR REPLACE INTO warranties VALUES (?, ?, ?, ?, ?, ?, ?)', w.serialNumber, w.model, w.purchaseDate, w.warrantyExpiry, w.status, w.carePlus ? 1 : 0, w.owner);
+      db.run('INSERT OR REPLACE INTO warranties (serial, model, purchase_date, expiry, status, care_plus, owner) VALUES (?, ?, ?, ?, ?, ?, ?)', w.serialNumber, w.model, w.purchaseDate, w.warrantyExpiry, w.status, w.carePlus ? 1 : 0, w.owner);
     }
   } catch (e) {
     console.error("Migration drivers/warranties sync error:", e);

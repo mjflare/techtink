@@ -233,5 +233,72 @@ r.get('/support/appointment/:code', (req, res) => {
   });
 });
 
+// ---------- Coupons (Public Validation) ----------
+r.post('/coupons/validate', (req, res) => {
+  const { code, subtotal = 0 } = req.body || {};
+  const cleanCode = String(code || '').trim().toUpperCase();
+  if (!cleanCode) return res.status(400).json({ valid: false, error: 'لطفاً کد تخفیف را وارد کنید.' });
+
+  const coupon = db.get('SELECT * FROM coupons WHERE UPPER(code) = ?', cleanCode);
+  if (!coupon) {
+    return res.status(404).json({ valid: false, error: 'کد تخفیف وارد شده معتبر نمی‌باشد.' });
+  }
+
+  if (!coupon.is_active) {
+    return res.status(400).json({ valid: false, error: 'این کد تخفیف در حال حاضر غیرفعال است.' });
+  }
+
+  if (coupon.usage_limit > 0 && coupon.usage_count >= coupon.usage_limit) {
+    return res.status(400).json({ valid: false, error: 'ظرفیت استفاده از این کد تخفیف به پایان رسیده است.' });
+  }
+
+  const numSubtotal = Number(subtotal) || 0;
+  if (coupon.min_order_value > 0 && numSubtotal < coupon.min_order_value) {
+    return res.status(400).json({ 
+      valid: false, 
+      error: `حداقل مبلغ سفارش برای استفاده از این کوپن ${coupon.min_order_value.toLocaleString('fa-IR')} تومان است.` 
+    });
+  }
+
+  // Calculate discount
+  let discountAmount = 0;
+  if (coupon.discount_type === 'percentage') {
+    discountAmount = Math.round(numSubtotal * (coupon.discount_value / 100));
+    if (coupon.max_discount > 0 && discountAmount > coupon.max_discount) {
+      discountAmount = coupon.max_discount;
+    }
+  } else {
+    discountAmount = Math.min(coupon.discount_value, numSubtotal);
+  }
+
+  res.json({
+    valid: true,
+    coupon: {
+      id: coupon.id,
+      code: coupon.code,
+      title: coupon.title,
+      discountType: coupon.discount_type,
+      discountValue: coupon.discount_value,
+      discountAmount,
+      minOrderValue: coupon.min_order_value,
+      maxDiscount: coupon.max_discount
+    }
+  });
+});
+
+r.get('/coupons/promoted', (_req, res) => {
+  const promoted = db.get('SELECT * FROM coupons WHERE is_promoted = 1 AND is_active = 1 LIMIT 1');
+  if (!promoted) return res.json({ coupon: null });
+  res.json({
+    coupon: {
+      code: promoted.code,
+      title: promoted.title,
+      discountType: promoted.discount_type,
+      discountValue: promoted.discount_value,
+      validUntil: promoted.valid_until
+    }
+  });
+});
+
 export default r;
 

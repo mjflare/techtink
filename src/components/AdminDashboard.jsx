@@ -6,7 +6,8 @@ import {
   Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
-  Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck
+  Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
+  Megaphone, Ticket
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -14,6 +15,7 @@ import ProductEditorModal from './ProductEditorModal.jsx';
 import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
 import HomeCustomizer from './HomeCustomizer.jsx';
 import WarrantyManager from './WarrantyManager.jsx';
+import CouponManager from './CouponManager.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout }) {
@@ -984,13 +986,14 @@ export default function AdminDashboard({ user, onLogout }) {
       ]
     },
     {
-      id: 'storefront',
-      title: 'طراحی و ویترین صفحه اصلی',
-      enTitle: 'Storefront & Homepage',
-      desc: 'سفارشی‌ساز ویترین، اخبار فوری، هیرو و پروموشن‌ها',
-      icon: Layout,
+      id: 'marketing',
+      title: 'مارکتینگ و کمپین‌های فروش',
+      enTitle: 'Marketing & Promotions',
+      desc: 'کدهای تخفیف، جشنواره‌ها، بنرهای تبلیغاتی و ویترین فروشگاه',
+      icon: Megaphone,
       tabs: [
-        { id: 'home_customizer', label: 'سفارشی‌ساز صفحه اصلی (Home Customizer)', icon: Sparkles, badge: 'ویترین' }
+        { id: 'coupons', label: 'کدهای تخفیف و کوپن‌ها', icon: Ticket, badge: 'کوپن' },
+        { id: 'home_customizer', label: 'بنرها و ویترین صفحه اصلی', icon: Sparkles, badge: 'ویترین' }
       ]
     },
     {
@@ -1446,6 +1449,11 @@ export default function AdminDashboard({ user, onLogout }) {
             </>
           ) : null}
         </div>
+      )}
+
+      {/* MARKETING: COUPONS & DISCOUNT MANAGEMENT */}
+      {activeSection === 'coupons' && (
+        <CouponManager authToken={authToken} />
       )}
 
       {/* HOME PAGE CUSTOMIZER */}

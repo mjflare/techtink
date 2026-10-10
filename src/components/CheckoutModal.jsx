@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2, Copy, Truck, Check } from 'lucide-react';
+import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2, Copy, Truck, Check, Tag } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
 const PROVINCES = [
@@ -65,6 +65,12 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
   const [saveAddressForFuture, setSaveAddressForFuture] = useState(true);
   const [hasPrefilledAddress, setHasPrefilledAddress] = useState(false);
   const [error, setError] = useState(null);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState(null);
 
   // Shipping form state prefilled from authenticated user
   const [fullName, setFullName] = useState(user?.name || '');
@@ -132,11 +138,47 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
     }
   }, [user]);
 
-  // Price calculations
+  // Price calculations with coupon discount
   const subtotal = cartItems.reduce((acc, item) => acc + (item.totalPrice * item.quantity), 0);
-  const tax = Math.round(subtotal * TAX_RATE);
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const taxableSubtotal = Math.max(0, subtotal - discountAmount);
+  const tax = Math.round(taxableSubtotal * TAX_RATE);
   const shippingCost = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
-  const total = subtotal + tax + shippingCost;
+  const total = Math.max(0, taxableSubtotal + tax + shippingCost);
+
+  const handleApplyCoupon = async (e) => {
+    if (e) e.preventDefault();
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+
+    setValidatingCoupon(true);
+    setCouponError(null);
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, subtotal })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.valid) {
+        setCouponError(data.error || 'کد تخفیف معتبر نمی‌باشد.');
+        setAppliedCoupon(null);
+      } else {
+        setAppliedCoupon(data.coupon);
+        setCouponError(null);
+      }
+    } catch {
+      setCouponError('خطا در اعتبارسنجی کد تخفیف');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    setCouponError(null);
+  };
 
   // Enforce auth gate if user is not logged in
   if (!user) {
@@ -253,6 +295,8 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
           userId: user?.id,
           shipping: { fullName, phone, nationalId, province, city, address, postalCode },
           gateway: selectedGateway,
+          couponCode: appliedCoupon?.code || null,
+          discountAmount: appliedCoupon?.discountAmount || 0,
         }),
       });
       const data = await response.json();
@@ -612,12 +656,78 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
                   ))}
                 </div>
 
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '12px' }}>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '16px' }}>
+                  
+                  {/* Coupon Code Input */}
+                  <div style={{ marginBottom: '16px', padding: '12px 14px', borderRadius: '12px', background: 'rgba(0,0,0,0.03)', border: '1px solid var(--border-glass)' }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Tag size={15} color="hsl(var(--accent-purple))" />
+                      کد تخفیف یا کوپن جشنواره دارید؟
+                    </div>
+
+                    {appliedCoupon ? (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '10px 14px', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <CheckCircle size={16} color="#10b981" />
+                          <div>
+                            <span className="font-tech" style={{ fontWeight: 800, color: '#10b981', marginRight: '6px' }}>{appliedCoupon.code}</span>
+                            <span style={{ fontSize: '0.8rem', color: '#10b981' }}>({formatPrice(appliedCoupon.discountAmount)} تخفیف اعمال شد)</span>
+                          </div>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={handleRemoveCoupon} 
+                          style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', padding: '2px 8px' }}
+                        >
+                          حذف
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            placeholder="مثال: TECHTINK2026"
+                            className="font-tech"
+                            value={couponInput}
+                            onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError(null); }}
+                            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleApplyCoupon(); } }}
+                            style={{ flex: 1, direction: 'ltr', textTransform: 'uppercase', fontSize: '0.85rem' }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            onClick={handleApplyCoupon}
+                            disabled={validatingCoupon || !couponInput.trim()}
+                            style={{ padding: '8px 16px', fontSize: '0.825rem' }}
+                          >
+                            {validatingCoupon ? 'بررسی...' : 'اعمال کد'}
+                          </button>
+                        </div>
+                        {couponError && (
+                          <div style={{ color: '#ef4444', fontSize: '0.78rem', marginTop: '6px' }}>
+                            {couponError}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Subtotal */}
                   <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                     <span>جمع مبلغ</span>
                     <span className="font-tech" style={{ direction: 'ltr' }}>{formatPrice(subtotal)}</span>
                   </div>
+
+                  {/* Coupon Discount */}
+                  {appliedCoupon && (
+                    <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem', color: '#10b981', fontWeight: 700 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Tag size={14} /> تخفیف کوپن ({appliedCoupon.code})
+                      </span>
+                      <span className="font-tech" style={{ direction: 'ltr' }}>-{formatPrice(appliedCoupon.discountAmount)}</span>
+                    </div>
+                  )}
 
                   {/* Tax */}
                   <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>

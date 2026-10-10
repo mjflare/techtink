@@ -512,4 +512,197 @@ r.delete('/warranties/:serial', (req, res) => {
   res.json({ success: true });
 });
 
+// ---------- Coupons Management ----------
+r.get('/coupons', (req, res) => {
+  const q = String(req.query?.q || '').trim().toUpperCase();
+  const status = req.query?.status;
+
+  let sql = 'SELECT * FROM coupons';
+  const params = [];
+  const where = [];
+
+  if (q) {
+    where.push('(UPPER(code) LIKE ? OR title LIKE ?)');
+    const p = `%${q}%`;
+    params.push(p, p);
+  }
+
+  if (status && status !== 'all') {
+    if (status === 'active') {
+      where.push('is_active = 1');
+    } else if (status === 'inactive') {
+      where.push('is_active = 0');
+    } else if (status === 'promoted') {
+      where.push('is_promoted = 1');
+    }
+  }
+
+  if (where.length > 0) sql += ' WHERE ' + where.join(' AND ');
+  sql += ' ORDER BY is_promoted DESC, id DESC';
+
+  const rows = db.all(sql, ...params);
+  res.json(rows.map(c => ({
+    id: c.id,
+    code: c.code,
+    title: c.title,
+    discountType: c.discount_type,
+    discountValue: c.discount_value,
+    minOrderValue: c.min_order_value || 0,
+    maxDiscount: c.max_discount || 0,
+    usageLimit: c.usage_limit || 0,
+    usageCount: c.usage_count || 0,
+    validFrom: c.valid_from || '',
+    validUntil: c.valid_until || '',
+    isActive: !!c.is_active,
+    isPromoted: !!c.is_promoted,
+    createdAt: c.created_at
+  })));
+});
+
+r.post('/coupons', (req, res) => {
+  const { 
+    code, title, discountType, discountValue, 
+    minOrderValue, maxDiscount, usageLimit, 
+    validFrom, validUntil, isActive, isPromoted 
+  } = req.body || {};
+
+  const cleanCode = String(code || '').trim().toUpperCase();
+  if (!cleanCode) return res.status(400).json({ error: 'کد تخفیف الزامی است.' });
+  if (!title) return res.status(400).json({ error: 'عنوان کمپین یا تخفیف الزامی است.' });
+  if (discountValue === undefined || Number(discountValue) <= 0) {
+    return res.status(400).json({ error: 'مقدار تخفیف باید بزرگتر از صفر باشد.' });
+  }
+
+  const existing = db.get('SELECT id FROM coupons WHERE UPPER(code) = ?', cleanCode);
+  if (existing) return res.status(409).json({ error: 'این کد تخفیف قبلاً تعریف شده است.' });
+
+  const numPromoted = isPromoted ? 1 : 0;
+  if (numPromoted) {
+    db.run('UPDATE coupons SET is_promoted = 0');
+  }
+
+  const { lastId } = db.run(
+    `INSERT INTO coupons (
+      code, title, discount_type, discount_value, min_order_value, max_discount, 
+      usage_limit, valid_from, valid_until, is_active, is_promoted
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    cleanCode,
+    title.trim(),
+    discountType === 'fixed' ? 'fixed' : 'percentage',
+    Number(discountValue),
+    Number(minOrderValue) || 0,
+    Number(maxDiscount) || 0,
+    Number(usageLimit) || 0,
+    validFrom || '',
+    validUntil || '',
+    isActive === false ? 0 : 1,
+    numPromoted
+  );
+
+  // If promoted, also update homepage_promotion setting
+  if (numPromoted) {
+    try {
+      const currentPromo = JSON.parse(getSetting('homepage_promotion') || '{}');
+      currentPromo.promoCode = cleanCode;
+      currentPromo.title = title;
+      currentPromo.active = true;
+      if (discountType === 'percentage') {
+        currentPromo.discountPercent = `${discountValue}٪`;
+      }
+      setSetting('homepage_promotion', JSON.stringify(currentPromo));
+    } catch {}
+  }
+
+  res.json({ success: true, id: lastId });
+});
+
+r.put('/coupons/:id', (req, res) => {
+  const id = Number(req.params.id);
+  const existing = db.get('SELECT * FROM coupons WHERE id = ?', id);
+  if (!existing) return res.status(404).json({ error: 'کوپن تخفیف یافت نشد.' });
+
+  const { 
+    code, title, discountType, discountValue, 
+    minOrderValue, maxDiscount, usageLimit, 
+    validFrom, validUntil, isActive, isPromoted 
+  } = req.body || {};
+
+  const cleanCode = code ? String(code).trim().toUpperCase() : existing.code;
+  if (cleanCode !== existing.code) {
+    const dup = db.get('SELECT id FROM coupons WHERE UPPER(code) = ? AND id != ?', cleanCode, id);
+    if (dup) return res.status(409).json({ error: 'کد تخفیف دیگری با این نام وجود دارد.' });
+  }
+
+  const numPromoted = isPromoted !== undefined ? (isPromoted ? 1 : 0) : existing.is_promoted;
+  if (numPromoted && !existing.is_promoted) {
+    db.run('UPDATE coupons SET is_promoted = 0');
+  }
+
+  db.run(
+    `UPDATE coupons SET 
+      code = ?, title = ?, discount_type = ?, discount_value = ?, min_order_value = ?, 
+      max_discount = ?, usage_limit = ?, valid_from = ?, valid_until = ?, 
+      is_active = ?, is_promoted = ?
+     WHERE id = ?`,
+    cleanCode,
+    title ? title.trim() : existing.title,
+    discountType || existing.discount_type,
+    discountValue !== undefined ? Number(discountValue) : existing.discount_value,
+    minOrderValue !== undefined ? Number(minOrderValue) : existing.min_order_value,
+    maxDiscount !== undefined ? Number(maxDiscount) : existing.max_discount,
+    usageLimit !== undefined ? Number(usageLimit) : existing.usage_limit,
+    validFrom !== undefined ? validFrom : existing.valid_from,
+    validUntil !== undefined ? validUntil : existing.valid_until,
+    isActive !== undefined ? (isActive ? 1 : 0) : existing.is_active,
+    numPromoted,
+    id
+  );
+
+  if (numPromoted) {
+    try {
+      const currentPromo = JSON.parse(getSetting('homepage_promotion') || '{}');
+      currentPromo.promoCode = cleanCode;
+      currentPromo.title = title || existing.title;
+      currentPromo.active = true;
+      if ((discountType || existing.discount_type) === 'percentage') {
+        currentPromo.discountPercent = `${discountValue !== undefined ? discountValue : existing.discount_value}٪`;
+      }
+      setSetting('homepage_promotion', JSON.stringify(currentPromo));
+    } catch {}
+  }
+
+  res.json({ success: true });
+});
+
+r.post('/coupons/:id/promote', (req, res) => {
+  const id = Number(req.params.id);
+  const coupon = db.get('SELECT * FROM coupons WHERE id = ?', id);
+  if (!coupon) return res.status(404).json({ error: 'کوپن تخفیف یافت نشد.' });
+
+  const willPromote = !coupon.is_promoted;
+  db.tx(() => {
+    db.run('UPDATE coupons SET is_promoted = 0');
+    if (willPromote) {
+      db.run('UPDATE coupons SET is_promoted = 1, is_active = 1 WHERE id = ?', id);
+      try {
+        const currentPromo = JSON.parse(getSetting('homepage_promotion') || '{}');
+        currentPromo.promoCode = coupon.code;
+        currentPromo.title = coupon.title;
+        currentPromo.active = true;
+        if (coupon.discount_type === 'percentage') {
+          currentPromo.discountPercent = `${coupon.discount_value}٪`;
+        }
+        setSetting('homepage_promotion', JSON.stringify(currentPromo));
+      } catch {}
+    }
+  });
+
+  res.json({ success: true, isPromoted: willPromote });
+});
+
+r.delete('/coupons/:id', (req, res) => {
+  db.run('DELETE FROM coupons WHERE id = ?', Number(req.params.id));
+  res.json({ success: true });
+});
+
 export default r;
