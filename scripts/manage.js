@@ -495,6 +495,14 @@ async function handlePort(args = []) {
     return;
   }
 
+  if (targetPort === 80 || targetPort === 443) {
+    console.log(`\n${TAG_WARN} IMPORTANT ARCHITECTURE NOTE:`);
+    console.log(`  Ports 80 (HTTP) and 443 (HTTPS) are handled by Nginx Reverse Proxy.`);
+    console.log(`  The TechTink backend should run on an internal port (default: 3000).`);
+    console.log(`  Nginx will listen on 443 with SSL and forward requests to port 3000.`);
+    console.log(`  Setting backend to 443 causes an infinite proxy loop with Nginx.\n`);
+  }
+
   const isFree = await checkPortFree(targetPort);
   if (!isFree && targetPort !== currentPort) {
     console.log(`${TAG_WARN} Warning: Port ${targetPort} is currently occupied by another process!`);
@@ -1088,13 +1096,65 @@ server {
 }
 
 async function handleNginxConfigure({ domain = '', certPath = '', keyPath = '' } = {}) {
-  const port = getCurrentPort();
+  let port = getCurrentPort();
+
+  // Prevent catastrophic port collision: Nginx occupies 80 and 443. Backend MUST be on internal port (e.g. 3000).
+  if (port === 443 || port === 80) {
+    console.log(`\n${TAG_WARN} CRITICAL PORT CONFLICT DETECTED:`);
+    console.log(`  Backend is configured to port ${c.red(port)}, but Nginx requires port 80 & 443 for external traffic!`);
+    console.log(`  Proxying to port ${port} causes an infinite SSL loop and crashes the connection.`);
+    console.log(`${TAG_INFO} Automatically switching TechTink backend port to ${c.green('3000')} in .env...`);
+    setEnvVar('PORT', 3000);
+    port = 3000;
+
+    if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+      console.log(`${TAG_INFO} Reinstalling systemd service on port 3000 and restarting backend...`);
+      handleServiceInstall();
+    }
+  }
+
+  // If no cert is provided, try to auto-discover existing certificates for domain or techtink.ir
+  if (!certPath || !keyPath) {
+    const targetDomain = domain || 'techtink.ir';
+    const resolved = resolveCertLocation(`/root/cert/${targetDomain}`) || resolveCertLocation(`certs/${targetDomain}`) || resolveCertLocation('/root/cert');
+    if (resolved) {
+      const pair = findCertAndKeyFiles(resolved.dir);
+      if (pair?.bestCert && pair?.bestKey) {
+        certPath = pair.bestCert;
+        keyPath = pair.bestKey;
+        if (!domain) domain = path.basename(resolved.dir).replace(/_ecc$/, '');
+      }
+    }
+  }
+
   const absCertPath = certPath ? path.resolve(certPath) : '';
   const absKeyPath = keyPath ? path.resolve(keyPath) : '';
   const useSSL = Boolean(absCertPath && absKeyPath && fs.existsSync(absCertPath) && fs.existsSync(absKeyPath));
 
+  // Fix permissions on Linux VPS so Nginx (www-data) can read the certificates
+  if (isLinux() && useSSL) {
+    console.log(`${TAG_INFO} Ensuring certificate permissions are accessible by Nginx...`);
+    runCmd('sudo chmod 755 /root 2>/dev/null || true');
+    runCmd('sudo chmod 755 /root/cert 2>/dev/null || true');
+    runCmd(`sudo chmod -R 755 "${path.dirname(absCertPath)}" 2>/dev/null || true`);
+    runCmd(`sudo chmod 644 "${absCertPath}" "${absKeyPath}" 2>/dev/null || true`);
+  }
+
+  // Ensure firewall allows 80 and 443
+  if (isLinux() && commandExists('ufw')) {
+    try {
+      const ufwStatus = runCmd('sudo ufw status')?.toLowerCase() || '';
+      if (ufwStatus.includes('active')) {
+        console.log(`${TAG_INFO} UFW firewall active: ensuring ports 80 and 443 are open...`);
+        runCmd('sudo ufw allow 80/tcp >/dev/null 2>&1 || true');
+        runCmd('sudo ufw allow 443/tcp >/dev/null 2>&1 || true');
+        console.log(`${TAG_OK} Firewall rules verified (80/tcp, 443/tcp).`);
+      }
+    } catch {}
+  }
+
   console.log(`\n${c.bold('--- Nginx Reverse Proxy Setup ---')}`);
-  console.log(`Backend Port : ${c.cyan(port)}`);
+  console.log(`Backend Port : ${c.cyan(port)} (Internal localhost)`);
   console.log(`Domain       : ${c.cyan(domain || 'All Domains / IP (_)')}`);
   console.log(`SSL Mode     : ${useSSL ? c.green('Active (HTTPS 443)') : c.yellow('Disabled (HTTP 80)')}`);
   if (useSSL) {
@@ -1145,16 +1205,46 @@ async function handleNginxConfigure({ domain = '', certPath = '', keyPath = '' }
 }
 
 async function handleNginxFix() {
-  console.log(`\n${c.bold('--- Automated Nginx Collision Fix ---')}`);
+  console.log(`\n${c.bold('--- Automated Nginx & SSL Repair Tool ---')}`);
+
+  // 1. Reset backend port if incorrectly set to 80 or 443
+  const port = getCurrentPort();
+  if (port === 443 || port === 80) {
+    console.log(`${TAG_WARN} Backend port in .env is set to ${port}. Correcting to port 3000...`);
+    setEnvVar('PORT', 3000);
+    if (isLinux() && fs.existsSync(SYSTEMD_FILE_PATH)) {
+      handleServiceInstall();
+    }
+  }
+
+  // 2. Remove default collision
   const defaultSite = '/etc/nginx/sites-enabled/default';
   if (fs.existsSync(defaultSite)) {
-    console.log(`${TAG_INFO} Removing ${defaultSite}...`);
+    console.log(`${TAG_INFO} Removing default site (${defaultSite})...`);
     runCmd(`sudo rm -f "${defaultSite}"`);
     console.log(`${TAG_OK} Removed default site symlink.`);
   } else {
-    console.log(`${TAG_OK} Default site is already removed.`);
+    console.log(`${TAG_OK} Default site is clean.`);
   }
-  await handleNginxConfigure({});
+
+  // 3. Find certificates
+  const resolved = resolveCertLocation('/root/cert/techtink.ir') || resolveCertLocation('/root/cert') || resolveCertLocation('certs');
+  let certPath = '';
+  let keyPath = '';
+  let domain = 'techtink.ir';
+
+  if (resolved) {
+    const pair = findCertAndKeyFiles(resolved.dir);
+    if (pair?.bestCert && pair?.bestKey) {
+      certPath = pair.bestCert;
+      keyPath = pair.bestKey;
+      const bname = path.basename(resolved.dir).replace(/_ecc$/, '');
+      domain = (bname !== 'certs' && bname !== 'cert' && bname.includes('.')) ? bname : 'techtink.ir';
+      console.log(`${TAG_OK} Discovered valid SSL certificates at: ${c.green(resolved.dir)}`);
+    }
+  }
+
+  await handleNginxConfigure({ domain, certPath, keyPath });
 }
 
 // ==============================================================================
