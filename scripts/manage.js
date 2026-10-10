@@ -736,13 +736,76 @@ function scanCertDirectory(dirPath) {
   };
 }
 
+function findPossibleCertDirs(nameOrPath) {
+  const clean = (nameOrPath || '').trim().replace(/^["']|["']$/g, '');
+  const basename = path.basename(clean);
+  const candidates = [];
+
+  // Direct paths
+  candidates.push(path.resolve(process.cwd(), clean));
+  candidates.push(path.resolve(PROJECT_ROOT, clean));
+
+  // Stripped leading slash (e.g. /cert/techtink.ir -> ./cert/techtink.ir or ./certs/techtink.ir)
+  if (clean.startsWith('/')) {
+    const relativePart = clean.replace(/^\/+/, '');
+    candidates.push(path.resolve(process.cwd(), relativePart));
+    candidates.push(path.resolve(PROJECT_ROOT, relativePart));
+    candidates.push(path.resolve(PROJECT_ROOT, 'certs', basename));
+    candidates.push(path.resolve(PROJECT_ROOT, 'cert', basename));
+  }
+
+  // Common Linux VPS & Certbot locations
+  const systemLocations = [
+    `/etc/letsencrypt/live/${basename}`,
+    `/etc/letsencrypt/live`,
+    `/etc/ssl/${basename}`,
+    `/etc/ssl/certs`,
+    `/etc/nginx/ssl/${basename}`,
+    `/etc/nginx/ssl`,
+    `/root/certs/${basename}`,
+    `/root/cert/${basename}`,
+    `/root/certs`,
+    `/root/cert`,
+    path.join(PROJECT_ROOT, 'certs'),
+    path.join(PROJECT_ROOT, 'cert'),
+  ];
+
+  for (const sys of systemLocations) {
+    if (!candidates.includes(sys)) {
+      candidates.push(sys);
+    }
+  }
+
+  const existingWithCerts = [];
+  for (const cand of candidates) {
+    try {
+      if (fs.existsSync(cand) && fs.statSync(cand).isDirectory()) {
+        const files = fs.readdirSync(cand);
+        const hasCert = files.some(
+          (f) =>
+            f.endsWith('.pem') ||
+            f.endsWith('.crt') ||
+            f.endsWith('.key') ||
+            f.endsWith('.cer')
+        );
+        if (hasCert && !existingWithCerts.includes(cand)) {
+          existingWithCerts.push(cand);
+        }
+      }
+    } catch {}
+  }
+
+  return existingWithCerts;
+}
+
 async function handleCertDir(args = []) {
   console.log(`\n${c.bold('============================================================')}`);
   console.log(`  ${c.bold(c.cyan('Configure Nginx with SSL Certificate Directory'))}`);
   console.log(`${c.bold('============================================================')}`);
 
-  let inputDir = args[0] || '';
-  let domain = args[1] || '';
+  const positional = args.filter((a) => a !== '-y' && a !== '--yes');
+  let inputDir = positional[0] || '';
+  let domain = positional[1] || '';
 
   if (!inputDir && process.stdin.isTTY) {
     const prompter = createPrompter();
@@ -759,9 +822,41 @@ async function handleCertDir(args = []) {
   const resolvedDir = path.resolve(process.cwd(), inputDir);
   console.log(`${TAG_INFO} Checking directory: ${c.cyan(resolvedDir)}`);
 
-  const scan = scanCertDirectory(resolvedDir);
+  let scan = scanCertDirectory(resolvedDir);
   if (scan.error) {
-    console.error(`${TAG_ERR} ${scan.error}`);
+    const discovered = findPossibleCertDirs(inputDir);
+    if (discovered.length > 0) {
+      console.log(`\n${TAG_WARN} "${c.yellow(resolvedDir)}" was not found directly.`);
+      console.log(`${TAG_INFO} Discovered SSL certificate directories on your server:`);
+      for (let i = 0; i < discovered.length; i++) {
+        console.log(`  [${i + 1}] ${c.green(discovered[i])}`);
+      }
+
+      if (process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
+        const prompter = createPrompter();
+        const choice = (await prompter.ask(`\nSelect a discovered directory [1-${discovered.length}] (or press Enter to exit): `)).trim();
+        prompter.close();
+        const idx = parseInt(choice, 10) - 1;
+        if (!isNaN(idx) && discovered[idx]) {
+          console.log(`\n${TAG_INFO} Using selected directory: ${c.cyan(discovered[idx])}`);
+          scan = scanCertDirectory(discovered[idx]);
+        }
+      } else if (discovered.length === 1) {
+        console.log(`\n${TAG_INFO} Auto-selecting discovered directory: ${c.cyan(discovered[0])}`);
+        scan = scanCertDirectory(discovered[0]);
+      }
+    }
+  }
+
+  if (scan.error) {
+    console.error(`\n${TAG_ERR} ${scan.error}`);
+    console.log(`\n${c.bold('Common SSL Certificate Locations on Linux VPS:')}`);
+    console.log(`  - Let's Encrypt / Certbot : ${c.cyan('/etc/letsencrypt/live/techtink.ir')}`);
+    console.log(`  - Local Project Folder   : ${c.cyan('./certs')}`);
+    console.log(`  - Standard SSL Directory : ${c.cyan('/etc/ssl/certs')}`);
+    console.log(`\nTo find where your certificates are stored on your VPS, run:`);
+    console.log(`  ${c.yellow('sudo ls -la /etc/letsencrypt/live/')}`);
+    console.log(`  ${c.yellow('sudo find / -name "*techtink*" 2>/dev/null')}\n`);
     return;
   }
 
