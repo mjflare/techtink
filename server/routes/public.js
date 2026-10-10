@@ -300,9 +300,22 @@ r.get('/coupons/promoted', (_req, res) => {
   });
 });
 
+function escapeXml(unsafe) {
+  if (!unsafe) return '';
+  return String(unsafe)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 // ---------- Google SEO & XML Sitemap Generators ----------
-export function generateSitemapXml() {
-  const baseUrl = (getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+export function generateSitemapXml(customBaseUrl) {
+  let baseUrl = (customBaseUrl || getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
   const now = new Date().toISOString().slice(0, 10);
 
   // Core high-priority routes
@@ -333,15 +346,15 @@ export function generateSitemapXml() {
 
   for (const item of allUrls) {
     xml += `  <url>\n`;
-    xml += `    <loc>${item.loc}</loc>\n`;
-    xml += `    <lastmod>${item.lastmod || now}</lastmod>\n`;
-    xml += `    <changefreq>${item.changefreq || 'weekly'}</changefreq>\n`;
-    xml += `    <priority>${item.priority || '0.7'}</priority>\n`;
+    xml += `    <loc>${escapeXml(item.loc)}</loc>\n`;
+    xml += `    <lastmod>${escapeXml(item.lastmod || now)}</lastmod>\n`;
+    xml += `    <changefreq>${escapeXml(item.changefreq || 'weekly')}</changefreq>\n`;
+    xml += `    <priority>${escapeXml(item.priority || '0.7')}</priority>\n`;
     if (item.image) {
       xml += `    <image:image>\n`;
-      xml += `      <image:loc>${item.image}</image:loc>\n`;
+      xml += `      <image:loc>${escapeXml(item.image)}</image:loc>\n`;
       if (item.title) {
-        xml += `      <image:title><![CDATA[${item.title}]]></image:title>\n`;
+        xml += `      <image:title><![CDATA[${item.title.replace(/]]>/g, ']]&gt;')}]]></image:title>\n`;
       }
       xml += `    </image:image>\n`;
     }
@@ -352,8 +365,11 @@ export function generateSitemapXml() {
   return xml;
 }
 
-export function generateRobotsTxt() {
-  const baseUrl = (getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+export function generateRobotsTxt(customBaseUrl) {
+  let baseUrl = (customBaseUrl || getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
   return `# TechTink Robots.txt for Googlebot, Bingbot & Search Engine Crawlers
 User-agent: *
 Allow: /
@@ -375,14 +391,20 @@ Sitemap: ${baseUrl}/sitemap.xml
 `;
 }
 
-r.get('/sitemap.xml', (_req, res) => {
+r.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml; charset=utf-8');
-  res.send(generateSitemapXml());
+  const host = req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const dynamicBase = host ? `${proto}://${host}` : null;
+  res.send(generateSitemapXml(dynamicBase));
 });
 
-r.get('/robots.txt', (_req, res) => {
+r.get('/robots.txt', (req, res) => {
   res.header('Content-Type', 'text/plain; charset=utf-8');
-  res.send(generateRobotsTxt());
+  const host = req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const dynamicBase = host ? `${proto}://${host}` : null;
+  res.send(generateRobotsTxt(dynamicBase));
 });
 
 r.get('/seo/info', (_req, res) => {

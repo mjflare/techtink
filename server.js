@@ -50,13 +50,19 @@ app.use('/api/admin/db', dbToolRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Root Search Engine Endpoints (Googlebot, Bing, Torob crawlers)
-app.get('/sitemap.xml', (_req, res) => {
+app.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml; charset=utf-8');
-  res.send(generateSitemapXml());
+  const host = req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const dynamicBase = host ? `${proto}://${host}` : null;
+  res.send(generateSitemapXml(dynamicBase));
 });
-app.get('/robots.txt', (_req, res) => {
+app.get('/robots.txt', (req, res) => {
   res.header('Content-Type', 'text/plain; charset=utf-8');
-  res.send(generateRobotsTxt());
+  const host = req.get('host');
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'https';
+  const dynamicBase = host ? `${proto}://${host}` : null;
+  res.send(generateRobotsTxt(dynamicBase));
 });
 
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
