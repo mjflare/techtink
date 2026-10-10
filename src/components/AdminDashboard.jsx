@@ -2573,7 +2573,14 @@ export default function AdminDashboard({ user, onLogout }) {
                   </div>
 
                   <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>۳. ری‌استارت سرویس تک‌تینک در صورت نیاز:</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>۳. ساخت یا بازیابی حساب مدیر (Admin) در سرور:</span>
+                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                      bun scripts/create-admin.js --email admin@techtink.ir --password mySecretPass123
+                    </div>
+                  </div>
+
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>۴. ری‌استارت سرویس تک‌تینک در صورت نیاز:</span>
                     <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       systemctl restart techtink.service
                     </div>

@@ -10,7 +10,9 @@
     "server": "node server.js",
     "start": "node server.js",
     "bun:dev": "bun --watch server.js",
-    "bun:start": "bun server.js"
+    "bun:start": "bun server.js",
+    "create-admin": "node scripts/create-admin.js",
+    "admin": "node scripts/create-admin.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
