@@ -911,15 +911,18 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                       borderRadius: '12px',
                       cursor: 'pointer',
                       border: isSelected
-                        ? '1px solid hsl(var(--accent-cyan))'
+                        ? '1.5px solid hsl(var(--accent-cyan))'
                         : isUnread
                           ? '1px solid rgba(14, 165, 233, 0.35)'
                           : '1px solid var(--border-glass)',
                       background: isSelected
-                        ? 'linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(139, 92, 246, 0.12))'
+                        ? 'linear-gradient(135deg, #f0f9ff 0%, #faf5ff 100%)'
                         : isUnread
-                          ? 'rgba(14, 165, 233, 0.05)'
-                          : 'rgba(255, 255, 255, 0.02)',
+                          ? '#f0f9ff'
+                          : '#ffffff',
+                      boxShadow: isSelected
+                        ? '0 4px 14px -2px rgba(2, 132, 199, 0.15)'
+                        : '0 1px 3px rgba(0, 0, 0, 0.02)',
                       transition: 'all 0.15s ease',
                       position: 'relative'
                     }}
@@ -938,7 +941,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                         <span style={{
                           fontSize: '0.825rem',
                           fontWeight: isUnread ? 800 : 600,
-                          color: isSelected ? '#ffffff' : isUnread ? 'hsl(var(--accent-cyan))' : 'var(--text-primary)',
+                          color: isSelected ? '#0284c7' : isUnread ? 'hsl(var(--accent-cyan))' : 'var(--text-primary)',
                           maxWidth: '180px',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
@@ -979,8 +982,8 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     {/* Subject line */}
                     <div style={{
                       fontSize: '0.85rem',
-                      fontWeight: isUnread ? 700 : 500,
-                      color: isSelected ? '#ffffff' : 'var(--text-primary)',
+                      fontWeight: isUnread ? 700 : 600,
+                      color: isSelected ? 'var(--text-primary)' : 'var(--text-primary)',
                       marginBottom: '6px',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
@@ -1172,9 +1175,10 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     padding: '6px 14px',
                     borderRadius: '8px',
                     fontSize: '0.8rem',
-                    background: viewTab === 'html' ? 'rgba(14, 165, 233, 0.2)' : 'transparent',
+                    background: viewTab === 'html' ? 'rgba(2, 132, 199, 0.12)' : '#ffffff',
                     borderColor: viewTab === 'html' ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                    color: viewTab === 'html' ? '#ffffff' : 'var(--text-secondary)'
+                    color: viewTab === 'html' ? '#0284c7' : 'var(--text-secondary)',
+                    fontWeight: viewTab === 'html' ? 700 : 500
                   }}
                 >
                   <Eye size={14} /> پیش‌نمایش گرافیکی
@@ -1187,9 +1191,10 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     padding: '6px 14px',
                     borderRadius: '8px',
                     fontSize: '0.8rem',
-                    background: viewTab === 'text' ? 'rgba(14, 165, 233, 0.2)' : 'transparent',
+                    background: viewTab === 'text' ? 'rgba(2, 132, 199, 0.12)' : '#ffffff',
                     borderColor: viewTab === 'text' ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                    color: viewTab === 'text' ? '#ffffff' : 'var(--text-secondary)'
+                    color: viewTab === 'text' ? '#0284c7' : 'var(--text-secondary)',
+                    fontWeight: viewTab === 'text' ? 700 : 500
                   }}
                 >
                   متن پیام (Plain Text)
@@ -1203,9 +1208,10 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                       padding: '6px 14px',
                       borderRadius: '8px',
                       fontSize: '0.8rem',
-                      background: viewTab === 'raw' ? 'rgba(14, 165, 233, 0.2)' : 'transparent',
+                      background: viewTab === 'raw' ? 'rgba(2, 132, 199, 0.12)' : '#ffffff',
                       borderColor: viewTab === 'raw' ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                      color: viewTab === 'raw' ? '#ffffff' : 'var(--text-secondary)'
+                      color: viewTab === 'raw' ? '#0284c7' : 'var(--text-secondary)',
+                      fontWeight: viewTab === 'raw' ? 700 : 500
                     }}
                   >
                     <Code size={14} /> داده‌های خام SMTP
@@ -1219,7 +1225,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                 minHeight: '380px',
                 borderRadius: '12px',
                 border: '1px solid var(--border-glass)',
-                background: viewTab === 'html' ? '#ffffff' : 'rgba(0, 0, 0, 0.3)',
+                background: viewTab === 'html' ? '#ffffff' : '#f8fafc',
                 color: viewTab === 'html' ? '#111827' : 'var(--text-primary)',
                 overflow: 'hidden',
                 position: 'relative'

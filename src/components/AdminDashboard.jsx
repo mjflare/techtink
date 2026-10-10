@@ -1408,10 +1408,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                 gap: '14px',
                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                 background: isCatActive 
-                  ? 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.15), hsla(var(--accent-purple), 0.12))' 
-                  : 'rgba(255, 255, 255, 0.02)',
+                  ? 'linear-gradient(135deg, #f0f9ff 0%, #faf5ff 100%)' 
+                  : '#ffffff',
                 borderColor: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                boxShadow: isCatActive ? '0 0 24px hsla(var(--accent-cyan), 0.25)' : 'none',
+                borderWidth: isCatActive ? '2px' : '1px',
+                borderStyle: 'solid',
+                boxShadow: isCatActive 
+                  ? '0 8px 24px -4px rgba(2, 132, 199, 0.18), 0 0 0 1px rgba(2, 132, 199, 0.1)' 
+                  : '0 2px 8px rgba(0, 0, 0, 0.03)',
                 transform: isCatActive ? 'translateY(-2px)' : 'none'
               }}
             >
@@ -1425,9 +1429,10 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   justifyContent: 'center',
                   background: isCatActive 
                     ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' 
-                    : 'rgba(255, 255, 255, 0.06)',
+                    : '#f8fafc',
+                  border: isCatActive ? 'none' : '1px solid var(--border-glass)',
                   color: isCatActive ? '#ffffff' : 'var(--text-secondary)',
-                  boxShadow: isCatActive ? '0 0 16px hsla(var(--accent-cyan), 0.4)' : 'none',
+                  boxShadow: isCatActive ? '0 4px 14px hsla(var(--accent-cyan), 0.35)' : 'none',
                   flexShrink: 0
                 }}
               >
@@ -1435,7 +1440,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: isCatActive ? '#ffffff' : 'var(--text-primary)' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 800, color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-primary)' }}>
                     {cat.title}
                   </h3>
                   {cat.badge ? (
@@ -1451,12 +1456,28 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                       {cat.badge}
                     </span>
                   ) : (
-                    <span style={{ fontSize: '0.65rem', color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', fontWeight: 700 }}>
+                    <span style={{ 
+                      fontSize: '0.65rem', 
+                      color: isCatActive ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)', 
+                      fontWeight: 700,
+                      background: isCatActive ? 'rgba(2, 132, 199, 0.12)' : '#f1f5f9',
+                      padding: '2px 8px',
+                      borderRadius: '8px',
+                      border: isCatActive ? '1px solid rgba(2, 132, 199, 0.25)' : '1px solid var(--border-glass)'
+                    }}>
                       {cat.tabs.length} بخش
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ 
+                  fontSize: '0.725rem', 
+                  color: isCatActive ? '#0284c7' : 'var(--text-secondary)', 
+                  fontWeight: isCatActive ? 600 : 400,
+                  marginTop: '3px', 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis' 
+                }}>
                   {cat.enTitle}
                 </div>
               </div>
@@ -2997,8 +3018,11 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   style={{
                     padding: '8px 16px',
                     fontSize: '0.8125rem',
-                    background: selectedTable === t.name ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
-                    borderColor: selectedTable === t.name ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)'
+                    background: selectedTable === t.name ? 'rgba(2, 132, 199, 0.12)' : '#ffffff',
+                    borderColor: selectedTable === t.name ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                    color: selectedTable === t.name ? '#0284c7' : 'var(--text-secondary)',
+                    fontWeight: selectedTable === t.name ? 700 : 500,
+                    boxShadow: selectedTable === t.name ? '0 2px 8px rgba(2, 132, 199, 0.15)' : 'none'
                   }}
                 >
                   {t.name} ({t.rows} رکورد)

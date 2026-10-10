@@ -508,7 +508,7 @@ export default function CouponManager({ authToken }) {
                             gap: '6px',
                             background: c.isPromoted 
                               ? 'linear-gradient(135deg, #f97316, #ea580c)' 
-                              : 'rgba(255, 255, 255, 0.05)',
+                              : '#f8fafc',
                             color: c.isPromoted ? '#ffffff' : 'var(--text-secondary)',
                             border: c.isPromoted ? 'none' : '1px solid var(--border-glass)',
                             boxShadow: c.isPromoted ? '0 0 12px rgba(249, 115, 22, 0.4)' : 'none',
