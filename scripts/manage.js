@@ -663,10 +663,262 @@ async function handleNginxFix(args = []) {
   }
 }
 
+function scanCertDirectory(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    return { error: `Directory "${dirPath}" does not exist.` };
+  }
+
+  let stats;
+  try {
+    stats = fs.statSync(dirPath);
+  } catch (e) {
+    return { error: `Cannot access "${dirPath}": ${e.message}` };
+  }
+
+  let targetDir = dirPath;
+  if (!stats.isDirectory()) {
+    targetDir = path.dirname(dirPath);
+  }
+
+  let files = [];
+  try {
+    files = fs.readdirSync(targetDir);
+  } catch (e) {
+    return { error: `Failed to read directory "${targetDir}": ${e.message}` };
+  }
+
+  if (files.length === 0) {
+    return { error: `Directory "${targetDir}" is empty.` };
+  }
+
+  const isCertFile = (f) => {
+    const lower = f.toLowerCase();
+    if (lower.includes('key') || lower.includes('priv')) return false;
+    return lower.endsWith('.pem') || lower.endsWith('.crt') || lower.endsWith('.cer');
+  };
+
+  const isKeyFile = (f) => {
+    const lower = f.toLowerCase();
+    return lower.endsWith('.key') || (lower.endsWith('.pem') && (lower.includes('key') || lower.includes('priv')));
+  };
+
+  // Sort candidate certs by preference
+  const certCandidates = [];
+  const priorityCertNames = ['fullchain.pem', 'bundle.crt', 'bundle.pem', 'chain.pem', 'cert.pem', 'certificate.crt', 'cert.crt'];
+  for (const name of priorityCertNames) {
+    if (files.includes(name)) certCandidates.push(name);
+  }
+  for (const f of files) {
+    if (isCertFile(f) && !certCandidates.includes(f)) {
+      certCandidates.push(f);
+    }
+  }
+
+  // Sort candidate keys by preference
+  const keyCandidates = [];
+  const priorityKeyNames = ['privkey.pem', 'private.key', 'privatekey.key', 'key.pem', 'cert.key'];
+  for (const name of priorityKeyNames) {
+    if (files.includes(name)) keyCandidates.push(name);
+  }
+  for (const f of files) {
+    if (isKeyFile(f) && !keyCandidates.includes(f)) {
+      keyCandidates.push(f);
+    }
+  }
+
+  return {
+    dir: targetDir,
+    files,
+    certCandidates,
+    keyCandidates,
+    bestCert: certCandidates[0] ? path.join(targetDir, certCandidates[0]) : null,
+    bestKey: keyCandidates[0] ? path.join(targetDir, keyCandidates[0]) : null,
+  };
+}
+
+async function handleCertDir(args = []) {
+  console.log(`\n${c.bold('============================================================')}`);
+  console.log(`  ${c.bold(c.cyan('Configure Nginx with SSL Certificate Directory'))}`);
+  console.log(`${c.bold('============================================================')}`);
+
+  let inputDir = args[0] || '';
+  let domain = args[1] || '';
+
+  if (!inputDir && process.stdin.isTTY) {
+    const prompter = createPrompter();
+    inputDir = (await prompter.ask('Enter path to directory containing certificate files (e.g. /etc/letsencrypt/live/yourdomain or ./certs): ')).trim();
+    prompter.close();
+  }
+
+  if (!inputDir) {
+    console.error(`${TAG_ERR} No certificate directory provided.`);
+    console.log(`Usage: node scripts/manage.js ssl cert-dir <directory_path> [domain]\n`);
+    return;
+  }
+
+  const resolvedDir = path.resolve(process.cwd(), inputDir);
+  console.log(`${TAG_INFO} Checking directory: ${c.cyan(resolvedDir)}`);
+
+  const scan = scanCertDirectory(resolvedDir);
+  if (scan.error) {
+    console.error(`${TAG_ERR} ${scan.error}`);
+    return;
+  }
+
+  console.log(`${TAG_INFO} Found ${scan.files.length} file(s) in directory: ${scan.files.join(', ')}`);
+
+  let certPath = scan.bestCert;
+  let keyPath = scan.bestKey;
+
+  if (certPath && keyPath && process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
+    console.log(`\nAuto-Detected SSL Files:`);
+    console.log(`  Certificate : ${c.green(certPath)}`);
+    console.log(`  Private Key : ${c.green(keyPath)}`);
+
+    const prompter = createPrompter();
+    const confirm = (await prompter.ask('\nUse these detected certificate files? [Y/n]: ')).trim().toLowerCase();
+    prompter.close();
+    if (confirm && confirm.startsWith('n')) {
+      certPath = null;
+      keyPath = null;
+    }
+  }
+
+  if (!certPath) {
+    if (scan.certCandidates.length > 0) {
+      console.log(`Available certificate files: ${scan.certCandidates.join(', ')}`);
+    } else {
+      console.log(`Available files in directory: ${scan.files.join(', ')}`);
+    }
+    const prompter = createPrompter();
+    const cInput = (await prompter.ask('Enter certificate filename (e.g. fullchain.pem or techtink.crt): ')).trim();
+    prompter.close();
+    if (!cInput) {
+      console.error(`${TAG_ERR} Certificate filename is required.`);
+      return;
+    }
+    certPath = path.isAbsolute(cInput) ? cInput : path.join(scan.dir, cInput);
+  }
+
+  if (!keyPath) {
+    if (scan.keyCandidates.length > 0) {
+      console.log(`Available private key files: ${scan.keyCandidates.join(', ')}`);
+    } else {
+      console.log(`Available files in directory: ${scan.files.join(', ')}`);
+    }
+    const prompter = createPrompter();
+    const kInput = (await prompter.ask('Enter private key filename (e.g. privkey.pem or techtink.key): ')).trim();
+    prompter.close();
+    if (!kInput) {
+      console.error(`${TAG_ERR} Private key filename is required.`);
+      return;
+    }
+    keyPath = path.isAbsolute(kInput) ? kInput : path.join(scan.dir, kInput);
+  }
+
+  if (!fs.existsSync(certPath)) {
+    console.error(`${TAG_ERR} Certificate file does not exist: ${certPath}`);
+    return;
+  }
+  if (!fs.existsSync(keyPath)) {
+    console.error(`${TAG_ERR} Private key file does not exist: ${keyPath}`);
+    return;
+  }
+
+  if (!domain && process.stdin.isTTY && !args.includes('-y') && !args.includes('--yes')) {
+    const prompter = createPrompter();
+    domain = (await prompter.ask('Enter domain name (press Enter to accept VPS IP and all domains): ')).trim();
+    prompter.close();
+  }
+
+  const port = getCurrentPort();
+  console.log(`\n${TAG_INFO} Generating Nginx HTTPS reverse proxy configuration:`);
+  console.log(`  Backend Port : ${c.cyan(port)}`);
+  console.log(`  Certificate  : ${c.cyan(certPath)}`);
+  console.log(`  Private Key  : ${c.cyan(keyPath)}`);
+  console.log(`  Server Name  : ${c.cyan(domain || 'All Domains / VPS IP (_)')}`);
+
+  const conf = buildNginxConfig({
+    domain,
+    port,
+    sslCert: certPath,
+    sslKey: keyPath,
+    useSSL: true,
+  });
+
+  const rootConf = path.join(PROJECT_ROOT, 'techtink.nginx.conf');
+  fs.writeFileSync(rootConf, conf, 'utf8');
+  console.log(`${TAG_OK} Saved configuration to: ${c.cyan(rootConf)}`);
+
+  // Remove default site collision
+  const defaultEnabled = '/etc/nginx/sites-enabled/default';
+  if (fs.existsSync(defaultEnabled)) {
+    try {
+      runCmd(`sudo rm -f "${defaultEnabled}"`);
+      console.log(`${TAG_OK} Removed default Nginx site symlink (${defaultEnabled})`);
+    } catch (e) {
+      console.warn(`${TAG_WARN} Could not remove ${defaultEnabled}: ${e.message}`);
+    }
+  }
+
+  const targetAvail = '/etc/nginx/sites-available/techtink';
+  const targetEnabled = '/etc/nginx/sites-enabled/techtink';
+  const isLinux = os.platform() === 'linux';
+
+  if (isLinux && (fs.existsSync('/etc/nginx/sites-available') || fs.existsSync('/etc/nginx'))) {
+    console.log(`${TAG_INFO} Installing configuration into Nginx...`);
+    try {
+      runCmd(`sudo cp "${rootConf}" "${targetAvail}"`);
+      console.log(`${TAG_OK} Copied config to ${c.cyan(targetAvail)}`);
+
+      runCmd(`sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
+      console.log(`${TAG_OK} Symlinked to ${c.cyan(targetEnabled)}`);
+
+      console.log(`${TAG_INFO} Verifying Nginx syntax with "sudo nginx -t"...`);
+      runCmd('sudo nginx -t');
+      console.log(`${TAG_OK} Nginx syntax validation successful!`);
+
+      console.log(`${TAG_INFO} Reloading Nginx service...`);
+      runCmd('sudo systemctl reload nginx || sudo systemctl restart nginx');
+      console.log(`${TAG_OK} Nginx successfully reloaded! HTTPS is now active on port 443.`);
+      console.log(`${TAG_OK} HTTP traffic on port 80 will automatically redirect to HTTPS.`);
+    } catch (err) {
+      console.error(`${TAG_ERR} Nginx auto-installation failed: ${err.message}`);
+      console.log(`Please run the following commands manually with sudo:`);
+      console.log(`  sudo cp "${rootConf}" "${targetAvail}"`);
+      console.log(`  sudo ln -sf "${targetAvail}" "${targetEnabled}"`);
+      console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
+      console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+    }
+  } else {
+    console.log(`\n${TAG_INFO} Configuration ready at: ${c.cyan(rootConf)}`);
+    console.log(`Run the following on your Linux VPS:`);
+    console.log(`  sudo rm -f /etc/nginx/sites-enabled/default`);
+    console.log(`  sudo cp "${rootConf}" /etc/nginx/sites-available/techtink`);
+    console.log(`  sudo ln -sf /etc/nginx/sites-available/techtink /etc/nginx/sites-enabled/`);
+    console.log(`  sudo nginx -t && sudo systemctl reload nginx\n`);
+  }
+
+  // Backend check
+  const isFree = await checkPortFree(port);
+  if (isFree) {
+    console.log(`\n${TAG_WARN} NOTICE: TechTink backend is NOT currently listening on port ${port}!`);
+    console.log(`Visitors will receive a "502 Bad Gateway" until the backend service is started.`);
+    console.log(`To start the backend right now, run:`);
+    console.log(`  sudo systemctl restart techtink   (or: bun server.js)\n`);
+  } else {
+    console.log(`\n${TAG_OK} TechTink backend is running and listening on port ${port}!`);
+    console.log(`${TAG_OK} Secure website is now LIVE at:`);
+    console.log(`  ${c.cyan(`https://${domain || 'YOUR_VPS_IP'}/`)}\n`);
+  }
+}
+
 async function handleNginx(args) {
   const sub = args[0]?.toLowerCase() || 'fix';
   if (sub === 'fix' || sub === 'setup' || sub === 'install') {
     await handleNginxFix(args.slice(1));
+  } else if (sub === 'cert-dir' || sub === 'certs' || sub === 'ssl-dir' || sub === 'ssl') {
+    await handleCertDir(args.slice(1));
   } else if (sub === 'reload' || sub === 'restart') {
     try {
       console.log(`${TAG_INFO} Testing Nginx configuration...`);
@@ -698,6 +950,11 @@ async function handleNginx(args) {
 async function handleSSL(args) {
   const sub = args[0] || 'menu';
   const port = getCurrentPort();
+
+  if (sub === 'cert-dir' || sub === 'certs' || sub === 'ssl-dir' || sub === 'dir') {
+    await handleCertDir(args.slice(1));
+    return;
+  }
 
   if (sub === 'self-signed') {
     const certDir = path.join(PROJECT_ROOT, 'certs');
@@ -817,13 +1074,14 @@ async function handleSSL(args) {
   console.log(`Nginx Installed  : ${commandExists('nginx') ? c.green('Yes') : c.yellow('No')}`);
   console.log('');
   console.log(`[1] Fix Nginx Default Page Collision (Automated One-Click Fix)`);
-  console.log(`[2] Generate Production Nginx Reverse Proxy Config`);
+  console.log(`[2] Configure Nginx with SSL Certificate Directory (Custom SSL / Let's Encrypt dir)`);
   console.log(`[3] Issue Let's Encrypt Free SSL Certificate (Certbot)`);
   console.log(`[4] Generate Self-Signed SSL Certificate (Development / Staging)`);
-  console.log(`[5] Test SSL Auto-Renewal (certbot renew --dry-run)`);
+  console.log(`[5] Generate Production Nginx Reverse Proxy Config (Manual)`);
+  console.log(`[6] Test SSL Auto-Renewal (certbot renew --dry-run)`);
   console.log(`[0] Back to main menu`);
 
-  const choice = await prompter.ask('\nSelect an option [0-5]: ');
+  const choice = await prompter.ask('\nSelect an option [0-6]: ');
   prompter.close();
 
   switch (choice.trim()) {
@@ -831,7 +1089,7 @@ async function handleSSL(args) {
       await handleNginxFix([]);
       break;
     case '2':
-      await handleSSL(['nginx-config']);
+      await handleCertDir([]);
       break;
     case '3':
       await handleSSL(['letsencrypt']);
@@ -840,6 +1098,9 @@ async function handleSSL(args) {
       await handleSSL(['self-signed']);
       break;
     case '5':
+      await handleSSL(['nginx-config']);
+      break;
+    case '6':
       await handleSSL(['test-renew']);
       break;
     default:
@@ -1272,11 +1533,13 @@ Commands:
                               restart   : Restart techtink systemd service
                               status    : View systemctl status
   ssl [subcommand]          SSL & Reverse proxy management:
-                              letsencrypt : Run certbot for domain
-                              self-signed : Generate 2048-bit dev certificate
-                              nginx-config: Generate production Nginx config
-                              test-renew  : Test certbot auto-renewal dry run
-  nginx [fix|status|reload] Fix Nginx default page collision & route traffic to TechTink
+                              cert-dir <dir> [domain] : Configure Nginx using cert files in directory
+                              letsencrypt             : Run certbot for domain
+                              self-signed             : Generate 2048-bit dev certificate
+                              nginx-config            : Generate production Nginx config
+                              test-renew              : Test certbot auto-renewal dry run
+  ssl-dir <dir> [domain]    Shortcut: configure Nginx with certificate directory
+  nginx [fix|cert-dir|status|reload] Nginx reverse proxy management & default site fix
   status                    Show comprehensive backend health report & diagnostics
   logs [-n <lines>] [-f]    Inspect live service logs (journalctl or file)
   db [subcommand]           SQLite database maintenance:
@@ -1292,9 +1555,11 @@ Commands:
 Running with NO arguments starts the interactive console menu (TUI).
 
 Examples:
+  node scripts/manage.js ssl cert-dir /etc/letsencrypt/live/techtink.ir
+  node scripts/manage.js ssl-dir ./certs techtink.ir
+  node scripts/manage.js nginx fix
   node scripts/manage.js port 8080
   node scripts/manage.js systemd generate
-  node scripts/manage.js ssl nginx-config
   node scripts/manage.js status
   node scripts/manage.js db backup
   node scripts/manage.js
@@ -1321,6 +1586,10 @@ async function main() {
       break;
     case 'nginx':
       await handleNginx(subArgs);
+      break;
+    case 'ssl-dir':
+    case 'cert-dir':
+      await handleCertDir(subArgs);
       break;
     case 'ssl':
     case 'cert':
