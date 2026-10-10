@@ -7,7 +7,7 @@ import {
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
-  Megaphone, Ticket
+  Megaphone, Ticket, Globe
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -17,6 +17,7 @@ import HomeCustomizer from './HomeCustomizer.jsx';
 import WarrantyManager from './WarrantyManager.jsx';
 import CouponManager from './CouponManager.jsx';
 import DemoNoticeModal from './DemoNoticeModal.jsx';
+import ViewerAnalytics from './ViewerAnalytics.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
@@ -1021,7 +1022,8 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       desc: 'شاخص‌های فروش، درآمد و وضعیت کل سیستم',
       icon: BarChart3,
       tabs: [
-        { id: 'dashboard', label: 'شاخص‌های کلیدی و آمار لحظه‌ای', icon: BarChart3, badge: 'زنده' }
+        { id: 'dashboard', label: 'شاخص‌های کلیدی و فروش', icon: BarChart3, badge: 'فروش' },
+        { id: 'viewer_analytics', label: 'آمار بازدیدکنندگان و ترافیک گوگل', icon: Eye, badge: 'آنالیتیکس' }
       ]
     },
     {
@@ -1517,6 +1519,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
             </>
           ) : null}
         </div>
+      )}
+
+      {/* 1.1 VIEWER ANALYTICS & GOOGLE TRAFFIC VIEW */}
+      {activeSection === 'viewer_analytics' && (
+        <ViewerAnalytics 
+          authToken={authToken} 
+          onGoToSeoSettings={() => setActiveSection('settings')} 
+        />
       )}
 
       {/* MARKETING: COUPONS & DISCOUNT MANAGEMENT */}
@@ -3083,6 +3093,174 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
               </button>
             </div>
 
+          </div>
+
+          {/* Google Search Console, XML Sitemap & SEO Card */}
+          <div className="glass-card" style={{ padding: '32px', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+                <Globe size={26} color="#f59e0b" />
+                <div>
+                  <h2 style={{ fontSize: '1.45rem', margin: 0 }}>تنظیمات سئو گوگل و سرچ کنسول (Google Search Console & SEO)</h2>
+                  <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                    مدیریت نقشه سایت، اعتبارسنجی مالکیت در گوگل، فایل robots.txt و ابزار‌های ایندکسینگ
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex" style={{ gap: '10px' }}>
+                <a 
+                  href="https://search.google.com/search-console" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="btn btn-glass"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', textDecoration: 'none' }}
+                >
+                  <ExternalLink size={14} /> ورود به Google Search Console
+                </a>
+                <a 
+                  href={`https://search.google.com/test/rich-results?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : 'https://techtink.ir')}`}
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="btn btn-glass"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8125rem', textDecoration: 'none' }}
+                >
+                  <Sparkles size={14} /> تست ریچ اسنیپت (Rich Results)
+                </a>
+              </div>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px', lineHeight: '1.7' }}>
+              وب‌سایت تک‌تینک به نقشه سایت داینامیک استاندارد XML مجهز است که به صورت خودکار تمام صفحات لپ‌تاپ‌ها، عکس‌ها و مقالات وبلاگ را برای خزنده‌های گوگل و موتورهای جستجو فهرست می‌کند.
+            </p>
+
+            {/* Sitemap & Robots.txt Links */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>آدرس نقشه سایت (XML Sitemap):</div>
+                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  <code className="font-code" style={{ direction: 'ltr', fontSize: '0.85rem', color: '#f59e0b', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {typeof window !== 'undefined' ? `${window.location.origin}/sitemap.xml` : '/sitemap.xml'}
+                  </code>
+                  <a 
+                    href="/sitemap.xml" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="btn btn-glass" 
+                    style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  >
+                    مشاهده
+                  </a>
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '16px', borderRadius: '12px' }}>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>آدرس فایل دستورات خزنده‌ها (Robots.txt):</div>
+                <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  <code className="font-code" style={{ direction: 'ltr', fontSize: '0.85rem', color: 'hsl(var(--accent-cyan))', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {typeof window !== 'undefined' ? `${window.location.origin}/robots.txt` : '/robots.txt'}
+                  </code>
+                  <a 
+                    href="/robots.txt" 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="btn btn-glass" 
+                    style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                  >
+                    مشاهده
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Google Search Console & SEO Fields Form */}
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                  کد تایید مالکیت سرچ کنسول (google-site-verification)
+                </label>
+                <input 
+                  type="text"
+                  className="font-code"
+                  placeholder="مثال: AbCdEf123456GhiJkLmNoPqRsTuVwXyZ"
+                  value={settingsForm.google_site_verification || ''}
+                  onChange={e => setSettingsForm({ ...settingsForm, google_site_verification: e.target.value })}
+                  style={{ direction: 'ltr' }}
+                />
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'block', marginTop: '4px' }}>
+                  کد دریافت‌شده از بخش HTML Tag در پنل Google Search Console
+                </span>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                  شناسه گوگل آنالیتیکس ۴ (Google Analytics 4 Measurement ID)
+                </label>
+                <input 
+                  type="text"
+                  className="font-code"
+                  placeholder="مثال: G-XXXXXXXXXX"
+                  value={settingsForm.google_analytics_id || ''}
+                  onChange={e => setSettingsForm({ ...settingsForm, google_analytics_id: e.target.value })}
+                  style={{ direction: 'ltr' }}
+                />
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', display: 'block', marginTop: '4px' }}>
+                  کد ترکیتگ GA4 جهت ارسال خودکار رویدادها به داشبورد گوگل
+                </span>
+              </div>
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>
+                  عنوان صفحه اصلی برای نتایج گوگل (SEO Title)
+                </label>
+                <input 
+                  type="text"
+                  placeholder="تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های گیمینگ و مهندسی"
+                  value={settingsForm.seo_meta_title || ''}
+                  onChange={e => setSettingsForm({ ...settingsForm, seo_meta_title: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>
+                  کلمات کلیدی اصلی سئو (Meta Keywords)
+                </label>
+                <input 
+                  type="text"
+                  placeholder="خرید لپ تاپ, لپ تاپ استوک, قیمت لپ تاپ گیمینگ..."
+                  value={settingsForm.seo_meta_keywords || ''}
+                  onChange={e => setSettingsForm({ ...settingsForm, seo_meta_keywords: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>
+                توضیحات متای صفحه اصلی برای نمایش در گوگل (Meta Description)
+              </label>
+              <textarea 
+                rows={2}
+                placeholder="مرجع تخصصی خرید انواع لپ‌تاپ‌های مهندسی، گیمینگ و رندرینگ با تست ۳۰ روزه و گارانتی طلایی..."
+                value={settingsForm.seo_meta_description || ''}
+                onChange={e => setSettingsForm({ ...settingsForm, seo_meta_description: e.target.value })}
+                style={{ width: '100%', resize: 'vertical' }}
+              />
+            </div>
+
+            <div className="flex" style={{ justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={savingSettings}
+                onClick={saveSettings}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px' }}
+              >
+                <Save size={16} />
+                {savingSettings ? 'در حال ذخیره‌سازی...' : 'ذخیره تنظیمات سئو و گوگل'}
+              </button>
+            </div>
           </div>
           
           {/* Torob API Integration Card */}

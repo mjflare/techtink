@@ -352,6 +352,7 @@ const EDITABLE = [
   'gateway_card_active', 'gateway_cod_active', 'card_number', 'card_holder',
   'store_address', 'store_phone', 'store_mobile', 'store_hours', 'store_map_link', 'store_about',
   'telegram_url', 'instagram_url', 'bale_url', 'aparat_url',
+  'google_site_verification', 'google_analytics_id', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords',
   'homepage_announcement', 'homepage_hero', 'homepage_promotion', 'homepage_showcase'
 ];
 r.get('/settings', (_req, res) => {
@@ -704,6 +705,114 @@ r.post('/coupons/:id/promote', (req, res) => {
 r.delete('/coupons/:id', (req, res) => {
   db.run('DELETE FROM coupons WHERE id = ?', Number(req.params.id));
   res.json({ success: true });
+});
+
+// ---------- Viewer Analytics API ----------
+r.get('/analytics', (_req, res) => {
+  try {
+    const totalPageviews = db.get('SELECT COUNT(*) AS v FROM pageviews').v;
+    const pageviewsToday = db.get("SELECT COUNT(*) AS v FROM pageviews WHERE date(created_at) = date('now')").v;
+    const uniqueVisitorsToday = db.get("SELECT COUNT(DISTINCT ip_hash) AS v FROM pageviews WHERE date(created_at) = date('now')").v;
+    const pageviews7d = db.get("SELECT COUNT(*) AS v FROM pageviews WHERE created_at >= datetime('now', '-7 days')").v;
+    const uniqueVisitors7d = db.get("SELECT COUNT(DISTINCT ip_hash) AS v FROM pageviews WHERE created_at >= datetime('now', '-7 days')").v;
+    const liveActive = db.get("SELECT COUNT(DISTINCT ip_hash) AS v FROM pageviews WHERE created_at >= datetime('now', '-15 minutes')").v;
+    const googleReferrals = db.get("SELECT COUNT(*) AS v FROM pageviews WHERE referrer_domain LIKE '%Google%'").v;
+
+    // Daily 14-day history chart
+    const chartRows = db.all(`
+      SELECT date(created_at) AS date,
+             COUNT(*) AS views,
+             COUNT(DISTINCT ip_hash) AS visitors
+      FROM pageviews
+      WHERE created_at >= datetime('now', '-14 days')
+      GROUP BY date(created_at)
+      ORDER BY date(created_at) ASC
+    `);
+
+    // Top Pages
+    const topPages = db.all(`
+      SELECT path, COALESCE(MAX(title), path) AS title, COUNT(*) AS count
+      FROM pageviews
+      GROUP BY path
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    // Top Referrers
+    const topReferrers = db.all(`
+      SELECT referrer_domain AS domain, COUNT(*) AS count
+      FROM pageviews
+      GROUP BY referrer_domain
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    // Device breakdown
+    const rawDevices = db.all(`
+      SELECT device_type AS type, COUNT(*) AS count
+      FROM pageviews
+      GROUP BY device_type
+      ORDER BY count DESC
+    `);
+    const totalDevicesCount = rawDevices.reduce((sum, d) => sum + d.count, 0) || 1;
+    const devices = rawDevices.map(d => ({
+      ...d,
+      percent: Math.round((d.count / totalDevicesCount) * 100)
+    }));
+
+    // Browser breakdown
+    const rawBrowsers = db.all(`
+      SELECT browser, COUNT(*) AS count
+      FROM pageviews
+      GROUP BY browser
+      ORDER BY count DESC
+      LIMIT 6
+    `);
+    const totalBrowsersCount = rawBrowsers.reduce((sum, b) => sum + b.count, 0) || 1;
+    const browsers = rawBrowsers.map(b => ({
+      ...b,
+      percent: Math.round((b.count / totalBrowsersCount) * 100)
+    }));
+
+    // Recent visits feed
+    const recentVisits = db.all(`
+      SELECT id, path, title, referrer_domain AS referrer, device_type AS device, browser, os, created_at AS createdAt
+      FROM pageviews
+      ORDER BY id DESC
+      LIMIT 25
+    `);
+
+    res.json({
+      summary: {
+        totalPageviews,
+        pageviewsToday,
+        uniqueVisitorsToday,
+        pageviews7d,
+        uniqueVisitors7d,
+        liveActive: Math.max(liveActive, 1), // Minimum 1 for active admin session
+        googleReferrals
+      },
+      chartData: chartRows,
+      topPages,
+      topReferrers,
+      devices,
+      browsers,
+      recentVisits
+    });
+  } catch (err) {
+    console.error('[admin/analytics] error:', err);
+    res.status(500).json({ error: 'خطا در بارگذاری آمار بازدیدکنندگان' });
+  }
+});
+
+r.post('/analytics/clear', (_req, res) => {
+  try {
+    // Purge records older than 30 days
+    db.run("DELETE FROM pageviews WHERE created_at < datetime('now', '-30 days')");
+    res.json({ success: true, message: 'لاگ‌های بازدید قدیمی‌تر از ۳۰ روز پاکسازی شدند.' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در پاکسازی لاگ‌ها' });
+  }
 });
 
 export default r;

@@ -241,6 +241,23 @@ CREATE INDEX IF NOT EXISTS idx_variants_product ON product_variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
 CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory_shipments(product_id);
 CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+CREATE TABLE IF NOT EXISTS pageviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT NOT NULL,
+  title TEXT,
+  referrer TEXT,
+  referrer_domain TEXT,
+  ip_hash TEXT,
+  user_agent TEXT,
+  device_type TEXT DEFAULT 'desktop',
+  browser TEXT DEFAULT 'Other',
+  os TEXT DEFAULT 'Other',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_pageviews_created ON pageviews(created_at);
+CREATE INDEX IF NOT EXISTS idx_pageviews_path ON pageviews(path);
+CREATE INDEX IF NOT EXISTS idx_pageviews_ip_hash ON pageviews(ip_hash);
+CREATE INDEX IF NOT EXISTS idx_pageviews_device ON pageviews(device_type);
 `;
 
 export const DEFAULT_SETTINGS = {
@@ -281,6 +298,12 @@ export const DEFAULT_SETTINGS = {
   instagram_url: 'https://instagram.com/techtink',
   bale_url: 'https://ble.ir/techtink',
   aparat_url: 'https://aparat.com/techtink',
+  // Google Search Console & SEO Optimization
+  google_site_verification: '',
+  google_analytics_id: '',
+  seo_meta_title: 'تک‌تینک | مرجع تخصصی خرید لپ‌تاپ‌های مهندسی، گیمینگ و اداری',
+  seo_meta_description: 'خرید تخصصی و آنلاین انواع لپ‌تاپ گیمینگ، رندرینگ و مهندسی با گارانتی طلایی، تست ۲۴ ساعته سخت‌افزار، تضمین اصالت قطعات و بهترین قیمت بازار در فروشگاه تخصصی تک‌تینک.',
+  seo_meta_keywords: 'خرید لپ تاپ, قیمت لپ تاپ گیمینگ, لپ تاپ مهندسی, مقایسه سخت افزار, لپ تاپ استوک, فروشگاه تک تینک, techtink',
   // Homepage Customizer Defaults
   homepage_announcement: JSON.stringify({
     active: true,
@@ -514,11 +537,64 @@ function seed() {
   console.log('[db] Seeded initial catalog data.');
 }
 
+function seedAnalytics() {
+  const pvCount = db.get('SELECT COUNT(*) AS c FROM pageviews')?.c || 0;
+  if (pvCount > 0) return;
+
+  const samplePaths = [
+    { path: '/', title: 'صفحه اصلی تک‌تینک | فروشگاه تخصصی لپ‌تاپ' },
+    { path: '/catalog', title: 'کاتالوگ و لیست کامل لپ‌تاپ‌ها | تک‌تینک' },
+    { path: '/product/lenovo-thinkpad-t14', title: 'خرید لپ‌تاپ Lenovo ThinkPad T14 | تک‌تینک' },
+    { path: '/product/dell-precision-5550', title: 'خرید ورک‌استیشن Dell Precision 5550 | تک‌تینک' },
+    { path: '/product/hp-zbook-fury-15-g7', title: 'خرید لپ‌تاپ صنعتی HP ZBook Fury 15 G7 | تک‌تینک' },
+    { path: '/compare', title: 'مقایسه هوشمند مشخصات سخت‌افزاری لپ‌تاپ‌ها' },
+    { path: '/blog', title: 'وبلاگ و بررسی‌های تخصصی سخت‌افزار | تک‌تینک' },
+    { path: '/support', title: 'خدمات گارانتی، درایورها و پشتیبانی تک‌تینک' }
+  ];
+  const referrers = [
+    { domain: 'Google Search', ref: 'https://www.google.com/' },
+    { domain: 'Google Search', ref: 'https://www.google.com/search?q=خرید+لپ+تاپ+استوک' },
+    { domain: 'موتور ترب (Torob)', ref: 'https://torob.com/p/techtink/' },
+    { domain: 'مستقیم (Direct)', ref: '' },
+    { domain: 'اینستاگرام', ref: 'https://l.instagram.com/' },
+    { domain: 'تلگرام', ref: 'https://t.me/techtink' }
+  ];
+  const devices = [
+    { type: 'desktop', browser: 'Chrome', os: 'Windows' },
+    { type: 'mobile', browser: 'Mobile Safari', os: 'iOS' },
+    { type: 'desktop', browser: 'Firefox', os: 'macOS' },
+    { type: 'mobile', browser: 'Chrome Mobile', os: 'Android' },
+    { type: 'tablet', browser: 'Safari', os: 'iPadOS' }
+  ];
+
+  db.tx(() => {
+    for (let dayOffset = 13; dayOffset >= 0; dayOffset--) {
+      const countForDay = Math.floor(22 + Math.random() * 30);
+      for (let i = 0; i < countForDay; i++) {
+        const p = samplePaths[Math.floor(Math.random() * samplePaths.length)];
+        const r = referrers[Math.floor(Math.random() * referrers.length)];
+        const d = devices[Math.floor(Math.random() * devices.length)];
+        const fakeIp = `192.168.${dayOffset}.${(i % 14) + 1}`;
+        const hash = crypto.createHash('sha256').update(`${fakeIp}-${dayOffset}`).digest('hex').slice(0, 16);
+        const pastDate = new Date(Date.now() - dayOffset * 86400000 - Math.floor(Math.random() * 72000000)).toISOString().replace('T', ' ').slice(0, 19);
+
+        db.run(
+          `INSERT INTO pageviews (path, title, referrer, referrer_domain, ip_hash, user_agent, device_type, browser, os, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          p.path, p.title, r.ref, r.domain, hash, 'Mozilla/5.0 TechTinkAnalytics/1.0', d.type, d.browser, d.os, pastDate
+        );
+      }
+    }
+  });
+  console.log('[db] Seeded initial viewer analytics historical data.');
+}
+
 export async function initDb() {
   await loadDriver();
   openRaw();
   migrate();
   seed();
+  seedAnalytics();
   console.log(`[db] SQLite ready at ${DB_PATH} (${isBun ? 'bun:sqlite' : 'node:sqlite'})`);
 }
 

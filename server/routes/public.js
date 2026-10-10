@@ -300,5 +300,150 @@ r.get('/coupons/promoted', (_req, res) => {
   });
 });
 
+// ---------- Google SEO & XML Sitemap Generators ----------
+export function generateSitemapXml() {
+  const baseUrl = (getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+  const now = new Date().toISOString().slice(0, 10);
+
+  // Core high-priority routes
+  const staticRoutes = [
+    { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
+    { loc: `${baseUrl}/catalog`, priority: '0.9', changefreq: 'daily' },
+    { loc: `${baseUrl}/compare`, priority: '0.8', changefreq: 'weekly' },
+    { loc: `${baseUrl}/blog`, priority: '0.8', changefreq: 'weekly' },
+    { loc: `${baseUrl}/support`, priority: '0.7', changefreq: 'monthly' }
+  ];
+
+  // Dynamic active products
+  const products = db.all('SELECT slug, updated_at, image, name FROM products WHERE active = 1 ORDER BY id DESC');
+  const productRoutes = products.map(p => ({
+    loc: `${baseUrl}/product/${p.slug}`,
+    priority: '0.9',
+    changefreq: 'daily',
+    lastmod: p.updated_at ? p.updated_at.slice(0, 10) : now,
+    image: p.image,
+    title: p.name
+  }));
+
+  const allUrls = [...staticRoutes, ...productRoutes];
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
+  xml += `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+
+  for (const item of allUrls) {
+    xml += `  <url>\n`;
+    xml += `    <loc>${item.loc}</loc>\n`;
+    xml += `    <lastmod>${item.lastmod || now}</lastmod>\n`;
+    xml += `    <changefreq>${item.changefreq || 'weekly'}</changefreq>\n`;
+    xml += `    <priority>${item.priority || '0.7'}</priority>\n`;
+    if (item.image) {
+      xml += `    <image:image>\n`;
+      xml += `      <image:loc>${item.image}</image:loc>\n`;
+      if (item.title) {
+        xml += `      <image:title><![CDATA[${item.title}]]></image:title>\n`;
+      }
+      xml += `    </image:image>\n`;
+    }
+    xml += `  </url>\n`;
+  }
+
+  xml += `</urlset>`;
+  return xml;
+}
+
+export function generateRobotsTxt() {
+  const baseUrl = (getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+  return `# TechTink Robots.txt for Googlebot, Bingbot & Search Engine Crawlers
+User-agent: *
+Allow: /
+Allow: /catalog
+Allow: /product/
+Allow: /compare
+Allow: /blog
+Allow: /support
+Disallow: /api/admin/
+Disallow: /api/torob/
+Disallow: /account
+Disallow: /cart
+
+# Crawl Delay
+Crawl-delay: 1
+
+# XML Sitemap Location
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+}
+
+r.get('/sitemap.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.send(generateSitemapXml());
+});
+
+r.get('/robots.txt', (_req, res) => {
+  res.header('Content-Type', 'text/plain; charset=utf-8');
+  res.send(generateRobotsTxt());
+});
+
+r.get('/seo/info', (_req, res) => {
+  const baseUrl = (getSetting('site_url') || 'https://techtink.ir').replace(/\/+$/, '');
+  res.json({
+    siteUrl: baseUrl,
+    sitemapUrl: `${baseUrl}/sitemap.xml`,
+    robotsUrl: `${baseUrl}/robots.txt`,
+    googleSiteVerification: getSetting('google_site_verification') || '',
+    googleAnalyticsId: getSetting('google_analytics_id') || '',
+    metaTitle: getSetting('seo_meta_title') || '',
+    metaDescription: getSetting('seo_meta_description') || '',
+    metaKeywords: getSetting('seo_meta_keywords') || '',
+    productsCount: db.get('SELECT COUNT(*) AS c FROM products WHERE active = 1').c
+  });
+});
+
+// ---------- Viewer Analytics Tracking ----------
+r.post('/analytics/pageview', (req, res) => {
+  try {
+    const { path = '/', title = '', referrer = '', deviceType = 'desktop', browser = 'Other', os = 'Other' } = req.body || {};
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
+    const userAgent = req.headers['user-agent'] || '';
+
+    // Anonymized daily hash for unique visitors (GDPR and privacy safe)
+    const today = new Date().toISOString().slice(0, 10);
+    const ipHash = crypto.createHash('sha256').update(`${ip}-${today}`).digest('hex').slice(0, 16);
+
+    let referrerDomain = 'مستقیم (Direct)';
+    if (referrer) {
+      try {
+        const u = new URL(referrer);
+        const host = u.hostname.replace(/^www\./, '');
+        if (host.includes('google')) referrerDomain = 'Google Search';
+        else if (host.includes('torob')) referrerDomain = 'موتور ترب (Torob)';
+        else if (host.includes('instagram')) referrerDomain = 'اینستاگرام';
+        else if (host.includes('t.me') || host.includes('telegram')) referrerDomain = 'تلگرام';
+        else if (host.includes('emalls')) referrerDomain = 'ایمالز (Emalls)';
+        else referrerDomain = host;
+      } catch {}
+    }
+
+    db.run(
+      `INSERT INTO pageviews (path, title, referrer, referrer_domain, ip_hash, user_agent, device_type, browser, os)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      String(path).slice(0, 255),
+      String(title).slice(0, 255),
+      String(referrer).slice(0, 500),
+      referrerDomain,
+      ipHash,
+      String(userAgent).slice(0, 255),
+      String(deviceType).slice(0, 30),
+      String(browser).slice(0, 50),
+      String(os).slice(0, 50)
+    );
+
+    res.json({ ok: true });
+  } catch {
+    res.status(200).json({ ok: false });
+  }
+});
+
 export default r;
 

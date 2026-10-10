@@ -20,6 +20,7 @@ import AboutUsModal from './components/AboutUsModal.jsx';
 import UserDashboard from './components/UserDashboard.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
 import DemoNoticeModal from './components/DemoNoticeModal.jsx';
+import { trackPageView } from './utils/analytics.js';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './components/SocialLogos.jsx';
 
 function App() {
@@ -147,6 +148,41 @@ function App() {
       }
     }
   }, []);
+
+  // Automatic Viewer Analytics Tracking & Dynamic SEO Title
+  useEffect(() => {
+    let currentPath = '/';
+    let title = siteSettings?.seo_meta_title || 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های گیمینگ، رندرینگ و مهندسی';
+
+    if (activeTab === 'product' && selectedProductSlug) {
+      currentPath = `/product/${selectedProductSlug}`;
+      const productObj = laptops.find(l => l.slug === selectedProductSlug || l.id === selectedProductSlug);
+      if (productObj) {
+        title = `خرید و قیمت لپ‌تاپ ${productObj.name} | تک‌تینک`;
+      }
+    } else if (activeTab === 'store') {
+      currentPath = '/';
+      title = siteSettings?.seo_meta_title || 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های گیمینگ، رندرینگ و مهندسی';
+    } else if (activeTab === 'compare') {
+      currentPath = '/compare';
+      title = 'مقایسه هوشمند سخت‌افزار و مشخصات فنی لپ‌تاپ‌ها | تک‌تینک';
+    } else if (activeTab === 'blog') {
+      currentPath = '/blog';
+      title = 'وبلاگ تخصصی سخت‌افزار، نقد و بررسی و راهنمای خرید لپ‌تاپ | تک‌تینک';
+    } else if (activeTab === 'support') {
+      currentPath = '/support';
+      title = 'گارانتی طلایی، دانلود درایورها و خدمات پس از فروش | تک‌تینک';
+    } else if (activeTab === 'admin') {
+      currentPath = '/admin';
+      title = 'پنل مدیریت و انبارداری تک‌تینک';
+    } else if (activeTab === 'account') {
+      currentPath = '/account';
+      title = 'حساب کاربری و پیگیری سفارش‌ها | تک‌تینک';
+    }
+
+    try { document.title = title; } catch {}
+    trackPageView(currentPath, title);
+  }, [activeTab, selectedProductSlug, laptops, siteSettings]);
 
   // Save cart to localStorage
   useEffect(() => {

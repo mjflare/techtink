@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { initDb } from './server/db.js';
 import { attachUser, ensureAdmin } from './server/auth.js';
-import publicRoutes from './server/routes/public.js';
+import publicRoutes, { generateSitemapXml, generateRobotsTxt } from './server/routes/public.js';
 import accountRoutes from './server/routes/account.js';
 import paymentRoutes from './server/routes/payment.js';
 import adminRoutes from './server/routes/admin.js';
@@ -48,6 +48,17 @@ app.use('/api', paymentRoutes);
 app.use('/api', torobRoutes);
 app.use('/api/admin/db', dbToolRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Root Search Engine Endpoints (Googlebot, Bing, Torob crawlers)
+app.get('/sitemap.xml', (_req, res) => {
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.send(generateSitemapXml());
+});
+app.get('/robots.txt', (_req, res) => {
+  res.header('Content-Type', 'text/plain; charset=utf-8');
+  res.send(generateRobotsTxt());
+});
+
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
 
 // Production: serve the built SPA and fall back to index.html for client-side routes (e.g. /product/:slug).

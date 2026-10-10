@@ -116,6 +116,52 @@ export default function ProductPage({
       .catch(() => {});
   }, [productSlug]);
 
+  // Dynamic Google Product JSON-LD Schema for Rich Snippets
+  useEffect(() => {
+    if (!product) return;
+
+    const scriptId = 'google-product-schema';
+    let script = document.getElementById(scriptId);
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
+
+    const schemaData = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": product.name,
+      "image": [product.image],
+      "description": product.tagline || `خرید و قیمت لپ‌تاپ ${product.name} با مشخصات پردازنده ${product.specs?.cpu || ''} و گرافیک ${product.specs?.gpu || ''}`,
+      "sku": product.slug,
+      "brand": {
+        "@type": "Brand",
+        "name": product.brand || "TechTink"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": typeof window !== 'undefined' ? window.location.href : `https://techtink.ir/product/${product.slug}`,
+        "priceCurrency": "IRR",
+        "price": product.basePrice,
+        "itemCondition": "https://schema.org/UsedCondition",
+        "availability": (product.stock ?? 1) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": {
+          "@type": "Organization",
+          "name": "تک‌تینک"
+        }
+      }
+    };
+
+    script.textContent = JSON.stringify(schemaData);
+
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) existing.remove();
+    };
+  }, [product]);
+
   if (loading) {
     return (
       <div className="container" style={{ padding: '120px 24px', textAlign: 'center' }}>
