@@ -380,8 +380,9 @@ export function sendViaSmtpSocket({ host, port = 25, useTls = false, auth = null
 
     let buffer = '';
     let step = 'BANNER';
+    let isTlsUpgraded = useTls;
 
-    socket.on('data', (chunk) => {
+    const onData = (chunk) => {
       buffer += chunk.toString('utf8');
 
       const lines = buffer.split('\r\n');
@@ -413,13 +414,47 @@ export function sendViaSmtpSocket({ host, port = 25, useTls = false, auth = null
 
         case 'EHLO':
           if (code === 250) {
-            if (auth && auth.user && auth.pass) {
+            const hasStartTls = completeLines.some((l) => /starttls/i.test(l));
+            if (!isTlsUpgraded && hasStartTls && !auth) {
+              step = 'STARTTLS';
+              socket.write('STARTTLS\r\n');
+            } else if (auth && auth.user && auth.pass) {
               step = 'AUTH_LOGIN';
               socket.write('AUTH LOGIN\r\n');
             } else {
               step = 'MAIL_FROM';
               socket.write(`MAIL FROM:<${from}>\r\n`);
             }
+          }
+          break;
+
+        case 'STARTTLS':
+          if (code === 220) {
+            step = 'EHLO';
+            isTlsUpgraded = true;
+            buffer = '';
+            const plainSocket = socket;
+            plainSocket.removeAllListeners('data');
+            plainSocket.removeAllListeners('error');
+
+            socket = tls.connect(
+              {
+                socket: plainSocket,
+                host,
+                servername: host,
+                rejectUnauthorized: false,
+              },
+              () => {
+                socket.write('EHLO mail.techtink.ir\r\n');
+              }
+            );
+            socket.on('data', onData);
+            socket.on('error', (err) => {
+              done(new Error(`خطای ارتباط TLS با ${host}:${port} - ${err.message}`));
+            });
+          } else {
+            step = 'MAIL_FROM';
+            socket.write(`MAIL FROM:<${from}>\r\n`);
           }
           break;
 
@@ -481,7 +516,9 @@ export function sendViaSmtpSocket({ host, port = 25, useTls = false, auth = null
         default:
           break;
       }
-    });
+    };
+
+    socket.on('data', onData);
   });
 }
 
