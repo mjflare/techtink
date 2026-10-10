@@ -20,6 +20,32 @@ export default function InteractiveFloatingIsland({
   );
   const islandRef = useRef(null);
   const popoverRef = useRef(null);
+  const closeTimeoutRef = useRef(null);
+
+  const cancelCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const scheduleClosePopover = (delay = 280) => {
+    if (windowWidth < 640) return;
+    cancelCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setActivePopover(null);
+    }, delay);
+  };
+
+  const handleOpenPopover = (type) => {
+    cancelCloseTimeout();
+    setActivePopover(type);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => cancelCloseTimeout();
+  }, []);
 
   // Monitor screen resizing
   useEffect(() => {
@@ -43,11 +69,15 @@ export default function InteractiveFloatingIsland({
         popoverRef.current && 
         !popoverRef.current.contains(e.target)
       ) {
+        cancelCloseTimeout();
         setActivePopover(null);
       }
     };
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') setActivePopover(null);
+      if (e.key === 'Escape') {
+        cancelCloseTimeout();
+        setActivePopover(null);
+      }
     };
     document.addEventListener('mousedown', handleOutsideClick);
     document.addEventListener('touchstart', handleOutsideClick, { passive: true });
@@ -71,7 +101,7 @@ export default function InteractiveFloatingIsland({
   // Popover positioning: safely anchored above the island, aligned to the left of the screen
   const popoverStyle = {
     position: 'fixed',
-    bottom: isMobile ? '70px' : '78px',
+    bottom: isMobile ? '70px' : '74px',
     left: isMobile ? '16px' : '24px',
     width: 'min(350px, calc(100vw - 32px))',
     maxWidth: 'calc(100vw - 32px)',
@@ -92,7 +122,10 @@ export default function InteractiveFloatingIsland({
             backdropFilter: 'blur(3px)',
             WebkitBackdropFilter: 'blur(3px)'
           }}
-          onClick={() => setActivePopover(null)}
+          onClick={() => {
+            cancelCloseTimeout();
+            setActivePopover(null);
+          }}
         />
       )}
 
@@ -101,6 +134,8 @@ export default function InteractiveFloatingIsland({
         <div 
           ref={popoverRef}
           className="floating-island-popover animate-fade-in"
+          onMouseEnter={cancelCloseTimeout}
+          onMouseLeave={() => scheduleClosePopover(280)}
           style={{
             ...popoverStyle,
             background: 'var(--glass-card-bg)',
@@ -115,6 +150,19 @@ export default function InteractiveFloatingIsland({
             textAlign: 'right'
           }}
         >
+          {/* Invisible hover bridge extending downward to bridge gap to island */}
+          <div 
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: '-26px',
+              left: 0,
+              right: 0,
+              height: '30px',
+              background: 'transparent',
+              pointerEvents: 'auto'
+            }} 
+          />
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -225,6 +273,8 @@ export default function InteractiveFloatingIsland({
         <div 
           ref={popoverRef}
           className="floating-island-popover animate-fade-in"
+          onMouseEnter={cancelCloseTimeout}
+          onMouseLeave={() => scheduleClosePopover(280)}
           style={{
             ...popoverStyle,
             background: 'var(--glass-card-bg)',
@@ -239,6 +289,19 @@ export default function InteractiveFloatingIsland({
             textAlign: 'right'
           }}
         >
+          {/* Invisible hover bridge extending downward to bridge gap to island */}
+          <div 
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              bottom: '-26px',
+              left: 0,
+              right: 0,
+              height: '30px',
+              background: 'transparent',
+              pointerEvents: 'auto'
+            }} 
+          />
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -334,6 +397,8 @@ export default function InteractiveFloatingIsland({
       <div 
         ref={islandRef}
         className="floating-action-island animate-fade-in"
+        onMouseEnter={cancelCloseTimeout}
+        onMouseLeave={() => scheduleClosePopover(280)}
         style={{
           position: 'fixed',
           bottom: isMobile ? '16px' : '22px',
@@ -353,10 +418,21 @@ export default function InteractiveFloatingIsland({
           boxSizing: 'border-box',
           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
-        onMouseLeave={() => {
-          if (!isMobile) setActivePopover(null);
-        }}
       >
+        {/* Invisible hover bridge extending upward toward popover */}
+        <div 
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '-24px',
+            left: 0,
+            right: 0,
+            height: '28px',
+            background: 'transparent',
+            pointerEvents: 'auto'
+          }} 
+        />
+
         {/* 1. Compare Icon Button */}
         {hasCompare && (
           <button
@@ -377,9 +453,15 @@ export default function InteractiveFloatingIsland({
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={() => {
-              if (!isMobile) setActivePopover('compare');
+              if (!isMobile) handleOpenPopover('compare');
             }}
-            onClick={() => setActivePopover(prev => prev === 'compare' ? null : 'compare')}
+            onMouseLeave={() => {
+              if (!isMobile) scheduleClosePopover(280);
+            }}
+            onClick={() => {
+              cancelCloseTimeout();
+              setActivePopover(prev => prev === 'compare' ? null : 'compare');
+            }}
             title={`مقایسه مشخصات (${compareList.length} مدل)`}
             aria-label="مشاهده مقایسه لپ‌تاپ‌ها"
           >
@@ -436,9 +518,15 @@ export default function InteractiveFloatingIsland({
               transition: 'all 0.2s ease'
             }}
             onMouseEnter={() => {
-              if (!isMobile) setActivePopover('cart');
+              if (!isMobile) handleOpenPopover('cart');
             }}
-            onClick={() => setActivePopover(prev => prev === 'cart' ? null : 'cart')}
+            onMouseLeave={() => {
+              if (!isMobile) scheduleClosePopover(280);
+            }}
+            onClick={() => {
+              cancelCloseTimeout();
+              setActivePopover(prev => prev === 'cart' ? null : 'cart');
+            }}
             title={`سبد خرید (${cartCount} کالا)`}
             aria-label="مشاهده سبد خرید"
           >

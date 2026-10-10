@@ -406,6 +406,29 @@ h1, h2, h3, h4, h5, h6 {
   animation: islandFlyoutEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Invisible hover bridge connecting popover with island buttons on desktop */
+.floating-island-popover::after {
+  content: '';
+  position: absolute;
+  bottom: -26px;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.floating-action-island::before {
+  content: '';
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: transparent;
+  pointer-events: auto;
+}
+
 .island-action-btn {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
