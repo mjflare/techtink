@@ -6,13 +6,14 @@ import {
   Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
-  Upload, Terminal, Server, AlertOctagon, Layout
+  Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
 import ProductEditorModal from './ProductEditorModal.jsx';
 import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
 import HomeCustomizer from './HomeCustomizer.jsx';
+import WarrantyManager from './WarrantyManager.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout }) {
@@ -20,7 +21,7 @@ export default function AdminDashboard({ user, onLogout }) {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token') || '');
 
   // Admin login fallback if not authenticated as admin
-  const [adminEmail, setAdminEmail] = useState('admin@techtink.ir');
+  const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
@@ -1002,6 +1003,7 @@ export default function AdminDashboard({ user, onLogout }) {
         { id: 'inventory', label: 'انبارداری و ورود/خروج بار', icon: Truck, badge: 'حواله‌ها' },
         { id: 'products', label: 'محصولات و موجودی انبار', icon: Package, badge: products.length > 0 ? `${products.length} کالا` : null },
         { id: 'orders', label: 'سفارشات مشتریان', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : null },
+        { id: 'warranties', label: 'کارت‌های گارانتی و اصالت کالا', icon: ShieldCheck, badge: 'گارانتی' },
         { id: 'appointments', label: 'نوبت‌های تست شوروم و ارتقا', icon: Calendar, badge: appointments.length > 0 ? `${appointments.length}` : null }
       ]
     },
@@ -1076,9 +1078,6 @@ export default function AdminDashboard({ user, onLogout }) {
               {authLoading ? 'در حال ورود...' : 'ورود به پنل مدیریت'}
             </button>
           </form>
-          <div style={{ marginTop: '16px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            نام کاربری پیش‌فرض: admin@techtink.ir
-          </div>
         </div>
       </div>
     );
@@ -2345,6 +2344,11 @@ export default function AdminDashboard({ user, onLogout }) {
             </table>
           </div>
         </div>
+      )}
+
+      {/* 3.1. WARRANTIES & CERTIFICATE ISSUANCE */}
+      {activeSection === 'warranties' && (
+        <WarrantyManager authToken={authToken} products={products} />
       )}
 
       {/* 4. COMMENTS MODERATION */}

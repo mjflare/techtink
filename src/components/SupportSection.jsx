@@ -650,7 +650,7 @@ export default function SupportSection() {
                   <input
                     type="text"
                     required
-                    placeholder="علی ابراهیمیان"
+                    placeholder="مثال: رضا محمدی"
                     value={appointmentForm.customer_name}
                     onChange={e => setAppointmentForm({ ...appointmentForm, customer_name: e.target.value })}
                     style={{ width: '100%' }}

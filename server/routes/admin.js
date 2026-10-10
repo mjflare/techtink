@@ -422,4 +422,94 @@ r.delete('/drivers/:id', (req, res) => {
   res.json({ success: true });
 });
 
+// ---------- Warranties Management ----------
+r.get('/warranties', (req, res) => {
+  const q = String(req.query?.q || '').trim().toLowerCase();
+  const status = req.query?.status;
+
+  let sql = 'SELECT * FROM warranties';
+  const params = [];
+  const where = [];
+
+  if (q) {
+    where.push('(LOWER(serial) LIKE ? OR LOWER(model) LIKE ? OR LOWER(owner) LIKE ? OR LOWER(COALESCE(phone, "")) LIKE ?)');
+    const p = `%${q}%`;
+    params.push(p, p, p, p);
+  }
+
+  if (status && status !== 'all') {
+    if (status === 'active') {
+      where.push('status LIKE "%فعال%"');
+    } else if (status === 'expired') {
+      where.push('status LIKE "%منقضی%"');
+    } else if (status === 'care_plus') {
+      where.push('care_plus = 1');
+    }
+  }
+
+  if (where.length > 0) {
+    sql += ' WHERE ' + where.join(' AND ');
+  }
+
+  sql += ' ORDER BY rowid DESC';
+  const rows = db.all(sql, ...params);
+  res.json(rows.map(w => ({
+    serialNumber: w.serial,
+    serial: w.serial,
+    model: w.model,
+    purchaseDate: w.purchase_date,
+    warrantyExpiry: w.expiry,
+    status: w.status,
+    carePlus: !!w.care_plus,
+    owner: w.owner,
+    phone: w.phone || '',
+    notes: w.notes || ''
+  })));
+});
+
+r.post('/warranties', (req, res) => {
+  const { serialNumber, serial, model, purchaseDate, warrantyExpiry, status, carePlus, owner, phone, notes } = req.body || {};
+  const sn = String(serial || serialNumber || '').trim().toUpperCase();
+  if (!sn) return res.status(400).json({ error: 'شماره سریال گارانتی الزامی است.' });
+  if (!model) return res.status(400).json({ error: 'مدل لپ‌تاپ الزامی است.' });
+
+  const existing = db.get('SELECT serial FROM warranties WHERE serial = ?', sn);
+  if (existing) return res.status(409).json({ error: 'این شماره سریال گارانتی قبلاً ثبت شده است.' });
+
+  db.run(
+    'INSERT INTO warranties (serial, model, purchase_date, expiry, status, care_plus, owner, phone, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    sn,
+    String(model).trim(),
+    purchaseDate || new Date().toLocaleDateString('fa-IR'),
+    warrantyExpiry || '',
+    status || 'فعال (گارانتی ۶ ماهه طلایی تک‌تینک)',
+    carePlus ? 1 : 0,
+    owner || '',
+    phone || '',
+    notes || ''
+  );
+
+  res.json({ success: true, serial: sn });
+});
+
+r.put('/warranties/:serial', (req, res) => {
+  const sn = String(req.params.serial).toUpperCase();
+  const existing = db.get('SELECT serial FROM warranties WHERE serial = ?', sn);
+  if (!existing) return res.status(404).json({ error: 'کارت گارانتی با این سریال یافت نشد.' });
+
+  const { model, purchaseDate, warrantyExpiry, status, carePlus, owner, phone, notes } = req.body || {};
+  db.run(
+    'UPDATE warranties SET model = COALESCE(?, model), purchase_date = COALESCE(?, purchase_date), expiry = COALESCE(?, expiry), status = COALESCE(?, status), care_plus = ?, owner = COALESCE(?, owner), phone = COALESCE(?, phone), notes = COALESCE(?, notes) WHERE serial = ?',
+    model, purchaseDate, warrantyExpiry, status, carePlus ? 1 : 0, owner, phone, notes, sn
+  );
+
+  res.json({ success: true });
+});
+
+r.delete('/warranties/:serial', (req, res) => {
+  const sn = String(req.params.serial).toUpperCase();
+  db.run('DELETE FROM warranties WHERE serial = ?', sn);
+  res.json({ success: true });
+});
+
 export default r;

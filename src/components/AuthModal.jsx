@@ -319,54 +319,6 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
                   {loading ? 'در حال ورود...' : 'ورود به حساب'}
                 </button>
               </div>
-
-              {/* Demo credentials hint */}
-              <div
-                style={{
-                  marginTop: '20px',
-                  padding: '14px',
-                  borderRadius: '10px',
-                  background: 'hsla(var(--accent-cyan), 0.06)',
-                  border: '1px solid hsla(var(--accent-cyan), 0.15)',
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: '0.78rem',
-                    fontWeight: 600,
-                    color: 'hsl(var(--accent-cyan))',
-                    marginBottom: '8px',
-                  }}
-                >
-                  اطلاعات ورود آزمایشی:
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <p
-                    style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 600 }}>مشتری: </span>
-                    <span className="font-code" style={{ direction: 'ltr', display: 'inline' }}>
-                      ali@example.com / user123
-                    </span>
-                  </p>
-                  <p
-                    style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      margin: 0,
-                    }}
-                  >
-                    <span style={{ fontWeight: 600 }}>مدیر: </span>
-                    <span className="font-code" style={{ direction: 'ltr', display: 'inline' }}>
-                      admin@techtink.ir / admin123
-                    </span>
-                  </p>
-                </div>
-              </div>
             </form>
           )}
 

@@ -916,7 +916,7 @@ export default function UserDashboard({
                     type="text"
                     value={addressForm.fullName}
                     onChange={e => setAddressForm({ ...addressForm, fullName: e.target.value })}
-                    placeholder="مثال: علی ابراهیمیان"
+                    placeholder="مثال: رضا محمدی"
                     required
                   />
                 </div>

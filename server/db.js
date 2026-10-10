@@ -325,6 +325,8 @@ function migrate() {
   try { db.exec("ALTER TABLE products ADD COLUMN grade TEXT;"); } catch {}
   try { db.exec("ALTER TABLE drivers ADD COLUMN download_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE blog_posts ADD COLUMN product_slug TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE warranties ADD COLUMN phone TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE warranties ADD COLUMN notes TEXT;"); } catch {}
   
   // Sync clean Iranian stock laptop inventory & clean Persian chassis
   try {

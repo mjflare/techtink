@@ -723,7 +723,7 @@ export const WARRANTY_DATABASE = {
     warrantyExpiry: "۱۴۰۳/۰۴/۱۵",
     status: "منقضی شده (مهلت گارانتی استوک به اتمام رسیده)",
     carePlus: false,
-    owner: "علی رضایی"
+    owner: "نوید رضایی"
   }
 };
 
