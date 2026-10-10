@@ -861,16 +861,8 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     <Inbox size={40} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
                     <p style={{ fontSize: '0.9rem', fontWeight: 700, margin: '0 0 6px' }}>صندوق ورودی خالی است</p>
                     <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', margin: 0 }}>
-                      به محض ارسال ایمیل از سمت اینماد یا سایر سرویس‌ها، پیام اینجا نمایش داده خواهد شد.
+                      پیام‌های جدید ارسال‌شده به info@techtink.ir به صورت خودکار در این بخش نمایش داده می‌شوند.
                     </p>
-                    <button
-                      type="button"
-                      onClick={handleSimulateEmail}
-                      className="btn btn-glass"
-                      style={{ marginTop: '16px', fontSize: '0.8rem', padding: '6px 14px' }}
-                    >
-                      تست دریافت ایمیل اینماد
-                    </button>
                   </>
                 ) : (
                   <>
