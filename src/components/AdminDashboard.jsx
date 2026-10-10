@@ -7,7 +7,7 @@ import {
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
-  Megaphone, Ticket, Globe, Mail
+  Megaphone, Ticket, Globe, Mail, Activity
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -19,6 +19,7 @@ import CouponManager from './CouponManager.jsx';
 import DemoNoticeModal from './DemoNoticeModal.jsx';
 import ViewerAnalytics from './ViewerAnalytics.jsx';
 import AdminWebmail from './AdminWebmail.jsx';
+import ResourceMonitor from './ResourceMonitor.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
@@ -1139,11 +1140,12 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
     },
     {
       id: 'developers',
-      title: 'توسعه‌دهندگان و سیستم',
-      enTitle: 'Developers & System',
-      desc: 'پایگاه داده SQLite، کنسول SQL، وب‌سرویس ترب و نشانی',
-      icon: Database,
+      title: 'منابع سرور، دیتابیس و سیستم',
+      enTitle: 'VPS Health, Database & System',
+      desc: 'پایش بی‌درنگ CPU، حافظه RAM، دیسک، سرویس‌های سرور و پایگاه داده',
+      icon: Activity,
       tabs: [
+        { id: 'resource_monitor', label: 'منابع و سلامت سرور (VPS Health)', icon: Activity, badge: 'زنده' },
         { id: 'dbtools', label: 'پایگاه داده (SQLite Console)', icon: Database, badge: 'SQL' },
         { id: 'settings', label: 'تنظیمات، وب‌سرویس ترب و نشانی', icon: Settings, badge: 'API' }
       ]
@@ -1320,6 +1322,30 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                 {unreadEmailCount} جدید
               </span>
             )}
+          </button>
+
+          {/* Quick VPS Resource Monitor Button */}
+          <button 
+            type="button"
+            onClick={() => setActiveSection('resource_monitor')}
+            className="btn btn-glass"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 14px',
+              borderRadius: '12px',
+              fontSize: '0.825rem',
+              fontWeight: '600',
+              borderColor: activeSection === 'resource_monitor' ? 'hsl(var(--accent-cyan))' : 'rgba(14, 165, 233, 0.4)',
+              background: activeSection === 'resource_monitor' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(14, 165, 233, 0.1)',
+              color: activeSection === 'resource_monitor' ? '#ffffff' : 'hsl(var(--accent-cyan))',
+              boxShadow: activeSection === 'resource_monitor' ? '0 0 16px hsla(var(--accent-cyan), 0.4)' : 'none'
+            }}
+            title="پایش سلامت سرور، پردازنده، رم و سرویس‌های فعال VPS"
+          >
+            <Activity size={16} />
+            <span>سلامت سرور (VPS Health)</span>
           </button>
 
           {/* Quick Site Mode Indicator Button */}
@@ -3838,6 +3864,13 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         <AdminWebmail
           authHeaders={authHeaders}
           onUnreadCountChange={setUnreadEmailCount}
+        />
+      )}
+
+      {/* 8. VPS RESOURCE MONITOR & MULTI-SERVICES HEALTH */}
+      {activeSection === 'resource_monitor' && (
+        <ResourceMonitor
+          authHeaders={authHeaders}
         />
       )}
 

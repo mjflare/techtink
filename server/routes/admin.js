@@ -10,6 +10,7 @@ import {
   listSentEmails, getSentEmailById, deleteSentEmail, deleteAllInboxEmails, 
   deleteAllSentEmails 
 } from '../mailServer.js';
+import { getFullSystemMetrics, probePort, triggerGarbageCollection } from '../systemMonitor.js';
 
 const r = Router();
 r.use(requireAdmin);
@@ -980,6 +981,40 @@ r.delete('/emails/:id', (req, res) => {
     res.json({ success: true, message: 'ایمیل با موفقیت حذف شد' });
   } catch (err) {
     res.status(500).json({ error: 'خطا در حذف ایمیل' });
+  }
+});
+
+// ---------- System Diagnostics & VPS Resource Monitor ----------
+r.get('/system/metrics', async (_req, res) => {
+  try {
+    const data = await getFullSystemMetrics();
+    res.json(data);
+  } catch (err) {
+    console.error('[Admin] Error gathering system metrics:', err);
+    res.status(500).json({ error: 'خطا در خواندن وضعیت منابع سرور: ' + err.message });
+  }
+});
+
+r.post('/system/probe-port', async (req, res) => {
+  try {
+    const { port, host = '127.0.0.1' } = req.body || {};
+    const portNum = parseInt(port, 10);
+    if (!portNum || portNum < 1 || portNum > 65535) {
+      return res.status(400).json({ error: 'شماره پورت نامعتبر است (باید بین ۱ تا ۶۵۵۳۵ باشد).' });
+    }
+    const result = await probePort(portNum, host);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در ارزیابی وضعیت پورت: ' + err.message });
+  }
+});
+
+r.post('/system/gc', (_req, res) => {
+  try {
+    const result = triggerGarbageCollection();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در اجرای آزادسازی حافظه: ' + err.message });
   }
 });
 
