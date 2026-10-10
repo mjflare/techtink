@@ -7,6 +7,8 @@
 // ==============================================================================
 
 import net from 'node:net';
+import tls from 'node:tls';
+import dns from 'node:dns';
 import crypto from 'node:crypto';
 import { db } from './db.js';
 
@@ -236,6 +238,358 @@ export function deleteEmail(id) {
   }
 }
 
+export function deleteAllInboxEmails() {
+  try {
+    return db.run('DELETE FROM inbox_emails');
+  } catch {
+    return null;
+  }
+}
+
+export function listSentEmails({ limit = 50, offset = 0, search = '' } = {}) {
+  try {
+    let sql = 'SELECT id, from_address, to_address, subject, body_text, status, error_message, created_at FROM sent_emails WHERE 1=1';
+    const params = [];
+    if (search) {
+      sql += ' AND (subject LIKE ? OR to_address LIKE ? OR from_address LIKE ? OR body_text LIKE ?)';
+      const s = `%${search}%`;
+      params.push(s, s, s, s);
+    }
+    sql += ' ORDER BY id DESC LIMIT ? OFFSET ?';
+    params.push(Number(limit), Number(offset));
+
+    const items = db.all(sql, ...params);
+    const totalCount = db.get('SELECT COUNT(*) as c FROM sent_emails')?.c || 0;
+    return { items, totalCount };
+  } catch (e) {
+    console.error('[MailServer] listSentEmails error:', e);
+    return { items: [], totalCount: 0 };
+  }
+}
+
+export function getSentEmailById(id) {
+  try {
+    return db.get('SELECT * FROM sent_emails WHERE id = ?', id);
+  } catch {
+    return null;
+  }
+}
+
+export function deleteSentEmail(id) {
+  try {
+    return db.run('DELETE FROM sent_emails WHERE id = ?', id);
+  } catch {
+    return null;
+  }
+}
+
+export function deleteAllSentEmails() {
+  try {
+    return db.run('DELETE FROM sent_emails');
+  } catch {
+    return null;
+  }
+}
+
+// --- Outbound Email (RFC 5322 MIME & SMTP Client) ---
+export function buildMimeMessage({ from, to, subject, bodyText = '', bodyHtml = '' }) {
+  const boundary = `----=_Part_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
+  const messageId = `<tt.${Date.now()}.${crypto.randomBytes(4).toString('hex')}@techtink.ir>`;
+  const dateStr = new Date().toUTCString();
+  const encodedSubject = `=?UTF-8?B?${Buffer.from(subject || '').toString('base64')}?=`;
+
+  const headers = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${encodedSubject}`,
+    `Date: ${dateStr}`,
+    `Message-ID: ${messageId}`,
+    `MIME-Version: 1.0`,
+  ];
+
+  if (bodyHtml && bodyText) {
+    headers.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+    const parts = [
+      headers.join('\r\n'),
+      '',
+      `--${boundary}`,
+      'Content-Type: text/plain; charset=utf-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      Buffer.from(bodyText).toString('base64').replace(/(.{76})/g, '$1\r\n'),
+      `--${boundary}`,
+      'Content-Type: text/html; charset=utf-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      Buffer.from(bodyHtml).toString('base64').replace(/(.{76})/g, '$1\r\n'),
+      `--${boundary}--`,
+      ''
+    ];
+    return parts.join('\r\n');
+  } else if (bodyHtml) {
+    headers.push('Content-Type: text/html; charset=utf-8');
+    headers.push('Content-Transfer-Encoding: base64');
+    return `${headers.join('\r\n')}\r\n\r\n${Buffer.from(bodyHtml).toString('base64').replace(/(.{76})/g, '$1\r\n')}\r\n`;
+  } else {
+    headers.push('Content-Type: text/plain; charset=utf-8');
+    headers.push('Content-Transfer-Encoding: base64');
+    return `${headers.join('\r\n')}\r\n\r\n${Buffer.from(bodyText || '').toString('base64').replace(/(.{76})/g, '$1\r\n')}\r\n`;
+  }
+}
+
+export function sendViaSmtpSocket({ host, port = 25, useTls = false, auth = null, from, to, rawData, timeout = 25000 }) {
+  return new Promise((resolve, reject) => {
+    let socket;
+    let timer = null;
+    let settled = false;
+
+    const cleanup = () => {
+      if (timer) clearTimeout(timer);
+      try { socket?.destroy(); } catch {}
+    };
+
+    const done = (err, result) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (err) reject(err);
+      else resolve(result);
+    };
+
+    timer = setTimeout(() => {
+      done(new Error(`پاسخی از سرور مقصد ${host}:${port} دریافت نشد (Timeout)`));
+    }, timeout);
+
+    const onConnect = () => {
+      // Socket connected, waiting for banner
+    };
+
+    try {
+      if (useTls) {
+        socket = tls.connect({ host, port, rejectUnauthorized: false }, onConnect);
+      } else {
+        socket = net.createConnection({ host, port }, onConnect);
+      }
+    } catch (e) {
+      return done(e);
+    }
+
+    socket.on('error', (err) => {
+      done(new Error(`خطای ارتباط سوکت با ${host}:${port} - ${err.message}`));
+    });
+
+    let buffer = '';
+    let step = 'BANNER';
+
+    socket.on('data', (chunk) => {
+      buffer += chunk.toString('utf8');
+
+      const lines = buffer.split('\r\n');
+      if (lines.length < 2) return;
+
+      const completeLines = lines.slice(0, lines.length - 1);
+      const lastLine = completeLines[completeLines.length - 1];
+      const match = lastLine.match(/^(\d{3})([ -])(.*)$/);
+      if (!match) return;
+
+      // Continuation line (e.g. 250-SIZE) - keep reading until terminating line (250 OK)
+      if (match[2] === '-') return;
+
+      const code = parseInt(match[1], 10);
+      const text = match[3];
+      buffer = lines[lines.length - 1];
+
+      if (code >= 400) {
+        return done(new Error(`پاسخ سرور ایمیل (${code}): ${text || lastLine}`));
+      }
+
+      switch (step) {
+        case 'BANNER':
+          if (code === 220) {
+            step = 'EHLO';
+            socket.write('EHLO mail.techtink.ir\r\n');
+          }
+          break;
+
+        case 'EHLO':
+          if (code === 250) {
+            if (auth && auth.user && auth.pass) {
+              step = 'AUTH_LOGIN';
+              socket.write('AUTH LOGIN\r\n');
+            } else {
+              step = 'MAIL_FROM';
+              socket.write(`MAIL FROM:<${from}>\r\n`);
+            }
+          }
+          break;
+
+        case 'AUTH_LOGIN':
+          if (code === 334) {
+            step = 'AUTH_PASS';
+            socket.write(`${Buffer.from(auth.user).toString('base64')}\r\n`);
+          }
+          break;
+
+        case 'AUTH_PASS':
+          if (code === 334) {
+            step = 'AUTH_VERIFY';
+            socket.write(`${Buffer.from(auth.pass).toString('base64')}\r\n`);
+          }
+          break;
+
+        case 'AUTH_VERIFY':
+          if (code === 235) {
+            step = 'MAIL_FROM';
+            socket.write(`MAIL FROM:<${from}>\r\n`);
+          } else {
+            done(new Error(`احراز هویت سرور ناموفق بود (${code}): ${text}`));
+          }
+          break;
+
+        case 'MAIL_FROM':
+          if (code === 250) {
+            step = 'RCPT_TO';
+            socket.write(`RCPT TO:<${to}>\r\n`);
+          }
+          break;
+
+        case 'RCPT_TO':
+          if (code === 250) {
+            step = 'DATA_INIT';
+            socket.write('DATA\r\n');
+          }
+          break;
+
+        case 'DATA_INIT':
+          if (code === 354) {
+            step = 'DATA_SEND';
+            socket.write(`${rawData}\r\n.\r\n`);
+          }
+          break;
+
+        case 'DATA_SEND':
+          if (code === 250) {
+            step = 'QUIT';
+            socket.write('QUIT\r\n');
+          }
+          break;
+
+        case 'QUIT':
+          done(null, { success: true, message: 'ایمیل با موفقیت تحویل داده شد', response: text });
+          break;
+
+        default:
+          break;
+      }
+    });
+  });
+}
+
+export async function sendOutgoingEmail({ from = 'info@techtink.ir', to, subject, bodyText = '', bodyHtml = '', relayConfig = null }) {
+  if (!to || !to.includes('@')) {
+    throw new Error('آدرس ایمیل گیرنده نامعتبر است.');
+  }
+
+  const senderAddress = (from || 'info@techtink.ir').trim();
+  const recipientAddress = to.trim();
+
+  let sentRecordId = null;
+  try {
+    const r = db.run(
+      'INSERT INTO sent_emails (from_address, to_address, subject, body_text, body_html, status) VALUES (?, ?, ?, ?, ?, ?)',
+      senderAddress, recipientAddress, subject || '(بدون عنوان)', bodyText, bodyHtml, 'sending'
+    );
+    sentRecordId = r.lastId;
+  } catch (e) {
+    console.error('[MailServer] Error saving sent_emails record:', e);
+  }
+
+  const rawData = buildMimeMessage({
+    from: senderAddress,
+    to: recipientAddress,
+    subject: subject || '',
+    bodyText,
+    bodyHtml
+  });
+
+  try {
+    const relayHost = relayConfig?.host || process.env.SMTP_RELAY_HOST;
+    const relayPort = parseInt(relayConfig?.port || process.env.SMTP_RELAY_PORT || '587', 10);
+    const relayUser = relayConfig?.user || process.env.SMTP_RELAY_USER;
+    const relayPass = relayConfig?.pass || process.env.SMTP_RELAY_PASS;
+    const relaySecure = relayConfig?.secure || process.env.SMTP_RELAY_SECURE === 'true' || relayPort === 465;
+
+    if (relayHost) {
+      await sendViaSmtpSocket({
+        host: relayHost,
+        port: relayPort,
+        useTls: relaySecure,
+        auth: relayUser && relayPass ? { user: relayUser, pass: relayPass } : null,
+        from: senderAddress,
+        to: recipientAddress,
+        rawData
+      });
+    } else {
+      const domain = recipientAddress.split('@')[1];
+      let mxHosts = [];
+      try {
+        const records = await dns.promises.resolveMx(domain);
+        if (records && records.length > 0) {
+          records.sort((a, b) => a.priority - b.priority);
+          mxHosts = records.map(r => r.exchange);
+        }
+      } catch (err) {
+        console.warn(`[MailServer] MX lookup failed for ${domain}: ${err.message}. Trying direct A record.`);
+      }
+
+      if (mxHosts.length === 0) {
+        mxHosts = [domain];
+      }
+
+      let delivered = false;
+      let lastDeliveryError = null;
+
+      for (const host of mxHosts) {
+        try {
+          await sendViaSmtpSocket({
+            host,
+            port: 25,
+            useTls: false,
+            from: senderAddress,
+            to: recipientAddress,
+            rawData,
+            timeout: 20000
+          });
+          delivered = true;
+          break;
+        } catch (err) {
+          lastDeliveryError = err;
+          console.warn(`[MailServer] Delivery attempt to ${host} failed: ${err.message}`);
+        }
+      }
+
+      if (!delivered) {
+        throw new Error(lastDeliveryError?.message || `امکان تحویل مستقیم ایمیل به ${domain} روی پورت ۲۵ وجود نداشت.`);
+      }
+    }
+
+    if (sentRecordId) {
+      db.run('UPDATE sent_emails SET status = ?, error_message = NULL WHERE id = ?', 'sent', sentRecordId);
+    }
+
+    return {
+      success: true,
+      emailId: sentRecordId,
+      message: 'ایمیل با موفقیت ارسال شد.'
+    };
+  } catch (err) {
+    if (sentRecordId) {
+      db.run('UPDATE sent_emails SET status = ?, error_message = ? WHERE id = ?', 'failed', err.message, sentRecordId);
+    }
+    throw err;
+  }
+}
+
 // --- SMTP Server Implementation (RFC 5321) ---
 export function startSmtpServer(portToUse = null) {
   if (smtpServerInstance) {
@@ -417,6 +771,7 @@ export function startSmtpServer(portToUse = null) {
 
 export function getMailServerStatus() {
   const emailStats = db.get('SELECT COUNT(*) as total, SUM(CASE WHEN is_read = 0 THEN 1 ELSE 0 END) as unread FROM inbox_emails') || { total: 0, unread: 0 };
+  const sentStats = db.get('SELECT COUNT(*) as total FROM sent_emails') || { total: 0 };
   const lastEmail = db.get('SELECT * FROM inbox_emails ORDER BY id DESC LIMIT 1');
 
   return {
@@ -425,6 +780,7 @@ export function getMailServerStatus() {
     lastError,
     totalEmails: emailStats.total || 0,
     unreadEmails: emailStats.unread || 0,
+    totalSent: sentStats.total || 0,
     mailbox: 'info@techtink.ir',
     lastEmail: lastEmail ? {
       id: lastEmail.id,

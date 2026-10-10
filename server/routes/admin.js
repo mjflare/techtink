@@ -4,7 +4,12 @@ import { db, getSettings, setSetting, getSetting } from '../db.js';
 import { requireAdmin, publicUser, hashPassword } from '../auth.js';
 import { serializeProduct } from '../products.js';
 import { orderWithItems } from './account.js';
-import { listEmails, getEmailById, markEmailRead, deleteEmail, saveIncomingEmail, getMailServerStatus, extractVerificationCode } from '../mailServer.js';
+import { 
+  listEmails, getEmailById, markEmailRead, deleteEmail, saveIncomingEmail, 
+  getMailServerStatus, extractVerificationCode, sendOutgoingEmail, 
+  listSentEmails, getSentEmailById, deleteSentEmail, deleteAllInboxEmails, 
+  deleteAllSentEmails 
+} from '../mailServer.js';
 
 const r = Router();
 r.use(requireAdmin);
@@ -885,6 +890,94 @@ r.post('/emails/simulate', (req, res) => {
     res.json({ success: true, id, verificationCode: code, message: 'ایمیل با موفقیت ثبت شد' });
   } catch (err) {
     res.status(500).json({ error: 'خطا در شبیه‌سازی ایمیل' });
+  }
+});
+
+// Outbound Email Sending
+r.post('/emails/send', async (req, res) => {
+  try {
+    const { to, from = 'info@techtink.ir', subject, bodyText, bodyHtml, relayConfig } = req.body || {};
+    if (!to) {
+      return res.status(400).json({ error: 'آدرس ایمیل گیرنده الزامی است' });
+    }
+    const result = await sendOutgoingEmail({ to, from, subject, bodyText, bodyHtml, relayConfig });
+    res.json(result);
+  } catch (err) {
+    console.error('[Admin] Error sending email:', err);
+    res.status(500).json({ error: err.message || 'خطا در ارسال ایمیل' });
+  }
+});
+
+// List Sent Emails
+r.get('/emails/sent', (req, res) => {
+  try {
+    const { limit = 50, offset = 0, search = '' } = req.query;
+    const result = listSentEmails({
+      limit: Number(limit) || 50,
+      offset: Number(offset) || 0,
+      search: String(search || '').trim()
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در بارگذاری ایمیل‌های ارسالی' });
+  }
+});
+
+// Get Single Sent Email
+r.get('/emails/sent/:id', (req, res) => {
+  try {
+    const email = getSentEmailById(req.params.id);
+    if (!email) return res.status(404).json({ error: 'ایمیل ارسالی یافت نشد' });
+    res.json(email);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در دریافت اطلاعات ایمیل ارسالی' });
+  }
+});
+
+// Delete Single Sent Email
+r.delete('/emails/sent/:id', (req, res) => {
+  try {
+    deleteSentEmail(req.params.id);
+    res.json({ success: true, message: 'ایمیل ارسالی با موفقیت حذف شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در حذف ایمیل ارسالی' });
+  }
+});
+
+// Clear All Inbox Emails
+r.delete('/emails/clear/inbox', (_req, res) => {
+  try {
+    deleteAllInboxEmails();
+    res.json({ success: true, message: 'صندوق دریافتی کاملاً پاکسازی شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در پاکسازی صندوق دریافتی' });
+  }
+});
+
+// Clear All Sent Emails
+r.delete('/emails/clear/sent', (_req, res) => {
+  try {
+    deleteAllSentEmails();
+    res.json({ success: true, message: 'صندوق ارسالی کاملاً پاکسازی شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در پاکسازی صندوق ارسالی' });
+  }
+});
+
+// Bulk Delete Emails
+r.post('/emails/bulk-delete', (req, res) => {
+  try {
+    const { ids = [], folder = 'inbox' } = req.body || {};
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'هیچ شناسه‌ای برای حذف ارسال نشده است' });
+    }
+    for (const id of ids) {
+      if (folder === 'sent') deleteSentEmail(id);
+      else deleteEmail(id);
+    }
+    res.json({ success: true, message: `${ids.length} ایمیل با موفقیت حذف شدند` });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در حذف گروهی ایمیل‌ها' });
   }
 });
 

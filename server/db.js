@@ -273,6 +273,20 @@ CREATE TABLE IF NOT EXISTS inbox_emails (
 CREATE INDEX IF NOT EXISTS idx_inbox_emails_to ON inbox_emails(to_address);
 CREATE INDEX IF NOT EXISTS idx_inbox_emails_read ON inbox_emails(is_read);
 CREATE INDEX IF NOT EXISTS idx_inbox_emails_created ON inbox_emails(created_at);
+CREATE TABLE IF NOT EXISTS sent_emails (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_address TEXT NOT NULL,
+  to_address TEXT NOT NULL,
+  subject TEXT,
+  body_text TEXT,
+  body_html TEXT,
+  status TEXT DEFAULT 'sent',
+  error_message TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_to ON sent_emails(to_address);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_status ON sent_emails(status);
+CREATE INDEX IF NOT EXISTS idx_sent_emails_created ON sent_emails(created_at);
 `;
 
 export const DEFAULT_SETTINGS = {
