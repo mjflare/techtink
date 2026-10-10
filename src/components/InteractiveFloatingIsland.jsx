@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeftRight, ShoppingCart, X, Trash2, ChevronUp } from 'lucide-react';
+import { ArrowLeftRight, ShoppingCart, X } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
 export default function InteractiveFloatingIsland({
@@ -21,11 +21,9 @@ export default function InteractiveFloatingIsland({
   const islandRef = useRef(null);
   const popoverRef = useRef(null);
 
-  // Re-align dynamically based on actual screen size reported by browser
+  // Monitor screen resizing
   useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
+    const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
     return () => {
@@ -61,68 +59,45 @@ export default function InteractiveFloatingIsland({
     };
   }, []);
 
-  // Hide if no items or if on admin panel
+  // Determine active states
   const hasCompare = compareList.length > 0 && activeTab !== 'compare';
   const hasCart = cartCount > 0;
 
+  // If neither has items or if on admin panel, do not render
   if ((!hasCompare && !hasCart) || activeTab === 'admin') {
     return null;
   }
 
-  // Calculate dynamic responsive positioning based on windowWidth
-  const mobileContainerStyle = {
+  // Popover positioning: safely anchored above the island
+  const popoverStyle = isMobile ? {
     position: 'fixed',
-    bottom: '16px',
-    left: '12px',
-    right: '12px',
-    maxWidth: '440px',
+    bottom: '72px',
+    left: '14px',
+    right: '14px',
+    maxWidth: '360px',
     margin: '0 auto',
-    width: 'calc(100% - 24px)',
-    zIndex: 1020,
-    boxSizing: 'border-box'
-  };
-
-  const desktopContainerStyle = {
-    position: 'fixed',
-    bottom: '24px',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: 'max-content',
-    maxWidth: 'calc(100vw - 32px)',
-    zIndex: 1020,
-    boxSizing: 'border-box'
-  };
-
-  const popoverPositionStyle = isMobile ? {
-    position: 'fixed',
-    bottom: '76px',
-    left: '12px',
-    right: '12px',
-    maxWidth: '440px',
-    margin: '0 auto',
-    width: 'calc(100% - 24px)',
-    zIndex: 1025,
+    zIndex: 1030,
     boxSizing: 'border-box'
   } : {
     position: 'fixed',
-    bottom: '82px',
+    bottom: '78px',
     left: '50%',
     transform: 'translateX(-50%)',
-    width: '380px',
+    width: '360px',
     maxWidth: 'calc(100vw - 32px)',
-    zIndex: 1025,
+    zIndex: 1030,
     boxSizing: 'border-box'
   };
 
   return (
     <>
-      {/* Mobile Backdrop to allow 1-tap dismiss */}
+      {/* Mobile backdrop for 1-tap dismiss */}
       {isMobile && activePopover && (
         <div 
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 1015,
+            zIndex: 1020,
             background: 'rgba(0, 0, 0, 0.35)',
             backdropFilter: 'blur(3px)',
             WebkitBackdropFilter: 'blur(3px)'
@@ -131,20 +106,20 @@ export default function InteractiveFloatingIsland({
         />
       )}
 
-      {/* 1. INTERACTIVE FLYOUT POPOVER (Positioned directly in viewport, NEVER in transformed container) */}
+      {/* FLYOUT POPOVER: Compare Items */}
       {activePopover === 'compare' && hasCompare && (
         <div 
           ref={popoverRef}
           className="floating-island-popover animate-fade-in"
           style={{
-            ...popoverPositionStyle,
+            ...popoverStyle,
             background: 'var(--glass-card-bg)',
             backdropFilter: 'blur(28px) saturate(190%)',
             WebkitBackdropFilter: 'blur(28px) saturate(190%)',
             border: '1px solid var(--border-glass)',
-            boxShadow: 'var(--glass-specular), 0 24px 60px rgba(0, 0, 0, 0.38)',
-            borderRadius: '22px',
-            padding: isMobile ? '14px' : '18px',
+            boxShadow: 'var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.35)',
+            borderRadius: '20px',
+            padding: '16px',
             color: 'var(--text-primary)',
             direction: 'rtl',
             textAlign: 'right'
@@ -156,16 +131,16 @@ export default function InteractiveFloatingIsland({
               <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ArrowLeftRight size={15} color="#ef4444" />
               </div>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
-                لیست مقایسه ({comparedLaptops.length} از ۳ مدل)
+              <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>
+                لیست مقایسه ({comparedLaptops.length} مدل)
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button 
                 type="button" 
                 onClick={() => { setCompareList([]); setActivePopover(null); }} 
-                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer', padding: '4px 6px', borderRadius: '6px' }}
-                title="حذف تمام موارد"
+                style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px' }}
+                title="حذف تمام مدل‌ها"
               >
                 حذف همه
               </button>
@@ -173,65 +148,59 @@ export default function InteractiveFloatingIsland({
                 type="button" 
                 onClick={() => setActivePopover(null)} 
                 className="btn btn-glass" 
-                style={{ padding: '4px', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                aria-label="بستن پنجره"
+                style={{ padding: '3px', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                aria-label="بستن"
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             </div>
           </div>
 
-          {/* List of Laptops */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '230px', overflowY: 'auto', marginBottom: '12px', paddingLeft: '4px' }}>
-            {comparedLaptops.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                موردی برای مقایسه انتخاب نشده است.
-              </div>
-            ) : (
-              comparedLaptops.map(item => (
-                <div 
-                  key={item.id} 
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '10px', 
-                    padding: '8px 10px', 
-                    borderRadius: '12px', 
-                    background: 'var(--glass-bg-hover)', 
-                    border: '1px solid var(--border-glass)' 
-                  }}
-                >
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
-                  />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.825rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.brand ? `${item.brand} ${item.model}` : item.name}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'hsl(var(--accent-cyan))', fontWeight: 700, marginTop: '2px' }}>
-                      {formatPrice(item.price)}
-                    </div>
+          {/* Items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', marginBottom: '12px' }}>
+            {comparedLaptops.map(item => (
+              <div 
+                key={item.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '10px', 
+                  padding: '8px 10px', 
+                  borderRadius: '12px', 
+                  background: 'var(--glass-bg-hover)', 
+                  border: '1px solid var(--border-glass)' 
+                }}
+              >
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {item.brand ? `${item.brand} ${item.model}` : item.name}
                   </div>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCompare(item.id);
-                    }}
-                    className="btn btn-glass"
-                    style={{ padding: '4px', borderRadius: '50%', width: '26px', height: '26px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}
-                    title="حذف از مقایسه"
-                  >
-                    <X size={13} />
-                  </button>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-cyan))', fontWeight: 700, marginTop: '2px' }}>
+                    {formatPrice(item.price)}
+                  </div>
                 </div>
-              ))
-            )}
+                <button 
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleCompare(item.id);
+                  }}
+                  className="btn btn-glass"
+                  style={{ padding: '4px', borderRadius: '50%', width: '24px', height: '24px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}
+                  title="حذف از مقایسه"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
           </div>
 
-          {/* Primary Action Button */}
+          {/* CTA */}
           <button 
             type="button" 
             className="btn" 
@@ -240,15 +209,15 @@ export default function InteractiveFloatingIsland({
               background: '#ef4444', 
               color: 'white', 
               border: 'none', 
-              padding: '11px', 
-              borderRadius: '14px', 
-              fontSize: '0.85rem', 
-              fontWeight: 700, 
+              padding: '10px', 
+              borderRadius: '12px', 
+              fontSize: '0.825rem', 
+              fontWeight: 600, 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: '8px',
-              boxShadow: '0 4px 16px rgba(239, 68, 68, 0.42)',
+              boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)',
               cursor: 'pointer'
             }}
             onClick={() => {
@@ -256,7 +225,7 @@ export default function InteractiveFloatingIsland({
               if (onGoToCompare) onGoToCompare();
             }}
           >
-            <ArrowLeftRight size={15} /> مشاهده جدول مقایسه کامل
+            <ArrowLeftRight size={14} /> مشاهده جدول مقایسه کامل
           </button>
         </div>
       )}
@@ -267,14 +236,14 @@ export default function InteractiveFloatingIsland({
           ref={popoverRef}
           className="floating-island-popover animate-fade-in"
           style={{
-            ...popoverPositionStyle,
+            ...popoverStyle,
             background: 'var(--glass-card-bg)',
             backdropFilter: 'blur(28px) saturate(190%)',
             WebkitBackdropFilter: 'blur(28px) saturate(190%)',
             border: '1px solid var(--border-glass)',
-            boxShadow: 'var(--glass-specular), 0 24px 60px rgba(0, 0, 0, 0.38)',
-            borderRadius: '22px',
-            padding: isMobile ? '14px' : '18px',
+            boxShadow: 'var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.35)',
+            borderRadius: '20px',
+            padding: '16px',
             color: 'var(--text-primary)',
             direction: 'rtl',
             textAlign: 'right'
@@ -286,7 +255,7 @@ export default function InteractiveFloatingIsland({
               <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'hsla(var(--accent-purple), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ShoppingCart size={15} color="hsl(var(--accent-purple))" />
               </div>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.875rem' }}>
                 سبد خرید شما ({cartCount} کالا)
               </span>
             </div>
@@ -294,15 +263,15 @@ export default function InteractiveFloatingIsland({
               type="button" 
               onClick={() => setActivePopover(null)} 
               className="btn btn-glass" 
-              style={{ padding: '4px', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              aria-label="بستن پنجره"
+              style={{ padding: '3px', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              aria-label="بستن"
             >
-              <X size={13} />
+              <X size={12} />
             </button>
           </div>
 
-          {/* Cart Item List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '230px', overflowY: 'auto', marginBottom: '12px', paddingLeft: '4px' }}>
+          {/* Items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', marginBottom: '12px' }}>
             {cartItems.map((item, idx) => (
               <div 
                 key={idx} 
@@ -319,13 +288,13 @@ export default function InteractiveFloatingIsland({
                 <img 
                   src={item.image} 
                   alt={item.name} 
-                  style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
+                  style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '0.825rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {item.name}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px', fontSize: '0.78rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px', fontSize: '0.75rem' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>تعداد: {item.quantity}</span>
                     <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 700 }}>
                       {formatPrice((item.totalPrice || item.basePrice || 0) * (item.quantity || 1))}
@@ -336,8 +305,8 @@ export default function InteractiveFloatingIsland({
             ))}
           </div>
 
-          {/* Subtotal & Primary CTA */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border-glass)', marginBottom: '12px', fontSize: '0.875rem', fontWeight: 700 }}>
+          {/* Total & CTA */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid var(--border-glass)', marginBottom: '10px', fontSize: '0.85rem', fontWeight: 700 }}>
             <span>مبلغ کل سبد:</span>
             <span style={{ color: 'hsl(var(--accent-cyan))' }}>{formatPrice(cartSubtotal)}</span>
           </div>
@@ -350,15 +319,15 @@ export default function InteractiveFloatingIsland({
               background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', 
               color: 'white', 
               border: 'none', 
-              padding: '11px', 
-              borderRadius: '14px', 
-              fontSize: '0.85rem', 
-              fontWeight: 700, 
+              padding: '10px', 
+              borderRadius: '12px', 
+              fontSize: '0.825rem', 
+              fontWeight: 600, 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: '8px',
-              boxShadow: '0 4px 16px hsla(var(--accent-purple), 0.42)',
+              boxShadow: '0 4px 14px hsla(var(--accent-purple), 0.4)',
               cursor: 'pointer'
             }}
             onClick={() => {
@@ -366,209 +335,144 @@ export default function InteractiveFloatingIsland({
               if (onOpenCart) onOpenCart();
             }}
           >
-            <ShoppingCart size={15} /> مشاهده سبد و تکمیل سفارش
+            <ShoppingCart size={14} /> مشاهده سبد و تکمیل سفارش
           </button>
         </div>
       )}
 
-      {/* 2. THE FLOATING BOTTOM ACTION ISLAND (Realigned dynamically based on browser screen width) */}
+      {/* ULTRA-COMPACT DYNAMIC ISLAND PILL (Icons Only, Hugs Content Dynamically) */}
       <div 
         ref={islandRef}
         className="floating-action-island animate-fade-in"
         style={{
-          ...(isMobile ? mobileContainerStyle : desktopContainerStyle),
+          position: 'fixed',
+          bottom: isMobile ? '16px' : '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1025,
           background: 'var(--glass-card-bg)',
-          backdropFilter: 'blur(24px) saturate(190%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+          backdropFilter: 'blur(28px) saturate(190%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(190%)',
           border: '1px solid var(--border-glass)',
-          boxShadow: 'var(--glass-specular), 0 16px 45px rgba(0, 0, 0, 0.22)',
-          borderRadius: isMobile ? '24px' : '34px',
-          padding: isMobile ? '5px 8px' : '6px 14px',
-          display: 'flex',
+          boxShadow: 'var(--glass-specular), 0 12px 36px rgba(0, 0, 0, 0.24)',
+          borderRadius: '30px',
+          padding: '4px 6px',
+          display: 'inline-flex',
           alignItems: 'center',
-          justifyContent: isMobile ? 'space-between' : 'center',
-          gap: isMobile ? '6px' : '10px'
+          gap: '4px',
+          width: 'max-content',
+          boxSizing: 'border-box',
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
         onMouseLeave={() => {
           if (!isMobile) setActivePopover(null);
         }}
       >
-        {/* Compare Capsule */}
+        {/* 1. Compare Icon Button */}
         {hasCompare && (
-          <div 
-            className="floating-island-capsule"
+          <button
+            type="button"
+            className="btn-glass"
             style={{
-              flex: isMobile ? 1 : 'initial',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-              background: activePopover === 'compare' ? 'var(--glass-bg-hover)' : 'transparent'
+              position: 'relative',
+              width: '42px',
+              height: '42px',
+              padding: 0,
+              borderRadius: '21px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: activePopover === 'compare' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent',
+              background: activePopover === 'compare' ? 'rgba(239, 68, 68, 0.16)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
             onMouseEnter={() => {
               if (!isMobile) setActivePopover('compare');
             }}
             onClick={() => setActivePopover(prev => prev === 'compare' ? null : 'compare')}
-            title="مشاهده موارد مقایسه"
+            title={`مقایسه مشخصات (${compareList.length} مدل)`}
+            aria-label="مشاهده مقایسه لپ‌تاپ‌ها"
           >
-            <span style={{ 
-              background: '#ef4444', 
-              color: 'white', 
-              borderRadius: '50%', 
-              width: '20px', 
-              height: '20px', 
-              minWidth: '20px',
-              display: 'flex', 
-              alignItems: 'center', 
+            <ArrowLeftRight size={19} color="#ef4444" />
+            <span style={{
+              position: 'absolute',
+              top: '1px',
+              right: '1px',
+              background: '#ef4444',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: 800,
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
+              boxShadow: '0 0 8px rgba(239, 68, 68, 0.7)'
             }}>
               {compareList.length}
             </span>
-
-            <span style={{ 
-              fontSize: '0.8rem', 
-              fontWeight: 600, 
-              color: 'var(--text-primary)', 
-              whiteSpace: 'nowrap'
-            }}>
-              {isMobile ? 'مقایسه' : `${compareList.length} مدل در مقایسه`}
-            </span>
-
-            <button 
-              type="button"
-              className="btn island-action-btn" 
-              style={{ 
-                background: '#ef4444', 
-                color: 'white',
-                border: 'none',
-                padding: '4px 10px', 
-                fontSize: '0.75rem', 
-                borderRadius: '16px', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: '4px',
-                boxShadow: '0 0 10px rgba(239, 68, 68, 0.35)',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onGoToCompare) onGoToCompare();
-              }}
-              title="مشاهده مقایسه"
-            >
-              <ArrowLeftRight size={12} />
-              {!isMobile && <span>مشاهده</span>}
-            </button>
-
-            <button 
-              type="button"
-              className="btn btn-glass island-clear-btn" 
-              style={{ 
-                padding: '2px', 
-                borderRadius: '50%', 
-                width: '22px', 
-                height: '22px', 
-                minHeight: '22px', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                cursor: 'pointer' 
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCompareList([]);
-                setActivePopover(null);
-              }}
-              title="پاک کردن مقایسه‌ها"
-              aria-label="پاک کردن مقایسه‌ها"
-            >
-              <X size={11} />
-            </button>
-          </div>
+          </button>
         )}
 
-        {/* Divider between Compare and Cart if both exist */}
+        {/* Divider if both exist */}
         {hasCompare && hasCart && (
-          <div 
-            style={{ 
-              width: '1px', 
-              height: isMobile ? '18px' : '22px', 
-              background: 'var(--border-glass)', 
-              flexShrink: 0,
-              margin: '0 2px'
-            }} 
-          />
+          <div style={{ 
+            width: '1px', 
+            height: '20px', 
+            background: 'var(--border-glass)', 
+            margin: '0 2px', 
+            flexShrink: 0 
+          }} />
         )}
 
-        {/* Cart Capsule */}
+        {/* 2. Cart Icon Button */}
         {hasCart && (
-          <div 
-            className="floating-island-capsule"
+          <button
+            type="button"
+            className="btn-glass"
             style={{
-              flex: isMobile ? 1 : 'initial',
-              justifyContent: isMobile ? 'center' : 'flex-start',
-              background: activePopover === 'cart' ? 'var(--glass-bg-hover)' : 'transparent'
+              position: 'relative',
+              width: '42px',
+              height: '42px',
+              padding: 0,
+              borderRadius: '21px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: activePopover === 'cart' ? '1px solid hsla(var(--accent-purple), 0.5)' : '1px solid transparent',
+              background: activePopover === 'cart' ? 'hsla(var(--accent-purple), 0.16)' : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
             }}
             onMouseEnter={() => {
               if (!isMobile) setActivePopover('cart');
             }}
             onClick={() => setActivePopover(prev => prev === 'cart' ? null : 'cart')}
-            title="مشاهده سبد خرید"
+            title={`سبد خرید (${cartCount} کالا)`}
+            aria-label="مشاهده سبد خرید"
           >
-            <span style={{ 
-              background: 'hsl(var(--accent-purple))', 
-              color: 'white', 
-              borderRadius: '50%', 
-              width: '20px', 
-              height: '20px', 
-              minWidth: '20px',
-              display: 'flex', 
-              alignItems: 'center', 
+            <ShoppingCart size={19} color="hsl(var(--accent-purple))" />
+            <span style={{
+              position: 'absolute',
+              top: '1px',
+              right: '1px',
+              background: 'hsl(var(--accent-purple))',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: 800,
+              width: '18px',
+              height: '18px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              boxShadow: '0 0 10px hsla(var(--accent-purple), 0.5)'
+              boxShadow: '0 0 8px hsla(var(--accent-purple), 0.7)'
             }}>
               {cartCount}
             </span>
-
-            <span style={{ 
-              fontSize: '0.8rem', 
-              fontWeight: 600, 
-              color: 'var(--text-primary)', 
-              whiteSpace: 'nowrap'
-            }}>
-              {isMobile ? 'سبد خرید' : `سبد (${formatPrice(cartSubtotal)})`}
-            </span>
-
-            <button 
-              type="button"
-              className="btn island-action-btn" 
-              style={{ 
-                background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', 
-                color: 'white',
-                border: 'none',
-                padding: '4px 10px', 
-                fontSize: '0.75rem', 
-                borderRadius: '16px', 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: '4px',
-                boxShadow: '0 0 10px hsla(var(--accent-purple), 0.35)',
-                whiteSpace: 'nowrap',
-                cursor: 'pointer'
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onOpenCart) onOpenCart();
-              }}
-              title="مشاهده سبد خرید"
-            >
-              <ShoppingCart size={12} />
-              {!isMobile && <span>مشاهده</span>}
-            </button>
-          </div>
+          </button>
         )}
       </div>
     </>
