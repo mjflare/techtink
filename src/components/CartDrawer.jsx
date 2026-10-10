@@ -25,12 +25,14 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
   return (
     <>
       <div 
-        style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 1040 }} 
+        style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.42)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', zIndex: 1040 }} 
         onClick={onClose}
       />
-      <div className="glass-panel" style={{
+      <div style={{
         position: 'fixed', top: 0, left: 0, bottom: 0, width: '100%', maxWidth: '420px', 
-        zIndex: 1050, borderLeft: 'none', borderTop: 'none', borderBottom: 'none', borderRadius: '0',
+        zIndex: 1050, borderRight: '1px solid var(--border-glass)',
+        background: '#ffffff',
+        boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.1)',
         display: 'flex', flexDirection: 'column', animation: 'fadeIn 0.3s ease-in-out', direction: 'rtl'
       }}>
         
@@ -52,7 +54,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
             </div>
           ) : (
             cartItems.map((item, idx) => (
-              <div key={idx} className="glass-card flex" style={{ padding: '16px', gap: '16px', position: 'relative' }}>
+              <div key={idx} className="flex" style={{ padding: '16px', gap: '16px', position: 'relative', background: '#ffffff', borderRadius: '16px', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)' }}>
                 <img src={item.image} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
                 
                 <div style={{ flexGrow: 1 }}>
@@ -65,7 +67,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
                       {formatPrice(item.totalPrice)}
                     </div>
                     
-                    <div className="flex" style={{ alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: '20px' }}>
+                    <div className="flex" style={{ alignItems: 'center', gap: '8px', background: '#f1f5f9', padding: '3px 10px', borderRadius: '20px', border: '1px solid rgba(0,0,0,0.06)' }}>
                       <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1rem' }} onClick={() => updateQuantity(idx, -1)}>-</button>
                       <span className="font-code" style={{ fontSize: '0.875rem' }}>{item.quantity}</span>
                       <button style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '1rem' }} onClick={() => updateQuantity(idx, 1)}>+</button>
@@ -86,7 +88,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
         </div>
 
         {cartItems.length > 0 && (
-          <div style={{ padding: '24px', borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.02)' }}>
+          <div style={{ padding: '24px', borderTop: '1px solid var(--border-glass)', background: '#f8fafc' }}>
             <div className="flex" style={{ justifyContent: 'space-between', marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
               <span>جمع مبلغ کالاها</span>
               <span className="font-code">{formatPrice(subtotal)}</span>

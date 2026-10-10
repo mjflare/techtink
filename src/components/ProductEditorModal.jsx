@@ -379,7 +379,7 @@ export default function ProductEditorModal({
             alignItems: 'center', 
             padding: '10px 24px',
             borderBottom: '1px solid var(--border-glass)',
-            background: 'rgba(0,0,0,0.06)',
+            background: '#f8fafc',
             flexShrink: 0
           }}
         >
@@ -1197,7 +1197,7 @@ export default function ProductEditorModal({
       {isPhotoModalOpen && (
         <div 
           className="modal-backdrop-wrapper" 
-          style={{ zIndex: 120, background: 'rgba(0, 0, 0, 0.75)' }}
+          style={{ zIndex: 120 }}
           onClick={() => setIsPhotoModalOpen(false)}
         >
           <div 
@@ -1287,7 +1287,7 @@ export default function ProductEditorModal({
                   borderRadius: '10px', 
                   overflow: 'hidden', 
                   border: '1px solid var(--border-glass)',
-                  background: 'rgba(0,0,0,0.3)',
+                  background: '#f8fafc',
                   textAlign: 'center',
                   padding: '12px'
                 }}>

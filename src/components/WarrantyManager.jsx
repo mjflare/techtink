@@ -438,7 +438,7 @@ export default function WarrantyManager({ authToken, products = [] }) {
         <div 
           style={{ 
             position: 'fixed', inset: 0, zIndex: 1200, 
-            background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
+            background: 'rgba(15, 23, 42, 0.42)', backdropFilter: 'blur(12px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' 
           }}
         >
@@ -446,7 +446,9 @@ export default function WarrantyManager({ authToken, products = [] }) {
             className="glass-card animate-fade-in"
             style={{ 
               width: '100%', maxWidth: '580px', borderRadius: '24px', 
-              padding: '28px', maxHeight: '90vh', overflowY: 'auto' 
+              padding: '28px', maxHeight: '90vh', overflowY: 'auto',
+              background: '#ffffff', border: '1px solid var(--border-glass)',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.14)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '14px' }}>
@@ -689,7 +691,7 @@ export default function WarrantyManager({ authToken, products = [] }) {
         <div 
           style={{ 
             position: 'fixed', inset: 0, zIndex: 1200, 
-            background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)',
+            background: 'rgba(15, 23, 42, 0.42)', backdropFilter: 'blur(12px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' 
           }}
         >
@@ -697,8 +699,9 @@ export default function WarrantyManager({ authToken, products = [] }) {
             className="glass-card animate-fade-in"
             style={{ 
               width: '100%', maxWidth: '520px', borderRadius: '26px', 
-              padding: '32px', position: 'relative', border: '1px solid hsla(var(--accent-cyan), 0.4)',
-              background: 'linear-gradient(135deg, rgba(14, 20, 32, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%)'
+              padding: '32px', position: 'relative', border: '1px solid hsla(var(--accent-cyan), 0.35)',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.14)'
             }}
           >
             <button 
@@ -711,7 +714,7 @@ export default function WarrantyManager({ authToken, products = [] }) {
 
             {/* Certificate Header */}
             <div style={{ textAlign: 'center', borderBottom: '1px solid var(--border-glass)', paddingBottom: '18px', marginBottom: '20px' }}>
-              <div style={{ display: 'inline-flex', padding: '10px', borderRadius: '16px', background: 'hsla(var(--accent-cyan), 0.15)', marginBottom: '10px' }}>
+              <div style={{ display: 'inline-flex', padding: '10px', borderRadius: '16px', background: 'hsla(var(--accent-cyan), 0.1)', marginBottom: '10px' }}>
                 <ShieldCheck size={32} color="hsl(var(--accent-cyan))" />
               </div>
               <h3 style={{ margin: 0, fontSize: '1.25rem', letterSpacing: '-0.5px' }} className="gradient-text">
@@ -723,7 +726,7 @@ export default function WarrantyManager({ authToken, products = [] }) {
             </div>
 
             {/* Serial Barcode box */}
-            <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px dashed var(--border-glass)', borderRadius: '14px', padding: '12px 16px', textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ background: '#ffffff', border: '1.5px dashed hsla(var(--accent-cyan), 0.4)', borderRadius: '14px', padding: '12px 16px', textAlign: 'center', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>شناسه یکتای اصالت دستگاه (Serial Number):</span>
               <div className="font-code" style={{ fontSize: '1.4rem', fontWeight: 900, color: 'hsl(var(--accent-cyan))', letterSpacing: '2px', marginTop: '4px' }}>
                 {cardModalWarranty.serial}

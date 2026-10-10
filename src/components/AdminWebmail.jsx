@@ -644,29 +644,29 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         </div>
 
         {showDnsGuide && (
-          <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.2)' }}>
+          <div style={{ padding: '20px 24px', borderTop: '1px solid var(--border-glass)', background: '#f8fafc' }}>
             <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
               
               {/* Box 1: DNS Records */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+              <div style={{ background: '#ffffff', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
                 <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem', color: 'hsl(var(--accent-cyan))', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <GlobeIcon size={16} /> ۱. رکوردهای DNS در پنل کلودفلر (Cloudflare):
                 </h4>
                 <ul style={{ margin: 0, paddingRight: '20px', fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
                   <li>
-                    <strong>رکورد MX:</strong> Type: <code style={{ color: '#10b981' }}>MX</code> | Name: <code style={{ color: '#10b981' }}>@</code> | Mail Server: <code style={{ color: '#10b981' }}>mail.techtink.ir</code> | Priority: <code style={{ color: '#10b981' }}>10</code>
+                    <strong>رکورد MX:</strong> Type: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>MX</code> | Name: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>@</code> | Mail Server: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>mail.techtink.ir</code> | Priority: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>10</code>
                   </li>
                   <li>
-                    <strong>رکورد A ساب‌دامین mail:</strong> Type: <code style={{ color: '#10b981' }}>A</code> | Name: <code style={{ color: '#10b981' }}>mail</code> | IPv4: <code style={{ color: '#10b981' }}>62.220.120.168</code> | <strong>Proxy status: حتماً DNS Only (ابر خاکستری)</strong>
+                    <strong>رکورد A ساب‌دامین mail:</strong> Type: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>A</code> | Name: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>mail</code> | IPv4: <code style={{ color: '#059669', background: '#ecfdf5', padding: '1px 6px', borderRadius: '4px' }}>62.220.120.168</code> | <strong>Proxy status: حتماً DNS Only (ابر خاکستری)</strong>
                   </li>
-                  <li style={{ color: '#f59e0b', marginTop: '4px' }}>
+                  <li style={{ color: '#d97706', marginTop: '4px', fontWeight: 600 }}>
                     ⚠️ ترافیک پورت ۲۵ نباید از پروکسی نارنجی کلودفلر عبور کند، حتماً رکورد mail خاکستری (DNS Only) باشد.
                   </li>
                 </ul>
               </div>
 
               {/* Box 2: Server Firewall */}
-              <div style={{ background: 'rgba(255, 255, 255, 0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+              <div style={{ background: '#ffffff', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-glass)', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
                 <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem', color: 'hsl(var(--accent-purple))', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Terminal size={16} /> ۲. باز کردن پورت ۲۵ روی سرور اوبونتو (UFW):
                 </h4>
@@ -674,19 +674,20 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                   جهت دریافت اتصالات ورودی اینماد روی پورت ۲۵، دستور زیر را در ترمینال سرور اجرا فرمایید:
                 </p>
                 <div style={{
-                  background: 'rgba(0,0,0,0.5)',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
+                  background: '#0f172a',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
                   fontFamily: 'monospace',
                   fontSize: '0.85rem',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  color: '#38bdf8'
                 }}>
                   <code>sudo ufw allow 25/tcp</code>
                   <button
                     onClick={() => navigator.clipboard.writeText('sudo ufw allow 25/tcp')}
-                    style={{ background: 'none', border: 'none', color: 'hsl(var(--accent-cyan))', cursor: 'pointer' }}
+                    style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer' }}
                     title="کپی دستور"
                   >
                     <Copy size={14} />
@@ -705,7 +706,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
       {/* 4. Folder Tabs (Inbox vs Sent) and Bulk Actions Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         {/* Folder Switcher */}
-        <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+        <div style={{ display: 'flex', gap: '8px', background: '#ffffff', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-glass)', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
           <button
             type="button"
             onClick={() => { setCurrentFolder('inbox'); setSelectedEmailId(null); setSelectedEmail(null); setSelectedIds([]); }}
@@ -728,7 +729,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
             <span>صندوق دریافتی (Inbox)</span>
             {serverStatus?.unreadEmails > 0 && (
               <span style={{
-                background: currentFolder === 'inbox' ? 'rgba(0,0,0,0.3)' : 'hsl(var(--accent-cyan))',
+                background: currentFolder === 'inbox' ? 'rgba(255,255,255,0.25)' : 'hsl(var(--accent-cyan))',
                 color: '#ffffff',
                 padding: '2px 6px',
                 borderRadius: '8px',
@@ -762,8 +763,8 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
             <span>ایمیل‌های ارسالی (Sent)</span>
             {serverStatus?.totalSent > 0 && (
               <span style={{
-                background: currentFolder === 'sent' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.1)',
-                color: '#ffffff',
+                background: currentFolder === 'sent' ? 'rgba(255,255,255,0.25)' : '#e2e8f0',
+                color: currentFolder === 'sent' ? '#ffffff' : '#475569',
                 padding: '2px 6px',
                 borderRadius: '8px',
                 fontSize: '0.7rem',
@@ -1421,7 +1422,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     marginTop: '10px',
                     padding: '14px',
                     borderRadius: '10px',
-                    background: 'rgba(0,0,0,0.3)',
+                    background: '#f8fafc',
                     border: '1px solid var(--border-glass)',
                     display: 'grid',
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',

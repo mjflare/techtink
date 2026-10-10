@@ -38,34 +38,34 @@ export default function PromotionBanner({ config, onExploreClick }) {
 
   const themes = {
     fiery: {
-      gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(249, 115, 22, 0.22) 50%, rgba(245, 158, 11, 0.15) 100%)',
-      border: 'rgba(249, 115, 22, 0.45)',
-      glow: 'radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, transparent 70%)',
-      badgeBg: '#f97316',
-      badgeColor: '#fff',
+      gradient: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%)',
+      border: 'rgba(249, 115, 22, 0.28)',
+      glow: 'radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%)',
+      badgeBg: '#ea580c',
+      badgeColor: '#ffffff',
       icon: Flame,
-      tagBg: 'rgba(249, 115, 22, 0.15)',
-      tagColor: '#fb923c'
+      tagBg: '#ffedd5',
+      tagColor: '#c2410c'
     },
     neon: {
-      gradient: 'linear-gradient(135deg, hsla(var(--accent-cyan), 0.18) 0%, hsla(var(--accent-purple), 0.25) 50%, hsla(var(--accent-pink), 0.15) 100%)',
-      border: 'hsla(var(--accent-cyan), 0.4)',
-      glow: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.25) 0%, transparent 70%)',
-      badgeBg: 'hsl(var(--accent-cyan))',
-      badgeColor: '#000',
+      gradient: 'linear-gradient(135deg, #f0f9ff 0%, #ede9fe 50%, #fae8ff 100%)',
+      border: 'rgba(14, 165, 233, 0.28)',
+      glow: 'radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, transparent 70%)',
+      badgeBg: '#0284c7',
+      badgeColor: '#ffffff',
       icon: Sparkles,
-      tagBg: 'hsla(var(--accent-cyan), 0.15)',
-      tagColor: 'hsl(var(--accent-cyan))'
+      tagBg: '#e0f2fe',
+      tagColor: '#0369a1'
     },
     emerald: {
-      gradient: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.22) 50%, rgba(20, 184, 166, 0.15) 100%)',
-      border: 'rgba(16, 185, 129, 0.45)',
-      glow: 'radial-gradient(circle, rgba(16, 185, 129, 0.25) 0%, transparent 70%)',
-      badgeBg: '#10b981',
-      badgeColor: '#000',
+      gradient: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #ccfbf1 100%)',
+      border: 'rgba(16, 185, 129, 0.28)',
+      glow: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+      badgeBg: '#059669',
+      badgeColor: '#ffffff',
       icon: ShieldCheck,
-      tagBg: 'rgba(16, 185, 129, 0.15)',
-      tagColor: '#34d399'
+      tagBg: '#dcfce7',
+      tagColor: '#15803d'
     }
   };
 
@@ -85,7 +85,7 @@ export default function PromotionBanner({ config, onExploreClick }) {
           background: currentTheme.gradient,
           borderColor: currentTheme.border,
           overflow: 'hidden',
-          boxShadow: 'var(--glass-specular), 0 20px 40px rgba(0, 0, 0, 0.25)'
+          boxShadow: '0 12px 32px -4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.03)'
         }}
       >
         {/* Ambient Back Glow */}
@@ -159,26 +159,40 @@ export default function PromotionBanner({ config, onExploreClick }) {
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    background: 'rgba(0,0,0,0.2)', 
-                    border: '1px dashed var(--border-glass)', 
-                    borderRadius: '12px', 
-                    padding: '4px 8px 4px 12px',
-                    gap: '8px'
+                    background: '#ffffff', 
+                    border: '1.5px dashed rgba(2, 132, 199, 0.35)', 
+                    borderRadius: '14px', 
+                    padding: '5px 8px 5px 14px',
+                    gap: '10px',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)'
                   }}
                 >
-                  <Tag size={14} color="var(--text-secondary)" />
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>کد تخفیف:</span>
-                  <span className="font-code" style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '1px', color: 'hsl(var(--accent-cyan))' }}>
+                  <Tag size={15} color="#0284c7" />
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>کد تخفیف:</span>
+                  <span className="font-code" style={{ fontWeight: 800, fontSize: '0.95rem', letterSpacing: '1px', color: '#0284c7' }}>
                     {config.promoCode}
                   </span>
                   <button
                     type="button"
                     onClick={handleCopyCode}
-                    className="btn btn-glass"
-                    style={{ padding: '4px 8px', fontSize: '0.75rem', gap: '4px', height: '28px' }}
+                    style={{
+                      background: copied ? '#10b981' : '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '5px 12px',
+                      borderRadius: '10px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      boxShadow: copied ? '0 2px 8px rgba(16, 185, 129, 0.3)' : '0 2px 8px rgba(2, 132, 199, 0.3)'
+                    }}
                     title="کپی کردن کد تخفیف"
                   >
-                    {copied ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
+                    {copied ? <Check size={13} color="#ffffff" /> : <Copy size={13} color="#ffffff" />}
                     <span>{copied ? 'کپی شد!' : 'کپی'}</span>
                   </button>
                 </div>
@@ -189,47 +203,48 @@ export default function PromotionBanner({ config, onExploreClick }) {
           {/* Left: Live Countdown Clock */}
           {config.expireDate && (
             <div 
-              className="glass-panel" 
               style={{ 
-                padding: '16px 20px', 
+                background: '#ffffff',
+                padding: '18px 22px', 
                 borderRadius: '18px', 
-                border: `1px solid ${currentTheme.border}`,
+                border: '1px solid rgba(0, 0, 0, 0.08)',
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
                 textAlign: 'center',
                 minWidth: '240px'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.785rem', marginBottom: '10px' }}>
-                <Clock size={14} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.785rem', marginBottom: '12px', fontWeight: 600 }}>
+                <Clock size={15} color="#0284c7" />
                 <span>زمان باقی‌مانده تا پایان تخفیف:</span>
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                <div style={{ background: 'rgba(0,0,0,0.18)', padding: '8px 10px', borderRadius: '10px', minWidth: '46px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid rgba(0, 0, 0, 0.06)', padding: '8px 10px', borderRadius: '12px', minWidth: '48px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
                   <div className="font-tech" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                     {toPersianNum(timeLeft.seconds)}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>ثانیه</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>ثانیه</div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.18)', padding: '8px 10px', borderRadius: '10px', minWidth: '46px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid rgba(0, 0, 0, 0.06)', padding: '8px 10px', borderRadius: '12px', minWidth: '48px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
                   <div className="font-tech" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                     {toPersianNum(timeLeft.minutes)}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>دقیقه</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>دقیقه</div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.18)', padding: '8px 10px', borderRadius: '10px', minWidth: '46px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid rgba(0, 0, 0, 0.06)', padding: '8px 10px', borderRadius: '12px', minWidth: '48px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
                   <div className="font-tech" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                     {toPersianNum(timeLeft.hours)}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>ساعت</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>ساعت</div>
                 </div>
 
-                <div style={{ background: 'rgba(0,0,0,0.18)', padding: '8px 10px', borderRadius: '10px', minWidth: '46px' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid rgba(0, 0, 0, 0.06)', padding: '8px 10px', borderRadius: '12px', minWidth: '48px', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)' }}>
                   <div className="font-tech" style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)' }}>
                     {toPersianNum(timeLeft.days)}
                   </div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '2px' }}>روز</div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>روز</div>
                 </div>
               </div>
             </div>

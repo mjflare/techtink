@@ -192,7 +192,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
             alignItems: 'center', 
             padding: '20px 24px', 
             borderBottom: '1px solid var(--border-glass)',
-            background: 'rgba(0,0,0,0.1)'
+            background: '#f8fafc'
           }}
         >
           <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
@@ -229,7 +229,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
         <div className="grid" style={{ gridTemplateColumns: '320px 1fr', flex: 1, overflowY: 'auto' }}>
           
           {/* Controls Sidebar */}
-          <div style={{ padding: '24px', borderLeft: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div style={{ padding: '24px', borderLeft: '1px solid var(--border-glass)', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '18px' }}>
             
             {/* Select Product */}
             {allProducts.length > 0 && (
@@ -366,7 +366,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
           </div>
 
           {/* Interactive Preview Canvas */}
-          <div style={{ padding: '32px', background: 'rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ padding: '32px', background: '#f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             
             <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '16px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
               <Eye size={16} /> پیش‌نمایش برچسب چاپ (ابعاد متناسب با رول پرینتر):

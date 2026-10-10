@@ -290,7 +290,7 @@ export default function BlogEditorModal({ initialData, isOpen, onClose, onSave, 
             alignItems: 'center', 
             padding: '10px 24px',
             borderBottom: '1px solid var(--border-glass)',
-            background: 'rgba(0,0,0,0.08)',
+            background: '#f8fafc',
             flexShrink: 0,
             fontSize: '0.85rem'
           }}
@@ -366,7 +366,7 @@ export default function BlogEditorModal({ initialData, isOpen, onClose, onSave, 
             className="animate-fade-in"
             style={{ 
               padding: '16px 24px', 
-              background: 'rgba(0,0,0,0.25)', 
+              background: '#f8fafc', 
               borderBottom: '1px solid var(--border-glass)',
               flexShrink: 0
             }}
@@ -810,7 +810,7 @@ export default function BlogEditorModal({ initialData, isOpen, onClose, onSave, 
       {isPhotoModalOpen && (
         <div 
           className="modal-backdrop-wrapper" 
-          style={{ zIndex: 120, background: 'rgba(0, 0, 0, 0.75)' }}
+          style={{ zIndex: 120 }}
           onClick={() => setIsPhotoModalOpen(false)}
         >
           <div 
@@ -900,7 +900,7 @@ export default function BlogEditorModal({ initialData, isOpen, onClose, onSave, 
                   borderRadius: '10px', 
                   overflow: 'hidden', 
                   border: '1px solid var(--border-glass)',
-                  background: 'rgba(0,0,0,0.3)',
+                  background: '#f8fafc',
                   textAlign: 'center',
                   padding: '12px'
                 }}>

@@ -527,7 +527,8 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
 
           {/* Quick info row */}
           <div style={{
-            background: 'rgba(0,0,0,0.25)',
+            background: '#f8fafc',
+            border: '1px solid var(--border-glass)',
             padding: '8px 12px',
             borderRadius: '8px',
             fontSize: '0.775rem',
@@ -577,10 +578,11 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           
           {/* CPU Chart */}
           <div style={{
-            background: 'rgba(0,0,0,0.3)',
+            background: '#ffffff',
             padding: '16px',
             borderRadius: '14px',
             border: '1px solid var(--border-glass)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px'
@@ -600,10 +602,11 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
 
           {/* RAM Chart */}
           <div style={{
-            background: 'rgba(0,0,0,0.3)',
+            background: '#ffffff',
             padding: '16px',
             borderRadius: '14px',
             border: '1px solid var(--border-glass)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             gap: '10px'
@@ -821,22 +824,22 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.825rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>نام سرور (Hostname):</span>
               <span className="font-code" style={{ color: 'var(--text-primary)' }}>{metrics?.os?.hostname}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>سیستم‌عامل و پلتفرم:</span>
               <span style={{ color: 'var(--text-primary)' }}>{metrics?.os?.platform} ({metrics?.os?.arch})</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>نسخه هسته کرنل (Kernel):</span>
               <span className="font-code" style={{ color: 'var(--text-secondary)' }}>{metrics?.os?.release}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>آپ‌تایم سیستم (Uptime):</span>
               <span style={{ color: '#10b981', fontWeight: 700 }}>{metrics?.os?.uptimeFormatted}</span>
             </div>
@@ -858,22 +861,22 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.825rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>موتور اجرایی سرور:</span>
               <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 800 }}>{metrics?.process?.runtime}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>شناسه پردازش (PID):</span>
               <span className="font-code" style={{ color: 'var(--text-primary)' }}>{metrics?.process?.pid}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>حافظه مقیم در رم (RSS):</span>
               <span className="font-code" style={{ color: 'var(--text-primary)' }}>{metrics?.memory?.processRssFormatted}</span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-glass)' }}>
               <span style={{ color: 'var(--text-muted)' }}>حافظه هیپ فعال (Heap Used):</span>
               <span className="font-code" style={{ color: 'var(--text-secondary)' }}>{metrics?.memory?.processHeapFormatted}</span>
             </div>

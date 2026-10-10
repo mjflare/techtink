@@ -182,7 +182,7 @@ export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
         <div className="about-modal-body">
           
           {/* About Description */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)', borderRadius: '16px', padding: '18px 20px', lineHeight: 1.8 }}>
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-glass)', borderRadius: '16px', padding: '18px 20px', lineHeight: 1.8 }}>
             <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '10px', color: 'hsl(var(--accent-cyan))' }}>
               <Sparkles size={18} />
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>داستان و رسالت ما</h3>

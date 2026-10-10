@@ -1476,7 +1476,9 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
           overflowX: 'auto', 
           alignItems: 'center',
           borderRadius: '14px',
-          background: 'rgba(0,0,0,0.2)'
+          background: '#ffffff',
+          border: '1px solid var(--border-glass)',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
         }}
       >
         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', padding: '0 8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
@@ -1501,7 +1503,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                 alignItems: 'center',
                 gap: '8px',
                 whiteSpace: 'nowrap',
-                background: isTabActive ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'rgba(255, 255, 255, 0.04)',
+                background: isTabActive ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : '#f8fafc',
                 color: isTabActive ? '#ffffff' : 'var(--text-secondary)',
                 border: isTabActive ? 'none' : '1px solid var(--border-glass)',
                 boxShadow: isTabActive ? '0 0 14px hsla(var(--accent-cyan), 0.3)' : 'none',
@@ -1515,8 +1517,8 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   fontSize: '0.65rem',
                   padding: '2px 6px',
                   borderRadius: '10px',
-                  background: isTabActive ? 'rgba(0,0,0,0.25)' : 'rgba(255, 255, 255, 0.1)',
-                  color: isTabActive ? '#ffffff' : 'var(--text-secondary)',
+                  background: isTabActive ? 'rgba(255, 255, 255, 0.25)' : '#e2e8f0',
+                  color: isTabActive ? '#ffffff' : '#475569',
                   fontWeight: 700
                 }}>
                   {tab.badge}
@@ -1632,11 +1634,11 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                     </button>
                   </div>
                   <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>رسیدهای ورود بار جدید:</span>
                       <strong className="font-code">{(stats.inboundShipments || 0).toLocaleString('fa-IR')} بارنامه</strong>
                     </div>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>حواله‌های خروج و ارسال مرسوله:</span>
                       <strong className="font-code">{(stats.outboundShipments || 0).toLocaleString('fa-IR')} مرسوله</strong>
                     </div>
@@ -1654,11 +1656,11 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                     </button>
                   </div>
                   <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>کل نوبت‌های رزرو شده:</span>
                       <strong className="font-code">{(stats.appointmentsTotal || 0).toLocaleString('fa-IR')} نوبت</strong>
                     </div>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>در انتظار بررسی و هماهنگی:</span>
                       <strong className="font-code" style={{ color: '#f59e0b' }}>{(stats.pendingAppointments || 0).toLocaleString('fa-IR')} نوبت</strong>
                     </div>
@@ -1676,11 +1678,11 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                     </button>
                   </div>
                   <div className="flex" style={{ flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>مقالات و بررسی‌های ویدیویی:</span>
                       <strong className="font-code">{(stats.totalBlogPosts || 0).toLocaleString('fa-IR')} مقاله</strong>
                     </div>
-                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="flex" style={{ justifyContent: 'space-between', padding: '10px 12px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                       <span style={{ color: 'var(--text-secondary)' }}>دیدگاه‌های کاربران در انتظار تایید:</span>
                       <strong className="font-code" style={{ color: stats.pendingComments > 0 ? '#ef4444' : 'hsl(var(--accent-green))' }}>
                         {(stats.pendingComments || 0).toLocaleString('fa-IR')} دیدگاه
@@ -2870,7 +2872,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
 
             {/* VPS Terminal Helper Guide */}
             {showVpsGuide && (
-              <div className="animate-fade-in" style={{ marginTop: '20px', padding: '20px', borderRadius: '16px', background: 'rgba(0,0,0,0.06)', border: '1px solid var(--border-glass)' }}>
+              <div className="animate-fade-in" style={{ marginTop: '20px', padding: '20px', borderRadius: '16px', background: '#f8fafc', border: '1px solid var(--border-glass)' }}>
                 <h4 style={{ fontSize: '0.95rem', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Server size={18} color="hsl(var(--accent-cyan))" />
                   راهنمای مدیریت مستقیم فایل پایگاه‌داده روی سرور لینوکس (VPS / Ubuntu)
@@ -2879,35 +2881,35 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.825rem' }}>
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>مسیر ذخیره‌سازی فایل اصلی دیتابیس روی سرور:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid var(--border-glass)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       {dbInfo?.dbPath || '/var/www/techtink/data/techtink.db'}
                     </div>
                   </div>
 
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>۱. تهیه نسخه پشتیبان سریع در ترمینال سرور:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid var(--border-glass)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       sqlite3 data/techtink.db &quot;.backup data/backups/manual_backup.db&quot;
                     </div>
                   </div>
 
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>۲. ارسال فایل دیتابیس از کامپیوتر شخصی به سرور VPS با SCP:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid var(--border-glass)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       scp ./techtink.db root@YOUR_VPS_IP:/path/to/techtink/data/techtink.db
                     </div>
                   </div>
 
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>۳. ساخت یا بازیابی حساب مدیر (Admin) در سرور:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid var(--border-glass)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       bun scripts/create-admin.js --email admin@techtink.ir --password mySecretPass123
                     </div>
                   </div>
 
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>۴. ری‌استارت سرویس تک‌تینک در صورت نیاز:</span>
-                    <div style={{ background: 'rgba(0,0,0,0.1)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid var(--border-glass)', padding: '8px 12px', borderRadius: '8px', direction: 'ltr', textAlign: 'left', fontFamily: 'var(--font-code)', marginTop: '4px' }}>
                       systemctl restart techtink.service
                     </div>
                   </div>

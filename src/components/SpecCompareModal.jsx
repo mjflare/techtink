@@ -150,7 +150,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose, onAddT
                   key={mi} 
                   className="compare-metric-box"
                   style={{ 
-                    background: 'rgba(0,0,0,0.02)', 
+                    background: '#f8fafc', 
                     padding: '12px 14px', 
                     borderRadius: '14px',
                     border: '1px solid var(--border-glass)'
@@ -299,7 +299,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose, onAddT
                             <span className="badge" style={{ background: palette.solid, color: 'white', fontSize: '0.75rem', fontWeight: 700, marginBottom: '10px', display: 'inline-block' }}>
                               دستگاه شماره {idx + 1}
                             </span>
-                            <img src={laptop.image} alt={laptop.name} style={{ width: '100%', height: '130px', objectFit: 'cover', borderRadius: '10px', marginBottom: '12px', background: 'rgba(0,0,0,0.05)' }} />
+                            <img src={laptop.image} alt={laptop.name} style={{ width: '100%', height: '130px', objectFit: 'cover', borderRadius: '10px', marginBottom: '12px', background: '#f1f5f9' }} />
                             <div style={{ textAlign: 'left', direction: 'ltr', marginBottom: '6px' }}>
                               <div style={{ fontSize: '0.75rem', fontWeight: 800, color: palette.solid, fontFamily: 'var(--font-tech)' }}>
                                 {laptop.brand || (laptop.name?.split(' ')[0] || '')}

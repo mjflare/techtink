@@ -69,25 +69,13 @@ function App() {
   const [authNotice, setAuthNotice] = useState(null);
   const [pendingCheckout, setPendingCheckout] = useState(false);
 
-  // Theme State ('light' by default, switchable to 'dark')
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('techtink_theme') || 'light';
-    } catch {
-      return 'light';
-    }
-  });
-
+  // Permanent Light Mode
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', 'light');
     try {
-      localStorage.setItem('techtink_theme', theme);
+      localStorage.removeItem('techtink_theme');
     } catch {}
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  }, []);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -297,8 +285,6 @@ function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenAbout={() => setIsAboutUsOpen(true)}
-        theme={theme}
-        onToggleTheme={toggleTheme}
         laptops={laptops}
         onSelectProduct={handleSelectProduct}
         siteSettings={siteSettings}
@@ -673,28 +659,6 @@ function App() {
           fontSize: '0.8125rem' 
         }}>
           <div>تمامی حقوق مادی و معنوی برای فروشگاه تخصصی لپ‌تاپ تک‌تینک محفوظ است. © ۱۴۰۵</div>
-
-          {/* Discreet Theme Switcher in Footer for Night Mode Seekers */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>تنظیمات تم صفحه:</span>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="btn btn-glass"
-              style={{
-                padding: '5px 14px',
-                borderRadius: '18px',
-                fontSize: '0.78rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                border: '1px solid var(--border-glass)'
-              }}
-              title="تغییر وضعیت به حالت شب یا روز"
-            >
-              {theme === 'dark' ? '🌙 حالت شب فعال است (تغییر به روز)' : '☀️ حالت روز فعال است (تغییر به شب)'}
-            </button>
-          </div>
         </div>
       </footer>
 

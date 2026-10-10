@@ -102,12 +102,12 @@
     }
     </script>
 
-    <!-- Theme & Dynamic Google Integrations Initializer -->
+    <!-- Permanent Light Theme & Dynamic Google Integrations Initializer -->
     <script>
       (function() {
         try {
-          var saved = localStorage.getItem('techtink_theme') || 'light';
-          document.documentElement.setAttribute('data-theme', saved);
+          localStorage.removeItem('techtink_theme');
+          document.documentElement.setAttribute('data-theme', 'light');
         } catch(e) {}
 
         // Fetch settings asynchronously for Google verification & Analytics

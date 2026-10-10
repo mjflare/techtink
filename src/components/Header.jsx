@@ -15,8 +15,6 @@ export default function Header({
   searchQuery = '',
   onSearchChange,
   onOpenAbout,
-  theme = 'dark',
-  onToggleTheme,
   laptops = [],
   onSelectProduct,
   siteSettings,
@@ -249,7 +247,7 @@ export default function Header({
                   borderRadius: '18px',
                   padding: '10px',
                   zIndex: 1050,
-                  boxShadow: 'var(--glass-specular), 0 24px 50px rgba(0, 0, 0, 0.45)'
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)'
                 }}
               >
                 <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '6px 8px 10px', borderBottom: '1px solid var(--border-glass)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -385,7 +383,7 @@ export default function Header({
                     borderRadius: '18px',
                     padding: '12px',
                     zIndex: 1050,
-                    boxShadow: 'var(--glass-specular), 0 20px 45px rgba(0, 0, 0, 0.35)',
+                    boxShadow: '0 16px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
                     direction: 'rtl'
                   }}
                 >
@@ -393,7 +391,7 @@ export default function Header({
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span>{user.name}</span>
                       {user.role === 'admin' && (
-                        <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#000', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800 }}>
+                        <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#ffffff', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800 }}>
                           مدیر سیستم
                         </span>
                       )}

@@ -1,45 +1,46 @@
-:root, [data-theme="dark"] {
-  /* HSL Accent Colors (triplets for hsl/hsla composition) */
-  --accent-cyan: 199 89% 48%;    /* Electric Sky #0ea5e9 */
-  --accent-purple: 263 70% 58%;  /* Cyber Violet #8b5cf6 */
-  --accent-green: 152 69% 45%;   /* Emerald Green #10b981 */
-  --accent-red: 350 89% 60%;     /* Crimson Red #f43f5e */
+:root, [data-theme="light"] {
+  /* HSL Accent Colors (Royal & Vivid Light Mode Colors) */
+  --accent-cyan: 200 95% 42%;    /* Royal Cyan #0284c7 */
+  --accent-purple: 262 80% 52%;  /* Cyber Violet #7c3aed */
+  --accent-green: 150 70% 36%;   /* Emerald Green #059669 */
+  --accent-red: 350 80% 54%;     /* Ruby Red #e11d48 */
+  --accent-pink: 328 85% 58%;
 
-  /* Surface & Base Backgrounds - Obsidian OLED */
-  --bg-dark: 222 47% 7%;         /* #080c14 */
-  --bg-panel: 222 45% 10%;       /* #0f172a */
+  /* Surface & Base Backgrounds - Apple Frost & Pure Whites */
+  --bg-dark: 210 40% 98%;        /* Crisp light slate #f8fafc */
+  --bg-panel: 0 0% 100%;         /* Pure white #ffffff */
 
   /* High Contrast Typography for Crystal Clarity */
-  --text-primary: #f8fafc;       /* Crisp Off-White (High Visibility) */
-  --text-secondary: #94a3b8;     /* High-Visibility Slate */
+  --text-primary: #0f172a;       /* Deep slate #0f172a */
+  --text-secondary: #475569;     /* Medium slate #475569 */
   --text-muted: #64748b;
-  --text-placeholder: #64748b;
+  --text-placeholder: #94a3b8;
 
-  /* iPhone Liquid Glass Properties (Dark Mode) */
-  --border-glass: rgba(255, 255, 255, 0.12);
-  --border-glass-hover: rgba(255, 255, 255, 0.24);
-  --glass-bg: rgba(15, 23, 42, 0.72);
-  --glass-bg-hover: rgba(30, 41, 59, 0.85);
-  --glass-card-bg: rgba(15, 23, 42, 0.65);
-  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.16);
-  --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
-  --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35);
-  --modal-bg: rgba(15, 23, 42, 0.88);
-  --modal-header-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
-  --input-bg: rgba(255, 255, 255, 0.05);
-  --input-border: rgba(255, 255, 255, 0.15);
-  --btn-glass-bg: rgba(255, 255, 255, 0.06);
-  --btn-glass-hover: rgba(255, 255, 255, 0.12);
+  /* iPhone Liquid Glass Properties (Crisp Light Mode Glassmorphism) */
+  --border-glass: rgba(0, 0, 0, 0.08);
+  --border-glass-hover: rgba(0, 0, 0, 0.16);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-bg-hover: #ffffff;
+  --glass-card-bg: rgba(255, 255, 255, 0.94);
+  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --modal-bg: #ffffff;
+  --modal-header-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, 0.14);
+  --btn-glass-bg: #ffffff;
+  --btn-glass-hover: #f8fafc;
 
   /* Ambient Aurora Refraction Glows */
-  --ambient-glow-1: rgba(14, 165, 233, 0.18);
-  --ambient-glow-2: rgba(139, 92, 246, 0.16);
+  --ambient-glow-1: rgba(56, 189, 248, 0.12);
+  --ambient-glow-2: rgba(244, 114, 182, 0.08);
 
   /* Tables & Lists */
-  --table-stripe: rgba(255, 255, 255, 0.03);
-  --table-border: rgba(255, 255, 255, 0.08);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.18);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.32);
+  --table-stripe: rgba(0, 0, 0, 0.02);
+  --table-border: rgba(0, 0, 0, 0.06);
+  --scrollbar-thumb: rgba(0, 0, 0, 0.18);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
   /* Typography */
   --font-sans: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
@@ -50,50 +51,6 @@
   /* Transitions */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-[data-theme="light"] {
-  /* HSL Accent Colors (adjusted for Light Mode visibility) */
-  --accent-cyan: 200 95% 42%;    /* Royal Cyan #0284c7 */
-  --accent-purple: 262 80% 52%;  /* Purple #7c3aed */
-  --accent-green: 150 70% 36%;   /* Emerald #059669 */
-  --accent-red: 350 80% 54%;     /* Ruby #e11d48 */
-
-  /* Surface & Base Backgrounds - Apple Frost */
-  --bg-dark: 210 40% 98%;        /* Crisp light #f8fafc */
-  --bg-panel: 0 0% 100%;         /* Pure white #ffffff */
-
-  /* High Contrast Typography for Light Mode */
-  --text-primary: #0f172a;       /* Deep slate #0f172a */
-  --text-secondary: #475569;     /* Medium slate #475569 */
-  --text-muted: #64748b;
-  --text-placeholder: #94a3b8;
-
-  /* iPhone Liquid Glass Properties (Light Mode) */
-  --border-glass: rgba(0, 0, 0, 0.08);
-  --border-glass-hover: rgba(0, 0, 0, 0.16);
-  --glass-bg: rgba(255, 255, 255, 0.82);
-  --glass-bg-hover: rgba(248, 250, 252, 0.95);
-  --glass-card-bg: rgba(255, 255, 255, 0.85);
-  --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --modal-bg: rgba(255, 255, 255, 0.94);
-  --modal-header-bg: linear-gradient(135deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.95));
-  --input-bg: rgba(0, 0, 0, 0.03);
-  --input-border: rgba(0, 0, 0, 0.12);
-  --btn-glass-bg: rgba(0, 0, 0, 0.04);
-  --btn-glass-hover: rgba(0, 0, 0, 0.08);
-
-  /* Ambient Aurora Refraction Glows */
-  --ambient-glow-1: rgba(56, 189, 248, 0.14);
-  --ambient-glow-2: rgba(244, 114, 182, 0.10);
-
-  /* Tables & Lists */
-  --table-stripe: rgba(0, 0, 0, 0.02);
-  --table-border: rgba(0, 0, 0, 0.06);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -178,9 +135,9 @@ h1, h2, h3, h4, h5, h6 {
 
 .glass-card:hover {
   transform: translateY(-4px);
-  border-color: hsla(var(--accent-cyan), 0.5);
+  border-color: hsla(var(--accent-cyan), 0.45);
   background: var(--glass-bg-hover);
-  box-shadow: var(--glass-specular), 0 16px 42px rgba(0, 0, 0, 0.35), 0 0 24px hsla(var(--accent-cyan), 0.18);
+  box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08), 0 0 20px hsla(var(--accent-cyan), 0.12);
 }
 
 /* Gradient Text */
@@ -234,7 +191,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: var(--glass-specular);
+  box-shadow: var(--glass-specular), 0 1px 3px rgba(0, 0, 0, 0.04);
   border-radius: 12px;
 }
 
@@ -242,6 +199,7 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--btn-glass-hover);
   border-color: hsla(var(--accent-cyan), 0.4);
   color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 /* Glowing Badges */
@@ -374,7 +332,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .floating-action-island:hover {
   border-color: var(--border-glass-hover);
-  box-shadow: var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08);
 }
 
 .floating-island-capsule {
@@ -534,9 +492,9 @@ input:focus, select:focus, textarea:focus {
   position: fixed;
   inset: 0;
   z-index: 1100;
-  background: rgba(3, 7, 18, 0.72);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -563,7 +521,8 @@ input:focus, select:focus, textarea:focus {
   background: var(--modal-bg);
   backdrop-filter: blur(36px) saturate(200%);
   -webkit-backdrop-filter: blur(36px) saturate(200%);
-  box-shadow: var(--glass-specular), 0 30px 80px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--border-glass);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 25px 65px -15px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(0, 0, 0, 0.04);
   direction: rtl;
   display: flex;
   flex-direction: column;
@@ -618,8 +577,8 @@ dialog {
 }
 
 dialog::backdrop {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(10px);
 }
 
 /* Modal mobile scaling */
@@ -715,7 +674,7 @@ details[open] summary ~ * {
 
 .spec-section-card:hover {
   border-color: hsla(var(--accent-cyan), 0.35);
-  box-shadow: var(--glass-specular), 0 12px 36px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--glass-specular), 0 12px 32px rgba(0, 0, 0, 0.08);
 }
 
 .spec-section-header {

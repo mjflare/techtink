@@ -353,9 +353,9 @@ export default function SupportSection() {
                   gap: '16px', 
                   padding: '16px 28px', 
                   borderRadius: '14px',
-                  background: 'rgba(0,0,0,0.3)',
-                  border: '1px solid hsla(var(--accent-cyan), 0.4)',
-                  boxShadow: '0 0 20px hsla(var(--accent-cyan), 0.2)'
+                  background: '#ffffff',
+                  border: '1.5px dashed hsla(var(--accent-cyan), 0.4)',
+                  boxShadow: '0 4px 16px hsla(var(--accent-cyan), 0.12)'
                 }}
               >
                 <div style={{ textAlign: 'right' }}>
@@ -490,7 +490,7 @@ export default function SupportSection() {
                       </div>
                     )}
                     {trackResult.notes && (
-                      <div style={{ gridColumn: '1 / -1', background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '8px' }}>
+                      <div style={{ gridColumn: '1 / -1', background: '#f8fafc', border: '1px solid var(--border-glass)', padding: '12px', borderRadius: '8px' }}>
                         <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>جزئیات و یادداشت کارشناسی:</span>
                         <p style={{ margin: 0, lineHeight: 1.6 }}>{trackResult.notes}</p>
                       </div>
