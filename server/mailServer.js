@@ -264,16 +264,20 @@ export function startSmtpServer(portToUse = null) {
 
     let buffer = '';
     socket.on('data', (chunk) => {
-      buffer += chunk.toString('utf8');
-
       if (state === 'DATA') {
-        // Collect raw email until ending sequence \r\n.\r\n or \n.\n
         dataBuffer += chunk.toString('utf8');
-        if (dataBuffer.includes('\r\n.\r\n') || dataBuffer.includes('\n.\n')) {
-          state = 'COMMAND';
+        const endIdx = dataBuffer.indexOf('\r\n.\r\n');
+        const altEndIdx = dataBuffer.indexOf('\n.\n');
+        const markerIdx = endIdx !== -1 ? endIdx : altEndIdx;
+        const markerLen = endIdx !== -1 ? 5 : 3;
 
-          // Clean end marker
-          const cleanRaw = dataBuffer.replace(/\r\n\.\r\n$/, '').replace(/\n\.\n$/, '');
+        if (markerIdx !== -1) {
+          const cleanRaw = dataBuffer.slice(0, markerIdx);
+          const remainder = dataBuffer.slice(markerIdx + markerLen);
+          state = 'COMMAND';
+          buffer = remainder;
+          dataBuffer = '';
+
           const parsed = parseRawEmail(cleanRaw);
 
           if (!parsed.from && mailFrom) parsed.from = mailFrom;
@@ -292,11 +296,13 @@ export function startSmtpServer(portToUse = null) {
           console.log(`[MailServer] ✓ New Email Received! ID: ${emailId} | From: ${parsed.from} | To: ${parsed.to} | Subject: "${parsed.subject}" ${parsed.verificationCode ? `| Code: [${parsed.verificationCode}]` : ''}`);
 
           send(250, `2.0.0 Ok: queued as tt-${Date.now()}`);
-          dataBuffer = '';
           mailFrom = '';
           rcptTo = [];
+        } else {
+          return;
         }
-        return;
+      } else {
+        buffer += chunk.toString('utf8');
       }
 
       // Process command lines
