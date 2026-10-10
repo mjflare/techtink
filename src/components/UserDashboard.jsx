@@ -49,9 +49,41 @@ export default function UserDashboard({
   onSelectProduct, 
   onGoToStore, 
   onGoToSupport,
+  onGoToAdmin,
   onUpdateUser,
   initialTab = 'orders'
 }) {
+  // Safety guard: Administrators should never use the customer account panel
+  if (user?.role === 'admin') {
+    return (
+      <div className="container animate-fade-in" style={{ paddingTop: '80px', paddingBottom: '100px', textAlign: 'center' }}>
+        <div className="glass-panel" style={{ maxWidth: '520px', margin: '0 auto', padding: '40px 24px', borderRadius: '24px' }}>
+          <div style={{ width: '60px', height: '60px', borderRadius: '18px', background: 'hsla(var(--accent-cyan), 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <Shield size={30} color="hsl(var(--accent-cyan))" />
+          </div>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '10px' }}>دسترسی اختصاصی مدیریت</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.7', marginBottom: '24px' }}>
+            شما با حساب <strong>مدیر فروشگاه</strong> وارد شده‌اید. پنل کاربری عادی و پیگیری سفارشات مختص خریداران و مشتریان است.
+          </p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {onGoToAdmin ? (
+              <button className="btn btn-primary" onClick={onGoToAdmin} style={{ padding: '10px 18px', gap: '8px' }}>
+                <Shield size={16} /> ورود به پنل مدیریت
+              </button>
+            ) : (
+              <a href="/admin" className="btn btn-primary" style={{ textDecoration: 'none', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Shield size={16} /> ورود به پنل مدیریت
+              </a>
+            )}
+            <button className="btn btn-glass" onClick={onLogout} style={{ padding: '10px 16px' }}>
+              خروج از حساب
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = useState(initialTab); // 'orders' | 'appointments' | 'address' | 'profile'
   const [orders, setOrders] = useState([]);
   const [appointments, setAppointments] = useState([]);

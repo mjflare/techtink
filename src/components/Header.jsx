@@ -347,12 +347,16 @@ export default function Header({
                   fontSize: '0.8rem', 
                   gap: '5px',
                   height: '32px',
-                  border: '1px solid var(--border-glass)',
-                  background: userMenuOpen ? 'var(--glass-bg-hover)' : 'transparent'
+                  border: user.role === 'admin' ? '1px solid hsla(var(--accent-cyan), 0.4)' : '1px solid var(--border-glass)',
+                  background: userMenuOpen ? 'var(--glass-bg-hover)' : user.role === 'admin' ? 'hsla(var(--accent-cyan), 0.08)' : 'transparent'
                 }}
                 title={user.name}
               >
-                <User size={15} color="hsl(var(--accent-cyan))" />
+                {user.role === 'admin' ? (
+                  <Shield size={14} color="hsl(var(--accent-cyan))" />
+                ) : (
+                  <User size={15} color="hsl(var(--accent-cyan))" />
+                )}
                 <span style={{ fontWeight: 600, maxWidth: '65px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {user.name.split(' ')[0]}
                 </span>
@@ -376,39 +380,43 @@ export default function Header({
                   }}
                 >
                   <div style={{ paddingBottom: '10px', borderBottom: '1px solid var(--border-glass)', marginBottom: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{user.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{user.email || user.mobile}</div>
-                    <div style={{ marginTop: '6px' }}>
-                      <span className="badge" style={{ background: user.role === 'admin' ? 'hsl(var(--accent-cyan))' : 'hsla(var(--accent-cyan), 0.15)', color: user.role === 'admin' ? '#fff' : 'hsl(var(--accent-cyan))', padding: '2px 8px', fontSize: '0.68rem' }}>
-                        {user.role === 'admin' ? 'مدیر فروشگاه' : 'حساب کاربری'}
-                      </span>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>{user.name}</span>
+                      {user.role === 'admin' && (
+                        <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#000', padding: '2px 8px', fontSize: '0.65rem', fontWeight: 800 }}>
+                          مدیر سیستم
+                        </span>
+                      )}
                     </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{user.email || user.mobile}</div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUserMenuOpen(false);
-                        setActiveTab('account');
-                      }}
-                      className="btn btn-glass"
-                      style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: '0.8rem', borderRadius: '10px', gap: '8px' }}
-                    >
-                      <Package size={16} color="hsl(var(--accent-purple))" /> حساب کاربری و سفارش‌ها
-                    </button>
-
-                    {user.role === 'admin' && (
+                    {user.role === 'admin' ? (
+                      /* Admin user: only admin dashboard access */
                       <button
                         type="button"
                         onClick={() => {
                           setUserMenuOpen(false);
                           setActiveTab('admin');
                         }}
+                        className="btn btn-primary"
+                        style={{ width: '100%', justifyContent: 'flex-start', padding: '9px 12px', fontSize: '0.825rem', borderRadius: '10px', gap: '8px' }}
+                      >
+                        <Shield size={16} /> پنل مدیریت فروشگاه
+                      </button>
+                    ) : (
+                      /* Regular customer: customer dashboard access */
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setActiveTab('account');
+                        }}
                         className="btn btn-glass"
                         style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: '0.8rem', borderRadius: '10px', gap: '8px' }}
                       >
-                        <Shield size={16} color="hsl(var(--accent-cyan))" /> پنل مدیریت فروشگاه
+                        <Package size={16} color="hsl(var(--accent-purple))" /> حساب کاربری و سفارش‌ها
                       </button>
                     )}
 
@@ -578,7 +586,7 @@ export default function Header({
                 {tab.label}
               </button>
             ))}
-            {user && (
+            {user && user.role !== 'admin' && (
               <button 
                 onClick={() => handleTabClick('account')}
                 className="btn btn-glass"

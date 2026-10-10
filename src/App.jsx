@@ -107,7 +107,17 @@ function App() {
     } else if (path === '/admin') {
       setActiveTab('admin');
     } else if (path === '/account' || path === '/profile') {
-      setActiveTab('account');
+      try {
+        const saved = localStorage.getItem('user');
+        const parsed = saved ? JSON.parse(saved) : null;
+        if (parsed?.role === 'admin') {
+          setActiveTab('admin');
+        } else {
+          setActiveTab('account');
+        }
+      } catch {
+        setActiveTab('account');
+      }
     }
   }, []);
 
@@ -145,14 +155,26 @@ function App() {
     window.history.pushState(null, '', `/product/${slug}`);
   };
 
+  // Safety guard: Administrators should never stay on customer account tab
+  useEffect(() => {
+    if (currentUser?.role === 'admin' && activeTab === 'account') {
+      setActiveTab('admin');
+    }
+  }, [currentUser, activeTab]);
+
   const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    if (tabId === 'store') {
+    let targetTab = tabId;
+    // Admins have no customer account dashboard; redirect to admin portal
+    if (targetTab === 'account' && currentUser?.role === 'admin') {
+      targetTab = 'admin';
+    }
+    setActiveTab(targetTab);
+    if (targetTab === 'store') {
       window.history.pushState(null, '', '/');
-    } else if (tabId === 'admin') {
+    } else if (targetTab === 'admin') {
       window.history.pushState(null, '', '/admin');
     } else {
-      window.history.pushState(null, '', `/${tabId}`);
+      window.history.pushState(null, '', `/${targetTab}`);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -170,6 +192,8 @@ function App() {
     if (pendingCheckout) {
       setPendingCheckout(false);
       setIsCheckoutOpen(true);
+    } else if (user?.role === 'admin') {
+      handleTabChange('admin');
     }
   };
 
@@ -267,14 +291,14 @@ function App() {
       {activeTab === 'blog' && <BlogSection onSelectProduct={handleSelectProduct} />}
 
       {/* 5. ADMIN PORTAL */}
-      {activeTab === 'admin' && (
+      {(activeTab === 'admin' || (activeTab === 'account' && currentUser?.role === 'admin')) && (
         <main>
           <AdminDashboard user={currentUser} onLogout={handleLogout} />
         </main>
       )}
 
-      {/* 6. USER ACCOUNT & ORDERS DASHBOARD */}
-      {activeTab === 'account' && (
+      {/* 6. USER ACCOUNT & ORDERS DASHBOARD (CUSTOMERS ONLY) */}
+      {activeTab === 'account' && currentUser?.role !== 'admin' && (
         <main>
           {currentUser ? (
             <UserDashboard 
@@ -283,6 +307,7 @@ function App() {
               onSelectProduct={handleSelectProduct} 
               onGoToStore={() => handleTabChange('store')} 
               onGoToSupport={() => handleTabChange('support')} 
+              onGoToAdmin={() => handleTabChange('admin')}
               onUpdateUser={(u) => {
                 setCurrentUser(u);
                 try { localStorage.setItem('user', JSON.stringify(u)); } catch {}
