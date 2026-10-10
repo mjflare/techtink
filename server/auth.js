@@ -35,8 +35,26 @@ function readToken(token) {
   return data.exp > Date.now() ? data : null;
 }
 
-export const publicUser = (u) =>
-  u && { id: u.id, name: u.name, mobile: u.mobile, phone: u.mobile, email: u.email, role: u.role, mustChangePassword: !!u.must_change_password, createdAt: u.created_at };
+export const publicUser = (u) => {
+  if (!u) return null;
+  let savedAddress = null;
+  if (u.saved_address) {
+    try {
+      savedAddress = typeof u.saved_address === 'string' ? JSON.parse(u.saved_address) : u.saved_address;
+    } catch {}
+  }
+  return {
+    id: u.id,
+    name: u.name,
+    mobile: u.mobile,
+    phone: u.mobile,
+    email: u.email,
+    role: u.role,
+    savedAddress,
+    mustChangePassword: !!u.must_change_password,
+    createdAt: u.created_at
+  };
+};
 
 // Attaches req.user when a valid token is present (does not reject).
 export function attachUser(req, _res, next) {

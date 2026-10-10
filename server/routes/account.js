@@ -54,6 +54,14 @@ r.put('/auth/profile', requireUser, (req, res) => {
   res.json({ user: publicUser(db.get('SELECT * FROM users WHERE id = ?', req.user.id)) });
 });
 
+r.put('/auth/address', requireUser, (req, res) => {
+  const addressData = req.body || {};
+  const addrJson = JSON.stringify(addressData);
+  db.run('UPDATE users SET saved_address = ? WHERE id = ?', addrJson, req.user.id);
+  const updated = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+  res.json({ success: true, user: publicUser(updated) });
+});
+
 r.put('/auth/password', requireUser, (req, res) => {
   const { current, next } = req.body || {};
   if (!verifyPassword(String(current || ''), req.user.password_hash)) return res.status(400).json({ error: 'رمز فعلی اشتباه است.' });
@@ -95,6 +103,7 @@ r.post('/orders', requireUser, (req, res) => {
       for (const l of lines) {
         db.run('INSERT INTO order_items (order_id, product_id, name, config, unit_price, qty) VALUES (?, ?, ?, ?, ?, ?)', lastId, l.productId, l.name, JSON.stringify(l.config), l.unitPrice, l.qty);
       }
+      db.run('UPDATE users SET saved_address = ? WHERE id = ?', JSON.stringify({ ...s, mobile }), req.user.id);
       return lastId;
     });
     res.json({ orderId, total: subtotal + shippingFee });
@@ -108,7 +117,7 @@ export function orderWithItems(o) {
     id: o.id, status: o.status, subtotal: o.subtotal, shipping: o.shipping, total: o.total, trackingCode: o.tracking_code,
     shippingInfo: JSON.parse(o.shipping_info || '{}'), createdAt: o.created_at,
     items: db.all('SELECT product_id AS productId, name, config, unit_price AS unitPrice, qty FROM order_items WHERE order_id = ?', o.id).map((i) => ({ ...i, config: JSON.parse(i.config) })),
-    payment: db.get('SELECT status, ref_id AS refId, card_pan AS cardPan, message FROM payments WHERE order_id = ? ORDER BY id DESC LIMIT 1', o.id),
+    payment: db.get('SELECT status, ref_id AS refId, card_pan AS cardPan, message, gateway FROM payments WHERE order_id = ? ORDER BY id DESC LIMIT 1', o.id),
   };
 }
 
@@ -119,6 +128,25 @@ r.get('/orders', requireUser, (req, res) => {
 r.get('/orders/:id', requireUser, (req, res) => {
   const o = db.get('SELECT * FROM orders WHERE id = ? AND user_id = ?', req.params.id, req.user.id);
   o ? res.json(orderWithItems(o)) : res.status(404).json({ error: 'سفارش یافت نشد.' });
+});
+
+r.get('/appointments/my', requireUser, (req, res) => {
+  const u = req.user;
+  const m = u.mobile || '';
+  const e = u.email || '';
+  const rows = db.all(
+    `SELECT * FROM appointments 
+     WHERE (user_id IS NOT NULL AND user_id = ?) 
+        OR (customer_phone IS NOT NULL AND customer_phone = ?) 
+        OR (customer_email IS NOT NULL AND customer_email = ?) 
+     ORDER BY id DESC LIMIT 100`,
+    u.id, m, e
+  );
+  res.json(rows.map(a => ({
+    ...a,
+    trackingCode: a.tracking_code,
+    services: JSON.parse(a.services || '[]')
+  })));
 });
 
 export default r;

@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'customer',
+  saved_address TEXT,
   blocked INTEGER NOT NULL DEFAULT 0,
   must_change_password INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -179,6 +180,7 @@ CREATE TABLE IF NOT EXISTS tickets (
 );
 CREATE TABLE IF NOT EXISTS appointments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER REFERENCES users(id),
   tracking_code TEXT UNIQUE,
   type TEXT NOT NULL,
   product_slug TEXT,
@@ -227,6 +229,15 @@ export const DEFAULT_SETTINGS = {
   shipping_fee: '0',
   zarinpal_merchant_id: '00000000-0000-0000-0000-000000000000',
   zarinpal_sandbox: '1',
+  // Payment Gateways & Methods
+  gateway_zarinpal_active: '1',
+  gateway_mellat_active: '1',
+  gateway_saman_active: '1',
+  gateway_parsian_active: '1',
+  gateway_card_active: '1',
+  gateway_cod_active: '1',
+  card_number: '۶۰۳۷-۹۹۷۵-۱۲۳۴-۵۶۷۸',
+  card_holder: 'فروشگاه تک‌تینک (شرکت فناوری اطلاعات)',
   torob_token: '',
   low_stock_threshold: '5',
   // Location & Contact Info
@@ -248,6 +259,8 @@ const toToman = (val) => (val >= 10000 ? val : Math.round((val * 65000) / 100000
 
 function migrate() {
   db.exec(SCHEMA);
+  try { db.exec("ALTER TABLE users ADD COLUMN saved_address TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE appointments ADD COLUMN user_id INTEGER;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN expert_review TEXT DEFAULT '{}';"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN cpu_brand TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN gpu_brand TEXT;"); } catch {}

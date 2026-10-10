@@ -14,6 +14,7 @@ import AdminDashboard from './components/AdminDashboard.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import ProductPage from './components/ProductPage.jsx';
 import AboutUsModal from './components/AboutUsModal.jsx';
+import UserDashboard from './components/UserDashboard.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './components/SocialLogos.jsx';
 
@@ -105,6 +106,8 @@ function App() {
       }
     } else if (path === '/admin') {
       setActiveTab('admin');
+    } else if (path === '/account' || path === '/profile') {
+      setActiveTab('account');
     }
   }, []);
 
@@ -174,7 +177,7 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCurrentUser(null);
-    if (activeTab === 'admin') {
+    if (activeTab === 'admin' || activeTab === 'account') {
       setActiveTab('store');
     }
   };
@@ -267,6 +270,37 @@ function App() {
       {activeTab === 'admin' && (
         <main>
           <AdminDashboard user={currentUser} onLogout={handleLogout} />
+        </main>
+      )}
+
+      {/* 6. USER ACCOUNT & ORDERS DASHBOARD */}
+      {activeTab === 'account' && (
+        <main>
+          {currentUser ? (
+            <UserDashboard 
+              user={currentUser} 
+              onLogout={handleLogout} 
+              onSelectProduct={handleSelectProduct} 
+              onGoToStore={() => handleTabChange('store')} 
+              onGoToSupport={() => handleTabChange('support')} 
+              onUpdateUser={(u) => {
+                setCurrentUser(u);
+                try { localStorage.setItem('user', JSON.stringify(u)); } catch {}
+              }} 
+            />
+          ) : (
+            <div className="container" style={{ paddingTop: '80px', paddingBottom: '100px', textAlign: 'center' }}>
+              <div className="glass-panel" style={{ maxWidth: '500px', margin: '0 auto', padding: '40px 28px', borderRadius: '24px' }}>
+                <h2 style={{ fontSize: '1.35rem', marginBottom: '14px' }}>ورود به حساب کاربری</h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '24px', lineHeight: '1.7' }}>
+                  برای مشاهده وضعیت سفارش‌ها، پیگیری کد رهگیری مرسولات و نوبت‌های ثبت‌شده، لطفاً وارد حساب خود شوید.
+                </p>
+                <button className="btn btn-primary" style={{ width: '100%', padding: '12px' }} onClick={() => setIsAuthModalOpen(true)}>
+                  ورود / ثبت‌نام در سایت
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       )}
 

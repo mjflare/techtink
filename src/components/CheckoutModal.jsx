@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2, Copy, Truck, Check } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
 const PROVINCES = [
@@ -11,16 +11,25 @@ const PROVINCES = [
   'خوزستان',
   'مازندران',
   'گیلان',
+  'البرز',
+  'قم',
+  'کرمان',
+  'همدان',
+  'یزد',
+  'مرکزی',
+  'قزوین',
 ];
 
-const GATEWAYS = [
-  { id: 'zarinpal', name: 'زرین‌پال', color: '#f5c518', border: 'rgba(245,197,24,0.5)' },
-  { id: 'mellat', name: 'بانک ملت', color: '#e53935', border: 'rgba(229,57,53,0.5)' },
-  { id: 'saman', name: 'بانک سامان', color: '#1e88e5', border: 'rgba(30,136,229,0.5)' },
-  { id: 'parsian', name: 'بانک پارسیان', color: '#43a047', border: 'rgba(67,160,71,0.5)' },
+const ALL_GATEWAYS = [
+  { id: 'zarinpal', name: 'زرین‌پال', color: '#f5c518', border: 'rgba(245,197,24,0.5)', subtitle: 'پرداخت امن و سریع شتاب با کلیه کارت‌های بانکی' },
+  { id: 'mellat', name: 'بانک ملت', color: '#e53935', border: 'rgba(229,57,53,0.5)', subtitle: 'درگاه به‌پرداخت شاپرک بانک ملت' },
+  { id: 'saman', name: 'بانک سامان', color: '#1e88e5', border: 'rgba(30,136,229,0.5)', subtitle: 'درگاه سامان‌کیش عضو شبکه شتاب' },
+  { id: 'parsian', name: 'بانک پارسیان', color: '#43a047', border: 'rgba(67,160,71,0.5)', subtitle: 'درگاه تجارت الکترونیک پارسیان' },
+  { id: 'card', name: 'کارت‌به‌کارت', color: '#8b5cf6', border: 'rgba(139,92,246,0.5)', subtitle: 'انتقال وجه شتابی به شماره کارت فروشگاه' },
+  { id: 'cod', name: 'پرداخت در محل', color: '#10b981', border: 'rgba(16,185,129,0.5)', subtitle: 'تسویه با دستگاه کارتخوان هنگام تحویل بسته' },
 ];
 
-const STEP_LABELS = ['اطلاعات ارسال', 'انتخاب درگاه پرداخت', 'تایید پرداخت'];
+const STEP_LABELS = ['اطلاعات ارسال', 'انتخاب روش پرداخت', 'تایید نهایی'];
 
 const SHIPPING_THRESHOLD = 50000000;
 const SHIPPING_COST = 350000;
@@ -51,6 +60,10 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
   const [orderId, setOrderId] = useState(null);
   const [refId, setRefId] = useState(null);
   const [selectedGateway, setSelectedGateway] = useState('zarinpal');
+  const [storeSettings, setStoreSettings] = useState(null);
+  const [copiedCard, setCopiedCard] = useState(false);
+  const [saveAddressForFuture, setSaveAddressForFuture] = useState(true);
+  const [hasPrefilledAddress, setHasPrefilledAddress] = useState(false);
   const [error, setError] = useState(null);
 
   // Shipping form state prefilled from authenticated user
@@ -62,10 +75,60 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
   const [address, setAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
 
+  // Fetch store settings to get active payment methods and store bank card
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data && !data.error) setStoreSettings(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Filter gateways by admin activation flags
+  const availableGateways = useMemo(() => {
+    if (!storeSettings) return ALL_GATEWAYS;
+    return ALL_GATEWAYS.filter(gw => {
+      const activeKey = `gateway_${gw.id}_active`;
+      return storeSettings[activeKey] !== '0';
+    });
+  }, [storeSettings]);
+
+  // Ensure selectedGateway is always valid
+  useEffect(() => {
+    if (availableGateways.length > 0 && !availableGateways.some(g => g.id === selectedGateway)) {
+      setSelectedGateway(availableGateways[0].id);
+    }
+  }, [availableGateways, selectedGateway]);
+
+  // Load saved address on mount or when user updates
   useEffect(() => {
     if (user) {
-      if (user.name && !fullName) setFullName(user.name);
-      if ((user.phone || user.mobile) && !phone) setPhone(user.phone || user.mobile);
+      let saved = user.savedAddress;
+      if (!saved) {
+        try {
+          const local = localStorage.getItem('techtink_saved_address');
+          if (local) saved = JSON.parse(local);
+        } catch {}
+      }
+
+      if (saved) {
+        if (saved.fullName) setFullName(saved.fullName);
+        else if (user.name) setFullName(user.name);
+
+        if (saved.phone) setPhone(saved.phone);
+        else if (user.phone || user.mobile) setPhone(user.phone || user.mobile);
+
+        if (saved.nationalId) setNationalId(saved.nationalId);
+        if (saved.province) setProvince(saved.province);
+        if (saved.city) setCity(saved.city);
+        if (saved.address) setAddress(saved.address);
+        if (saved.postalCode) setPostalCode(saved.postalCode);
+        setHasPrefilledAddress(true);
+      } else {
+        if (user.name && !fullName) setFullName(user.name);
+        if ((user.phone || user.mobile) && !phone) setPhone(user.phone || user.mobile);
+      }
     }
   }, [user]);
 
@@ -133,12 +196,31 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
     );
   }
 
-  const handleShippingSubmit = (e) => {
+  const handleShippingSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
       if (onOpenAuth) onOpenAuth();
       return;
     }
+
+    const shippingData = { fullName, phone, nationalId, province, city, address, postalCode };
+    try {
+      localStorage.setItem('techtink_saved_address', JSON.stringify(shippingData));
+      if (saveAddressForFuture) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          fetch('/api/auth/address', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(shippingData)
+          }).catch(() => {});
+        }
+      }
+    } catch {}
+
     setStep(2);
   };
 
@@ -311,15 +393,33 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
           {/* ──────── Step 1: Shipping Info ──────── */}
           {step === 1 && (
             <form onSubmit={handleShippingSubmit} className="animate-fade-in">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <MapPin size={20} />
+                  <MapPin size={20} color="hsl(var(--accent-cyan))" />
                   اطلاعات ارسال
                 </h3>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                   (فیلدهای دارای <span style={{ color: '#ef4444', fontWeight: 'bold' }}>*</span> الزامی هستند)
                 </span>
               </div>
+
+              {hasPrefilledAddress && (
+                <div style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '0.85rem',
+                  color: '#10b981'
+                }}>
+                  <Check size={16} />
+                  <span>نشانی شما از حساب کاربری بازخوانی شد. نیازی به ورود مجدد اطلاعات نیست.</span>
+                </div>
+              )}
 
               <div className="checkout-form-grid">
                 {/* Full Name */}
@@ -442,11 +542,24 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
                     style={{ ...inputStyle, direction: 'ltr', textAlign: 'left' }}
                   />
                 </div>
+
+                {/* Save Address Checkbox */}
+                <div style={{ gridColumn: '1 / -1', marginTop: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={saveAddressForFuture} 
+                      onChange={e => setSaveAddressForFuture(e.target.checked)}
+                      style={{ width: '16px', height: '16px', accentColor: 'hsl(var(--accent-cyan))' }}
+                    />
+                    <span>ذخیره این نشانی در حساب کاربری برای خریدهای آینده</span>
+                  </label>
+                </div>
               </div>
 
-              <div style={{ marginTop: '28px', display: 'flex', justifyContent: 'flex-start' }}>
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-start' }}>
                 <button type="submit" className="btn btn-primary" style={{ padding: '12px 32px' }}>
-                  ادامه
+                  ادامه و انتخاب روش پرداخت
                 </button>
               </div>
             </form>
@@ -547,47 +660,140 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
               </div>
 
               {/* Gateway Selection */}
-              <div className="grid gateway-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '24px' }}>
-                {GATEWAYS.map((gw) => {
+              <div className="grid gateway-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+                {availableGateways.map((gw) => {
                   const isSelected = selectedGateway === gw.id;
                   return (
-                    <label
+                    <div
                       key={gw.id}
+                      onClick={() => setSelectedGateway(gw.id)}
                       className="glass-card"
                       style={{
                         padding: '16px',
                         cursor: 'pointer',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        border: isSelected ? `2px solid ${gw.border}` : '2px solid transparent',
-                        boxShadow: isSelected ? `0 0 16px ${gw.border}` : 'none',
-                        transition: 'all 0.3s ease',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        borderRadius: '16px',
+                        border: isSelected ? `2px solid ${gw.border}` : '2px solid var(--border-glass)',
+                        background: isSelected ? `linear-gradient(135deg, ${gw.border}15, var(--glass-card-bg))` : 'var(--glass-card-bg)',
+                        boxShadow: isSelected ? `0 0 18px ${gw.border}` : 'none',
+                        transition: 'all 0.25s ease',
+                        position: 'relative'
                       }}
                     >
-                      <input
-                        type="radio"
-                        name="gateway"
-                        value={gw.id}
-                        checked={isSelected}
-                        onChange={() => setSelectedGateway(gw.id)}
-                        style={{ width: 'auto', accentColor: gw.color }}
-                      />
-                      <span style={{ fontWeight: 600 }}>{gw.name}</span>
-                      <span
-                        style={{
-                          marginRight: 'auto',
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          background: gw.color,
-                          boxShadow: `0 0 8px ${gw.color}`,
-                        }}
-                      />
-                    </label>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div 
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              borderRadius: '50%',
+                              border: `2px solid ${isSelected ? gw.color : 'var(--border-glass)'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: isSelected ? gw.color : 'transparent',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {isSelected && <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fff' }} />}
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: '0.95rem', color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
+                            {gw.name}
+                          </span>
+                        </div>
+
+                        <span
+                          style={{
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            background: gw.color,
+                            boxShadow: `0 0 8px ${gw.color}`,
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                        {gw.subtitle}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
+
+              {/* Special details for Card-to-Card */}
+              {selectedGateway === 'card' && (
+                <div 
+                  className="glass-card animate-fade-in"
+                  style={{ 
+                    padding: '18px 20px', 
+                    borderRadius: '16px', 
+                    marginBottom: '22px', 
+                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.05))',
+                    border: '1px solid rgba(139, 92, 246, 0.35)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <CreditCard size={20} color="#8b5cf6" />
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>اطلاعات حساب بانکی فروشگاه تک‌تینک جهت کارت‌به‌کارت</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', background: 'rgba(0,0,0,0.05)', padding: '12px 16px', borderRadius: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>شماره کارت شتاب:</div>
+                      <div className="font-tech" style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '2px', direction: 'ltr', color: '#8b5cf6' }}>
+                        {storeSettings?.card_number || '۶۰۳۷-۹۹۷۵-۱۲۳۴-۵۶۷۸'}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', marginTop: '4px' }}>
+                        به نام: {storeSettings?.card_holder || 'فروشگاه تک‌تینک (شرکت فناوری اطلاعات)'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-glass"
+                      onClick={() => {
+                        const cleanNum = (storeSettings?.card_number || '6037997512345678').replace(/[^0-9]/g, '');
+                        navigator.clipboard.writeText(cleanNum);
+                        setCopiedCard(true);
+                        setTimeout(() => setCopiedCard(false), 2500);
+                      }}
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', gap: '6px' }}
+                    >
+                      <Copy size={14} />
+                      <span>{copiedCard ? 'کپی شد!' : 'کپی شماره کارت'}</span>
+                    </button>
+                  </div>
+
+                  <p style={{ margin: '12px 0 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                    پس از واریز مبلغ، دکمه «ثبت سفارش» را بزنید. کارشناسان ما جهت تایید شماره تراکنش با شما تماس می‌گیرند.
+                  </p>
+                </div>
+              )}
+
+              {/* Special details for Cash on Delivery (COD) */}
+              {selectedGateway === 'cod' && (
+                <div 
+                  className="glass-card animate-fade-in"
+                  style={{ 
+                    padding: '16px 20px', 
+                    borderRadius: '16px', 
+                    marginBottom: '22px', 
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                  }}
+                >
+                  <Truck size={24} color="#10b981" style={{ flexShrink: 0 }} />
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                    سفارش شما ثبت شده و بلافاصله آماده‌سازی می‌شود. مبلغ فاکتور هنگام تحویل سفارش درب محل با دستگاه کارتخوان سیار (پوز) تسویه خواهد شد.
+                  </div>
+                </div>
+              )}
 
               {/* Security notice */}
               <div
@@ -638,7 +844,13 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
                   disabled={loading}
                   style={{ padding: '12px 32px' }}
                 >
-                  {loading ? 'در حال اتصال...' : 'پرداخت'}
+                  {loading 
+                    ? 'در حال پردازش...' 
+                    : selectedGateway === 'card'
+                    ? 'ثبت سفارش با کارت‌به‌کارت'
+                    : selectedGateway === 'cod'
+                    ? 'ثبت نهایی سفارش (پرداخت در محل)'
+                    : `پرداخت با ${availableGateways.find(g => g.id === selectedGateway)?.name || 'درگاه بانکی'}`}
                 </button>
               </div>
             </form>
@@ -669,7 +881,9 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
               />
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>
-                در حال انتقال به درگاه بانکی...
+                {selectedGateway === 'card' || selectedGateway === 'cod'
+                  ? 'در حال ثبت نهایی سفارش در سیستم...'
+                  : 'در حال انتقال به درگاه بانکی...'}
               </p>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
                 لطفاً صبر کنید و از بستن این صفحه خودداری نمایید

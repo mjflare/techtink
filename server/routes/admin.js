@@ -347,6 +347,8 @@ r.get('/inventory/stock-log', (_req, res) => {
 // ---------- Settings ----------
 const EDITABLE = [
   'store_name', 'site_url', 'banner_text', 'shipping_fee', 'zarinpal_merchant_id', 'zarinpal_sandbox', 'torob_token', 'low_stock_threshold',
+  'gateway_zarinpal_active', 'gateway_mellat_active', 'gateway_saman_active', 'gateway_parsian_active',
+  'gateway_card_active', 'gateway_cod_active', 'card_number', 'card_holder',
   'store_address', 'store_phone', 'store_mobile', 'store_hours', 'store_map_link', 'store_about',
   'telegram_url', 'instagram_url', 'bale_url', 'aparat_url'
 ];

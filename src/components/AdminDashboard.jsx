@@ -5,7 +5,7 @@ import {
   Plus, AlertTriangle, Shield, CheckCircle, ExternalLink, Copy, Search, Trash2,
   Sparkles, FileText, BookOpen, ThumbsUp, ThumbsDown, Cpu, Layers, HardDrive, Wrench,
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
-  ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye
+  ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -93,6 +93,8 @@ export default function AdminDashboard({ user, onLogout }) {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [trackingInputs, setTrackingInputs] = useState({});
+  const [savingTrackingId, setSavingTrackingId] = useState(null);
 
   // Comments
   const [comments, setComments] = useState([]);
@@ -749,6 +751,26 @@ export default function AdminDashboard({ user, onLogout }) {
       console.error(err);
     }
     setUpdatingOrderId(null);
+  };
+
+  const saveOrderTracking = async (orderId) => {
+    const code = trackingInputs[orderId] !== undefined 
+      ? trackingInputs[orderId] 
+      : (orders.find(o => o.id === orderId)?.trackingCode || '');
+    setSavingTrackingId(orderId);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({ trackingCode: code })
+      });
+      if (res.ok) {
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, trackingCode: code } : o));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setSavingTrackingId(null);
   };
 
   const updateCommentStatus = async (commentId, newStatus) => {
@@ -2107,6 +2129,7 @@ export default function AdminDashboard({ user, onLogout }) {
                   <th style={{ padding: '12px' }}>مبلغ کل</th>
                   <th style={{ padding: '12px' }}>وضعیت سفارش</th>
                   <th style={{ padding: '12px' }}>کد پیگیری درگاه</th>
+                  <th style={{ padding: '12px' }}>کد رهگیری پستی (پست / تیپاکس)</th>
                   <th style={{ padding: '12px' }}>تغییر وضعیت</th>
                 </tr>
               </thead>
@@ -2119,13 +2142,35 @@ export default function AdminDashboard({ user, onLogout }) {
                     <td style={{ padding: '12px' }} className="font-code">{formatPrice(o.total)}</td>
                     <td style={{ padding: '12px' }}>
                       <span className="badge" style={{
-                        background: o.status === 'paid' ? 'hsla(var(--accent-green), 0.15)' : 'hsla(var(--accent-cyan), 0.15)',
-                        color: o.status === 'paid' ? 'hsl(var(--accent-green))' : 'hsl(var(--accent-cyan))'
+                        background: o.status === 'paid' ? 'hsla(var(--accent-green), 0.15)' : o.status === 'shipped' ? 'hsla(var(--accent-purple), 0.15)' : 'hsla(var(--accent-cyan), 0.15)',
+                        color: o.status === 'paid' ? 'hsl(var(--accent-green))' : o.status === 'shipped' ? 'hsl(var(--accent-purple))' : 'hsl(var(--accent-cyan))'
                       }}>
-                        {o.status === 'paid' ? 'پرداخت شده' : o.status === 'shipped' ? 'ارسال شده' : o.status}
+                        {o.status === 'paid' ? 'پرداخت شده' : o.status === 'shipped' ? 'ارسال شده به پست' : o.status === 'delivered' ? 'تحویل شده' : o.status}
                       </span>
                     </td>
                     <td style={{ padding: '12px' }} className="font-code">{o.payment?.refId || '—'}</td>
+                    <td style={{ padding: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <input
+                          type="text"
+                          placeholder="کد ۲۴ رقمی پست"
+                          value={trackingInputs[o.id] !== undefined ? trackingInputs[o.id] : (o.trackingCode || '')}
+                          onChange={e => setTrackingInputs({ ...trackingInputs, [o.id]: e.target.value })}
+                          className="font-code"
+                          style={{ padding: '4px 8px', fontSize: '0.75rem', width: '145px', direction: 'ltr' }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => saveOrderTracking(o.id)}
+                          disabled={savingTrackingId === o.id}
+                          style={{ padding: '5px 8px', fontSize: '0.75rem', lineHeight: 1 }}
+                          title="ذخیره کد رهگیری پستی"
+                        >
+                          <Save size={13} />
+                        </button>
+                      </div>
+                    </td>
                     <td style={{ padding: '12px' }}>
                       <select 
                         value={o.status} 
@@ -2354,6 +2399,106 @@ export default function AdminDashboard({ user, onLogout }) {
                     <option value="1">فعال (Sandbox Mode برای تست)</option>
                     <option value="0">غیرفعال (اتصال به درگاه واقعی شتاب)</option>
                   </select>
+                </div>
+              </div>
+
+              {/* Payment Methods & Gateways Activation */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <h3 style={{ fontSize: '1.15rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CreditCard size={18} color="hsl(var(--accent-purple))" />
+                  مدیریت درگاه‌ها و روش‌های فعال پرداخت (فعال‌سازی / غیرفعال‌سازی)
+                </h3>
+                
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>درگاه پرداخت زرین‌پال</label>
+                    <select
+                      value={settingsForm.gateway_zarinpal_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_zarinpal_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>درگاه به‌پرداخت بانک ملت</label>
+                    <select
+                      value={settingsForm.gateway_mellat_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_mellat_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>درگاه سامان‌کیش بانک سامان</label>
+                    <select
+                      value={settingsForm.gateway_saman_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_saman_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>درگاه تجارت الکترونیک پارسیان</label>
+                    <select
+                      value={settingsForm.gateway_parsian_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_parsian_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>روش پرداخت کارت‌به‌کارت</label>
+                    <select
+                      value={settingsForm.gateway_card_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_card_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>روش پرداخت در محل (COD)</label>
+                    <select
+                      value={settingsForm.gateway_cod_active ?? '1'}
+                      onChange={e => setSettingsForm({ ...settingsForm, gateway_cod_active: e.target.value })}
+                    >
+                      <option value="1">فعال (نمایش در فرم پرداخت مشتری)</option>
+                      <option value="0">غیرفعال</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>شماره کارت شتاب فروشگاه (جهت کارت‌به‌کارت)</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.card_number || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, card_number: e.target.value })} 
+                      placeholder="۶۰۳۷-۹۹۷۵-۱۲۳۴-۵۶۷۸"
+                      style={{ direction: 'ltr' }}
+                      className="font-code"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>نام صاحب حساب / فروشگاه</label>
+                    <input 
+                      type="text" 
+                      value={settingsForm.card_holder || ''} 
+                      onChange={e => setSettingsForm({ ...settingsForm, card_holder: e.target.value })} 
+                      placeholder="فروشگاه تک‌تینک (شرکت فناوری اطلاعات)"
+                    />
+                  </div>
                 </div>
               </div>
 

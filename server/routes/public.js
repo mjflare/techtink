@@ -147,13 +147,15 @@ r.post('/support/appointment', (req, res) => {
 
   const code = 'RES-' + crypto.randomInt(100000, 999999);
   const servicesJson = typeof services === 'object' ? JSON.stringify(services) : (services || '[]');
+  const userId = req.user?.id || null;
 
   db.run(
     `INSERT INTO appointments (
-      tracking_code, type, product_slug, product_name, device_model, services,
+      user_id, tracking_code, type, product_slug, product_name, device_model, services,
       customer_name, customer_phone, customer_email, preferred_date, preferred_time,
       delivery_method, notes, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+    userId,
     code,
     type,
     productSlug || null,

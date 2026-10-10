@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown, Package } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
 export default function Header({ 
@@ -386,6 +386,18 @@ export default function Header({
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        setActiveTab('account');
+                      }}
+                      className="btn btn-glass"
+                      style={{ width: '100%', justifyContent: 'flex-start', padding: '8px 10px', fontSize: '0.8rem', borderRadius: '10px', gap: '8px' }}
+                    >
+                      <Package size={16} color="hsl(var(--accent-purple))" /> حساب کاربری و سفارش‌ها
+                    </button>
+
                     {user.role === 'admin' && (
                       <button
                         type="button"
@@ -566,6 +578,23 @@ export default function Header({
                 {tab.label}
               </button>
             ))}
+            {user && (
+              <button 
+                onClick={() => handleTabClick('account')}
+                className="btn btn-glass"
+                style={{ 
+                  justifyContent: 'flex-start', 
+                  padding: '12px 16px', 
+                  width: '100%',
+                  background: activeTab === 'account' ? 'hsla(var(--accent-purple), 0.15)' : 'transparent',
+                  borderColor: activeTab === 'account' ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
+                  fontWeight: activeTab === 'account' ? 'bold' : 'normal',
+                  gap: '8px'
+                }}
+              >
+                <Package size={18} color="hsl(var(--accent-purple))" /> حساب کاربری و رهگیری سفارش‌ها
+              </button>
+            )}
             {onOpenAbout && (
               <button 
                 onClick={() => { setMobileMenuOpen(false); onOpenAbout(); }}

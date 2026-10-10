@@ -66,6 +66,9 @@ r.post('/checkout/init', (req, res) => {
       'INSERT INTO payments (order_id, gateway, authority, amount, status) VALUES (?, ?, ?, ?, ?)',
       lastId, gw, token, tot * 10, 'initiated'
     );
+    if (shipping && Object.keys(shipping).length > 0) {
+      db.run('UPDATE users SET saved_address = ? WHERE id = ?', JSON.stringify(shipping), uid);
+    }
     return lastId;
   });
 
