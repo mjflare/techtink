@@ -735,13 +735,16 @@ async function sslIssueDomain(domainArg, portArg) {
     }
 
     // Auto-configure Nginx reverse proxy
-    if (process.stdin.isTTY) {
+    if (process.stdin.isTTY && !domainArg) {
       const prompter = createPrompter();
       const applyNginx = (await prompter.ask('\nApply this certificate to Nginx Reverse Proxy now? [Y/n]: ')).trim().toLowerCase();
       prompter.close();
       if (!applyNginx || applyNginx.startsWith('y')) {
         await handleNginxConfigure({ domain, certPath, keyPath });
       }
+    } else {
+      // Automatically apply to Nginx when run non-interactively or with domain argument
+      await handleNginxConfigure({ domain, certPath, keyPath });
     }
     return true;
   } catch (err) {
