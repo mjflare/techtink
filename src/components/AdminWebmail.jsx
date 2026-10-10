@@ -72,12 +72,15 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
   };
 
   // Fetch emails based on current folder
-  const fetchEmailList = async (isBackground = false) => {
-    if (!isBackground) setLoading(true);
+  const fetchEmailList = async (overrideFolder = null, isBackground = false) => {
+    const folder = typeof overrideFolder === 'string' ? overrideFolder : currentFolder;
+    const isBg = typeof overrideFolder === 'boolean' ? overrideFolder : isBackground;
+
+    if (!isBg) setLoading(true);
     else setRefreshing(true);
 
     try {
-      if (currentFolder === 'inbox') {
+      if (folder === 'inbox') {
         const params = new URLSearchParams({
           limit: '50',
           search: search.trim(),
@@ -89,8 +92,11 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
           const items = Array.isArray(data.items) ? data.items : [];
           setInboxEmails(items);
 
-          if (items.length > 0 && !selectedEmailId) {
-            setSelectedEmailId(items[0].id);
+          if (items.length > 0) {
+            setSelectedEmailId(prev => (prev && items.some(x => x.id === prev) ? prev : items[0].id));
+          } else {
+            setSelectedEmailId(null);
+            setSelectedEmail(null);
           }
         }
       } else {
@@ -104,22 +110,28 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
           const items = Array.isArray(data.items) ? data.items : [];
           setSentEmails(items);
 
-          if (items.length > 0 && !selectedEmailId) {
-            setSelectedEmailId(items[0].id);
+          if (items.length > 0) {
+            setSelectedEmailId(prev => (prev && items.some(x => x.id === prev) ? prev : items[0].id));
+          } else {
+            setSelectedEmailId(null);
+            setSelectedEmail(null);
           }
         }
       }
     } catch (e) {
       console.error('Failed to fetch emails', e);
     } finally {
-      if (!isBackground) setLoading(false);
+      if (!isBg) setLoading(false);
       setRefreshing(false);
     }
   };
 
   // Fetch full email detail
   const fetchEmailDetail = async (id) => {
-    if (!id) return;
+    if (!id) {
+      setSelectedEmail(null);
+      return;
+    }
     setEmailDetailLoading(true);
     try {
       const endpoint = currentFolder === 'inbox' 
@@ -134,9 +146,12 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         if (currentFolder === 'inbox') {
           fetchStatus();
         }
+      } else {
+        setSelectedEmail(null);
       }
     } catch (e) {
       console.error('Failed to load email details', e);
+      setSelectedEmail(null);
     } finally {
       setEmailDetailLoading(false);
     }
@@ -330,10 +345,8 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         });
         // Switch to Sent folder to view sent message
         setCurrentFolder('sent');
-        await fetchEmailList();
-        if (data.emailId) {
-          setSelectedEmailId(data.emailId);
-        }
+        setSelectedEmailId(data.emailId || null);
+        await fetchEmailList('sent');
         fetchStatus();
       } else {
         setActionMessage({ type: 'error', text: data.error || 'خطا در ارسال ایمیل' });
@@ -695,7 +708,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         <div style={{ display: 'flex', gap: '8px', background: 'rgba(0,0,0,0.2)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
           <button
             type="button"
-            onClick={() => { setCurrentFolder('inbox'); setSelectedEmailId(null); setSelectedIds([]); }}
+            onClick={() => { setCurrentFolder('inbox'); setSelectedEmailId(null); setSelectedEmail(null); setSelectedIds([]); }}
             className="btn"
             style={{
               padding: '8px 18px',
@@ -729,7 +742,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
 
           <button
             type="button"
-            onClick={() => { setCurrentFolder('sent'); setSelectedEmailId(null); setSelectedIds([]); }}
+            onClick={() => { setCurrentFolder('sent'); setSelectedEmailId(null); setSelectedEmail(null); setSelectedIds([]); }}
             className="btn"
             style={{
               padding: '8px 18px',

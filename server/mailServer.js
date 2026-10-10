@@ -317,7 +317,12 @@ export function listSentEmails({ limit = 50, offset = 0, search = '' } = {}) {
     sql += ' ORDER BY id DESC LIMIT ? OFFSET ?';
     params.push(Number(limit), Number(offset));
 
-    const items = db.all(sql, ...params);
+    const rawItems = db.all(sql, ...params);
+    const items = rawItems.map((item) => ({
+      ...item,
+      subject: sanitizeMojibake(item.subject),
+      body_text: sanitizeMojibake(item.body_text),
+    }));
     const totalCount = db.get('SELECT COUNT(*) as c FROM sent_emails')?.c || 0;
     return { items, totalCount };
   } catch (e) {
@@ -328,7 +333,14 @@ export function listSentEmails({ limit = 50, offset = 0, search = '' } = {}) {
 
 export function getSentEmailById(id) {
   try {
-    return db.get('SELECT * FROM sent_emails WHERE id = ?', id);
+    const row = db.get('SELECT * FROM sent_emails WHERE id = ?', id);
+    if (!row) return null;
+    return {
+      ...row,
+      subject: sanitizeMojibake(row.subject),
+      body_text: sanitizeMojibake(row.body_text),
+      body_html: sanitizeMojibake(row.body_html),
+    };
   } catch {
     return null;
   }

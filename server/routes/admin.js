@@ -845,54 +845,6 @@ r.get('/emails/status', (_req, res) => {
   }
 });
 
-r.get('/emails/:id', (req, res) => {
-  try {
-    const email = getEmailById(req.params.id);
-    if (!email) return res.status(404).json({ error: 'ایمیل یافت نشد' });
-    markEmailRead(req.params.id);
-    res.json(email);
-  } catch (err) {
-    res.status(500).json({ error: 'خطا در دریافت اطلاعات ایمیل' });
-  }
-});
-
-r.patch('/emails/:id/read', (req, res) => {
-  try {
-    markEmailRead(req.params.id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'خطا در تغییر وضعیت ایمیل' });
-  }
-});
-
-r.delete('/emails/:id', (req, res) => {
-  try {
-    deleteEmail(req.params.id);
-    res.json({ success: true, message: 'ایمیل با موفقیت حذف شد' });
-  } catch (err) {
-    res.status(500).json({ error: 'خطا در حذف ایمیل' });
-  }
-});
-
-r.post('/emails/simulate', (req, res) => {
-  try {
-    const { from = 'noreply@enamad.ir', to = 'info@techtink.ir', subject = 'کد تایید اینماد', body = 'کد تایید درخواست اینماد شما 24125751 می‌باشد.' } = req.body || {};
-    const code = extractVerificationCode(`${subject}\n${body}`);
-    const id = saveIncomingEmail({
-      from,
-      to,
-      subject,
-      bodyText: body,
-      bodyHtml: `<p>${body}</p>`,
-      rawMessage: `From: ${from}\nTo: ${to}\nSubject: ${subject}\n\n${body}`,
-      verificationCode: code,
-    });
-    res.json({ success: true, id, verificationCode: code, message: 'ایمیل با موفقیت ثبت شد' });
-  } catch (err) {
-    res.status(500).json({ error: 'خطا در شبیه‌سازی ایمیل' });
-  }
-});
-
 // Outbound Email Sending
 r.post('/emails/send', async (req, res) => {
   try {
@@ -908,7 +860,7 @@ r.post('/emails/send', async (req, res) => {
   }
 });
 
-// List Sent Emails
+// List Sent Emails (MUST be before /emails/:id)
 r.get('/emails/sent', (req, res) => {
   try {
     const { limit = 50, offset = 0, search = '' } = req.query;
@@ -978,6 +930,56 @@ r.post('/emails/bulk-delete', (req, res) => {
     res.json({ success: true, message: `${ids.length} ایمیل با موفقیت حذف شدند` });
   } catch (err) {
     res.status(500).json({ error: 'خطا در حذف گروهی ایمیل‌ها' });
+  }
+});
+
+// Simulate incoming email (for testing or eNamad checks)
+r.post('/emails/simulate', (req, res) => {
+  try {
+    const { from = 'noreply@enamad.ir', to = 'info@techtink.ir', subject = 'کد تایید اینماد', body = 'کد تایید درخواست اینماد شما 24125751 می‌باشد.' } = req.body || {};
+    const code = extractVerificationCode(`${subject}\n${body}`);
+    const id = saveIncomingEmail({
+      from,
+      to,
+      subject,
+      bodyText: body,
+      bodyHtml: `<p>${body}</p>`,
+      rawMessage: `From: ${from}\nTo: ${to}\nSubject: ${subject}\n\n${body}`,
+      verificationCode: code,
+    });
+    res.json({ success: true, id, verificationCode: code, message: 'ایمیل با موفقیت ثبت شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در شبیه‌سازی ایمیل' });
+  }
+});
+
+// Parameterized Inbox Email Endpoints (MUST be placed after specific routes)
+r.get('/emails/:id', (req, res) => {
+  try {
+    const email = getEmailById(req.params.id);
+    if (!email) return res.status(404).json({ error: 'ایمیل یافت نشد' });
+    markEmailRead(req.params.id);
+    res.json(email);
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در دریافت اطلاعات ایمیل' });
+  }
+});
+
+r.patch('/emails/:id/read', (req, res) => {
+  try {
+    markEmailRead(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در تغییر وضعیت ایمیل' });
+  }
+});
+
+r.delete('/emails/:id', (req, res) => {
+  try {
+    deleteEmail(req.params.id);
+    res.json({ success: true, message: 'ایمیل با موفقیت حذف شد' });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در حذف ایمیل' });
   }
 });
 
