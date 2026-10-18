@@ -2,14 +2,30 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      compiler: {
+        target: '18',
+      },
+    }),
+  ],
+  build: {
+    rolldownOptions: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE' && warning.message?.includes('use no memo')) {
+          return;
+        }
+        defaultHandler(warning);
+      },
+    },
+  },
   server: {
     port: 3000,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-      }
-    }
-  }
+      },
+    },
+  },
 });

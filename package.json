@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "vp build",
+    "preview": "vp preview",
+    "check": "vp check",
     "server": "node server.js",
     "start": "node server.js",
     "bun:dev": "bun --watch server.js",
@@ -25,11 +26,16 @@
     "express": "^4.19.2",
     "lucide-react": "^0.344.0",
     "react": "^18.2.0",
+    "react-compiler-runtime": "^1.0.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.6"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.1.4"
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxc-transform-react": "^0.154.0",
+    "vite-plus": "^1.3.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.3.0"
   }
 }
