@@ -69,13 +69,18 @@ pub async fn get_full_system_metrics(pool: &SqlitePool) -> Value {
     let cpus = sys.cpus();
     let cores = cpus.len().max(1);
     let cpu_model = cpus.first().map(|c| c.brand().to_string()).unwrap_or_else(|| "CPU Generic".to_string());
-    let cpu_percent = sys.global_cpu_usage();
+    let raw_cpu = sys.global_cpu_usage();
+    let cpu_percent: f64 = format!("{:.1}", (raw_cpu * 10.0).round() / 10.0)
+        .parse()
+        .unwrap_or(0.0);
 
     let total_mem = sys.total_memory();
     let used_mem = sys.used_memory();
     let free_mem = sys.free_memory();
-    let mem_percent = if total_mem > 0 {
-        ((used_mem as f32 / total_mem as f32) * 100.0 * 10.0).round() / 10.0
+    let mem_percent: f64 = if total_mem > 0 {
+        format!("{:.1}", (used_mem as f64 / total_mem as f64) * 100.0)
+            .parse()
+            .unwrap_or(0.0)
     } else {
         0.0
     };
@@ -89,8 +94,10 @@ pub async fn get_full_system_metrics(pool: &SqlitePool) -> Value {
         free_disk_bytes += disk.available_space();
     }
     let used_disk_bytes = total_disk_bytes.saturating_sub(free_disk_bytes);
-    let disk_percent = if total_disk_bytes > 0 {
-        ((used_disk_bytes as f32 / total_disk_bytes as f32) * 100.0 * 10.0).round() / 10.0
+    let disk_percent: f64 = if total_disk_bytes > 0 {
+        format!("{:.1}", (used_disk_bytes as f64 / total_disk_bytes as f64) * 100.0)
+            .parse()
+            .unwrap_or(0.0)
     } else {
         0.0
     };
@@ -103,7 +110,11 @@ pub async fn get_full_system_metrics(pool: &SqlitePool) -> Value {
     let db_latency = start_db.elapsed().as_millis() as u64;
 
     let probe_app = probe_tcp_port(3000, "127.0.0.1").await;
-    let probe_smtp = probe_tcp_port(2525, "127.0.0.1").await;
+    // Check standard SMTP port 25 first, fallback to 2525 if port 25 is not bound
+    let mut probe_smtp = probe_tcp_port(25, "127.0.0.1").await;
+    if !probe_smtp["open"].as_bool().unwrap_or(false) {
+        probe_smtp = probe_tcp_port(2525, "127.0.0.1").await;
+    }
 
     let uptime = System::uptime();
 

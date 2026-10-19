@@ -30,7 +30,7 @@ impl Config {
         let smtp_port = std::env::var("SMTP_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
-            .unwrap_or(2525);
+            .unwrap_or(25);
 
         let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
             "techtink_default_secret_key_change_in_production".to_string()

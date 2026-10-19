@@ -6,19 +6,39 @@ use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
-pub async fn start_smtp_listener(pool: SqlitePool, port: u16) {
-    let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    let listener = match TcpListener::bind(addr).await {
-        Ok(l) => {
-            tracing::info!("🚀 Native SMTP Server listening on port {}", port);
-            l
+pub async fn start_smtp_listener(pool: SqlitePool, requested_port: u16) {
+    let candidate_ports = if requested_port == 25 {
+        vec![25, 2525]
+    } else {
+        vec![requested_port, 25, 2525]
+    };
+
+    let mut active_listener = None;
+    let mut bound_port = 0;
+
+    for p in candidate_ports {
+        let addr = SocketAddr::from(([0, 0, 0, 0], p));
+        match TcpListener::bind(addr).await {
+            Ok(l) => {
+                tracing::info!("🚀 Native SMTP Server successfully listening on port {} (0.0.0.0:{})", p, p);
+                active_listener = Some(l);
+                bound_port = p;
+                break;
+            }
+            Err(e) => {
+                tracing::warn!(
+                    "Could not bind SMTP on port {}: {} (trying fallback...)",
+                    p,
+                    e
+                );
+            }
         }
-        Err(e) => {
-            tracing::warn!(
-                "Failed to bind SMTP port {}: {} (port may require root permissions)",
-                port,
-                e
-            );
+    }
+
+    let listener = match active_listener {
+        Some(l) => l,
+        None => {
+            tracing::error!("SMTP Receiver failed: could not bind to port 25 or fallback port 2525.");
             return;
         }
     };

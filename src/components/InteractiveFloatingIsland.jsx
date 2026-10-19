@@ -450,7 +450,9 @@ export default function InteractiveFloatingIsland({
               border: activePopover === 'compare' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent',
               background: activePopover === 'compare' ? 'rgba(239, 68, 68, 0.16)' : 'transparent',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
             onMouseEnter={() => {
               if (!isMobile) handleOpenPopover('compare');
@@ -460,7 +462,12 @@ export default function InteractiveFloatingIsland({
             }}
             onClick={() => {
               cancelCloseTimeout();
-              setActivePopover(prev => prev === 'compare' ? null : 'compare');
+              if (isMobile) {
+                setActivePopover(null);
+                if (onGoToCompare) onGoToCompare();
+              } else {
+                setActivePopover(prev => prev === 'compare' ? null : 'compare');
+              }
             }}
             title={`مقایسه مشخصات (${compareList.length} مدل)`}
             aria-label="مشاهده مقایسه لپ‌تاپ‌ها"
@@ -515,7 +522,9 @@ export default function InteractiveFloatingIsland({
               border: activePopover === 'cart' ? '1px solid hsla(var(--accent-purple), 0.5)' : '1px solid transparent',
               background: activePopover === 'cart' ? 'hsla(var(--accent-purple), 0.16)' : 'transparent',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent'
             }}
             onMouseEnter={() => {
               if (!isMobile) handleOpenPopover('cart');
@@ -525,7 +534,12 @@ export default function InteractiveFloatingIsland({
             }}
             onClick={() => {
               cancelCloseTimeout();
-              setActivePopover(prev => prev === 'cart' ? null : 'cart');
+              if (isMobile) {
+                setActivePopover(null);
+                if (onOpenCart) onOpenCart();
+              } else {
+                setActivePopover(prev => prev === 'cart' ? null : 'cart');
+              }
             }}
             title={`سبد خرید (${cartCount} کالا)`}
             aria-label="مشاهده سبد خرید"

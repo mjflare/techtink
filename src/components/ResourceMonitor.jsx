@@ -18,6 +18,12 @@ export default function ResourceMonitor({ authHeaders }) {
   const [probingPort, setProbingPort] = useState(false);
   const [probeResult, setProbeResult] = useState(null);
 
+  const formatPercent = (val) => {
+    if (val === undefined || val === null || isNaN(val)) return '0';
+    const num = Number(val);
+    return num % 1 === 0 ? num.toFixed(0) : num.toFixed(1);
+  };
+
   // Garbage Collection State
   const [triggeringGc, setTriggeringGc] = useState(false);
 
@@ -394,18 +400,18 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.cpu?.usagePercent || 0) }}>
-              {metrics?.cpu?.usagePercent || 0}%
+            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.cpu?.usagePercent || 0), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+              {formatPercent(metrics?.cpu?.usagePercent)}%
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'left', direction: 'ltr' }}>
-              Load: {metrics?.cpu?.loadAvg?.map(v => v.toFixed(2)).join(', ')}
+              Load: {metrics?.cpu?.loadAvg?.map(v => Number(v || 0).toFixed(2)).join(', ')}
             </div>
           </div>
 
           {/* Progress Bar */}
           <div style={{ width: '100%', height: '8px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
             <div style={{
-              width: `${Math.min(100, metrics?.cpu?.usagePercent || 0)}%`,
+              width: `${Math.min(100, Math.max(0, metrics?.cpu?.usagePercent || 0))}%`,
               height: '100%',
               borderRadius: '6px',
               background: getProgressColor(metrics?.cpu?.usagePercent || 0),
@@ -417,7 +423,7 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
               {metrics?.cpu?.model || 'پردازنده سرور'}
             </span>
-            <span>میانگین ۱ دقیقه: {metrics?.cpu?.loadAvg?.[0] || 0}</span>
+            <span>میانگین ۱ دقیقه: {Number(metrics?.cpu?.loadAvg?.[0] || 0).toFixed(2)}</span>
           </div>
         </div>
 
@@ -434,8 +440,8 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.memory?.usagePercent || 0) }}>
-              {metrics?.memory?.usagePercent || 0}%
+            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.memory?.usagePercent || 0), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+              {formatPercent(metrics?.memory?.usagePercent)}%
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', direction: 'ltr' }}>
               {metrics?.memory?.usedFormatted} / {metrics?.memory?.totalFormatted}
@@ -445,7 +451,7 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           {/* Progress Bar */}
           <div style={{ width: '100%', height: '8px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
             <div style={{
-              width: `${Math.min(100, metrics?.memory?.usagePercent || 0)}%`,
+              width: `${Math.min(100, Math.max(0, metrics?.memory?.usagePercent || 0))}%`,
               height: '100%',
               borderRadius: '6px',
               background: getProgressColor(metrics?.memory?.usagePercent || 0),
@@ -472,8 +478,8 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.disk?.usagePercent || 0) }}>
-              {metrics?.disk?.usagePercent || 0}%
+            <div className="font-code" style={{ fontSize: '2.1rem', fontWeight: 900, color: getProgressColor(metrics?.disk?.usagePercent || 0), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
+              {formatPercent(metrics?.disk?.usagePercent)}%
             </div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', direction: 'ltr' }}>
               {metrics?.disk?.usedFormatted} / {metrics?.disk?.totalFormatted}
@@ -564,11 +570,11 @@ ${metrics.services?.map(s => ` - [${s.status.toUpperCase()}] ${s.name} (Port ${s
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '0.8rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '4px', borderRadius: '2px', background: 'hsl(var(--accent-cyan))' }} />
-              <span style={{ color: 'var(--text-secondary)' }}>پردازنده CPU ({metrics?.cpu?.usagePercent}%)</span>
+              <span style={{ color: 'var(--text-secondary)' }}>پردازنده CPU ({formatPercent(metrics?.cpu?.usagePercent)}%)</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '12px', height: '4px', borderRadius: '2px', background: 'hsl(var(--accent-purple))' }} />
-              <span style={{ color: 'var(--text-secondary)' }}>حافظه RAM ({metrics?.memory?.usagePercent}%)</span>
+              <span style={{ color: 'var(--text-secondary)' }}>حافظه RAM ({formatPercent(metrics?.memory?.usagePercent)}%)</span>
             </div>
           </div>
         </div>
