@@ -48,9 +48,12 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
   --font-code: var(--font-tech);
 
-  /* Transitions */
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Emil Kowalski & Apple Design Easing Curves */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);      /* Strong ease-out: responsive entry & feedback */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);   /* iOS native bottom sheet & drawer curve */
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);  /* Smooth continuous motion */
+  --transition-fast: 140ms var(--ease-out);
+  --transition-smooth: 240ms var(--ease-out);
 }
 
 * {
@@ -59,9 +62,25 @@
   padding: 0;
 }
 
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* Eliminate 300ms mobile tap delay and prevent accidental button text selection */
+button, a, input, select, textarea, [role="button"], .btn, .dock-btn, .island-action-btn, .btn-compare {
+  touch-action: manipulation;
+}
+
+button, .btn, .dock-btn, .island-action-btn, .btn-compare, .floating-island-capsule {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 body {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: hsl(var(--bg-dark));
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -69,7 +88,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   direction: rtl; /* RTL default layout */
-  transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
 }
 
 /* iPhone Liquid Aurora Ambient Background Glows */
@@ -120,7 +139,7 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-glass);
   border-radius: 20px;
   box-shadow: var(--glass-specular), var(--glass-shadow);
-  transition: background var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  transition: background-color var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
 }
 
 .glass-card {
@@ -130,14 +149,17 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-glass);
   border-radius: 18px;
   box-shadow: var(--glass-specular), var(--card-shadow);
-  transition: transform var(--transition-smooth), border-color var(--transition-smooth), background var(--transition-smooth), box-shadow var(--transition-smooth);
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth), background-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  will-change: transform;
 }
 
-.glass-card:hover {
-  transform: translateY(-4px);
-  border-color: hsla(var(--accent-cyan), 0.45);
-  background: var(--glass-bg-hover);
-  box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08), 0 0 20px hsla(var(--accent-cyan), 0.12);
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover {
+    transform: translateY(-4px);
+    border-color: hsla(var(--accent-cyan), 0.45);
+    background: var(--glass-bg-hover);
+    box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08), 0 0 20px hsla(var(--accent-cyan), 0.12);
+  }
 }
 
 /* Gradient Text */
@@ -157,7 +179,7 @@ h1, h2, h3, h4, h5, h6 {
   color: #ef4444; /* fallback */
 }
 
-/* Custom Buttons */
+/* Custom Buttons - Emil Kowalski Tactile Feedback & Apple Fluid Physics */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -168,9 +190,20 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: all var(--transition-fast);
   border: none;
   text-decoration: none;
+  transition: transform 140ms var(--ease-out), background-color 140ms var(--ease-out), border-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out), opacity 140ms var(--ease-out);
+  will-change: transform;
+}
+
+/* Subtle tactile spring bounce on active press (User chosen: scale(0.97)) */
+.btn:active, 
+.dock-btn:active, 
+.island-action-btn:active, 
+.btn-compare:active,
+.floating-island-capsule:active,
+.social-icon-btn:active {
+  transform: scale(0.97) !important;
 }
 
 .btn-primary {
@@ -179,10 +212,12 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 4px 18px hsla(var(--accent-cyan), 0.35);
 }
 
-.btn-primary:hover {
-  filter: brightness(1.06);
-  box-shadow: 0 6px 24px hsla(var(--accent-cyan), 0.55);
-  transform: scale(1.02);
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 6px 24px hsla(var(--accent-cyan), 0.55);
+    transform: scale(1.02);
+  }
 }
 
 .btn-glass {
@@ -195,11 +230,13 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: 12px;
 }
 
-.btn-glass:hover {
-  background: var(--btn-glass-hover);
-  border-color: hsla(var(--accent-cyan), 0.4);
-  color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+@media (hover: hover) and (pointer: fine) {
+  .btn-glass:hover {
+    background: var(--btn-glass-hover);
+    border-color: hsla(var(--accent-cyan), 0.4);
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
 }
 
 /* Glowing Badges */
@@ -446,9 +483,17 @@ input, select, textarea {
   padding: 10px 14px;
   border-radius: 12px;
   font-family: var(--font-sans);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  font-size: 0.9375rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
   width: 100%;
   outline: none;
+}
+
+@media (max-width: 640px) {
+  /* Critical mobile-native rule: prevent iOS Safari auto-zooming on focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
 }
 
 ::placeholder {
@@ -484,10 +529,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 240ms var(--ease-out) forwards;
 }
 
-/* Modern Centered & Scalable Modal System */
+/* Modern Centered & Scalable Modal System - Emil Kowalski 220ms Ease-Out Physics */
 .modal-backdrop-wrapper {
   position: fixed;
   inset: 0;
@@ -501,7 +546,7 @@ input:focus, select:focus, textarea:focus {
   padding: clamp(12px, 3vw, 28px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  animation: modalBackdropFadeIn 0.22s ease-out forwards;
+  animation: modalBackdropFadeIn 200ms var(--ease-out) forwards;
 }
 
 @keyframes modalBackdropFadeIn {
@@ -517,7 +562,7 @@ input:focus, select:focus, textarea:focus {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 24px;
-  animation: modalScaleIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalScaleIn 220ms var(--ease-out) forwards;
   background: var(--modal-bg);
   backdrop-filter: blur(36px) saturate(200%);
   -webkit-backdrop-filter: blur(36px) saturate(200%);
@@ -526,16 +571,104 @@ input:focus, select:focus, textarea:focus {
   direction: rtl;
   display: flex;
   flex-direction: column;
+  will-change: transform, opacity;
 }
 
 @keyframes modalScaleIn {
   0% {
     opacity: 0;
-    transform: scale(0.94) translateY(10px);
+    transform: scale(0.95);
   }
   100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
+  }
+}
+
+/* =========================================================
+   Apple-Grade Cart Drawer & Mobile iOS Bottom Sheet
+   ========================================================= */
+.cart-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 1060;
+  animation: modalBackdropFadeIn 200ms var(--ease-out) forwards;
+}
+
+.cart-drawer-panel {
+  position: fixed;
+  z-index: 1070;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  direction: rtl;
+  overflow: hidden;
+  box-shadow: -10px 0 45px rgba(0, 0, 0, 0.14);
+}
+
+/* Desktop: Smooth left-sliding drawer with ease-drawer */
+@media (min-width: 641px) {
+  .cart-drawer-panel {
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 440px;
+    border-right: 1px solid var(--border-glass);
+    animation: cartSlideDesktop 340ms var(--ease-drawer) forwards;
+  }
+}
+
+@keyframes cartSlideDesktop {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Mobile: Native iOS Bottom Sheet with grab handle & safe-area inset */
+@media (max-width: 640px) {
+  .cart-drawer-panel {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: 26px 26px 0 0;
+    border-top: 1px solid var(--border-glass);
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.18);
+    animation: cartSlideMobile 350ms var(--ease-drawer) forwards;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+@keyframes cartSlideMobile {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-grab-handle {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .sheet-grab-handle {
+    display: block;
+    width: 38px;
+    height: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    margin: 10px auto 4px auto;
   }
 }
 

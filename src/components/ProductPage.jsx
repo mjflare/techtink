@@ -5,6 +5,7 @@ import {
   Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, 
   ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
@@ -243,11 +244,14 @@ export default function ProductPage({
       if (res.ok) {
         setCommentNotice({ type: 'success', text: data.message || 'نظر شما با موفقیت ثبت شد و پس از بررسی تایید می‌شود.' });
         setCommentBody('');
+        toast.success(data.message || 'نظر شما با موفقیت ثبت شد!');
       } else {
         setCommentNotice({ type: 'error', text: data.error || 'خطا در ثبت نظر' });
+        toast.error(data.error || 'خطا در ثبت نظر');
       }
     } catch {
       setCommentNotice({ type: 'error', text: 'خطا در ارتباط با سرور' });
+      toast.error('خطا در برقراری ارتباط با سرور');
     }
     setCommentSubmitting(false);
   };

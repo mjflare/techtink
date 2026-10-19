@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Clock, Sparkles, Copy, Check, ArrowLeft, Tag, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function PromotionBanner({ config, onExploreClick }) {
   const [copied, setCopied] = useState(false);
@@ -33,6 +34,10 @@ export default function PromotionBanner({ config, onExploreClick }) {
     if (!config.promoCode) return;
     navigator.clipboard.writeText(config.promoCode).catch(() => {});
     setCopied(true);
+    toast.success('کد تخفیف کپی شد', {
+      description: config.promoCode,
+      duration: 2500
+    });
     setTimeout(() => setCopied(false), 2500);
   };
 

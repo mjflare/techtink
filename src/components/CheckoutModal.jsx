@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, ShieldCheck, CreditCard, CheckCircle, MapPin, Smartphone, Building2, Copy, Truck, Check, Tag } from 'lucide-react';
+import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 
 const PROVINCES = [
@@ -163,12 +164,17 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
       if (!res.ok || !data.valid) {
         setCouponError(data.error || 'کد تخفیف معتبر نمی‌باشد.');
         setAppliedCoupon(null);
+        toast.error(data.error || 'کد تخفیف معتبر نمی‌باشد.');
       } else {
         setAppliedCoupon(data.coupon);
         setCouponError(null);
+        toast.success('کد تخفیف با موفقیت اعمال شد!', {
+          description: `${formatPrice(data.coupon.discountAmount)} کسر شد`
+        });
       }
     } catch {
       setCouponError('خطا در اعتبارسنجی کد تخفیف');
+      toast.error('خطا در اعتبارسنجی کد تخفیف');
     } finally {
       setValidatingCoupon(false);
     }
@@ -178,6 +184,7 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
     setAppliedCoupon(null);
     setCouponInput('');
     setCouponError(null);
+    toast.info('کد تخفیف حذف شد');
   };
 
   // Enforce auth gate if user is not logged in
@@ -336,6 +343,9 @@ export default function CheckoutModal({ cartItems, onClose, onClearCart, user, o
           setRefId(verifyData.refId);
           setRedirecting(false);
           setStep(3);
+          toast.success('پرداخت با موفقیت انجام شد!', {
+            description: `شماره پیگیری: ${verifyData.refId || verifyData.orderId}`
+          });
         } catch (err) {
           console.error(err);
           setRedirecting(false);

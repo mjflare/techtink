@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink, ShoppingCart, X } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+import 'sonner/dist/styles.css';
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
@@ -190,13 +192,37 @@ function App() {
       }
       return [...prev, item];
     });
+
+    toast.success('به سبد خرید اضافه شد', {
+      description: item.name || 'محصول با موفقیت ثبت شد',
+      action: {
+        label: 'مشاهده سبد',
+        onClick: () => setIsCartOpen(true)
+      }
+    });
+
     setIsCartOpen(true);
   };
 
   const toggleCompare = (id) => {
+    const laptop = (laptops || []).find(l => l.id === id);
+    const laptopName = laptop?.name || 'دستگاه';
+
     setCompareList(prev => {
-      if (prev.includes(id)) return prev.filter(x => x !== id);
-      if (prev.length >= 3) return [...prev.slice(1), id]; // Max 3 items
+      if (prev.includes(id)) {
+        toast.info(`«${laptopName}» از لیست مقایسه حذف شد`);
+        return prev.filter(x => x !== id);
+      }
+      if (prev.length >= 3) {
+        toast.warning(`حداکثر ۳ دستگاه قابل مقایسه است؛ «${laptopName}» جایگزین اولین مورد شد`);
+        return [...prev.slice(1), id];
+      }
+      toast.success(`«${laptopName}» به مقایسه اضافه شد`, {
+        action: {
+          label: 'مشاهده مقایسه',
+          onClick: () => handleTabChange('compare')
+        }
+      });
       return [...prev, id];
     });
   };
@@ -245,6 +271,9 @@ function App() {
     setCurrentUser(user);
     setIsAuthModalOpen(false);
     setAuthNotice(null);
+    toast.success('ورود موفقیت‌آمیز بود', {
+      description: user?.name ? `خوش آمدید، ${user.name}` : `ورود با شماره ${user?.phone || ''}`
+    });
     if (pendingCheckout) {
       setPendingCheckout(false);
       setIsCheckoutOpen(true);
@@ -257,6 +286,7 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setCurrentUser(null);
+    toast.info('از حساب کاربری خارج شدید');
     if (activeTab === 'admin' || activeTab === 'account') {
       setActiveTab('store');
     }
@@ -264,6 +294,24 @@ function App() {
 
   return (
     <div>
+      {/* 0. HIGH-CRAFT TOAST NOTIFICATION SYSTEM (SONNER) */}
+      <Toaster 
+        position="top-center" 
+        dir="rtl" 
+        richColors 
+        closeButton 
+        duration={3200}
+        toastOptions={{
+          style: {
+            fontFamily: 'var(--font-sans)',
+            borderRadius: '16px',
+            fontSize: '0.875rem',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
+            border: '1px solid var(--border-glass)'
+          }
+        }}
+      />
+
       {/* 0. DYNAMIC ANNOUNCEMENT BAR */}
       <AnnouncementBar 
         config={homepageConfig?.announcement} 

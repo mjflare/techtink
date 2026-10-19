@@ -101,7 +101,7 @@ export default function InteractiveFloatingIsland({
   // Popover positioning: safely anchored above the island, aligned to the left of the screen
   const popoverStyle = {
     position: 'fixed',
-    bottom: isMobile ? '70px' : '74px',
+    bottom: isMobile ? 'calc(70px + env(safe-area-inset-bottom, 0px))' : '74px',
     left: isMobile ? '16px' : '24px',
     width: 'min(350px, calc(100vw - 32px))',
     maxWidth: 'calc(100vw - 32px)',
@@ -401,7 +401,7 @@ export default function InteractiveFloatingIsland({
         onMouseLeave={() => scheduleClosePopover(280)}
         style={{
           position: 'fixed',
-          bottom: isMobile ? '16px' : '22px',
+          bottom: isMobile ? 'calc(16px + env(safe-area-inset-bottom, 0px))' : '22px',
           left: isMobile ? '16px' : '24px',
           zIndex: 1025,
           background: 'var(--glass-card-bg)',
