@@ -764,17 +764,23 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       id: p.id,
       name: p.name || '',
       slug: p.slug || '',
-      category: p.category || 'گیمینگ',
+      brand: p.brand || p.specs?.brand || '',
+      model: p.model || p.specs?.model || '',
+      grade: p.grade || p.specs?.grade || 'گرید ++A اروپایی (تمیز در حد نو)',
+      category: p.category || 'ورک استیشن',
       series: p.series || '',
       basePrice: p.basePrice || 0,
       stock: p.stock || 0,
       tagline: p.tagline || '',
       badge: p.badge || '',
       image: p.image || '',
-      guarantee: p.guarantee || 'گارانتی ۲ ساله طلایی تک‌تینک',
+      images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []),
+      upgrades: p.upgrades || { ram: [], storage: [], display: [] },
+      flagshipShowcase: p.specs?.flagshipShowcase || p.flagshipShowcase || null,
+      guarantee: p.guarantee || 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
       cpuBrand: p.cpuBrand || 'Intel',
       gpuBrand: p.gpuBrand || 'NVIDIA',
-      chassis: p.chassis || p.specs?.chassis || 'All-Aluminum CNC Machined',
+      chassis: p.chassis || p.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم',
       specs: {
         cpu: p.specs?.cpu || '',
         gpu: p.specs?.gpu || '',
@@ -784,7 +790,8 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         battery: p.specs?.battery || '',
         weight: p.specs?.weight || '',
         npuScore: p.specs?.npuScore || '',
-        chassis: p.chassis || p.specs?.chassis || 'All-Aluminum CNC Machined'
+        chassis: p.chassis || p.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم',
+        flagshipShowcase: p.specs?.flagshipShowcase || p.flagshipShowcase || null
       },
       expertReview: {
         intro: p.expertReview?.intro || '',
@@ -811,7 +818,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       ? dataToSave.expertReview.cons
       : (dataToSave.expertReview?.cons || '').split('\n').map(s => s.trim()).filter(Boolean);
 
-    const chassisVal = dataToSave.chassis || dataToSave.specs?.chassis || 'All-Aluminum CNC Machined';
+    const chassisVal = dataToSave.chassis || dataToSave.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم';
 
     const payload = {
       name: dataToSave.name,
@@ -830,7 +837,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       cpuBrand: dataToSave.cpuBrand,
       gpuBrand: dataToSave.gpuBrand,
       chassis: chassisVal,
-      specs: { ...dataToSave.specs, chassis: chassisVal },
+      specs: { 
+        ...dataToSave.specs, 
+        chassis: chassisVal,
+        flagshipShowcase: dataToSave.flagshipShowcase || dataToSave.specs?.flagshipShowcase || null
+      },
+      flagshipShowcase: dataToSave.flagshipShowcase || dataToSave.specs?.flagshipShowcase || null,
+      images: Array.isArray(dataToSave.images) && dataToSave.images.length > 0 ? dataToSave.images : (dataToSave.image ? [dataToSave.image] : []),
+      upgrades: dataToSave.upgrades || null,
       expertReview: {
         intro: dataToSave.expertReview?.intro || '',
         pros: prosList,

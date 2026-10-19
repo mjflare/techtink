@@ -466,19 +466,30 @@ function migrate() {
   try {
     console.log('[db] Synchronizing Iranian market stock catalog, images and upgrade variants...');
     db.tx(() => {
-      // Remove outdated legacy demo slugs
-      db.run("DELETE FROM products WHERE slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13', 'neuralcraft-18', 'tink-blade-14', 'tink-student-15', 'dell-precision-7530', 'hp-zbook-15-g6')");
+      // Safely archive or remove legacy demo slugs only if not referenced in customer orders
+      const legacySlugs = ['tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13', 'neuralcraft-18', 'tink-blade-14', 'tink-student-15'];
+      for (const slug of legacySlugs) {
+        const item = db.get("SELECT id FROM products WHERE slug = ?", slug);
+        if (item) {
+          const hasOrders = (db.get("SELECT COUNT(*) AS c FROM order_items WHERE product_id = ?", item.id)?.c || 0) > 0;
+          if (hasOrders) {
+            db.run("UPDATE products SET active = 0 WHERE id = ?", item.id);
+          } else {
+            db.run("DELETE FROM products WHERE id = ?", item.id);
+          }
+        }
+      }
 
       for (const l of LAPTOPS) {
         const base = toToman(l.basePrice);
         const old = l.oldPrice ? toToman(l.oldPrice) : Math.round(base * 1.08 / 100000) * 100000;
-        let p = db.get("SELECT id FROM products WHERE slug = ?", l.id);
+        let p = db.get("SELECT id, stock, active, base_price FROM products WHERE slug = ?", l.id);
         let prodId;
 
         if (!p) {
           const res = db.run(
-            `INSERT INTO products (slug, name, brand, model, grade, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee, chassis, cpu_brand, gpu_brand)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO products (slug, name, brand, model, grade, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee, chassis, cpu_brand, gpu_brand, active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             l.id, l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, base, old,
             l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
             l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand
@@ -486,10 +497,10 @@ function migrate() {
           prodId = res.lastId;
         } else {
           prodId = p.id;
+          // Non-destructive update: preserve current stock, active status, and custom price if set
           db.run(
-            `UPDATE products SET name = ?, brand = ?, model = ?, grade = ?, tagline = ?, category = ?, series = ?, badge = ?, base_price = ?, old_price = ?, stock = ?, image = ?, specs = ?, highlights = ?, chassis = ?, cpu_brand = ?, gpu_brand = ? WHERE id = ?`,
-            l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, base, old,
-            l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand, prodId
+            `UPDATE products SET name = ?, brand = ?, model = ?, grade = ?, tagline = ?, category = ?, series = ?, badge = ?, image = ?, specs = ?, highlights = ?, chassis = ?, cpu_brand = ?, gpu_brand = ? WHERE id = ?`,
+            l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand, prodId
           );
         }
 

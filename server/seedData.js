@@ -1201,6 +1201,1968 @@ export const LAPTOPS = [
       "گرید تمیز وارداتی با مهلت تست یک‌هفته‌ای رایتاپ و شارژر اورجینال دل"
     ]
   }
+,
+  {
+    "id": "hp-zbook-15-g6",
+    "name": "HP ZBook 15 G6 Workstation",
+    "brand": "HP",
+    "model": "ZBook 15 G6",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "محبوب‌ترین ورک‌استیشن صنعتی و مهندسی بازار ایران با بدنه تمام آلومینیوم و گرافیک Quadro T2000",
+    "category": "ورک استیشن",
+    "series": "سری ZBook",
+    "badge": "پرفروش‌ترین مهندسی",
+    "rating": 4.95,
+    "reviewsCount": 184,
+    "basePrice": 38500000,
+    "oldPrice": 42000000,
+    "inStock": true,
+    "stockCount": 6,
+    "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلومینیوم و منیزیم نظامی MIL-STD",
+    "techTinkScore": {
+      "overall": 92,
+      "batteryLife": 84,
+      "temperature": 92,
+      "processingPower": 90,
+      "usability": 95,
+      "buildQuality": 98,
+      "repairability": 99
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-9750H",
+      "gpu": "NVIDIA Quadro T2000 4GB",
+      "ram": "32GB RAM",
+      "storage": "512GB SSD",
+      "display": "15.6\" FHD IPS 400nits",
+      "battery": "90Wh Battery",
+      "chassis": "آلومینیوم و منیزیم نظامی"
+    },
+    "specs": {
+      "brand": "HP",
+      "model": "ZBook 15 G6",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 92,
+        "batteryLife": 84,
+        "temperature": 92,
+        "processingPower": 90,
+        "usability": 95,
+        "buildQuality": 98,
+        "repairability": 99
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-9750H",
+        "gpu": "NVIDIA Quadro T2000 4GB",
+        "ram": "32GB RAM",
+        "storage": "512GB SSD",
+        "display": "15.6\" FHD IPS 400nits",
+        "battery": "90Wh Battery",
+        "chassis": "آلومینیوم و منیزیم نظامی"
+      },
+      "cpu": "Intel Core i7-9750H (6 Cores / 12 Threads, up to 4.5GHz, 12MB L3 Cache)",
+      "gpu": "NVIDIA Quadro T2000 4GB GDDR5 (ISV Certified Workstation GPU)",
+      "ram": "32GB DDR4-2666MHz (۴ اسلات رم، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      "storage": "512GB PCIe NVMe M.2 SSD (پشتیبانی از ۳ هارد همزمان: ۲ اسلات M.2 و ۱ هارد 2.5 اینچ)",
+      "display": "15.6\" FHD (1920x1080) IPS مات Anti-Glare 400 nits 100% sRGB",
+      "chassis": "شاسی تیتانیوم و آلومینیوم با استاندارد نظامی ارتش آمریکا MIL-STD-810G",
+      "battery": "90Wh سلامت بالای ۸۵٪ با شارژر اورجینال ۱۵۰ وات HP",
+      "weight": "2.6 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 3, 3x USB 3.1 Gen 1, HDMI 2.0b, RJ-45 LAN, Smart Card Reader, SD Card Reader",
+      "npuScore": "22 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 مهندسی",
+          "price": 2800000
+        },
+        {
+          "name": "۱۲۸ گیگابایت DDR4 حداکثر رندرینگ",
+          "price": 6500000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت NVMe Gen3 پرسرعت",
+          "price": 1800000
+        },
+        {
+          "name": "۲ ترابایت (دو درایو ۱ ترابایت SSD)",
+          "price": 3800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS مات ۴۰۰ نیت",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "مجهز به ۴ اسلات رم و ۳ درگاه هارد دیسک مجزا با قابلیت ارتقای استثنایی",
+      "کارت گرافیک صنعتی تاییدشده Quadro T2000 بهینه برای نرم‌افزارهای اتوکد، سالیدورک و رویت",
+      "سیستم خنک‌کننده دوقلوی قدرتمند با فن‌های بی‌صدا در استفاده اداری",
+      "کیبورد کامل با بخش عددی (NumPad) و تاچ‌پد سه‌کلیده مهندسی"
+    ]
+  },
+  {
+    "id": "hp-zbook-17-g6",
+    "name": "HP ZBook 17 G6 Heavy Workstation",
+    "brand": "HP",
+    "model": "ZBook 17 G6",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "تانک پردازش سنگین و رندرینگ بدون توقف با نمایشگر غول‌پیکر ۱۷.۳ اینچ و کارت گرافیک Quadro RTX 3000",
+    "category": "ورک استیشن",
+    "series": "سری ZBook",
+    "badge": "غول رندرینگ ۱۷ اینچ",
+    "rating": 4.97,
+    "reviewsCount": 94,
+    "basePrice": 46000000,
+    "oldPrice": 50000000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "شاسی صنعتی تیتانیوم و آلومینیوم",
+    "techTinkScore": {
+      "overall": 94,
+      "batteryLife": 78,
+      "temperature": 95,
+      "processingPower": 94,
+      "usability": 94,
+      "buildQuality": 99,
+      "repairability": 99
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-9850H",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "17.3\" FHD IPS DreamColor",
+      "battery": "95Wh Battery",
+      "chassis": "شاسی صنعتی تیتانیوم"
+    },
+    "specs": {
+      "brand": "HP",
+      "model": "ZBook 17 G6",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 94,
+        "batteryLife": 78,
+        "temperature": 95,
+        "processingPower": 94,
+        "usability": 94,
+        "buildQuality": 99,
+        "repairability": 99
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-9850H",
+        "gpu": "NVIDIA Quadro RTX 3000 6GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "17.3\" FHD IPS DreamColor",
+        "battery": "95Wh Battery",
+        "chassis": "شاسی صنعتی تیتانیوم"
+      },
+      "cpu": "Intel Core i7-9850H (6 Cores / 12 Threads, up to 4.6GHz, 12MB Cache, vPro)",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB GDDR6 (Ray Tracing & AI Tensor Cores)",
+      "ram": "32GB DDR4-2666MHz (۴ اسلات رم، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      "storage": "1TB PCIe NVMe M.2 SSD (پشتیبانی از ۴ هارد SSD همزمان)",
+      "display": "17.3\" FHD (1920x1080) IPS DreamColor 300 nits Anti-Glare",
+      "chassis": "بدنه بسیار ضخیم و مستحکم تیتانیوم و آلومینیوم با تهویه غول‌پیکر پشتی",
+      "battery": "95Wh سلامت باتری بالای ۸۵٪ با شارژر اورجینال ۲۰۰ وات HP",
+      "weight": "3.2 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 3, 3x USB 3.1, HDMI 2.0, Mini DisplayPort 1.4, RJ-45 LAN, SD Card Reader",
+      "npuScore": "26 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 فوق‌سریع",
+          "price": 2800000
+        },
+        {
+          "name": "۱۲۸ گیگابایت DDR4 ماکزیمم رندر",
+          "price": 6500000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen3 NVMe SSD",
+          "price": 2200000
+        },
+        {
+          "name": "۴ ترابایت (دو درایو ۲ ترابایت)",
+          "price": 5400000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۷.۳ اینچ FHD IPS دریم‌کالر ضد بازتاب",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "کارت گرافیک RTX 3000 با ۶ گیگابایت حافظه اختصاصی و هسته‌های Ray Tracing برای رندرینگ آنی",
+      "صفحه نمایش غول‌پیکر ۱۷.۳ اینچی با کیفیت دید وسیع مناسب جایگزینی کامل کامپیوتر دسکتاپ",
+      "پشتیبانی از ۴ درایو ذخیره‌سازی همزمان با امکان راه‌اندازی آرایه‌های RAID 0 و RAID 1",
+      "خنک‌کاری فوق‌سنگین صنعتی بدون افت فرکانس پردازنده در رندرهای طولانی‌مدت"
+    ]
+  },
+  {
+    "id": "dell-precision-7550",
+    "name": "Dell Precision 7550 Workstation",
+    "brand": "Dell",
+    "model": "Precision 7550",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "ورک‌استیشن افسانه‌ای نسل ۱۰ دل با پردازنده ۸ هسته‌ای i7-10850H، خنک‌کننده اتاق بخار و گرافیک RTX 3000",
+    "category": "ورک استیشن",
+    "series": "سری Precision",
+    "badge": "ورک‌استیشن سنگین",
+    "rating": 4.96,
+    "reviewsCount": 112,
+    "basePrice": 49500000,
+    "oldPrice": 54000000,
+    "inStock": true,
+    "stockCount": 4,
+    "image": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلیاژ آلومینیوم و فیبر کربن",
+    "techTinkScore": {
+      "overall": 94,
+      "batteryLife": 85,
+      "temperature": 93,
+      "processingPower": 94,
+      "usability": 96,
+      "buildQuality": 98,
+      "repairability": 98
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-10850H",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "15.6\" FHD IPS 500nits",
+      "battery": "95Wh Battery",
+      "chassis": "آلومینیوم و فیبر کربن"
+    },
+    "specs": {
+      "brand": "Dell",
+      "model": "Precision 7550",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 94,
+        "batteryLife": 85,
+        "temperature": 93,
+        "processingPower": 94,
+        "usability": 96,
+        "buildQuality": 98,
+        "repairability": 98
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-10850H",
+        "gpu": "NVIDIA Quadro RTX 3000 6GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "15.6\" FHD IPS 500nits",
+        "battery": "95Wh Battery",
+        "chassis": "آلومینیوم و فیبر کربن"
+      },
+      "cpu": "Intel Core i7-10850H (6 Cores / 12 Threads, up to 5.1GHz, 12MB Cache, vPro)",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB GDDR6 (ISV Certified)",
+      "ram": "32GB DDR4-2933MHz (۴ اسلات رم، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      "storage": "1TB PCIe NVMe M.2 SSD (دارای ۳ اسلات SSD M.2 مجزا)",
+      "display": "15.6\" FHD (1920x1080) IPS 500 nits 100% DCI-P3 Anti-Glare",
+      "chassis": "آلیاژ آلومینیوم برس‌خورده نقره‌ای همراه با استراحتگاه مچ دست فیبر کربن",
+      "battery": "95Wh با سلامت بالای ۸۵٪ و شارژر اورجینال ۱۸۰ وات Dell",
+      "weight": "2.45 kg",
+      "os": "Windows 11 Pro for Workstations 64-bit",
+      "ports": "2x Thunderbolt 3, 2x USB 3.2 Gen 1, HDMI 2.0, Mini DP 1.4, RJ-45 LAN, SD Card Reader",
+      "npuScore": "28 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 دو کاناله",
+          "price": 2800000
+        },
+        {
+          "name": "۱۲۸ گیگابایت DDR4 ماکزیمم",
+          "price": 6800000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen3 NVMe SSD سامسونگ",
+          "price": 2400000
+        },
+        {
+          "name": "۴ ترابایت (دو درایو ۲ ترابایت)",
+          "price": 5800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS فوق‌روشن ۵۰۰ نیت ۱۰۰٪ DCI-P3",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "نمایشگر استثنایی ۵۰۰ نیت با پوشش ۱۰۰٪ فضای رنگی سینمایی DCI-P3 مناسب استفاده در نور مستقیم",
+      "سیستم خنک‌کاری پیشرفته با محفظه بخار مسی برای مهار کامل گرمای پردازنده i7 و گرافیک RTX",
+      "دارای ۴ اسلات رم DDR4 و ۳ درگاه هارد M.2 با پشتیبانی از آرایه‌های RAID",
+      "کیفیت ساخت خیره‌کننده با لولاهای فلزی مقاوم در برابر صدها هزار باز و بسته شدن"
+    ]
+  },
+  {
+    "id": "dell-precision-3561",
+    "name": "Dell Precision 3561 Mobile Workstation",
+    "brand": "Dell",
+    "model": "Precision 3561",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "ورک‌استیشن نسل ۱۱ با وزن سبک ۱.۷۹ کیلوگرم، پردازنده قدرتمند هشت هسته‌ای و کیبورد عددی کامل",
+    "category": "ورک استیشن",
+    "series": "سری Precision",
+    "badge": "ورک‌استیشن سبک نسل ۱۱",
+    "rating": 4.93,
+    "reviewsCount": 87,
+    "basePrice": 42000000,
+    "oldPrice": 46000000,
+    "inStock": true,
+    "stockCount": 4,
+    "image": "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "پلی‌کربنات فشرده صنعتی و منیزیم",
+    "techTinkScore": {
+      "overall": 93,
+      "batteryLife": 86,
+      "temperature": 91,
+      "processingPower": 93,
+      "usability": 95,
+      "buildQuality": 95,
+      "repairability": 96
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-11850H",
+      "gpu": "NVIDIA T600 4GB",
+      "ram": "16GB RAM",
+      "storage": "512GB SSD",
+      "display": "15.6\" FHD IPS 400nits",
+      "battery": "64Wh Battery",
+      "chassis": "پلی‌کربنات فشرده و منیزیم"
+    },
+    "specs": {
+      "brand": "Dell",
+      "model": "Precision 3561",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 93,
+        "batteryLife": 86,
+        "temperature": 91,
+        "processingPower": 93,
+        "usability": 95,
+        "buildQuality": 95,
+        "repairability": 96
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-11850H",
+        "gpu": "NVIDIA T600 4GB",
+        "ram": "16GB RAM",
+        "storage": "512GB SSD",
+        "display": "15.6\" FHD IPS 400nits",
+        "battery": "64Wh Battery",
+        "chassis": "پلی‌کربنات فشرده و منیزیم"
+      },
+      "cpu": "Intel Core i7-11850H (8 Cores / 16 Threads, up to 4.8GHz, 24MB Cache, vPro)",
+      "gpu": "NVIDIA T600 4GB GDDR6 (پایدار برای اتوکد و سالیدورک)",
+      "ram": "16GB DDR4-3200MHz (دو اسلات رم، قابل ارتقا تا ۶۴ گیگابایت)",
+      "storage": "512GB PCIe Gen3 x4 NVMe M.2 SSD",
+      "display": "15.6\" FHD (1920x1080) IPS 400 nits 100% sRGB Anti-Glare",
+      "chassis": "پلی‌کربنات صنعتی مقاوم در برابر خط و خش با شاسی داخلی آلیاژ منیزیم",
+      "battery": "64Wh با سلامت بالای ۸۸٪ و شارژ سریع ExpressCharge دل",
+      "weight": "1.79 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 4 Type-C, 2x USB 3.2 Gen 1, HDMI 2.0, RJ-45 LAN, MicroSD Card Reader",
+      "npuScore": "30 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۳۲ گیگابایت DDR4 پرسرعت",
+          "price": 1600000
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 حداکثر توان",
+          "price": 4200000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 1800000
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD",
+          "price": 3800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS مات ۴۰۰ نیت ۱۰۰٪ sRGB",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "پردازنده قدرتمند ۸ هسته‌ای و ۱۶ رشته‌ای نسل ۱۱ با فرکانس توربو بوست ۴.۸ گیگاهرتز",
+      "وزن بسیار مناسب ۱.۷۹ کیلوگرم مناسب حمل و نقل روزمره مهندسان ناظر و دانشجویان",
+      "مجهز به دو درگاه فوق‌سریع تاندربولت ۴ برای اتصال به مانیتورهای 4K و کارت‌های گرافیک اکسترنال",
+      "کیبورد کامل با بخش اعداد و شارژدهی تا ۸ ساعت کارهای اداری و نقشه‌کشی"
+    ]
+  },
+  {
+    "id": "lenovo-thinkpad-p53",
+    "name": "Lenovo ThinkPad P53 Workstation",
+    "brand": "Lenovo",
+    "model": "ThinkPad P53",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "شاهکار کلاسیک تینک‌پد با کیبورد افسانه‌ای ضدآب، گرافیک قدرتمند رندرینگ Quadro RTX 3000 و نمایشگر کالیبره",
+    "category": "ورک استیشن",
+    "series": "سری ThinkPad P",
+    "badge": "کلاسیک مهندسی",
+    "rating": 4.96,
+    "reviewsCount": 134,
+    "basePrice": 44500000,
+    "oldPrice": 48000000,
+    "inStock": true,
+    "stockCount": 4,
+    "image": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "پلیمر فشرده با قفس منیزیمی Roll Cage",
+    "techTinkScore": {
+      "overall": 93,
+      "batteryLife": 82,
+      "temperature": 94,
+      "processingPower": 93,
+      "usability": 98,
+      "buildQuality": 99,
+      "repairability": 99
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-9850H",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "15.6\" FHD IPS 500nits HDR",
+      "battery": "90Wh Battery",
+      "chassis": "قفس منیزیمی Roll Cage"
+    },
+    "specs": {
+      "brand": "Lenovo",
+      "model": "ThinkPad P53",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 93,
+        "batteryLife": 82,
+        "temperature": 94,
+        "processingPower": 93,
+        "usability": 98,
+        "buildQuality": 99,
+        "repairability": 99
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-9850H",
+        "gpu": "NVIDIA Quadro RTX 3000 6GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "15.6\" FHD IPS 500nits HDR",
+        "battery": "90Wh Battery",
+        "chassis": "قفس منیزیمی Roll Cage"
+      },
+      "cpu": "Intel Core i7-9850H (6 Cores / 12 Threads, up to 4.6GHz, 12MB Cache, vPro)",
+      "gpu": "NVIDIA Quadro RTX 3000 6GB GDDR6 (Ray Tracing Architecture)",
+      "ram": "32GB DDR4-2666MHz (۴ اسلات رم مجزا، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      "storage": "1TB PCIe NVMe M.2 SSD (۳ درگاه هارد M.2 مجزا)",
+      "display": "15.6\" FHD (1920x1080) IPS 500 nits Dolby Vision HDR 72% NTSC Anti-Glare",
+      "chassis": "پلیمر تقویت‌شده با فیبر شیشه و قفس منیزیمی Roll Cage مقاوم در برابر سقوط",
+      "battery": "90Wh با سلامت بالای ۸۵٪ و شارژر اورجینال ۱۷۰ وات لنوو",
+      "weight": "2.5 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 3, 1x USB-C, 2x USB 3.1 Gen 1, HDMI 2.0, RJ-45 LAN, SD Card Reader",
+      "npuScore": "25 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 مهندسی",
+          "price": 2800000
+        },
+        {
+          "name": "۱۲۸ گیگابایت DDR4 حداکثر رندر",
+          "price": 6600000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen3 NVMe SSD سامسونگ",
+          "price": 2200000
+        },
+        {
+          "name": "۴ ترابایت (دو درایو ۲ ترابایت)",
+          "price": 5400000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS روشنایی ۵۰۰ نیت با Dolby Vision",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "بهترین کیبورد مهندسی دنیا با عمق جابجایی کلید استثنایی و دکمه سنتی TrackPoint قرمز لنوو",
+      "گواهی ۱۲ آزمون نظامی ارتش آمریکا MIL-STD-810G برای دوام در شرایط گرد و غبار، لرزش و گرما",
+      "کارت گرافیک RTX 3000 با ۶ گیگابایت VRAM برای رندرهای بدون وقفه نرم‌افزارهای معماری و انیمیشن",
+      "دارای ۴ اسلات رم و ۳ درگاه حافظه M.2 با قابلیت ارتقای آسان در منزل"
+    ]
+  },
+  {
+    "id": "lenovo-thinkpad-p15-gen2",
+    "name": "Lenovo ThinkPad P15 Gen 2",
+    "brand": "Lenovo",
+    "model": "ThinkPad P15 Gen 2",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "نهایت قدرت مهندسی و شبیه‌سازی با پردازنده ۸ هسته‌ای Core i7-11850H و گرافیک RTX A3000",
+    "category": "ورک استیشن",
+    "series": "سری ThinkPad P",
+    "badge": "پرچمدار مهندسی",
+    "rating": 4.98,
+    "reviewsCount": 79,
+    "basePrice": 63000000,
+    "oldPrice": 68000000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "فیبر کربن، پلیمر فشرده و منیزیم",
+    "techTinkScore": {
+      "overall": 96,
+      "batteryLife": 84,
+      "temperature": 94,
+      "processingPower": 97,
+      "usability": 97,
+      "buildQuality": 99,
+      "repairability": 99
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-11850H",
+      "gpu": "NVIDIA RTX A3000 6GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "15.6\" FHD IPS 500nits HDR",
+      "battery": "94Wh Battery",
+      "chassis": "فیبر کربن و منیزیم"
+    },
+    "specs": {
+      "brand": "Lenovo",
+      "model": "ThinkPad P15 Gen 2",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 96,
+        "batteryLife": 84,
+        "temperature": 94,
+        "processingPower": 97,
+        "usability": 97,
+        "buildQuality": 99,
+        "repairability": 99
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-11850H",
+        "gpu": "NVIDIA RTX A3000 6GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "15.6\" FHD IPS 500nits HDR",
+        "battery": "94Wh Battery",
+        "chassis": "فیبر کربن و منیزیم"
+      },
+      "cpu": "Intel Core i7-11850H (8 Cores / 16 Threads, up to 4.8GHz, 24MB Cache, vPro)",
+      "gpu": "NVIDIA RTX A3000 6GB GDDR6 (توان ۱۱۰ وات با رهگیری پرتو)",
+      "ram": "32GB DDR4-3200MHz (۴ اسلات رم، قابل ارتقا تا ۱۲۸ گیگابایت)",
+      "storage": "1TB PCIe Gen4 NVMe M.2 SSD (۳ درگاه هارد M.2)",
+      "display": "15.6\" FHD (1920x1080) IPS 500 nits 100% sRGB Dolby Vision HDR",
+      "chassis": "پلیمر فشرده صنعتی، فیبر کربن و ساختار منیزیومی داخلی",
+      "battery": "94Wh با شارژر اورجینال ۲۳۰ وات لنوو",
+      "weight": "2.87 kg",
+      "os": "Windows 11 Pro for Workstations 64-bit",
+      "ports": "2x Thunderbolt 4, 1x USB-C 3.2 Gen 2, 2x USB 3.2 Gen 1, HDMI 2.1, RJ-45 LAN, SD Card Reader",
+      "npuScore": "34 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 دو کاناله",
+          "price": 2900000
+        },
+        {
+          "name": "۱۲۸ گیگابایت DDR4 ماکزیمم",
+          "price": 6900000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت Gen4 NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 2600000
+        },
+        {
+          "name": "۴ ترابایت (دو درایو ۲ ترابایت Gen4)",
+          "price": 6200000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS روشنایی ۵۰۰ نیت با کالیبراسیون X-Rite",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "کارت گرافیک قدرتمند RTX A3000 با توان گرافیکی بالای ۱۱۰ وات برای سنگین‌ترین محاسبات هوش مصنوعی و CAD",
+      "سیستم خنک‌کننده ارتقایافته با هیت‌پایپ‌های مسی ضخیم‌تر و فن‌های بزرگتر جهت ثبات عملکرد در کلاک بوست",
+      "مجهز به دو درگاه تاندربولت ۴ و خروجی HDMI 2.1 برای اتصال به نمایشگرهای 8K و رفرش‌ریت بالا",
+      "صفحه نمایش ۵۰۰ نیتی دالبی ویژن با پوشش کامل رنگی مناسب تدوین‌گران ویدیو و عکاسان حرفه‌ای"
+    ]
+  },
+  {
+    "id": "lenovo-thinkpad-x1-carbon-gen9",
+    "name": "Lenovo ThinkPad X1 Carbon Gen 9",
+    "brand": "Lenovo",
+    "model": "ThinkPad X1 Carbon Gen 9",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "شاهکار اولترابوک‌های تجاری دنیا؛ وزن خیره‌کننده ۱.۱۳ کیلوگرم با شاسی فیبر کربن و نسبت تصویر ۱۶:۱۰",
+    "category": "فوق سبک",
+    "series": "سری ThinkPad X1",
+    "badge": "اولترابوک مدیریتی پرچمدار",
+    "rating": 4.97,
+    "reviewsCount": 165,
+    "basePrice": 47500000,
+    "oldPrice": 52000000,
+    "inStock": true,
+    "stockCount": 4,
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "Intel",
+    "chassis": "فیبر کربن هوافضا و آلیاژ منیزیم",
+    "techTinkScore": {
+      "overall": 95,
+      "batteryLife": 93,
+      "temperature": 91,
+      "processingPower": 88,
+      "usability": 99,
+      "buildQuality": 99,
+      "repairability": 88
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-1165G7",
+      "gpu": "Intel Iris Xe Graphics",
+      "ram": "16GB RAM",
+      "storage": "512GB SSD",
+      "display": "14.0\" WUXGA 16:10 IPS",
+      "battery": "57Wh Battery",
+      "chassis": "فیبر کربن و منیزیم ۱.۱۳ کیلوگرم"
+    },
+    "specs": {
+      "brand": "Lenovo",
+      "model": "ThinkPad X1 Carbon Gen 9",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 95,
+        "batteryLife": 93,
+        "temperature": 91,
+        "processingPower": 88,
+        "usability": 99,
+        "buildQuality": 99,
+        "repairability": 88
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-1165G7",
+        "gpu": "Intel Iris Xe Graphics",
+        "ram": "16GB RAM",
+        "storage": "512GB SSD",
+        "display": "14.0\" WUXGA 16:10 IPS",
+        "battery": "57Wh Battery",
+        "chassis": "فیبر کربن و منیزیم ۱.۱۳ کیلوگرم"
+      },
+      "cpu": "Intel Core i7-1165G7 (4 Cores / 8 Threads, up to 4.7GHz, 12MB Cache, Intel Evo)",
+      "gpu": "Intel Iris Xe Graphics G7 96EUs",
+      "ram": "16GB LPDDR4x-4266MHz آنبورد دو کاناله",
+      "storage": "512GB PCIe Gen4 NVMe M.2 SSD",
+      "display": "14.0\" WUXGA (1920x1200) IPS 16:10 Low Power 400 nits 100% sRGB Anti-Glare",
+      "chassis": "شاسی فیبر کربن هوافضا و آلیاژ منیزیم فوق‌سبک با وزن ۱.۱۳ کیلوگرم",
+      "battery": "57Wh با ماندگاری تا ۱۲ ساعت و شارژر ۶۵ وات Type-C لنوو",
+      "weight": "1.13 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 4 Type-C, 2x USB 3.2 Gen 1, HDMI 2.0, Combo Audio Jack",
+      "npuScore": "28 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت LPDDR4x (پیش‌فرض آنبورد)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 1800000
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD پرسرعت",
+          "price": 3800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۴ اینچ WUXGA 16:10 کم‌مصرف ۴۰۰ نیت ۱۰۰٪ sRGB",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "وزن فوق‌العاده سبک ۱.۱۳ کیلوگرم و ضخامت باریک ۱۴.۹ میلی‌متر برای حداکثر جابجایی راحت",
+      "نسبت تصویر طلایی ۱۶:۱۰ با ارتفاع عمودی بیشتر برای دیدن کدهای برنامه‌نویسی و فایل‌های اکسل",
+      "بلندگوهای چهارگانه قدرتمند با پشتیبانی دالبی اتموس و چهار میکروفون ۳۶۰ درجه برای جلسات آنلاین",
+      "حسگر اثر انگشت ادغام‌شده در دکمه پاور و سیستم تشخیص چهره Windows Hello با شاتر حریم خصوصی"
+    ]
+  },
+  {
+    "id": "lenovo-thinkpad-t14s-gen2",
+    "name": "Lenovo ThinkPad T14s Gen 2 AMD",
+    "brand": "Lenovo",
+    "model": "ThinkPad T14s Gen 2 AMD",
+    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "tagline": "نهایت بازدهی باتری و سرعت پردازش با پردازنده ۸ هسته‌ای و ۱۶ رشته‌ای Ryzen 7 PRO 5850U و وزن ۱.۲۸ کیلوگرم",
+    "category": "مهندسی",
+    "series": "سری ThinkPad T",
+    "badge": "۸ هسته کم‌مصرف",
+    "rating": 4.94,
+    "reviewsCount": 108,
+    "basePrice": 34000000,
+    "oldPrice": 38000000,
+    "inStock": true,
+    "stockCount": 5,
+    "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "AMD",
+    "gpuBrand": "AMD",
+    "chassis": "آلیاژ تیتانیوم و منیزیم",
+    "techTinkScore": {
+      "overall": 93,
+      "batteryLife": 95,
+      "temperature": 94,
+      "processingPower": 92,
+      "usability": 98,
+      "buildQuality": 97,
+      "repairability": 90
+    },
+    "shortSpecs": {
+      "cpu": "AMD Ryzen 7 PRO 5850U",
+      "gpu": "AMD Radeon Graphics",
+      "ram": "16GB RAM",
+      "storage": "512GB SSD",
+      "display": "14.0\" FHD IPS 400nits",
+      "battery": "57Wh Battery",
+      "chassis": "آلیاژ تیتانیوم و منیزیم"
+    },
+    "specs": {
+      "brand": "Lenovo",
+      "model": "ThinkPad T14s Gen 2 AMD",
+      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "techTinkScore": {
+        "overall": 93,
+        "batteryLife": 95,
+        "temperature": 94,
+        "processingPower": 92,
+        "usability": 98,
+        "buildQuality": 97,
+        "repairability": 90
+      },
+      "shortSpecs": {
+        "cpu": "AMD Ryzen 7 PRO 5850U",
+        "gpu": "AMD Radeon Graphics",
+        "ram": "16GB RAM",
+        "storage": "512GB SSD",
+        "display": "14.0\" FHD IPS 400nits",
+        "battery": "57Wh Battery",
+        "chassis": "آلیاژ تیتانیوم و منیزیم"
+      },
+      "cpu": "AMD Ryzen 7 PRO 5850U (8 Cores / 16 Threads, up to 4.4GHz, 16MB L3 Cache)",
+      "gpu": "AMD Radeon Graphics Vega 8",
+      "ram": "16GB LPDDR4x-4266MHz دو کاناله",
+      "storage": "512GB PCIe NVMe M.2 SSD",
+      "display": "14.0\" FHD (1920x1080) IPS 400 nits Low Power 72% NTSC Anti-Glare",
+      "chassis": "آلیاژ تیتانیوم، منیزیم و الیاف کربن با پوشش مات مشکی ضد لک",
+      "battery": "57Wh با شارژدهی فوق‌العاده ۱۰ الی ۱۴ ساعته و سلامت بالای ۸۸٪",
+      "weight": "1.28 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x USB-C 3.2 Gen 2, 2x USB 3.2 Gen 1, HDMI 2.0, Combo Audio Jack",
+      "npuScore": "26 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت LPDDR4x (پیش‌فرض آنبورد)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 1800000
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD",
+          "price": 3800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۴ اینچ FHD IPS مات کم‌مصرف ۴۰۰ نیت",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "پردازنده تجاری ۸ هسته‌ای Ryzen 7 PRO با امنیت سخت‌افزاری پیشرفته و بازدهی حرارتی بی‌نظیر",
+      "شارژدهی طولانی باتری تا ۱۴ ساعت مناسب سفرها و کاربری بدون نیاز به حمل مداوم شارژر",
+      "وزن فوق‌سبک ۱.۲۸ کیلوگرم با دوام بی‌رقیب سری تینک‌پد و تست‌های استاندارد ارتش آمریکا",
+      "بدنه باریک‌تر و جمع‌وجورتر از نسخه معمولی T14 با جنس بدنه هیبریدی آلومینیوم و منیزیم"
+    ]
+  },
+  {
+    "id": "apple-macbook-pro-16-m1-max",
+    "name": "Apple MacBook Pro 16 M1 Max",
+    "brand": "Apple",
+    "model": "MacBook Pro 16 M1 Max",
+    "grade": "گرید ++A اوپن‌باکس با سایکل باتری زیر ۲۰",
+    "tagline": "قدرت بی‌پایان اپل سیلیکون با ۳۲ هسته گرافیکی، ۳۲ گیگابایت حافظه یکپارچه و نمایشگر Liquid Retina XDR",
+    "category": "تولید محتوا",
+    "series": "سری MacBook Pro",
+    "badge": "پرچمدار اکوسیستم اپل",
+    "rating": 4.99,
+    "reviewsCount": 210,
+    "basePrice": 94500000,
+    "oldPrice": 102000000,
+    "inStock": true,
+    "stockCount": 2,
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Apple",
+    "gpuBrand": "Apple",
+    "chassis": "آلومینیوم ۱۰۰٪ Unibody اپل",
+    "techTinkScore": {
+      "overall": 99,
+      "batteryLife": 98,
+      "temperature": 97,
+      "processingPower": 99,
+      "usability": 99,
+      "buildQuality": 100,
+      "repairability": 82
+    },
+    "shortSpecs": {
+      "cpu": "Apple M1 Max (10-Core)",
+      "gpu": "Apple 32-Core GPU",
+      "ram": "32GB Unified Memory",
+      "storage": "1TB SSD",
+      "display": "16.2\" Liquid Retina XDR 120Hz",
+      "battery": "100Wh Battery",
+      "chassis": "آلومینیوم یکپارچه Unibody"
+    },
+    "specs": {
+      "brand": "Apple",
+      "model": "MacBook Pro 16 M1 Max",
+      "grade": "گرید ++A اوپن‌باکس با سایکل باتری زیر ۲۰",
+      "techTinkScore": {
+        "overall": 99,
+        "batteryLife": 98,
+        "temperature": 97,
+        "processingPower": 99,
+        "usability": 99,
+        "buildQuality": 100,
+        "repairability": 82
+      },
+      "shortSpecs": {
+        "cpu": "Apple M1 Max (10-Core)",
+        "gpu": "Apple 32-Core GPU",
+        "ram": "32GB Unified Memory",
+        "storage": "1TB SSD",
+        "display": "16.2\" Liquid Retina XDR 120Hz",
+        "battery": "100Wh Battery",
+        "chassis": "آلومینیوم یکپارچه Unibody"
+      },
+      "cpu": "Apple M1 Max (10-Core CPU: 8 Performance Cores + 2 Efficiency Cores, 16-Core Neural Engine)",
+      "gpu": "Apple 32-Core GPU (پهنای باند حافظه ۴۰۰ گیگابایت بر ثانیه، موتور اختصاصی مدیا)",
+      "ram": "32GB Unified Memory یکپارچه با سرعت فوق‌العاده",
+      "storage": "1TB Apple PCIe Gen4 SSD با سرعت خواندن ۷۴۰۰ مگابایت بر ثانیه",
+      "display": "16.2\" Liquid Retina XDR (3456x2234) Mini-LED 120Hz ProMotion 1000 nits Sustained / 1600 nits Peak",
+      "chassis": "آلومینیوم ماشین‌کاری‌شده یکپارچه Unibody با رنگ نقره‌ای و خاکستری فضایی",
+      "battery": "100Wh با سلامت ۱۰۰٪، سایکل باتری زیر ۲۰ و شارژر اورجینال ۱۴۰ وات MagSafe 3",
+      "weight": "2.16 kg",
+      "os": "macOS Sequoia (پشتیبانی تا سال‌های متمادی)",
+      "ports": "3x Thunderbolt 4 Type-C, HDMI, SDXC Card Slot, MagSafe 3, 3.5mm Headphone Jack",
+      "npuScore": "40 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت Unified Memory یکپارچه (پیش‌فرض)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت Apple Ultra-Fast SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Apple Ultra-Fast SSD",
+          "price": 5800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۶.۲ اینچ Liquid Retina XDR با کنتراست ۱,۰۰۰,۰۰۰:۱ و ۱۲۰ هرتز ProMotion",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "بهترین نمایشگر تاریخ لپ‌تاپ‌ها: پنل Mini-LED با ۱۶۰۰ نیت روشنایی اوج، رنگ‌های عمیق HDR و رفرش‌ریت ۱۲۰ هرتز",
+      "۳۲ هسته گرافیکی خارق‌العاده با قابلیت تدوین همزمان ۷ استریم ویدیوی 8K ProRes بدون حتی یک فریم لگ",
+      "سیستم صوتی استودیویی شش اسپیکره با ووفر‌های لرزش‌گیر و پشتیبانی از Spatial Audio فضایی",
+      "شارژدهی واقعی تا ۲۱ ساعت تماشای ویدیو و عملکرد یکسان چه در حالت اتصال به برق و چه روی باتری"
+    ]
+  },
+  {
+    "id": "apple-macbook-pro-14-m1-pro",
+    "name": "Apple MacBook Pro 14 M1 Pro",
+    "brand": "Apple",
+    "model": "MacBook Pro 14 M1 Pro",
+    "grade": "گرید ++A اوپن‌باکس در حد آکبند",
+    "tagline": "کامل‌ترین مک‌بوک برای برنامه‌نویسان و تولیدکنندگان محتوا؛ بی‌صدا، پرقدرت و شارژدهی تا ۱۷ ساعت",
+    "category": "تولید محتوا",
+    "series": "سری MacBook Pro",
+    "badge": "محبوب‌ترین مک‌بوک برنامه‌نویسان",
+    "rating": 4.98,
+    "reviewsCount": 240,
+    "basePrice": 68000000,
+    "oldPrice": 73500000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Apple",
+    "gpuBrand": "Apple",
+    "chassis": "آلومینیوم یکپارچه Unibody اپل",
+    "techTinkScore": {
+      "overall": 98,
+      "batteryLife": 96,
+      "temperature": 98,
+      "processingPower": 96,
+      "usability": 99,
+      "buildQuality": 100,
+      "repairability": 84
+    },
+    "shortSpecs": {
+      "cpu": "Apple M1 Pro (8-Core)",
+      "gpu": "Apple 14-Core GPU",
+      "ram": "16GB Unified Memory",
+      "storage": "512GB SSD",
+      "display": "14.2\" Liquid Retina XDR 120Hz",
+      "battery": "70Wh Battery",
+      "chassis": "آلومینیوم Unibody ۱.۶ کیلوگرم"
+    },
+    "specs": {
+      "brand": "Apple",
+      "model": "MacBook Pro 14 M1 Pro",
+      "grade": "گرید ++A اوپن‌باکس در حد آکبند",
+      "techTinkScore": {
+        "overall": 98,
+        "batteryLife": 96,
+        "temperature": 98,
+        "processingPower": 96,
+        "usability": 99,
+        "buildQuality": 100,
+        "repairability": 84
+      },
+      "shortSpecs": {
+        "cpu": "Apple M1 Pro (8-Core)",
+        "gpu": "Apple 14-Core GPU",
+        "ram": "16GB Unified Memory",
+        "storage": "512GB SSD",
+        "display": "14.2\" Liquid Retina XDR 120Hz",
+        "battery": "70Wh Battery",
+        "chassis": "آلومینیوم Unibody ۱.۶ کیلوگرم"
+      },
+      "cpu": "Apple M1 Pro (8-Core CPU: 6 Performance + 2 Efficiency Cores, 16-Core Neural Engine)",
+      "gpu": "Apple 14-Core GPU با پهنای باند ۲۰۰ گیگابایت بر ثانیه",
+      "ram": "16GB Unified Memory یکپارچه",
+      "storage": "512GB Apple PCIe Gen4 SSD فوق‌العاده سریع",
+      "display": "14.2\" Liquid Retina XDR (3024x1964) Mini-LED 120Hz ProMotion 1000 nits Sustained",
+      "chassis": "آلومینیوم ماشین‌کاری‌شده یکپارچه Unibody با وزن ۱.۶ کیلوگرم",
+      "battery": "70Wh با سلامت بالای ۹۵٪ و شارژر اورجینال ۶۷ وات MagSafe 3",
+      "weight": "1.60 kg",
+      "os": "macOS Sequoia",
+      "ports": "3x Thunderbolt 4 Type-C, HDMI, SDXC Card Slot, MagSafe 3, 3.5mm Audio",
+      "npuScore": "36 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت Unified Memory (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۳۲ گیگابایت Unified Memory سفارشی",
+          "price": 4800000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت SSD فوق‌سریع اپل",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت SSD فوق‌سریع اپل",
+          "price": 3200000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۴.۲ اینچ Liquid Retina XDR با ۱۲۰ هرتز ProMotion",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "ابعاد کامپکت ۱۴ اینچ و وزن ۱.۶ کیلوگرم با همان توان و خنک‌کاری نسخه ۱۶ اینچ",
+      "درگاه‌های کامل شامل کارت‌خوان SDXC، پورت HDMI و مگ‌سیف ۳ بدون نیاز به هیچ‌گونه دانگل",
+      "عملکرد کاملاً بی‌صدا و خنک در کامپایل پروژه‌های سنگین داکر، فلاتر و ری‌اکت نیتnative",
+      "کیبورد بازطراحی‌شده مجیک با کلیدهای فانکشن تمام‌قد و حس فوق‌العاده تایپ"
+    ]
+  },
+  {
+    "id": "apple-macbook-air-m2",
+    "name": "Apple MacBook Air M2 13.6\"",
+    "brand": "Apple",
+    "model": "MacBook Air M2",
+    "grade": "گرید ++A اروپایی در حد نو",
+    "tagline": "طراحی مدرن با حاشیه‌های باریک، بریدگی دوربین ۱۰۸۰p، وزن ۱.۲۴ کیلوگرم و شارژدهی ۱۸ ساعته بدون فن",
+    "category": "فوق سبک",
+    "series": "سری MacBook Air",
+    "badge": "اولترابوک مدرن بدون صدا",
+    "rating": 4.97,
+    "reviewsCount": 178,
+    "basePrice": 52000000,
+    "oldPrice": 56000000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Apple",
+    "gpuBrand": "Apple",
+    "chassis": "آلومینیوم ۱۰۰٪ Unibody فوق‌باریک",
+    "techTinkScore": {
+      "overall": 96,
+      "batteryLife": 99,
+      "temperature": 92,
+      "processingPower": 93,
+      "usability": 99,
+      "buildQuality": 99,
+      "repairability": 80
+    },
+    "shortSpecs": {
+      "cpu": "Apple M2 (8-Core)",
+      "gpu": "Apple 8-Core GPU",
+      "ram": "16GB Unified Memory",
+      "storage": "512GB SSD",
+      "display": "13.6\" Liquid Retina 500nits",
+      "battery": "52.6Wh Battery",
+      "chassis": "آلومینیوم Unibody ۱.۲۴ کیلوگرم"
+    },
+    "specs": {
+      "brand": "Apple",
+      "model": "MacBook Air M2",
+      "grade": "گرید ++A اروپایی در حد نو",
+      "techTinkScore": {
+        "overall": 96,
+        "batteryLife": 99,
+        "temperature": 92,
+        "processingPower": 93,
+        "usability": 99,
+        "buildQuality": 99,
+        "repairability": 80
+      },
+      "shortSpecs": {
+        "cpu": "Apple M2 (8-Core)",
+        "gpu": "Apple 8-Core GPU",
+        "ram": "16GB Unified Memory",
+        "storage": "512GB SSD",
+        "display": "13.6\" Liquid Retina 500nits",
+        "battery": "52.6Wh Battery",
+        "chassis": "آلومینیوم Unibody ۱.۲۴ کیلوگرم"
+      },
+      "cpu": "Apple M2 (8-Core CPU: 4 Performance + 4 Efficiency Cores, 16-Core Neural Engine)",
+      "gpu": "Apple 8-Core GPU با پهنای باند حافظه ۱۰۰ گیگابایت بر ثانیه",
+      "ram": "16GB Unified Memory یکپارچه",
+      "storage": "512GB Apple PCIe SSD",
+      "display": "13.6\" Liquid Retina (2560x1664) IPS 500 nits True Tone با ۱ میلیارد رنگ",
+      "chassis": "آلومینیوم یکپارچه Unibody باریک ۱۱.۳ میلی‌متری با وزن ۱.۲۴ کیلوگرم",
+      "battery": "52.6Wh با سلامت بالای ۹۵٪، کاملاً بی‌صدا (Fanless) با شارژر ۳۵ وات دو پورته",
+      "weight": "1.24 kg",
+      "os": "macOS Sequoia",
+      "ports": "2x Thunderbolt / USB 4, MagSafe 3, 3.5mm Headphone Jack",
+      "npuScore": "32 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت Unified Memory (پیش‌فرض)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت SSD فوق‌سریع",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت SSD فوق‌سریع اپل",
+          "price": 3200000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۳.۶ اینچ Liquid Retina پانصد نیت با True Tone",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "طراحی تخت و بی‌نهایت باریک ۱۱.۳ میلی‌متری با رنگ‌های جذاب میدنایت و استارلایت",
+      "سیستم خنک‌کننده پسیو بدون فن: کارکرد ۱۰۰٪ بی‌صدا حتی زیر بارهای سنگین پردازشی",
+      "دوربین فیس‌تایم با کیفیت 1080p HD و آرایه سه میکروفونه استودیویی",
+      "شارژدهی حیرت‌انگیز تا ۱۸ ساعت مناسب دانشجویان، اساتید و مدیران پر رفت‌وآمد"
+    ]
+  },
+  {
+    "id": "microsoft-surface-laptop-studio",
+    "name": "Microsoft Surface Laptop Studio",
+    "brand": "Microsoft",
+    "model": "Surface Laptop Studio",
+    "grade": "گرید ++A تمیز بدون خط و خش",
+    "tagline": "تبدیل‌پذیرترین لپ‌تاپ سه‌حالته برای طراحان و معماران؛ لولای Dynamic Woven و گرافیک RTX 3050 Ti",
+    "category": "تولید محتوا",
+    "series": "سری Surface",
+    "badge": "تبدیل‌پذیر حرفه‌ای با قلم",
+    "rating": 4.95,
+    "reviewsCount": 82,
+    "basePrice": 64500000,
+    "oldPrice": 70000000,
+    "inStock": true,
+    "stockCount": 2,
+    "image": "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلیاژ منیزیم و آلومینیوم با لولای چندحالته",
+    "techTinkScore": {
+      "overall": 95,
+      "batteryLife": 88,
+      "temperature": 92,
+      "processingPower": 93,
+      "usability": 99,
+      "buildQuality": 99,
+      "repairability": 86
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-11370H",
+      "gpu": "NVIDIA RTX 3050 Ti 4GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "14.4\" 120Hz PixelSense Touch",
+      "battery": "58Wh Battery",
+      "chassis": "لولای سه‌حالته Dynamic Woven"
+    },
+    "specs": {
+      "brand": "Microsoft",
+      "model": "Surface Laptop Studio",
+      "grade": "گرید ++A تمیز بدون خط و خش",
+      "techTinkScore": {
+        "overall": 95,
+        "batteryLife": 88,
+        "temperature": 92,
+        "processingPower": 93,
+        "usability": 99,
+        "buildQuality": 99,
+        "repairability": 86
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-11370H",
+        "gpu": "NVIDIA RTX 3050 Ti 4GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "14.4\" 120Hz PixelSense Touch",
+        "battery": "58Wh Battery",
+        "chassis": "لولای سه‌حالته Dynamic Woven"
+      },
+      "cpu": "Intel Core i7-11370H (4 Cores / 8 Threads, up to 4.8GHz, 35W H-series)",
+      "gpu": "NVIDIA GeForce RTX 3050 Ti 4GB GDDR6",
+      "ram": "32GB LPDDR4x-4266MHz",
+      "storage": "1TB Removable PCIe NVMe M.2 SSD",
+      "display": "14.4\" PixelSense Flow (2400x1600) 120Hz Touch 3:2 Dolby Vision با پشتیبانی از قلم Surface Slim Pen 2",
+      "chassis": "آلومینیوم و منیزیم تراش‌خورده با لولای نوآورانه Dynamic Woven Hinge",
+      "battery": "58Wh با سلامت بالای ۸۸٪ و شارژر اورجینال ۱۰۲ وات سرفیس",
+      "weight": "1.82 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 4 Type-C, Surface Connect Port, 3.5mm Headphone Jack",
+      "npuScore": "30 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت LPDDR4x (پیش‌فرض)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD سرفیس",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 2800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۴.۴ اینچ PixelSense Flow لمسی ۱۲۰ هرتز نسبت ۳:۲",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "طراحی انقلابی سه‌حالته: لپ‌تاپ معمولی، حالت استیج برای پرزنتیشن و حالت تبلت استودیو برای طراحی با قلم",
+      "ترک‌پد لمسی هپتیک Precision با فیدبک لرزشی شبیه به ترک‌پد مک‌بوک پرو",
+      "پشتیبانی از قلم Surface Slim Pen 2 با موتور هپتیک که حس واقعی کشیدن مداد روی کاغذ را شبیه‌سازی می‌کند",
+      "نمایشگر ۱۲۰ هرتزی بسیار روان نسبت تصویر ۳:۲ مناسب اسکچ، رتوش عکس و مدلسازی سه‌بعدی"
+    ]
+  },
+  {
+    "id": "microsoft-surface-laptop-4",
+    "name": "Microsoft Surface Laptop 4 15\"",
+    "brand": "Microsoft",
+    "model": "Surface Laptop 4",
+    "grade": "گرید ++A اروپایی تمیز",
+    "tagline": "تجربه تایپ لوکس با استراحتگاه فلزی، نسبت صفحه ۳:۲ طلایی برای وب‌گردی و مطالعه و کیبورد کاملاً بی‌صدا",
+    "category": "مهندسی",
+    "series": "سری Surface",
+    "badge": "لوکس و باریک",
+    "rating": 4.94,
+    "reviewsCount": 115,
+    "basePrice": 36500000,
+    "oldPrice": 40000000,
+    "inStock": true,
+    "stockCount": 4,
+    "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "AMD",
+    "gpuBrand": "AMD",
+    "chassis": "تمام آلومینیوم مات مشکی",
+    "techTinkScore": {
+      "overall": 92,
+      "batteryLife": 94,
+      "temperature": 93,
+      "processingPower": 90,
+      "usability": 98,
+      "buildQuality": 98,
+      "repairability": 84
+    },
+    "shortSpecs": {
+      "cpu": "AMD Ryzen 7 4980U",
+      "gpu": "AMD Radeon Graphics",
+      "ram": "16GB RAM",
+      "storage": "512GB SSD",
+      "display": "15.0\" 2K PixelSense Touch 3:2",
+      "battery": "47.4Wh Battery",
+      "chassis": "تمام آلومینیوم مشکی مات"
+    },
+    "specs": {
+      "brand": "Microsoft",
+      "model": "Surface Laptop 4",
+      "grade": "گرید ++A اروپایی تمیز",
+      "techTinkScore": {
+        "overall": 92,
+        "batteryLife": 94,
+        "temperature": 93,
+        "processingPower": 90,
+        "usability": 98,
+        "buildQuality": 98,
+        "repairability": 84
+      },
+      "shortSpecs": {
+        "cpu": "AMD Ryzen 7 4980U",
+        "gpu": "AMD Radeon Graphics",
+        "ram": "16GB RAM",
+        "storage": "512GB SSD",
+        "display": "15.0\" 2K PixelSense Touch 3:2",
+        "battery": "47.4Wh Battery",
+        "chassis": "تمام آلومینیوم مشکی مات"
+      },
+      "cpu": "AMD Ryzen 7 4980U Microsoft Surface Edition (8 Cores / 16 Threads, up to 4.4GHz)",
+      "gpu": "AMD Radeon Graphics Vega 8",
+      "ram": "16GB LPDDR4x-3733MHz",
+      "storage": "512GB Removable M.2 NVMe SSD",
+      "display": "15.0\" PixelSense (2496x1664) Touch 3:2 400 nits با پشتیبانی از قلم سرفیس",
+      "chassis": "تمام آلومینیوم مات مشکی Matte Black با استراحتگاه فلزی لوکس",
+      "battery": "47.4Wh با شارژدهی تا ۱۴ ساعت کاری و سلامت بالای ۹۰٪",
+      "weight": "1.54 kg",
+      "os": "Windows 11 Home / Pro 64-bit",
+      "ports": "1x USB-C, 1x USB-A, Surface Connect Port, 3.5mm Headphone Jack",
+      "npuScore": "24 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت LPDDR4x (پیش‌فرض)",
+          "price": 0
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت SSD سرفیس",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت NVMe SSD سامسونگ",
+          "price": 1800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵ اینچ 2K PixelSense لمسی نسبت ۳:۲",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "کیبورد فوق‌العاده نرم و بی‌صدا با بازخورد عالی برای تایپیست‌ها، نویسندگان و برنامه‌نویسان",
+      "اسپیکرهای مخفی هوشمند Omnisonic در زیر کیبورد با شفافیت صدای کم‌نظیر",
+      "دوربین وب‌کم بهینه‌شده برای نور کم همراه با سنسور تشخیص چهره مادون قرمز Windows Hello",
+      "نسبت تصویر ۳:۲ که محتوای عمودی بیشتری را در صفحات وب و برنامه‌ها نمایش می‌دهد"
+    ]
+  },
+  {
+    "id": "asus-rog-strix-g15-g513",
+    "name": "Asus ROG Strix G15 G513RM",
+    "brand": "Asus",
+    "model": "ROG Strix G15 G513RM",
+    "grade": "گرید ++A در حد نو",
+    "tagline": "غول گیمینگ با نمایشگر فوق‌سریع ۳۰۰ هرتز، پردازنده نسل ۶ رایزن و گرافیک پرقدرت RTX 3060 با توان ۱۴۰ وات",
+    "category": "گیمینگ",
+    "series": "سری ROG Strix",
+    "badge": "گیمینگ ۳۰۰ هرتز ۱۴۰ وات",
+    "rating": 4.96,
+    "reviewsCount": 142,
+    "basePrice": 59500000,
+    "oldPrice": 65000000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "AMD",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلومینیوم و پلی‌کربنات مقاوم با نورپردازی Aura Sync",
+    "techTinkScore": {
+      "overall": 95,
+      "batteryLife": 82,
+      "temperature": 92,
+      "processingPower": 96,
+      "usability": 95,
+      "buildQuality": 97,
+      "repairability": 94
+    },
+    "shortSpecs": {
+      "cpu": "AMD Ryzen 7 6800H",
+      "gpu": "NVIDIA RTX 3060 6GB 140W",
+      "ram": "16GB DDR5",
+      "storage": "1TB SSD",
+      "display": "15.6\" 300Hz 3ms IPS",
+      "battery": "90Wh Battery",
+      "chassis": "فلز آلومینیوم با نورپردازی RGB"
+    },
+    "specs": {
+      "brand": "Asus",
+      "model": "ROG Strix G15 G513RM",
+      "grade": "گرید ++A در حد نو",
+      "techTinkScore": {
+        "overall": 95,
+        "batteryLife": 82,
+        "temperature": 92,
+        "processingPower": 96,
+        "usability": 95,
+        "buildQuality": 97,
+        "repairability": 94
+      },
+      "shortSpecs": {
+        "cpu": "AMD Ryzen 7 6800H",
+        "gpu": "NVIDIA RTX 3060 6GB 140W",
+        "ram": "16GB DDR5",
+        "storage": "1TB SSD",
+        "display": "15.6\" 300Hz 3ms IPS",
+        "battery": "90Wh Battery",
+        "chassis": "فلز آلومینیوم با نورپردازی RGB"
+      },
+      "cpu": "AMD Ryzen 7 6800H (8 Cores / 16 Threads, up to 4.7GHz, 16MB L3 Cache, 6nm Rembrandt)",
+      "gpu": "NVIDIA GeForce RTX 3060 6GB GDDR6 (توان حداکثری 140W همراه با MUX Switch)",
+      "ram": "16GB DDR5-4800MHz (دو اسلات، قابل ارتقا تا ۶۴ گیگابایت)",
+      "storage": "1TB PCIe 4.0 NVMe M.2 SSD (دارای دو اسلات هارد Gen4)",
+      "display": "15.6\" FHD (1920x1080) IPS 300Hz 3ms 100% sRGB با قابلیت Adaptive-Sync و Dolby Vision",
+      "chassis": "درب آلومینیومی مات دودی همراه با نوار نورپردازی پیرامونی RGB و کیبورد ۴ ناحیه‌ای",
+      "battery": "90Wh با شارژر اورجینال ۲۴۰ وات ایسوس و پشتیبانی از شارژ Type-C ۱۰۰ وات",
+      "weight": "2.30 kg",
+      "os": "Windows 11 Home 64-bit",
+      "ports": "1x USB 3.2 Gen 2 Type-C (DisplayPort / Power Delivery), 1x USB 3.2 Gen 2 Type-C, 2x USB 3.2 Gen 1, HDMI 2.0b, RJ-45 LAN, Audio Jack",
+      "npuScore": "32 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت DDR5 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۳۲ گیگابایت DDR5 دو کاناله",
+          "price": 2400000
+        },
+        {
+          "name": "۶۴ گیگابایت DDR5 گیمینگ",
+          "price": 5400000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت Gen4 NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 2800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS رفرش‌ریت استثنایی ۳۰۰ هرتز ۳ میلی‌ثانیه",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "گرافیک ۱۴۰ وات پرقدرت با سوئیچ سخت‌افزاری MUX Switch برای افزایش ۱۰ الی ۲۰ درصدی نرخ فریم در بازی‌ها",
+      "نمایشگر مسابقه‌ای ۳۰۰ هرتز با زمان پاسخ‌دهی ۳ میلی‌ثانیه ایده‌آل برای بازی‌های شوتر آنلاین CS2 و Valorant",
+      "سیستم خنک‌کاری خمیر فلز مایع (Liquid Metal) روی پردازنده برای کاهش دمای کاری تا ۱۵ درجه سانتی‌گراد",
+      "باتری غول‌پیکر ۹۰ وات‌ساعت با قابلیت شارژ سریع ۵۰ درصد در ۳۰ دقیقه"
+    ]
+  },
+  {
+    "id": "asus-rog-zephyrus-g14-ga401",
+    "name": "Asus ROG Zephyrus G14",
+    "brand": "Asus",
+    "model": "ROG Zephyrus G14 GA401QM",
+    "grade": "گرید ++A اروپایی تمیز",
+    "tagline": "سبک‌ترین اولترابوک گیمینگ ۱۴ اینچ با پردازنده Ryzen 9، گرافیک RTX 3060، نمایشگر QHD 120Hz و درب AniMe Matrix",
+    "category": "گیمینگ",
+    "series": "سری ROG Zephyrus",
+    "badge": "گیمینگ ۱۴ اینچ اولترابوک",
+    "rating": 4.97,
+    "reviewsCount": 188,
+    "basePrice": 54000000,
+    "oldPrice": 59000000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1593642702821-c8da6771f0c6?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "AMD",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلیاژ منیزیم و آلومینیوم ۱.۶ کیلوگرم",
+    "techTinkScore": {
+      "overall": 96,
+      "batteryLife": 90,
+      "temperature": 91,
+      "processingPower": 95,
+      "usability": 97,
+      "buildQuality": 98,
+      "repairability": 90
+    },
+    "shortSpecs": {
+      "cpu": "AMD Ryzen 9 5900HS",
+      "gpu": "NVIDIA RTX 3060 6GB",
+      "ram": "16GB RAM",
+      "storage": "1TB SSD",
+      "display": "14.0\" 2K QHD 120Hz IPS",
+      "battery": "76Wh Battery",
+      "chassis": "آلیاژ منیزیم ۱.۶ کیلوگرم"
+    },
+    "specs": {
+      "brand": "Asus",
+      "model": "ROG Zephyrus G14 GA401QM",
+      "grade": "گرید ++A اروپایی تمیز",
+      "techTinkScore": {
+        "overall": 96,
+        "batteryLife": 90,
+        "temperature": 91,
+        "processingPower": 95,
+        "usability": 97,
+        "buildQuality": 98,
+        "repairability": 90
+      },
+      "shortSpecs": {
+        "cpu": "AMD Ryzen 9 5900HS",
+        "gpu": "NVIDIA RTX 3060 6GB",
+        "ram": "16GB RAM",
+        "storage": "1TB SSD",
+        "display": "14.0\" 2K QHD 120Hz IPS",
+        "battery": "76Wh Battery",
+        "chassis": "آلیاژ منیزیم ۱.۶ کیلوگرم"
+      },
+      "cpu": "AMD Ryzen 9 5900HS (8 Cores / 16 Threads, up to 4.6GHz, 16MB Cache, 35W Energy-Efficient)",
+      "gpu": "NVIDIA GeForce RTX 3060 6GB GDDR6 (پشتیبانی از DLSS و Ray Tracing)",
+      "ram": "16GB DDR4-3200MHz (قابل ارتقا تا ۴۰ گیگابایت)",
+      "storage": "1TB PCIe NVMe M.2 SSD",
+      "display": "14.0\" WQHD 2K (2560x1440) IPS 120Hz 100% DCI-P3 Pantone Validated Adaptive-Sync",
+      "chassis": "آلیاژ منیزیم و آلومینیوم به رنگ سفید مهتابی Moonlight White با وزن ۱.۶ کیلوگرم",
+      "battery": "76Wh با شارژدهی تا ۱۰ ساعت کارهای اداری و شارژر ۱۸۰ وات ایسوس",
+      "weight": "1.60 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "1x USB-C 3.2 Gen 2 (DisplayPort / Power Delivery), 1x USB-C 3.2 Gen 2, 2x USB 3.2 Gen 1, HDMI 2.0b, Audio Jack",
+      "npuScore": "30 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۲۴ گیگابایت DDR4 پرسرعت",
+          "price": 1200000
+        },
+        {
+          "name": "۴۰ گیگابایت DDR4 ماکزیمم",
+          "price": 2800000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 2400000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۴ اینچ 2K QHD ۱۲۰ هرتز ۱۰۰٪ DCI-P3 کالیبره پنتون",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "شاهکار وزن و قدرت: لپ‌تاپ گیمینگ ۱.۶ کیلوگرمی با پردازنده ۸ هسته‌ای Ryzen 9 و گرافیک RTX 3060",
+      "نمایشگر فوق‌شفاف 2K QHD با پوشش ۱۰۰٪ رنگ‌های سینمایی DCI-P3 و تاییدیه رسمی Pantone",
+      "لولای هوشمند ErgoLift که زاویه تایپ ارگونومیک ایجاد کرده و جریان هوای زیر شاسی را افزایش می‌دهد",
+      "شارژدهی طولانی باتری تا ۱۰ ساعت مناسب دانشجویان و مهندسانی که لپ‌تاپ را همه جا همراه خود دارند"
+    ]
+  },
+  {
+    "id": "dell-xps-15-9510",
+    "name": "Dell XPS 15 9510",
+    "brand": "Dell",
+    "model": "XPS 15 9510",
+    "grade": "گرید ++A تمیز در حد آکبند",
+    "tagline": "زیباترین لپ‌تاپ ویندوزی دنیا با نمایشگر لمسی 3.5K OLED بدون حاشیه، بدنه آلومینیوم CNC و فیبر کربن",
+    "category": "تولید محتوا",
+    "series": "سری XPS",
+    "badge": "نمایشگر 3.5K OLED InfinityEdge",
+    "rating": 4.96,
+    "reviewsCount": 150,
+    "basePrice": 59000000,
+    "oldPrice": 64500000,
+    "inStock": true,
+    "stockCount": 3,
+    "image": "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلومینیوم تراش‌خورده CNC و فیبر کربن",
+    "techTinkScore": {
+      "overall": 96,
+      "batteryLife": 85,
+      "temperature": 90,
+      "processingPower": 94,
+      "usability": 98,
+      "buildQuality": 99,
+      "repairability": 91
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i7-11800H",
+      "gpu": "NVIDIA RTX 3050 Ti 4GB",
+      "ram": "32GB RAM",
+      "storage": "1TB SSD",
+      "display": "15.6\" 3.5K OLED Touch",
+      "battery": "86Wh Battery",
+      "chassis": "فیبر کربن و آلومینیوم"
+    },
+    "specs": {
+      "brand": "Dell",
+      "model": "XPS 15 9510",
+      "grade": "گرید ++A تمیز در حد آکبند",
+      "techTinkScore": {
+        "overall": 96,
+        "batteryLife": 85,
+        "temperature": 90,
+        "processingPower": 94,
+        "usability": 98,
+        "buildQuality": 99,
+        "repairability": 91
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i7-11800H",
+        "gpu": "NVIDIA RTX 3050 Ti 4GB",
+        "ram": "32GB RAM",
+        "storage": "1TB SSD",
+        "display": "15.6\" 3.5K OLED Touch",
+        "battery": "86Wh Battery",
+        "chassis": "فیبر کربن و آلومینیوم"
+      },
+      "cpu": "Intel Core i7-11800H (8 Cores / 16 Threads, up to 4.6GHz, 24MB Cache)",
+      "gpu": "NVIDIA GeForce RTX 3050 Ti 4GB GDDR6 (توان ۴۵ وات)",
+      "ram": "32GB DDR4-3200MHz (دو اسلات، قابل ارتقا تا ۶۴ گیگابایت)",
+      "storage": "1TB PCIe Gen3 x4 NVMe M.2 SSD",
+      "display": "15.6\" 3.5K (3456x2160) OLED Touch 400 nits 100% DCI-P3 DisplayHDR 500 کنتراست ۱۰۰,۰۰۰:۱",
+      "chassis": "شاسی تراش‌خورده تمام آلومینیوم CNC نقره‌ای با استراحتگاه دست از فیبر کربن بافت‌دار مشکی",
+      "battery": "86Wh با سلامت بالای ۸۸٪ و شارژر اورجینال ۱۳۰ وات Type-C دل",
+      "weight": "1.92 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "2x Thunderbolt 4 Type-C, 1x USB-C 3.2 Gen 2, Full-size SD Card Reader, 3.5mm Headphone Jack",
+      "npuScore": "30 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۳۲ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۶۴ گیگابایت DDR4 مهندسی",
+          "price": 2800000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۱ ترابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۲ ترابایت Gen4 NVMe SSD سامسونگ",
+          "price": 2400000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ 3.5K OLED لمسی با مشکی مطلق و ۱۰۰٪ DCI-P3",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "نمایشگر جادویی 3.5K OLED بدون حاشیه با مشکی مطلق و عمق رنگ شگفت‌انگیز برای عکاسان و گرافیست‌ها",
+      "اسپیکرهای چهارگانه با تفکیک صدای استودیویی Waves Nx 3D Audio",
+      "ترک‌پد شیشه‌ای غول‌پیکر با حرکت روان و شاسی مستحکم آلومینیوم و فیبر کربن",
+      "کارت‌خوان کامل SD Card جهت انتقال سریع عکس و فیلم از دوربین‌های عکاسی"
+    ]
+  },
+  {
+    "id": "hp-probook-450-g8",
+    "name": "HP ProBook 450 G8",
+    "brand": "HP",
+    "model": "ProBook 450 G8",
+    "grade": "گرید ++A اروپایی بسیار تمیز",
+    "tagline": "لپ‌تاپ تجاری اقتصادی و بسیار پرفروش با پردازنده نسل ۱۱، گرافیک مجزای MX450 و بدنه آلومینیومی نقره‌ای",
+    "category": "مهندسی",
+    "series": "سری ProBook",
+    "badge": "اقتصادی و باارزش",
+    "rating": 4.91,
+    "reviewsCount": 160,
+    "basePrice": 26500000,
+    "oldPrice": 29800000,
+    "inStock": true,
+    "stockCount": 6,
+    "image": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1544731612-de292439cc67?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "cpuBrand": "Intel",
+    "gpuBrand": "NVIDIA",
+    "chassis": "آلومینیوم طبیعی نقره‌ای با استاندارد نظامی",
+    "techTinkScore": {
+      "overall": 90,
+      "batteryLife": 89,
+      "temperature": 92,
+      "processingPower": 88,
+      "usability": 95,
+      "buildQuality": 94,
+      "repairability": 98
+    },
+    "shortSpecs": {
+      "cpu": "Intel Core i5-1135G7",
+      "gpu": "NVIDIA GeForce MX450 2GB",
+      "ram": "16GB RAM",
+      "storage": "512GB SSD",
+      "display": "15.6\" FHD IPS Anti-Glare",
+      "battery": "45Wh Battery",
+      "chassis": "آلومینیوم طبیعی نقره‌ای"
+    },
+    "specs": {
+      "brand": "HP",
+      "model": "ProBook 450 G8",
+      "grade": "گرید ++A اروپایی بسیار تمیز",
+      "techTinkScore": {
+        "overall": 90,
+        "batteryLife": 89,
+        "temperature": 92,
+        "processingPower": 88,
+        "usability": 95,
+        "buildQuality": 94,
+        "repairability": 98
+      },
+      "shortSpecs": {
+        "cpu": "Intel Core i5-1135G7",
+        "gpu": "NVIDIA GeForce MX450 2GB",
+        "ram": "16GB RAM",
+        "storage": "512GB SSD",
+        "display": "15.6\" FHD IPS Anti-Glare",
+        "battery": "45Wh Battery",
+        "chassis": "آلومینیوم طبیعی نقره‌ای"
+      },
+      "cpu": "Intel Core i5-1135G7 (4 Cores / 8 Threads, up to 4.2GHz, 8MB Cache)",
+      "gpu": "NVIDIA GeForce MX450 2GB GDDR5",
+      "ram": "16GB DDR4-3200MHz (دو اسلات، قابل ارتقا تا ۳۲ گیگابایت)",
+      "storage": "512GB PCIe NVMe M.2 SSD",
+      "display": "15.6\" FHD (1920x1080) IPS مات Anti-Glare 250 nits",
+      "chassis": "شاسی آلومینیومی در بخش درب و کیبورد با استاندارد نظامی MIL-STD-810H",
+      "battery": "45Wh سلامت بالای ۸۸٪ با شارژر اورجینال ۶۵ وات HP",
+      "weight": "1.74 kg",
+      "os": "Windows 11 Pro 64-bit",
+      "ports": "1x USB-C 3.2 Gen 2 (DisplayPort / Power Delivery), 3x USB 3.2 Gen 1, HDMI 1.4b, RJ-45 LAN, MicroSD Card Reader",
+      "npuScore": "22 TOPS"
+    },
+    "upgrades": {
+      "ram": [
+        {
+          "name": "۱۶ گیگابایت DDR4 (پیش‌فرض)",
+          "price": 0
+        },
+        {
+          "name": "۳۲ گیگابایت DDR4 پرسرعت",
+          "price": 1400000
+        }
+      ],
+      "storage": [
+        {
+          "name": "۵۱۲ گیگابایت NVMe SSD",
+          "price": 0
+        },
+        {
+          "name": "۱ ترابایت NVMe SSD پرسرعت",
+          "price": 1800000
+        }
+      ],
+      "display": [
+        {
+          "name": "۱۵.۶ اینچ FHD IPS مات ضد انعکاس",
+          "price": 0
+        }
+      ]
+    },
+    "highlights": [
+      "یکی از خوش‌قیمت‌ترین و پرفروش‌ترین لپ‌تاپ‌های اداری و دانشجویی استوک بازار ایران",
+      "مجهز به گرافیک مجزای MX450 انویدیا جهت اجرای بازی‌های سبک و کارهای گرافیکی و فتوشاپ",
+      "قابلیت ارتقای آسان رم و هارد با دو اسلات رم DDR4 و اسلات SSD M.2",
+      "کیبورد کامل دارای بخش عددی مجزا (NumPad) مقاوم در برابر نفوذ قطرات مایعات"
+    ]
+  }
 ];
 
 export const BLOG_POSTS = [

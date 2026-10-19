@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
+import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 
 export default function ProductPage({ 
   productSlug, 
@@ -922,6 +923,13 @@ export default function ProductPage({
           </div>
         </div>
       </section>
+      
+      {/* 2.5 APPLE-GRADE INTERACTIVE SCROLL & 3D HARDWARE SHOWCASE */}
+      <AppleFlagshipShowcase 
+        product={product} 
+        onSelectProduct={onSelectProduct} 
+        onAddToCart={handleAddToCart} 
+      />
 
       {/* Navigation Tabs for Detailed Sections */}
       <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
