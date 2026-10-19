@@ -7,6 +7,105 @@ import {
   ArrowRight, Shield, Layers, HelpCircle
 } from 'lucide-react';
 
+// Persian/Arabic Mojibake & Encoding Helpers
+export function sanitizeMojibake(text) {
+  if (!text || typeof text !== 'string') return text || '';
+  if (/[ØÙÚÛ]/.test(text)) {
+    try {
+      const bytes = new Uint8Array(text.length);
+      for (let i = 0; i < text.length; i++) {
+        bytes[i] = text.charCodeAt(i) & 0xff;
+      }
+      const decoded = new TextDecoder('utf-8').decode(bytes);
+      if (/[\u0600-\u06FF]/.test(decoded)) {
+        return decoded;
+      }
+    } catch (_) {}
+  }
+  return text;
+}
+
+export function decodeQuotedPrintable(text) {
+  if (!text || typeof text !== 'string') return text || '';
+  if (!text.includes('=')) return text;
+  try {
+    const unsoft = text.replace(/=\r?\n/g, '');
+    if (/=[0-9A-Fa-f]{2}/.test(unsoft)) {
+      const bytes = [];
+      let i = 0;
+      while (i < unsoft.length) {
+        if (unsoft[i] === '=' && i + 2 < unsoft.length && /^[0-9A-Fa-f]{2}$/.test(unsoft.slice(i + 1, i + 3))) {
+          bytes.push(parseInt(unsoft.slice(i + 1, i + 3), 16));
+          i += 3;
+        } else {
+          const code = unsoft.charCodeAt(i);
+          if (code < 128) {
+            bytes.push(code);
+          } else {
+            const u = new TextEncoder().encode(unsoft[i]);
+            for (const b of u) bytes.push(b);
+          }
+          i++;
+        }
+      }
+      const decoded = new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+      return sanitizeMojibake(decoded);
+    }
+  } catch (_) {}
+  return text;
+}
+
+export function decodeMimeWords(str) {
+  if (!str || typeof str !== 'string' || !str.includes('=?')) return str || '';
+  return str.replace(/=\?([^?]+)\?([BQbq])\?([^?]+)\?=/g, (_, charset, encoding, data) => {
+    try {
+      const enc = encoding.toUpperCase();
+      if (enc === 'B') {
+        const binStr = atob(data);
+        const bytes = new Uint8Array(binStr.length);
+        for (let i = 0; i < binStr.length; i++) {
+          bytes[i] = binStr.charCodeAt(i);
+        }
+        return new TextDecoder(charset || 'utf-8').decode(bytes);
+      } else if (enc === 'Q') {
+        const qp = data.replace(/_/g, ' ');
+        return decodeQuotedPrintable(qp);
+      }
+    } catch {}
+    return data;
+  });
+}
+
+export function cleanEmailText(text) {
+  if (!text) return '';
+  return sanitizeMojibake(decodeMimeWords(decodeQuotedPrintable(text)));
+}
+
+function getCleanHtml(html, text) {
+  let content = html || '';
+  if (!content && text) {
+    const safeText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    content = `<pre style="font-family: inherit; white-space: pre-wrap; font-size: 0.9rem; line-height: 1.8;">${safeText}</pre>`;
+  }
+  content = cleanEmailText(content);
+  if (/<!DOCTYPE|<html/i.test(content)) {
+    return content;
+  }
+  return `<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #1f2937; line-height: 1.6; word-break: break-word; }
+    a { color: #0284c7; }
+  </style>
+</head>
+<body>
+  ${content}
+</body>
+</html>`;
+}
+
 export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
   // Folder state: 'inbox' | 'sent'
   const [currentFolder, setCurrentFolder] = useState('inbox');
@@ -89,7 +188,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         const res = await fetch(`/api/admin/emails?${params.toString()}`, { headers: authHeaders });
         if (res.ok) {
           const data = await res.json();
-          const items = Array.isArray(data.items) ? data.items : [];
+          const items = Array.isArray(data.items) ? data.items : (Array.isArray(data.emails) ? data.emails : []);
           setInboxEmails(items);
 
           if (items.length > 0) {
@@ -107,7 +206,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
         const res = await fetch(`/api/admin/emails/sent?${params.toString()}`, { headers: authHeaders });
         if (res.ok) {
           const data = await res.json();
-          const items = Array.isArray(data.items) ? data.items : [];
+          const items = Array.isArray(data.items) ? data.items : (Array.isArray(data.emails) ? data.emails : []);
           setSentEmails(items);
 
           if (items.length > 0) {
@@ -948,8 +1047,8 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                           textOverflow: 'ellipsis'
                         }}>
                           {currentFolder === 'inbox' 
-                            ? (item.from_address || 'فرستنده ناشناس')
-                            : `به: ${item.to_address || 'گیرنده'}`
+                            ? (cleanEmailText(item.from_address) || 'فرستنده ناشناس')
+                            : `به: ${cleanEmailText(item.to_address) || 'گیرنده'}`
                           }
                         </span>
                       </div>
@@ -989,7 +1088,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
                     }}>
-                      {item.subject || '(بدون عنوان)'}
+                      {cleanEmailText(item.subject) || '(بدون عنوان)'}
                     </div>
 
                     {/* Badges */}
@@ -1056,7 +1155,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '12px' }}>
                   <div>
                     <h2 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      {selectedEmail.subject || '(بدون عنوان)'}
+                      {cleanEmailText(selectedEmail.subject) || '(بدون عنوان)'}
                     </h2>
                     {currentFolder === 'sent' && (
                       <span style={{
@@ -1105,13 +1204,13 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ color: 'var(--text-muted)', width: '60px' }}>فرستنده:</span>
                     <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: 700, direction: 'ltr' }}>
-                      {selectedEmail.from_address}
+                      {cleanEmailText(selectedEmail.from_address)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ color: 'var(--text-muted)', width: '60px' }}>گیرنده:</span>
                     <span style={{ color: 'var(--text-secondary)', direction: 'ltr' }}>
-                      {selectedEmail.to_address}
+                      {cleanEmailText(selectedEmail.to_address)}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1231,24 +1330,10 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                 position: 'relative'
               }}>
                 {viewTab === 'html' ? (
-                  selectedEmail.body_html ? (
+                  (selectedEmail.body_html || selectedEmail.body_text) ? (
                     <iframe
                       title="Email Content"
-                      srcDoc={`
-                        <!DOCTYPE html>
-                        <html dir="rtl" lang="fa">
-                        <head>
-                          <meta charset="utf-8">
-                          <style>
-                            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; color: #1f2937; line-height: 1.6; }
-                            a { color: #0284c7; }
-                          </style>
-                        </head>
-                        <body>
-                          ${selectedEmail.body_html}
-                        </body>
-                        </html>
-                      `}
+                      srcDoc={getCleanHtml(selectedEmail.body_html, selectedEmail.body_text)}
                       sandbox="allow-same-origin"
                       style={{
                         width: '100%',
@@ -1260,7 +1345,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     />
                   ) : (
                     <div style={{ padding: '24px', whiteSpace: 'pre-wrap', lineHeight: 1.8, color: '#1f2937' }}>
-                      {selectedEmail.body_text || '(محتوای متنی وجود ندارد)'}
+                      (محتوای متنی وجود ندارد)
                     </div>
                   )
                 ) : viewTab === 'text' ? (
@@ -1274,7 +1359,7 @@ export default function AdminWebmail({ authHeaders, onUnreadCountChange }) {
                     height: '100%',
                     direction: 'auto'
                   }}>
-                    {selectedEmail.body_text || selectedEmail.body_html?.replace(/<[^>]+>/g, '') || '(محتوای متنی یافت نشد)'}
+                    {cleanEmailText(selectedEmail.body_text || selectedEmail.body_html?.replace(/<[^>]+>/g, '')) || '(محتوای متنی یافت نشد)'}
                   </div>
                 ) : (
                   <div style={{

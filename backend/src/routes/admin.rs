@@ -7,6 +7,7 @@ use crate::routes::public::AppState;
 use crate::services::auth::{hash_password, Claims};
 use crate::services::mail_sender::{send_outgoing_email, OutgoingEmailInput};
 use crate::services::pricing::serialize_product;
+use crate::services::smtp_receiver::sanitize_mojibake;
 use crate::services::system::{get_full_system_metrics, probe_tcp_port};
 use axum::{
     extract::{Path, Query, State},
@@ -2312,10 +2313,33 @@ pub async fn list_admin_emails(
         .await
         .unwrap_or(0);
 
+    let sanitized_rows: Vec<Value> = rows.into_iter().map(|r| {
+        let clean_subj = sanitize_mojibake(&r.subject.unwrap_or_default());
+        let clean_from = sanitize_mojibake(&r.from_address);
+        let clean_text = sanitize_mojibake(&r.body_text.unwrap_or_default());
+        let clean_html = r.body_html.map(|h| sanitize_mojibake(&h));
+        let preview = clean_text.chars().take(150).collect::<String>();
+        json!({
+            "id": r.id,
+            "from_address": clean_from,
+            "to_address": r.to_address,
+            "subject": clean_subj,
+            "body_text": clean_text,
+            "body_html": clean_html,
+            "preview": preview,
+            "verification_code": r.verification_code,
+            "is_read": r.is_read,
+            "created_at": r.created_at,
+        })
+    }).collect();
+
     Ok(Json(json!({
-        "emails": rows,
+        "items": sanitized_rows,
+        "emails": sanitized_rows,
         "total": total,
-        "unread": unread
+        "totalCount": total,
+        "unread": unread,
+        "unreadCount": unread
     })))
 }
 
@@ -2351,8 +2375,8 @@ pub async fn get_admin_mail_server_status(
     let last_email_json = last_email.map(|m| {
         json!({
             "id": m.id,
-            "from": m.from_address,
-            "subject": m.subject,
+            "from": sanitize_mojibake(&m.from_address),
+            "subject": sanitize_mojibake(&m.subject.unwrap_or_default()),
             "verificationCode": m.verification_code,
             "receivedAt": m.created_at,
         })
@@ -2447,9 +2471,28 @@ pub async fn list_admin_sent_emails(
         .await
         .unwrap_or(0);
 
+    let sanitized_rows: Vec<Value> = rows.into_iter().map(|r| {
+        let clean_subj = sanitize_mojibake(&r.subject.unwrap_or_default());
+        let clean_text = sanitize_mojibake(&r.body_text.unwrap_or_default());
+        let clean_html = r.body_html.map(|h| sanitize_mojibake(&h));
+        json!({
+            "id": r.id,
+            "from_address": r.from_address,
+            "to_address": r.to_address,
+            "subject": clean_subj,
+            "body_text": clean_text,
+            "body_html": clean_html,
+            "status": r.status,
+            "error_message": r.error_message,
+            "created_at": r.created_at,
+        })
+    }).collect();
+
     Ok(Json(json!({
-        "emails": rows,
-        "total": total
+        "items": sanitized_rows,
+        "emails": sanitized_rows,
+        "total": total,
+        "totalCount": total
     })))
 }
 
@@ -2458,7 +2501,7 @@ pub async fn get_admin_sent_email_by_id(
     Path(id): Path<i64>,
     headers: HeaderMap,
     Query(query): Query<AdminQuery>,
-) -> Result<Json<SentEmailRow>, AppError> {
+) -> Result<Json<Value>, AppError> {
     check_admin(&headers, query.token.as_deref(), &state.config.token_secret)?;
     let email: SentEmailRow = sqlx::query_as::<_, SentEmailRow>("SELECT * FROM sent_emails WHERE id = ?")
         .bind(id)
@@ -2466,7 +2509,22 @@ pub async fn get_admin_sent_email_by_id(
         .await
         .map_err(|e| AppError::Database(e.to_string()))?
         .ok_or_else(|| AppError::NotFound("ایمیل ارسالی یافت نشد.".to_string()))?;
-    Ok(Json(email))
+
+    let clean_subj = sanitize_mojibake(&email.subject.unwrap_or_default());
+    let clean_text = sanitize_mojibake(&email.body_text.unwrap_or_default());
+    let clean_html = email.body_html.map(|h| sanitize_mojibake(&h));
+
+    Ok(Json(json!({
+        "id": email.id,
+        "from_address": email.from_address,
+        "to_address": email.to_address,
+        "subject": clean_subj,
+        "body_text": clean_text,
+        "body_html": clean_html,
+        "status": email.status,
+        "error_message": email.error_message,
+        "created_at": email.created_at,
+    })))
 }
 
 pub async fn delete_admin_sent_email(
@@ -2528,7 +2586,7 @@ pub async fn get_admin_inbox_email_by_id(
     Path(id): Path<i64>,
     headers: HeaderMap,
     Query(query): Query<AdminQuery>,
-) -> Result<Json<InboxEmailRow>, AppError> {
+) -> Result<Json<Value>, AppError> {
     check_admin(&headers, query.token.as_deref(), &state.config.token_secret)?;
 
     let _ = sqlx::query("UPDATE inbox_emails SET is_read = 1 WHERE id = ?").bind(id).execute(&state.pool).await;
@@ -2540,7 +2598,23 @@ pub async fn get_admin_inbox_email_by_id(
         .map_err(|e| AppError::Database(e.to_string()))?
         .ok_or_else(|| AppError::NotFound("ایمیل یافت نشد.".to_string()))?;
 
-    Ok(Json(email))
+    let clean_subj = sanitize_mojibake(&email.subject.unwrap_or_default());
+    let clean_from = sanitize_mojibake(&email.from_address);
+    let clean_text = sanitize_mojibake(&email.body_text.unwrap_or_default());
+    let clean_html = email.body_html.map(|h| sanitize_mojibake(&h));
+
+    Ok(Json(json!({
+        "id": email.id,
+        "from_address": clean_from,
+        "to_address": email.to_address,
+        "subject": clean_subj,
+        "body_text": clean_text,
+        "body_html": clean_html,
+        "raw_message": email.raw_message,
+        "verification_code": email.verification_code,
+        "is_read": 1,
+        "created_at": email.created_at,
+    })))
 }
 
 pub async fn mark_admin_email_read(
