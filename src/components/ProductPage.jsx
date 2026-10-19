@@ -41,6 +41,18 @@ export default function ProductPage({
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentNotice, setCommentNotice] = useState(null);
 
+  // Apple-grade Sticky Buy Bar & Perspective Switcher
+  const [showStickyBuyBar, setShowStickyBuyBar] = useState(false);
+  const angleLabels = ['نمای روبرو', 'کیبورد و تاچ‌پد', 'درگاه‌های جانبی', 'پشت شاسی'];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyBuyBar(window.scrollY > 480);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Drivers state
   const [drivers, setDrivers] = useState([]);
   const [driversLoading, setDriversLoading] = useState(false);
@@ -257,7 +269,40 @@ export default function ProductPage({
   };
 
   return (
-    <div className="container" style={{ paddingTop: '24px', paddingBottom: '80px' }}>
+    <>
+      {/* 0. APPLE STICKY BUY BAR (Floats into view on scroll past hero) */}
+      <div className={`apple-sticky-buy-bar ${showStickyBuyBar ? 'is-visible' : ''}`} role="region" aria-label="نوار خرید سریع">
+        <div className="apple-sticky-buy-bar-inner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <img 
+              src={images[activeImage] || product.image || '/vite.svg'} 
+              alt={product.name} 
+              style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '10px', background: '#f8fafc', padding: '2px', border: '1px solid var(--border-glass)', flexShrink: 0 }} 
+            />
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {product.name}
+              </div>
+              <div className="font-tech gradient-text" style={{ fontSize: '0.825rem', fontWeight: 800 }}>
+                {formatPrice(totalPrice)}
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button 
+              className="btn btn-primary" 
+              style={{ padding: '8px 18px', fontSize: '0.875rem', borderRadius: '10px' }}
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+            >
+              <ShoppingCart size={15} /> افزودن به سبد
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container" style={{ paddingTop: '24px', paddingBottom: '80px' }}>
       
       {/* Embedded mobile styles for product page */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -307,12 +352,12 @@ export default function ProductPage({
         
         {/* Right column: Gallery */}
         <div>
-          <div className="glass-card" style={{ padding: '12px', overflow: 'hidden', position: 'relative', marginBottom: '16px' }}>
+          <div className="glass-card" style={{ padding: '16px', overflow: 'hidden', position: 'relative', marginBottom: '14px', background: 'radial-gradient(circle at 50% 60%, rgba(56, 189, 248, 0.08) 0%, var(--glass-card-bg) 75%)' }}>
             <img 
               src={images[activeImage] || product.image} 
               alt={product.name} 
               className="product-main-img"
-              style={{ width: '100%', height: 'auto', maxHeight: '420px', aspectRatio: '16/10', objectFit: 'cover', borderRadius: '12px', display: 'block' }}
+              style={{ width: '100%', height: 'auto', maxHeight: '420px', aspectRatio: '16/10', objectFit: 'contain', borderRadius: '12px', display: 'block', filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.14))', transition: 'transform 260ms var(--ease-out)' }}
             />
             {product.badge && (
               <span className="badge badge-glow" style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -328,6 +373,23 @@ export default function ProductPage({
               </span>
             </div>
           </div>
+
+          {/* Angle / Perspective Selector Pills (Apple Style) */}
+          {images.length > 1 && (
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '12px' }}>
+              {images.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(idx)}
+                  className={`angle-pill ${activeImage === idx ? 'active' : ''}`}
+                  type="button"
+                >
+                  <Eye size={13} />
+                  {angleLabels[idx] || `زاویه ${idx + 1}`}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Thumbnails if multiple images */}
           {images.length > 1 && (
@@ -724,6 +786,142 @@ export default function ProductPage({
           </div>
         </div>
       </div>
+
+      {/* =========================================================
+          APPLE-GRADE BENTO GRID: HARDWARE HIGHLIGHTS AT A GLANCE
+          ========================================================= */}
+      <section style={{ marginBottom: '44px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <span className="badge badge-glow" style={{ fontSize: '0.725rem', padding: '3px 10px', marginBottom: '8px', display: 'inline-block' }}>
+            نوآوری و مهندسی
+          </span>
+          <h2 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
+            ویژگی‌های برجسته در یک نگاه
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: '4px 0 0 0' }}>
+            معماری قدرتمند سخت‌افزاری مهندسی‌شده برای پروژه‌های سنگین، رندرینگ حرفه‌ای و کاربری بدون افت عملکرد
+          </p>
+        </div>
+
+        <div className="apple-bento-grid">
+          {/* Card 1: Display (Wide 7 cols) */}
+          <div className="bento-card bento-col-7" style={{ minHeight: '220px', background: 'radial-gradient(circle at top right, hsla(var(--accent-cyan), 0.08) 0%, var(--glass-card-bg) 70%)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <div>
+                <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', marginBottom: '6px' }}>
+                  نمایشگر و تصویر
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+                  نمایشگر شفاف با تفکیک رنگی استثنایی
+                </h3>
+              </div>
+              <Monitor size={28} color="hsl(var(--accent-cyan))" style={{ opacity: 0.9 }} />
+            </div>
+            
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.6, margin: '0 0 16px 0' }}>
+              {shortSpecs.display ? `مجهز به پنل ${shortSpecs.display} با عمق رنگ سینمایی و زاویه دید گسترده جهت امور گرافیکی و تماشای محتوا با بالاترین دقت.` : 'دقت رنگی بالا، روشنایی فوق‌العاده و پوشش کامل طیف رنگی حرفه‌ای.'}
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-primary)' }}>
+                ۱۰۰٪ sRGB / DCI-P3
+              </span>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-primary)' }}>
+                روشنایی بالا ضد بازتاب
+              </span>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--text-primary)' }}>
+                زاویه دید ۱۷۸ درجه
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Processor Silicon (5 cols) */}
+          <div className="bento-card bento-col-5" style={{ minHeight: '220px', background: 'radial-gradient(circle at top left, hsla(var(--accent-purple), 0.08) 0%, var(--glass-card-bg) 70%)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <span className="badge" style={{ background: 'hsla(var(--accent-purple), 0.15)', color: 'hsl(var(--accent-purple))', marginBottom: '6px' }}>
+                  پردازنده مرکزی (CPU)
+                </span>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
+                  موتور پردازش بدون وقفه
+                </h3>
+              </div>
+              <Cpu size={28} color="hsl(var(--accent-purple))" style={{ opacity: 0.9 }} />
+            </div>
+
+            <div className="font-tech" style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', marginBottom: '10px' }}>
+              {shortSpecs.cpu}
+            </div>
+
+            <div style={{ marginTop: 'auto', background: 'var(--table-stripe)', padding: '10px 14px', borderRadius: '14px', border: '1px solid var(--border-glass)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>
+                <span style={{ color: 'var(--text-secondary)' }}>شاخص قدرت پردازشی تک‌تینک</span>
+                <span className="font-tech" style={{ color: 'hsl(var(--accent-purple))' }}>{product.scores?.processingPower ? `${product.scores.processingPower}/100` : '۹۲/۱۰۰'}</span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: `${product.scores?.processingPower || 92}%`, height: '100%', background: 'linear-gradient(90deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', borderRadius: '3px' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Graphics (4 cols) */}
+          <div className="bento-card bento-col-4" style={{ minHeight: '190px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.15)', color: 'hsl(var(--accent-green))' }}>
+                گرافیک و AI
+              </span>
+              <Zap size={22} color="hsl(var(--accent-green))" />
+            </div>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+              رندرینگ و شتاب‌دهی گرافیک
+            </h4>
+            <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', marginBottom: '8px' }}>
+              {shortSpecs.gpu}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: 0 }}>
+              بهینه‌سازی شده برای اجرای روان نرم‌افزارهای مهندسی، معماری، مدل‌های هوش مصنوعی و تدوین 4K.
+            </p>
+          </div>
+
+          {/* Card 4: Battery & Efficiency (4 cols) */}
+          <div className="bento-card bento-col-4" style={{ minHeight: '190px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span className="badge" style={{ background: 'rgba(234, 88, 12, 0.15)', color: '#ea580c' }}>
+                پایداری باتری
+              </span>
+              <Battery size={22} color="#ea580c" />
+            </div>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+              شارژدهی طولانی و مصرف بهینه
+            </h4>
+            <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', marginBottom: '8px' }}>
+              {shortSpecs.battery || 'باتری لیتیومی بادوام'}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: 0 }}>
+              فناوری مدیریت هوشمند توان جهت بازدهی پایدار باتری در ساعات طولانی کار و جابجایی.
+            </p>
+          </div>
+
+          {/* Card 5: Chassis & Build (4 cols) */}
+          <div className="bento-card bento-col-4" style={{ minHeight: '190px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
+                شاسی و بدنه
+              </span>
+              <Layers size={22} color="hsl(var(--accent-cyan))" />
+            </div>
+            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+              مهندسی متریال و ارگونومی
+            </h4>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              {shortSpecs.chassis || 'آلیاژ مستحکم فلزی'}
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem', margin: 0 }}>
+              طراحی ارگونومیک با انتقال حرارت بهینه و مقاومت فیزیکی بالا در برابر ضربه و استفاده روزمره.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Navigation Tabs for Detailed Sections */}
       <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>
@@ -1429,5 +1627,6 @@ export default function ProductPage({
       )}
 
     </div>
+    </>
   );
 }
