@@ -66,7 +66,7 @@ export default function HomeCustomizer({ authToken, onNotify }) {
     title: 'ویترین محصولات برگزیده و پیشنهادات ویژه',
     subtitle: 'دستچین تخصصی کارشناسان سخت‌افزار با بالاترین امتیاز عملکرد و سلامت قطعات',
     badge: 'پیشنهاد کارشناسان',
-    bannerText: 'تحویل اکسپرس در تهران و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
+    bannerText: 'تحویل اکسپرس در اصفهان و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
     productSlugs: []
   });
 
@@ -710,7 +710,7 @@ export default function HomeCustomizer({ authToken, onNotify }) {
                 className="input" 
                 value={showcase.bannerText || ''} 
                 onChange={(e) => setShowcase(prev => ({ ...prev, bannerText: e.target.value }))}
-                placeholder="مثال: تحویل اکسپرس در تهران و ارسال سریع با بیمه کامل"
+                placeholder="مثال: تحویل اکسپرس در اصفهان و ارسال سریع با بیمه کامل"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '12px' }}
               />
             </div>

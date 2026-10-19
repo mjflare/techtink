@@ -316,12 +316,12 @@ export const DEFAULT_SETTINGS = {
   torob_token: '',
   low_stock_threshold: '5',
   // Location & Contact Info
-  store_address: 'تهران، خیابان ولیعصر، تقاطع طالقانی، مجتمع نور تهران، طبقه همکف سوم، واحد ۸۰۲۴',
-  store_phone: '۰۲۱-۸۸۹۴۲۱۷۵',
+  store_address: 'اصفهان، خیابان حکیم نظامی، چهارراه شریعتی',
+  store_phone: '۰۳۱-۳۶۲۸۲۱۷۵',
   store_mobile: '۰۹۱۲-۳۴۵۶۷۸۹',
-  store_hours: 'شنبه تا چهارشنبه ۱۰:۰۰ الی ۱۹:۳۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۵:۰۰',
-  store_map_link: 'https://neshan.org/maps',
-  store_about: 'فروشگاه تخصصی تک‌تینک، مرجع مستقیم واردات و ارزیابی مهندسی لپ‌تاپ‌های استوک صنعتی، اداری و گیمینگ اروپا و آمریکا با ضمانت سلامت سخت‌افزاری و تست ۳۰ روزه در ایران.',
+  store_hours: 'شنبه تا چهارشنبه ۱۰:۰۰ الی ۲۰:۰۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۶:۰۰',
+  store_map_link: 'https://neshan.org/maps/@32.6368,51.6562,17z',
+  store_about: 'فروشگاه تخصصی تک‌تینک در اصفهان، مرجع مستقیم واردات و ارزیابی مهندسی لپ‌تاپ‌های استوک صنعتی، اداری و گیمینگ اروپا و آمریکا با ضمانت سلامت سخت‌افزاری و تست ۳۰ روزه در اصفهان.',
   // Social Media Channels
   telegram_url: 'https://t.me/techtink',
   instagram_url: 'https://instagram.com/techtink',
@@ -334,9 +334,9 @@ export const DEFAULT_SETTINGS = {
   // Google Search Console & SEO Optimization
   google_site_verification: '',
   google_analytics_id: '',
-  seo_meta_title: 'تک‌تینک | مرجع تخصصی خرید لپ‌تاپ‌های مهندسی، گیمینگ و اداری',
-  seo_meta_description: 'خرید تخصصی و آنلاین انواع لپ‌تاپ گیمینگ، رندرینگ و مهندسی با گارانتی طلایی، تست ۲۴ ساعته سخت‌افزار، تضمین اصالت قطعات و بهترین قیمت بازار در فروشگاه تخصصی تک‌تینک.',
-  seo_meta_keywords: 'خرید لپ تاپ, قیمت لپ تاپ گیمینگ, لپ تاپ مهندسی, مقایسه سخت افزار, لپ تاپ استوک, فروشگاه تک تینک, techtink',
+  seo_meta_title: 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های مهندسی و گیمینگ در اصفهان',
+  seo_meta_description: 'خرید تخصصی آنلاین و حضوری انواع لپ‌تاپ گیمینگ، رندرینگ و مهندسی در اصفهان (خیابان حکیم نظامی، چهارراه شریعتی) با گارانتی طلایی، تست ۲۴ ساعته سخت‌افزار، تضمین اصالت قطعات و بهترین قیمت بازار در فروشگاه تخصصی تک‌تینک.',
+  seo_meta_keywords: 'خرید لپ تاپ در اصفهان, قیمت لپ تاپ گیمینگ اصفهان, لپ تاپ مهندسی اصفهان, مقایسه سخت افزار, لپ تاپ استوک اصفهان, خرید لپ تاپ حکیم نظامی اصفهان, فروشگاه تک تینک, techtink isfahan',
   // Homepage Customizer Defaults
   homepage_announcement: JSON.stringify({
     active: true,
@@ -385,7 +385,7 @@ export const DEFAULT_SETTINGS = {
     title: 'ویترین محصولات برگزیده و پیشنهادات ویژه',
     subtitle: 'دستچین تخصصی کارشناسان سخت‌افزار با بالاترین امتیاز عملکرد و سلامت قطعات',
     badge: 'پیشنهاد کارشناسان',
-    bannerText: 'تحویل اکسپرس در تهران و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
+    bannerText: 'تحویل اکسپرس در اصفهان و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
     productSlugs: ['hp-zbook-fury-16-g9', 'dell-precision-5570', 'lenovo-thinkpad-p1-gen5', 'lenovo-thinkpad-t14']
   })
 };
@@ -554,6 +554,40 @@ function migrate() {
       }
     }
   } catch {}
+
+  // Ensure location and local SEO are updated to Isfahan
+  try {
+    const curAddr = db.get("SELECT value FROM settings WHERE key = 'store_address'");
+    if (curAddr && (curAddr.value.includes('تهران') || curAddr.value.includes('طالقانی') || curAddr.value.includes('ولیعصر'))) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'store_address'", 'اصفهان، خیابان حکیم نظامی، چهارراه شریعتی');
+    }
+    const curPh = db.get("SELECT value FROM settings WHERE key = 'store_phone'");
+    if (curPh && (curPh.value.includes('۰۲۱') || curPh.value.includes('021') || curPh.value.includes('8894') || curPh.value.includes('8822'))) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'store_phone'", '۰۳۱-۳۶۲۸۲۱۷۵');
+    }
+    const curMap = db.get("SELECT value FROM settings WHERE key = 'store_map_link'");
+    if (curMap && (curMap.value.includes('Tehran') || curMap.value === 'https://neshan.org/maps')) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'store_map_link'", 'https://neshan.org/maps/@32.6368,51.6562,17z');
+    }
+    const curSeoT = db.get("SELECT value FROM settings WHERE key = 'seo_meta_title'");
+    if (curSeoT && !curSeoT.value.includes('اصفهان')) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'seo_meta_title'", 'تک‌تینک | فروشگاه تخصصی لپ‌تاپ‌های مهندسی و گیمینگ در اصفهان');
+    }
+    const curSeoD = db.get("SELECT value FROM settings WHERE key = 'seo_meta_description'");
+    if (curSeoD && !curSeoD.value.includes('اصفهان')) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'seo_meta_description'", 'خرید تخصصی آنلاین و حضوری انواع لپ‌تاپ گیمینگ و مهندسی در اصفهان (خیابان حکیم نظامی، چهارراه شریعتی) با گارانتی طلایی، تست ۲۴ ساعته سخت‌افزار، تضمین اصالت قطعات و بهترین قیمت بازار در فروشگاه تخصصی تک‌تینک.');
+    }
+    const curSeoK = db.get("SELECT value FROM settings WHERE key = 'seo_meta_keywords'");
+    if (curSeoK && !curSeoK.value.includes('اصفهان')) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'seo_meta_keywords'", 'خرید لپ تاپ در اصفهان, قیمت لپ تاپ گیمینگ اصفهان, لپ تاپ مهندسی اصفهان, مقایسه سخت افزار, لپ تاپ استوک اصفهان, خرید لپ تاپ حکیم نظامی اصفهان, فروشگاه تک تینک, techtink isfahan');
+    }
+    const curAbout = db.get("SELECT value FROM settings WHERE key = 'store_about'");
+    if (curAbout && !curAbout.value.includes('اصفهان')) {
+      db.run("UPDATE settings SET value = ? WHERE key = 'store_about'", 'فروشگاه تخصصی تک‌تینک در اصفهان، مرجع مستقیم واردات و ارزیابی مهندسی لپ‌تاپ‌های استوک صنعتی، اداری و گیمینگ اروپا و آمریکا با ضمانت سلامت سخت‌افزاری و تست ۳۰ روزه در اصفهان.');
+    }
+  } catch (e) {
+    console.error("Migration location settings update error:", e);
+  }
 
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
     db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);

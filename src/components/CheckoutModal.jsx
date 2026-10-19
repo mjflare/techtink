@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 
 const PROVINCES = [
-  'تهران',
   'اصفهان',
+  'تهران',
   'خراسان رضوی',
   'فارس',
   'آذربایجان شرقی',

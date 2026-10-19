@@ -8,8 +8,8 @@ import {
 import { formatPrice } from '../utils/formatPrice.js';
 
 const PROVINCES = [
-  'تهران',
   'اصفهان',
+  'تهران',
   'خراسان رضوی',
   'فارس',
   'آذربایجان شرقی',
@@ -96,7 +96,7 @@ export default function UserDashboard({
     fullName: user?.savedAddress?.fullName || user?.name || '',
     phone: user?.savedAddress?.phone || user?.phone || user?.mobile || '',
     nationalId: user?.savedAddress?.nationalId || '',
-    province: user?.savedAddress?.province || 'تهران',
+    province: user?.savedAddress?.province || 'اصفهان',
     city: user?.savedAddress?.city || '',
     address: user?.savedAddress?.address || '',
     postalCode: user?.savedAddress?.postalCode || ''
@@ -128,7 +128,7 @@ export default function UserDashboard({
         fullName: user.savedAddress.fullName || user.name || '',
         phone: user.savedAddress.phone || user.phone || user.mobile || '',
         nationalId: user.savedAddress.nationalId || '',
-        province: user.savedAddress.province || 'تهران',
+        province: user.savedAddress.province || 'اصفهان',
         city: user.savedAddress.city || '',
         address: user.savedAddress.address || '',
         postalCode: user.savedAddress.postalCode || ''
@@ -973,7 +973,7 @@ export default function UserDashboard({
                     type="text"
                     value={addressForm.city}
                     onChange={e => setAddressForm({ ...addressForm, city: e.target.value })}
-                    placeholder="مثال: تهران"
+                    placeholder="مثال: اصفهان"
                     required
                   />
                 </div>
@@ -987,7 +987,7 @@ export default function UserDashboard({
                   rows={3}
                   value={addressForm.address}
                   onChange={e => setAddressForm({ ...addressForm, address: e.target.value })}
-                  placeholder="خیابان ولیعصر، تقاطع طالقانی، مجتمع تجاری نور، طبقه همکف سوم، واحد ۸۰۲۴"
+                  placeholder="اصفهان، خیابان حکیم نظامی، چهارراه شریعتی..."
                   required
                 />
               </div>

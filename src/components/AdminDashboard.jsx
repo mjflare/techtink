@@ -200,7 +200,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
     quantity: 1,
     courier: 'تیپاکس (Tipax)',
     tracking_number: '',
-    destination: 'تهران',
+    destination: 'اصفهان',
     recipient_name: '',
     notes: ''
   });
@@ -469,7 +469,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       const data = await res.json();
       if (res.ok) {
         setShipmentMessage({ type: 'success', text: `حواله خروج و ارسال مرسوله با موفقیت ثبت و از موجودی انبار کسر گردید.` });
-        setOutboundForm({ product_id: '', quantity: 1, courier: 'تیپاکس (Tipax)', tracking_number: '', destination: 'تهران', recipient_name: '', notes: '' });
+        setOutboundForm({ product_id: '', quantity: 1, courier: 'تیپاکس (Tipax)', tracking_number: '', destination: 'اصفهان', recipient_name: '', notes: '' });
         loadInventory();
         fetch('/api/admin/products', { headers: authHeaders })
           .then(res => res.json())
@@ -2214,7 +2214,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                       <option value="تیپاکس (Tipax)">تیپاکس (Tipax)</option>
                       <option value="پست پیشتاز">پست پیشتاز</option>
                       <option value="چاپار (Chapar)">چاپار (Chapar)</option>
-                      <option value="پیک موتوری ویژه تهران">پیک موتوری ویژه تهران</option>
+                      <option value="پیک موتوری ویژه اصفهان">پیک موتوری ویژه اصفهان</option>
                       <option value="تحویل حضوری در شوروم">تحویل حضوری در شوروم</option>
                       <option value="باربری هوایی / اتوبوسی">باربری هوایی / اتوبوسی</option>
                     </select>
@@ -3714,7 +3714,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                       type="text" 
                       value={settingsForm.store_address || ''} 
                       onChange={e => setSettingsForm({ ...settingsForm, store_address: e.target.value })} 
-                      placeholder="تهران، خیابان ولیعصر، تقاطع طالقانی..."
+                      placeholder="اصفهان، خیابان حکیم نظامی، چهارراه شریعتی..."
                     />
                   </div>
                   <div>
@@ -3723,7 +3723,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                       type="text" 
                       value={settingsForm.store_phone || ''} 
                       onChange={e => setSettingsForm({ ...settingsForm, store_phone: e.target.value })} 
-                      placeholder="۰۲۱-۸۸۲۲۶۶۰۰"
+                      placeholder="۰۳۱-۳۶۲۸۲۱۷۵"
                       style={{ direction: 'ltr' }}
                     />
                   </div>

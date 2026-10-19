@@ -7,12 +7,12 @@ import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon } from './SocialLogos
 
 export default function AboutUsModal({ isOpen, onClose, onOpenSupport }) {
   const [aboutData, setAboutData] = useState({
-    store_address: 'تهران، خیابان ولیعصر، تقاطع طالقانی، مجتمع تجاری نور تهران، طبقه همکف سوم، واحد ۸۰۲۴',
-    store_phone: '۰۲۱-۸۸۲۲۶۶۰۰',
+    store_address: 'اصفهان، خیابان حکیم نظامی، چهارراه شریعتی',
+    store_phone: '۰۳۱-۳۶۲۸۲۱۷۵',
     store_mobile: '۰۹۱۲-۳۴۵۶۷۸۹',
     store_hours: 'شنبه تا چهارشنبه ۱۰:۰۰ الی ۲۰:۰۰ | پنج‌شنبه‌ها ۱۰:۰۰ الی ۱۶:۰۰',
-    store_map_link: 'https://maps.google.com/?q=Tehran+Valiasr+TechTink',
-    store_about: 'تک‌تینک نخستین مرجع تخصصی بررسی سخت‌افزاری، بنچمارک‌های آزمایشگاهی و عرضه بی‌واسطه لپ‌تاپ‌های گیمینگ، اولترابوک‌ها و ورک‌استیشن‌ها (Workstation) در ایران است.',
+    store_map_link: 'https://neshan.org/maps/@32.6368,51.6562,17z',
+    store_about: 'فروشگاه تخصصی تک‌تینک در اصفهان، مرجع مستقیم واردات و ارزیابی مهندسی لپ‌تاپ‌های استوک صنعتی، اداری و گیمینگ اروپا و آمریکا با ضمانت سلامت سخت‌افزاری و تست ۳۰ روزه در اصفهان.',
     telegram_url: 'https://t.me/techtink',
     instagram_url: 'https://instagram.com/techtink',
     bale_url: 'https://ble.ir/techtink',

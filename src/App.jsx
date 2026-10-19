@@ -543,11 +543,11 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               <div className="flex" style={{ gap: '8px', alignItems: 'flex-start' }}>
                 <MapPin size={16} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span>{storeAboutInfo?.store_address || 'تهران، مجتمع تجاری نور، واحد ۸۰۲۴'}</span>
+                <span>{storeAboutInfo?.store_address || 'اصفهان، خیابان حکیم نظامی، چهارراه شریعتی'}</span>
               </div>
               <div className="flex" style={{ gap: '8px', alignItems: 'center' }}>
                 <Phone size={16} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
-                <span style={{ direction: 'ltr' }}>{storeAboutInfo?.store_phone || '۰۲۱-۸۸۲۲۶۶۰۰'}</span>
+                <span style={{ direction: 'ltr' }}>{storeAboutInfo?.store_phone || '۰۳۱-۳۶۲۸۲۱۷۵'}</span>
               </div>
             </div>
             <button 
