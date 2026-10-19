@@ -5,7 +5,7 @@ use crate::models::{
 use crate::routes::dbtools::check_admin;
 use crate::routes::public::AppState;
 use crate::services::auth::{hash_password, Claims};
-use crate::services::mail_sender::{send_outgoing_email, OutgoingEmailInput};
+use crate::services::mail_sender::{send_outgoing_email, OutgoingEmailInput, SmtpRelayConfig};
 use crate::services::pricing::serialize_product;
 use crate::services::smtp_receiver::sanitize_mojibake;
 use crate::services::system::{get_full_system_metrics, probe_tcp_port};
@@ -2417,6 +2417,8 @@ pub struct SendEmailInput {
     pub body_text: Option<String>,
     #[serde(rename = "bodyHtml")]
     pub body_html: Option<String>,
+    #[serde(rename = "relayConfig")]
+    pub relay_config: Option<SmtpRelayConfig>,
 }
 
 pub async fn send_admin_email(
@@ -2431,7 +2433,7 @@ pub async fn send_admin_email(
         return Err(AppError::BadRequest("آدرس ایمیل گیرنده الزامی است.".to_string()));
     }
 
-    send_outgoing_email(
+    let email_id = send_outgoing_email(
         &state.pool,
         OutgoingEmailInput {
             from: input.from.unwrap_or_else(|| "info@techtink.ir".to_string()),
@@ -2439,12 +2441,13 @@ pub async fn send_admin_email(
             subject: input.subject.unwrap_or_else(|| "پیام از فروشگاه تک‌تینک".to_string()),
             body_text: input.body_text.unwrap_or_default(),
             body_html: input.body_html,
+            relay_config: input.relay_config,
         },
     )
     .await
     .map_err(AppError::Internal)?;
 
-    Ok(Json(json!({ "success": true, "message": "ایمیل با موفقیت ارسال شد." })))
+    Ok(Json(json!({ "success": true, "emailId": email_id, "message": "ایمیل با موفقیت ارسال شد." })))
 }
 
 pub async fn list_admin_sent_emails(

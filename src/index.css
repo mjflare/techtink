@@ -65,11 +65,13 @@
 html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
+  touch-action: manipulation;
 }
 
 /* Eliminate 300ms mobile tap delay and prevent accidental button text selection */
-button, a, input, select, textarea, [role="button"], .btn, .dock-btn, .island-action-btn, .btn-compare {
+button, a, input, select, textarea, [role="button"], .btn, .dock-btn, .island-action-btn, .btn-compare, .glass-card, .search-preview-item, [tabindex] {
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button, .btn, .dock-btn, .island-action-btn, .btn-compare, .floating-island-capsule {
@@ -196,14 +198,20 @@ h1, h2, h3, h4, h5, h6 {
   will-change: transform;
 }
 
-/* Subtle tactile spring bounce on active press (User chosen: scale(0.97)) */
+/* Instant 0ms tactile feedback on active press */
+button:active, 
+a:active, 
+[role="button"]:active, 
 .btn:active, 
 .dock-btn:active, 
 .island-action-btn:active, 
 .btn-compare:active,
 .floating-island-capsule:active,
-.social-icon-btn:active {
-  transform: scale(0.97) !important;
+.social-icon-btn:active,
+.search-preview-item:active {
+  transform: scale(0.96) !important;
+  transition: transform 60ms ease-out !important;
+  opacity: 0.88;
 }
 
 .btn-primary {
@@ -273,9 +281,11 @@ h1, h2, h3, h4, h5, h6 {
   transition: all var(--transition-smooth);
 }
 
-.unified-glass-dock:hover {
-  border-color: var(--border-glass-hover);
-  box-shadow: var(--glass-specular), 0 10px 30px rgba(0, 0, 0, 0.2);
+@media (hover: hover) and (pointer: fine) {
+  .unified-glass-dock:hover {
+    border-color: var(--border-glass-hover);
+    box-shadow: var(--glass-specular), 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
 }
 
 .dock-btn {
@@ -293,10 +303,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: all var(--transition-fast);
 }
 
-.dock-btn:hover {
-  background: var(--btn-glass-hover);
-  border-color: var(--border-glass);
-  color: var(--text-primary);
+@media (hover: hover) and (pointer: fine) {
+  .dock-btn:hover {
+    background: var(--btn-glass-hover);
+    border-color: var(--border-glass);
+    color: var(--text-primary);
+  }
 }
 
 .dock-divider {
@@ -338,8 +350,10 @@ h1, h2, h3, h4, h5, h6 {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.dock-theme-switch:hover {
-  border-color: hsla(var(--accent-cyan), 0.45);
+@media (hover: hover) and (pointer: fine) {
+  .dock-theme-switch:hover {
+    border-color: hsla(var(--accent-cyan), 0.45);
+  }
 }
 
 @media (max-width: 480px) {
@@ -358,8 +372,10 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-.search-preview-item:hover {
-  background: var(--glass-bg-hover) !important;
+@media (hover: hover) and (pointer: fine) {
+  .search-preview-item:hover {
+    background: var(--glass-bg-hover) !important;
+  }
 }
 
 /* Floating Bottom Action Island (Dynamic Compare & Cart) */
@@ -367,9 +383,11 @@ h1, h2, h3, h4, h5, h6 {
   transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.floating-action-island:hover {
-  border-color: var(--border-glass-hover);
-  box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .floating-action-island:hover {
+    border-color: var(--border-glass-hover);
+    box-shadow: var(--glass-specular), 0 16px 36px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .floating-island-capsule {
@@ -382,8 +400,10 @@ h1, h2, h3, h4, h5, h6 {
   transition: background 0.2s ease;
 }
 
-.floating-island-capsule:hover {
-  background: var(--glass-bg-hover);
+@media (hover: hover) and (pointer: fine) {
+  .floating-island-capsule:hover {
+    background: var(--glass-bg-hover);
+  }
 }
 
 @keyframes islandFlyoutEnter {
@@ -428,18 +448,22 @@ h1, h2, h3, h4, h5, h6 {
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.island-action-btn:hover {
-  transform: scale(1.03);
+@media (hover: hover) and (pointer: fine) {
+  .island-action-btn:hover {
+    transform: scale(1.03);
+  }
 }
 
 .island-clear-btn {
   transition: transform 0.15s ease, background 0.15s ease;
 }
 
-.island-clear-btn:hover {
-  transform: scale(1.1);
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #ef4444 !important;
+@media (hover: hover) and (pointer: fine) {
+  .island-clear-btn:hover {
+    transform: scale(1.1);
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+  }
 }
 
 @media (max-width: 639px) {
@@ -454,10 +478,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, box-shadow 0.25s, background 0.25s;
 }
 
-.social-icon-btn:hover {
-  transform: translateY(-3px) scale(1.1);
-  border-color: hsla(var(--accent-cyan), 0.5);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px hsla(var(--accent-cyan), 0.2);
+@media (hover: hover) and (pointer: fine) {
+  .social-icon-btn:hover {
+    transform: translateY(-3px) scale(1.1);
+    border-color: hsla(var(--accent-cyan), 0.5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 16px hsla(var(--accent-cyan), 0.2);
+  }
 }
 
 /* Custom Scrollbar */
@@ -797,9 +823,11 @@ details[open] summary ~ * {
   transition: all var(--transition-fast);
 }
 
-.spec-pill:hover {
-  background: var(--glass-bg-hover);
-  border-color: hsla(var(--accent-cyan), 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .spec-pill:hover {
+    background: var(--glass-bg-hover);
+    border-color: hsla(var(--accent-cyan), 0.35);
+  }
 }
 
 .spec-card-grid {
@@ -819,9 +847,11 @@ details[open] summary ~ * {
   transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
 }
 
-.spec-section-card:hover {
-  border-color: hsla(var(--accent-cyan), 0.35);
-  box-shadow: var(--glass-specular), 0 12px 32px rgba(0, 0, 0, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .spec-section-card:hover {
+    border-color: hsla(var(--accent-cyan), 0.35);
+    box-shadow: var(--glass-specular), 0 12px 32px rgba(0, 0, 0, 0.08);
+  }
 }
 
 .spec-section-header {
@@ -1066,9 +1096,11 @@ details[open] summary ~ * {
   }
 }
 
-.compare-device-bar-card:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.03);
+@media (hover: hover) and (pointer: fine) {
+  .compare-device-bar-card:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+  }
 }
 
 /* =========================================================
@@ -1215,4 +1247,40 @@ details[open] summary ~ * {
   overflow: hidden;
   box-shadow: var(--glass-specular), 0 20px 50px rgba(0, 0, 0, 0.07);
 }
+
+/* =========================================================
+   Mobile WebKit & Safari Native Touch & GPU Optimizations
+   ========================================================= */
+@media (max-width: 768px) {
+  /* Eliminate heavy compositor fill rate crush on mobile WebKit */
+  body::before,
+  body::after {
+    display: none !important;
+  }
+
+  /* Lighten glass backdrop blur on mobile GPU */
+  .glass-panel {
+    backdrop-filter: blur(10px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(10px) saturate(140%) !important;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(8px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(8px) saturate(130%) !important;
+    will-change: auto !important;
+  }
+
+  .floating-action-island {
+    backdrop-filter: blur(12px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+  }
+
+  /* Disable hover bridges that intercept touch events on mobile */
+  .floating-action-island::before,
+  .floating-island-popover::after {
+    display: none !important;
+    pointer-events: none !important;
+  }
+}
+
 

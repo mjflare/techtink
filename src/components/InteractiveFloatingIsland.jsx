@@ -58,7 +58,10 @@ export default function InteractiveFloatingIsland({
     };
   }, []);
 
-  const isMobile = windowWidth < 640;
+  const isTouch = typeof window !== 'undefined' && (
+    (typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches) || windowWidth < 768
+  );
+  const isMobile = isTouch;
 
   // Close popover on outside click or Escape key
   useEffect(() => {
@@ -419,19 +422,21 @@ export default function InteractiveFloatingIsland({
           transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        {/* Invisible hover bridge extending upward toward popover */}
-        <div 
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '-24px',
-            left: 0,
-            right: 0,
-            height: '28px',
-            background: 'transparent',
-            pointerEvents: 'auto'
-          }} 
-        />
+        {/* Invisible hover bridge extending upward toward popover (desktop pointer only) */}
+        {!isTouch && (
+          <div 
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '-24px',
+              left: 0,
+              right: 0,
+              height: '28px',
+              background: 'transparent',
+              pointerEvents: 'auto'
+            }} 
+          />
+        )}
 
         {/* 1. Compare Icon Button */}
         {hasCompare && (
@@ -455,14 +460,15 @@ export default function InteractiveFloatingIsland({
               WebkitTapHighlightColor: 'transparent'
             }}
             onMouseEnter={() => {
-              if (!isMobile) handleOpenPopover('compare');
+              if (!isTouch) handleOpenPopover('compare');
             }}
             onMouseLeave={() => {
-              if (!isMobile) scheduleClosePopover(280);
+              if (!isTouch) scheduleClosePopover(280);
             }}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               cancelCloseTimeout();
-              if (isMobile) {
+              if (isTouch) {
                 setActivePopover(null);
                 if (onGoToCompare) onGoToCompare();
               } else {
@@ -527,14 +533,15 @@ export default function InteractiveFloatingIsland({
               WebkitTapHighlightColor: 'transparent'
             }}
             onMouseEnter={() => {
-              if (!isMobile) handleOpenPopover('cart');
+              if (!isTouch) handleOpenPopover('cart');
             }}
             onMouseLeave={() => {
-              if (!isMobile) scheduleClosePopover(280);
+              if (!isTouch) scheduleClosePopover(280);
             }}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               cancelCloseTimeout();
-              if (isMobile) {
+              if (isTouch) {
                 setActivePopover(null);
                 if (onOpenCart) onOpenCart();
               } else {
