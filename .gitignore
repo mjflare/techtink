@@ -12,6 +12,7 @@ dist-ssr/
 data/*.db
 data/*.sqlite
 data/*.sqlite3
+data/*.sql
 data/backups/*
 !data/backups/.gitkeep
 

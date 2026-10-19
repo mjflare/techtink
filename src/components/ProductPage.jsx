@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
   Cpu, HardDrive, Monitor, ArrowLeftRight, Plus, ShoppingCart, MessageSquare, 
-  Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, 
+  Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, Eye,
   ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
 } from 'lucide-react';
 import { toast } from 'sonner';

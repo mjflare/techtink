@@ -19,7 +19,8 @@
     "systemd": "node scripts/manage.js systemd",
     "ssl": "node scripts/manage.js ssl",
     "status": "node scripts/manage.js status",
-    "db": "node scripts/manage.js db"
+    "db": "node scripts/manage.js db",
+    "db:seed": "bun scripts/seed-db.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
