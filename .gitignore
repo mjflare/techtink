@@ -6,15 +6,20 @@ node_modules/
 # Production build output
 dist/
 dist-ssr/
+target/
+backend/target/
 *.local
 
 # SQLite Database & Backups
 data/*.db
+data/*.db-wal
+data/*.db-shm
 data/*.sqlite
 data/*.sqlite3
 data/*.sql
 data/backups/*
 !data/backups/.gitkeep
+backend/data/
 
 # Environment variables & secrets
 .env

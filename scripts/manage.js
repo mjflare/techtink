@@ -258,8 +258,10 @@ async function getDbInstance() {
 // 1. SERVICE CONTROLLER (x-ui Style: start, stop, restart, status, logs)
 // ==============================================================================
 function buildSystemdUnit({ user, cwd, execPath, port }) {
+  const rustBin = path.join(cwd, 'backend/target/release/techtink-server');
+  const execCmd = fs.existsSync(rustBin) ? rustBin : `${execPath} server.js`;
   return `[Unit]
-Description=TechTink E-Commerce Platform
+Description=TechTink E-Commerce Platform (High-Performance Engine)
 After=network.target
 Wants=network.target
 StartLimitIntervalSec=180
@@ -272,7 +274,7 @@ WorkingDirectory=${cwd}
 Environment=NODE_ENV=production
 Environment=PORT=${port}
 EnvironmentFile=-${path.join(cwd, '.env')}
-ExecStart=${execPath} server.js
+ExecStart=${execCmd}
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s

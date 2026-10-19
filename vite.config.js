@@ -11,12 +11,16 @@ export default defineConfig({
   ],
   build: {
     rolldownOptions: {
+      external: ['@google/model-viewer'],
       onwarn(warning, defaultHandler) {
         if (warning.code === 'MODULE_LEVEL_DIRECTIVE' && warning.message?.includes('use no memo')) {
           return;
         }
         defaultHandler(warning);
       },
+    },
+    rollupOptions: {
+      external: ['@google/model-viewer'],
     },
   },
   server: {

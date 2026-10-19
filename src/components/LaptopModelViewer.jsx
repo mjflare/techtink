@@ -20,17 +20,36 @@ export default function LaptopModelViewer({
   const [activeHotspot, setActiveHotspot] = useState(null);
   const [hasError, setHasError] = useState(false);
 
-  // Lazy-load @google/model-viewer only in browser environment
+  // Lazy-load model-viewer custom element in browser environment
   useEffect(() => {
     let isMounted = true;
-    import('@google/model-viewer')
-      .then(() => {
+    if (typeof window !== 'undefined' && customElements.get('model-viewer')) {
+      setIsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = '/js/model-viewer.min.js';
+    script.onload = () => {
+      if (isMounted) setIsLoaded(true);
+    };
+    script.onerror = () => {
+      // Fallback to CDN if local bundle fails
+      const cdnScript = document.createElement('script');
+      cdnScript.type = 'module';
+      cdnScript.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+      cdnScript.onload = () => {
         if (isMounted) setIsLoaded(true);
-      })
-      .catch((err) => {
-        console.warn('Failed to load @google/model-viewer:', err);
+      };
+      cdnScript.onerror = (err) => {
+        console.warn('Failed to load model-viewer script:', err);
         if (isMounted) setHasError(true);
-      });
+      };
+      document.head.appendChild(cdnScript);
+    };
+    document.head.appendChild(script);
+
     return () => { isMounted = false; };
   }, []);
 
