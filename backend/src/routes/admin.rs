@@ -2320,17 +2320,67 @@ pub async fn list_admin_emails(
 }
 
 pub async fn get_admin_mail_server_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     headers: HeaderMap,
     Query(query): Query<AdminQuery>,
 ) -> Result<Json<Value>, AppError> {
-    check_admin(&headers, query.token.as_deref(), &_state.config.token_secret)?;
+    check_admin(&headers, query.token.as_deref(), &state.config.token_secret)?;
+
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM inbox_emails")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
+
+    let unread: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM inbox_emails WHERE is_read = 0")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
+
+    let total_sent: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM sent_emails")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
+
+    let last_email = sqlx::query_as::<_, InboxEmailRow>(
+        "SELECT * FROM inbox_emails ORDER BY id DESC LIMIT 1"
+    )
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let last_email_json = last_email.map(|m| {
+        json!({
+            "id": m.id,
+            "from": m.from_address,
+            "subject": m.subject,
+            "verificationCode": m.verification_code,
+            "receivedAt": m.created_at,
+        })
+    });
+
+    let port = if state.config.smtp_port > 0 { state.config.smtp_port } else { 25 };
+
     Ok(Json(json!({
         "status": "online",
         "service": "Rust Axum Native RFC 5321 SMTP Listener",
-        "ports": [25, 2525],
+        "isListening": state.config.smtp_port > 0,
+        "port": port,
+        "totalEmails": total,
+        "unreadEmails": unread,
+        "totalSent": total_sent,
+        "lastEmail": last_email_json,
+        "ports": [port, 2525],
         "domain": "techtink.ir",
-        "mailbox": "info@techtink.ir"
+        "mailbox": "info@techtink.ir",
+        "dnsInstructions": {
+            "mxType": "MX",
+            "mxHost": "@ (techtink.ir)",
+            "mxTarget": "mail.techtink.ir",
+            "mxPriority": 10,
+            "aType": "A",
+            "aHost": "mail",
+            "proxyStatus": "DNS only (Grey Cloud in Cloudflare)"
+        }
     })))
 }
 

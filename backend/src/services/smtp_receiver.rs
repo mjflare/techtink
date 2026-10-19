@@ -7,6 +7,11 @@ use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 
 pub async fn start_smtp_listener(pool: SqlitePool, requested_port: u16) {
+    if requested_port == 0 {
+        tracing::info!("SMTP Receiver is disabled (SMTP_PORT=0)");
+        return;
+    }
+
     let candidate_ports = if requested_port == 25 {
         vec![25, 2525]
     } else {
@@ -14,7 +19,6 @@ pub async fn start_smtp_listener(pool: SqlitePool, requested_port: u16) {
     };
 
     let mut active_listener = None;
-    let mut bound_port = 0;
 
     for p in candidate_ports {
         let addr = SocketAddr::from(([0, 0, 0, 0], p));
@@ -22,7 +26,6 @@ pub async fn start_smtp_listener(pool: SqlitePool, requested_port: u16) {
             Ok(l) => {
                 tracing::info!("🚀 Native SMTP Server successfully listening on port {} (0.0.0.0:{})", p, p);
                 active_listener = Some(l);
-                bound_port = p;
                 break;
             }
             Err(e) => {
