@@ -404,6 +404,7 @@ function migrate() {
   try { db.exec("ALTER TABLE products ADD COLUMN brand TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN model TEXT;"); } catch {}
   try { db.exec("ALTER TABLE products ADD COLUMN grade TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN model3d_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE drivers ADD COLUMN download_url TEXT;"); } catch {}
   try { db.exec("ALTER TABLE blog_posts ADD COLUMN product_slug TEXT;"); } catch {}
   try { db.exec("ALTER TABLE warranties ADD COLUMN phone TEXT;"); } catch {}
@@ -588,6 +589,11 @@ function migrate() {
   } catch (e) {
     console.error("Migration location settings update error:", e);
   }
+
+  // Ensure default 3D GLB model is assigned to products
+  try {
+    db.run("UPDATE products SET model3d_url = '/models/laptop-flagship.glb' WHERE model3d_url IS NULL OR model3d_url = ''");
+  } catch {}
 
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
     db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);

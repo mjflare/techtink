@@ -23,6 +23,7 @@
     "db:seed": "bun scripts/seed-db.js"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.4.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "lucide-react": "^0.344.0",

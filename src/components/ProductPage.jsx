@@ -3,13 +3,14 @@ import {
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
   Cpu, HardDrive, Monitor, ArrowLeftRight, Plus, ShoppingCart, MessageSquare, 
   Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, Eye,
-  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
+  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X, Rotate3d
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs } from '../utils/shortSpecs.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
+import LaptopModelViewer from './LaptopModelViewer.jsx';
 
 export default function ProductPage({ 
   productSlug, 
@@ -27,6 +28,7 @@ export default function ProductPage({
 
   // Tab navigation inside product page
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'review', 'drivers', 'comments'
+  const [showcaseMode, setShowcaseMode] = useState('3d'); // '3d' or 'story'
 
   // Selected upgrades
   const [selectedRam, setSelectedRam] = useState(0);
@@ -925,11 +927,95 @@ export default function ProductPage({
       </section>
       
       {/* 2.5 APPLE-GRADE INTERACTIVE SCROLL & 3D HARDWARE SHOWCASE */}
-      <AppleFlagshipShowcase 
-        product={product} 
-        onSelectProduct={onSelectProduct} 
-        onAddToCart={handleAddToCart} 
-      />
+      <section style={{ marginBottom: '40px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', border: '1px solid hsla(var(--accent-cyan), 0.3)', padding: '3px 10px', fontSize: '0.75rem', fontWeight: 700 }}>
+                بررسی تعاملی سخت‌افزار
+              </span>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                تجربه تعاملی مهندسی و شبیه‌سازی قطعات
+              </h3>
+            </div>
+            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
+              امکان چرخش ۳۶۰ درجه، بررسی اجزای سخت‌افزاری، شبیه‌سازی لایو محفظه بخار و ساختار شاسی
+            </p>
+          </div>
+
+          {/* Segmented Mode Switcher */}
+          <div 
+            style={{
+              display: 'inline-flex',
+              padding: '4px',
+              borderRadius: '12px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid var(--border-glass)',
+              gap: '4px'
+            }}
+          >
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowcaseMode('3d')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: showcaseMode === '3d' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
+                color: showcaseMode === '3d' ? '#fff' : 'var(--text-secondary)',
+                fontWeight: showcaseMode === '3d' ? 700 : 500,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 200ms ease'
+              }}
+            >
+              <Rotate3d size={14} />
+              <span>مدل سه‌بعدی ۳۶۰°</span>
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => setShowcaseMode('story')}
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.8rem',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: showcaseMode === 'story' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
+                color: showcaseMode === 'story' ? '#fff' : 'var(--text-secondary)',
+                fontWeight: showcaseMode === 'story' ? 700 : 500,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 200ms ease'
+              }}
+            >
+              <Sparkles size={14} />
+              <span>شوکیس استوری اپل</span>
+            </button>
+          </div>
+        </div>
+
+        {showcaseMode === '3d' ? (
+          <LaptopModelViewer 
+            modelUrl={product.model3d_url || product.specs?.model3d_url || '/models/laptop-flagship.glb'} 
+            productName={product.name}
+            specs={product.shortSpecs || {}}
+            onAddToCart={handleAddToCart}
+          />
+        ) : (
+          <AppleFlagshipShowcase 
+            product={product} 
+            onSelectProduct={onSelectProduct} 
+            onAddToCart={handleAddToCart} 
+          />
+        )}
+      </section>
 
       {/* Navigation Tabs for Detailed Sections */}
       <div className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>

@@ -98,6 +98,7 @@ export function serializeProduct(p, { full = false } = {}) {
     expertReview,
     rating: rating.c ? Math.round(rating.avg * 10) / 10 : null,
     reviewsCount: rating.c,
+    model3d_url: p.model3d_url || specs.model3d_url || null,
     updatedAt: p.updated_at,
     createdAt: p.created_at,
   };

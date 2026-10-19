@@ -5,11 +5,12 @@ import {
   Code, AlertCircle, Sparkles, Maximize2, Minimize2, Check, ThumbsUp, 
   ThumbsDown, Layers, ShieldCheck, Plus, Video, Play, Trash2, Wand2, 
   FileText, ChevronDown, ChevronUp, Monitor, HardDrive, Battery, 
-  Activity, Flame, RefreshCw, Radio
+  Activity, Flame, RefreshCw, Radio, Rotate3d
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
+import LaptopModelViewer from './LaptopModelViewer.jsx';
 
 // Suggested tech photos for quick insertion in product reviews
 const TECH_PHOTO_PRESETS = [
@@ -445,6 +446,7 @@ export default function ProductEditorModal({
       ]
     },
     flagshipShowcase: null,
+    model3d_url: '/models/laptop-flagship.glb',
     expertReview: {
       intro: '',
       pros: '',
@@ -516,6 +518,7 @@ export default function ProductEditorModal({
         },
         upgrades: initialData.upgrades || { ram: [], storage: [], display: [] },
         flagshipShowcase: initialData.specs?.flagshipShowcase || initialData.flagshipShowcase || null,
+        model3d_url: initialData.model3d_url || initialData.specs?.model3d_url || '/models/laptop-flagship.glb',
         expertReview: {
           intro: initialData.expertReview?.intro || '',
           pros: Array.isArray(initialData.expertReview?.pros) ? initialData.expertReview.pros.join('\n') : (initialData.expertReview?.pros || ''),
@@ -971,7 +974,7 @@ export default function ProductEditorModal({
               { id: 'specs', label: 'مشخصات سخت‌افزار', icon: Cpu },
               { id: 'gallery', label: 'گالری چندزاویه‌ای', icon: Image, badge: '۴ زاویه' },
               { id: 'upgrades', label: 'ارتقای سخت‌افزاری', icon: Layers, badge: 'RAM/SSD' },
-              { id: 'flagship', label: 'شوکیس پرچمدار اپل', icon: Sparkles, badge: 'Apple 3D' },
+              { id: 'flagship', label: 'مدل ۳ بعدی و شوکیس اپل', icon: Rotate3d, badge: '3D / Apple' },
               { id: 'review', label: 'نقد و بررسی زنده', icon: BookOpen, badge: 'Studio' }
             ].map(tab => (
               <button
@@ -1594,6 +1597,37 @@ export default function ProductEditorModal({
                     </button>
                   </div>
 
+                  {/* 3D Model Configuration (GLB / GLTF) */}
+                  <div className="glass-panel" style={{ padding: '16px 18px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'hsl(var(--accent-cyan))' }}>
+                          <Rotate3d size={16} /> فایل مدل سه‌بعدی تعاملی ۳۶۰ درجه (.glb / .gltf)
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          آدرس فایل سه‌بعدی استاندارد وب برای چرخش ۳۶۰ درجه، بزرگ‌نمایی و نمایش واقعیت افزوده (AR).
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-glass"
+                        onClick={() => setFormData(prev => ({ ...prev, model3d_url: '/models/laptop-flagship.glb' }))}
+                        style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <RefreshCw size={13} /> استفاده از مدل پیش‌فرض پرچمدار
+                      </button>
+                    </div>
+
+                    <input 
+                      type="text"
+                      className="font-code"
+                      value={formData.model3d_url || ''}
+                      onChange={e => setFormData(prev => ({ ...prev, model3d_url: e.target.value }))}
+                      placeholder="مثال: /models/laptop-flagship.glb یا https://..."
+                      style={{ direction: 'ltr', fontSize: '0.8rem', padding: '10px 14px', borderRadius: '10px' }}
+                    />
+                  </div>
+
                   {/* Toggle Enable/Disable */}
                   <div className="glass-panel" style={{ padding: '14px 18px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -1847,9 +1881,14 @@ export default function ProductEditorModal({
                   </div>
                 )}
 
-                {/* 2. Apple Flagship Showcase Live Preview */}
+                {/* 2. Apple Flagship & 3D Model Live Preview */}
                 {previewSubTab === 'flagship' && (
-                  <div className="animate-fade-in">
+                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <LaptopModelViewer 
+                      modelUrl={formData.model3d_url || '/models/laptop-flagship.glb'}
+                      productName={formData.name || 'لپ‌تاپ'}
+                      specs={previewProduct.shortSpecs || {}}
+                    />
                     <AppleFlagshipShowcase 
                       product={previewProduct} 
                       onSelectProduct={() => {}} 
