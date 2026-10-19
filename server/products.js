@@ -121,11 +121,12 @@ export function serializeProduct(p, { full = false } = {}) {
   }));
   out.blogReview = out.blogReviews[0] || null;
   
+  out.images = db.all('SELECT url FROM product_images WHERE product_id = ? ORDER BY sort, id', p.id).map((r) => r.url);
+  if (!out.images.length && p.image) out.images = [p.image];
+  
   if (full) {
     out.description = p.description;
     out.highlights = parse(p.highlights, []);
-    out.images = db.all('SELECT url FROM product_images WHERE product_id = ? ORDER BY sort, id', p.id).map((r) => r.url);
-    if (!out.images.length && p.image) out.images = [p.image];
   }
   return out;
 }

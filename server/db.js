@@ -386,7 +386,7 @@ export const DEFAULT_SETTINGS = {
     subtitle: 'دستچین تخصصی کارشناسان سخت‌افزار با بالاترین امتیاز عملکرد و سلامت قطعات',
     badge: 'پیشنهاد کارشناسان',
     bannerText: 'تحویل اکسپرس در تهران و ارسال سریع به سراسر کشور با بیمه کامل مرسوله',
-    productSlugs: ['lenovo-thinkpad-t14', 'dell-precision-7530', 'hp-zbook-15-g6']
+    productSlugs: ['hp-zbook-fury-16-g9', 'dell-precision-5570', 'lenovo-thinkpad-p1-gen5', 'lenovo-thinkpad-t14']
   })
 };
 
@@ -462,65 +462,87 @@ function migrate() {
     }
   } catch {}
   
-  // Sync clean Iranian stock laptop inventory & clean Persian chassis
+  // Sync clean Iranian stock laptop inventory, multi-angle images & variants
   try {
-    const hasStock = db.get("SELECT id FROM products WHERE slug = 'lenovo-thinkpad-t14'");
-    if (!hasStock) {
-      console.log('[db] Migrating catalog to Iranian stock laptops from raitop.ir...');
-      db.tx(() => {
-        // Remove old demo products
-        db.run("DELETE FROM products WHERE slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13', 'neuralcraft-18', 'tink-blade-14', 'tink-student-15')");
-        // Insert new stock laptops
-        for (const l of LAPTOPS) {
-          const base = toToman(l.basePrice);
-          const old = l.oldPrice ? toToman(l.oldPrice) : Math.round(base * 1.08 / 100000) * 100000;
-          const { lastId } = db.run(
+    console.log('[db] Synchronizing Iranian market stock catalog, images and upgrade variants...');
+    db.tx(() => {
+      // Remove outdated legacy demo slugs
+      db.run("DELETE FROM products WHERE slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13', 'neuralcraft-18', 'tink-blade-14', 'tink-student-15', 'dell-precision-7530', 'hp-zbook-15-g6')");
+
+      for (const l of LAPTOPS) {
+        const base = toToman(l.basePrice);
+        const old = l.oldPrice ? toToman(l.oldPrice) : Math.round(base * 1.08 / 100000) * 100000;
+        let p = db.get("SELECT id FROM products WHERE slug = ?", l.id);
+        let prodId;
+
+        if (!p) {
+          const res = db.run(
             `INSERT INTO products (slug, name, brand, model, grade, tagline, category, series, badge, base_price, old_price, stock, image, specs, highlights, guarantee, chassis, cpu_brand, gpu_brand)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             l.id, l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, base, old,
             l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
             l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand
           );
+          prodId = res.lastId;
+        } else {
+          prodId = p.id;
+          db.run(
+            `UPDATE products SET name = ?, brand = ?, model = ?, grade = ?, tagline = ?, category = ?, series = ?, badge = ?, base_price = ?, old_price = ?, stock = ?, image = ?, specs = ?, highlights = ?, chassis = ?, cpu_brand = ?, gpu_brand = ? WHERE id = ?`,
+            l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, base, old,
+            l.stockCount, l.image, JSON.stringify(l.specs), JSON.stringify(l.highlights || []), l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand, prodId
+          );
+        }
+
+        // Sync product_variants (upgrades: RAM, Storage, Display)
+        if (l.upgrades) {
+          db.run("DELETE FROM product_variants WHERE product_id = ?", prodId);
           for (const type of ['ram', 'storage', 'display']) {
-            (l.upgrades?.[type] || []).forEach((v, i) =>
-              db.run('INSERT INTO product_variants (product_id, type, name, price, sort) VALUES (?, ?, ?, ?, ?)', lastId, type, v.name, toToman(v.price), i)
+            (l.upgrades[type] || []).forEach((v, i) =>
+              db.run('INSERT INTO product_variants (product_id, type, name, price, sort) VALUES (?, ?, ?, ?, ?)', prodId, type, v.name, toToman(v.price), i)
             );
           }
-          db.run('INSERT INTO product_images (product_id, url, sort) VALUES (?, ?, 0)', lastId, l.image);
         }
-      });
-    } else {
-      for (const l of LAPTOPS) {
-        db.run(
-          "UPDATE products SET name = ?, brand = ?, model = ?, grade = ?, tagline = ?, category = ?, series = ?, badge = ?, base_price = ?, old_price = ?, specs = ?, highlights = ?, chassis = ?, cpu_brand = ?, gpu_brand = ? WHERE slug = ?",
-          l.name, l.brand, l.model, l.grade, l.tagline, l.category, l.series, l.badge, toToman(l.basePrice), l.oldPrice ? toToman(l.oldPrice) : null,
-          JSON.stringify(l.specs), JSON.stringify(l.highlights || []), l.chassis || l.specs?.chassis, l.cpuBrand, l.gpuBrand, l.id
-        );
+
+        // Sync product_images (Multi-angle Apple gallery views)
+        const imgList = (l.images && l.images.length > 0) ? l.images : [l.image];
+        db.run("DELETE FROM product_images WHERE product_id = ?", prodId);
+        imgList.forEach((url, i) => {
+          db.run('INSERT INTO product_images (product_id, url, sort) VALUES (?, ?, ?)', prodId, url, i);
+        });
       }
-    }
+    });
   } catch (e) {
     console.error("Migration specs sync error:", e);
   }
 
-  // Update drivers and warranties if needed
+  // Update drivers and warranties
   try {
-    const hasNewDriver = db.get("SELECT id FROM drivers WHERE product_slug = 'lenovo-thinkpad-t14'");
-    if (!hasNewDriver) {
-      db.tx(() => {
-        db.run("DELETE FROM drivers WHERE product_slug IN ('tink-blade-16', 'tink-book-pro-14', 'aeroslim-x13')");
-        for (const d of DRIVER_DOWNLOADS) {
-          for (const f of d.files) {
-            db.run('INSERT INTO drivers (product_slug, model_name, name, date, size, version, category) VALUES (?, ?, ?, ?, ?, ?, ?)', d.modelId, d.modelName, f.name, f.date, f.size, f.version, f.category);
-          }
+    db.tx(() => {
+      db.run("DELETE FROM drivers WHERE 1=1");
+      for (const d of DRIVER_DOWNLOADS) {
+        for (const f of d.files) {
+          db.run('INSERT INTO drivers (product_slug, model_name, name, date, size, version, category) VALUES (?, ?, ?, ?, ?, ?, ?)', d.modelId, d.modelName, f.name, f.date, f.size, f.version, f.category);
         }
-      });
-    }
-    for (const w of Object.values(WARRANTY_DATABASE)) {
-      db.run('INSERT OR REPLACE INTO warranties (serial, model, purchase_date, expiry, status, care_plus, owner) VALUES (?, ?, ?, ?, ?, ?, ?)', w.serialNumber, w.model, w.purchaseDate, w.warrantyExpiry, w.status, w.carePlus ? 1 : 0, w.owner);
-    }
+      }
+      for (const w of Object.values(WARRANTY_DATABASE)) {
+        db.run('INSERT OR REPLACE INTO warranties (serial, model, purchase_date, expiry, status, care_plus, owner) VALUES (?, ?, ?, ?, ?, ?, ?)', w.serialNumber, w.model, w.purchaseDate, w.warrantyExpiry, w.status, w.carePlus ? 1 : 0, w.owner);
+      }
+    });
   } catch (e) {
     console.error("Migration drivers/warranties sync error:", e);
   }
+
+  // Ensure homepage_showcase points to real Iranian workstations
+  try {
+    const curShowcase = db.get("SELECT value FROM settings WHERE key = 'homepage_showcase'");
+    if (curShowcase) {
+      const parsed = JSON.parse(curShowcase.value);
+      if (parsed.productSlugs?.some(s => ['dell-precision-7530', 'hp-zbook-15-g6', 'tink-blade-16'].includes(s))) {
+        parsed.productSlugs = ['hp-zbook-fury-16-g9', 'dell-precision-5570', 'lenovo-thinkpad-p1-gen5', 'lenovo-thinkpad-t14'];
+        db.run("UPDATE settings SET value = ? WHERE key = 'homepage_showcase'", JSON.stringify(parsed));
+      }
+    }
+  } catch {}
 
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) {
     db.run('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)', k, v);

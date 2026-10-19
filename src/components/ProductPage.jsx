@@ -856,10 +856,10 @@ export default function ProductPage({
             <div style={{ marginTop: 'auto', background: 'var(--table-stripe)', padding: '10px 14px', borderRadius: '14px', border: '1px solid var(--border-glass)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>شاخص قدرت پردازشی تک‌تینک</span>
-                <span className="font-tech" style={{ color: 'hsl(var(--accent-purple))' }}>{product.scores?.processingPower ? `${product.scores.processingPower}/100` : '۹۲/۱۰۰'}</span>
+                <span className="font-tech" style={{ color: 'hsl(var(--accent-purple))' }}>{(product.techTinkScore?.processingPower || product.scores?.processingPower) ? `${product.techTinkScore?.processingPower || product.scores?.processingPower}/۱۰۰` : '۹۲/۱۰۰'}</span>
               </div>
               <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.08)', borderRadius: '3px', overflow: 'hidden' }}>
-                <div style={{ width: `${product.scores?.processingPower || 92}%`, height: '100%', background: 'linear-gradient(90deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', borderRadius: '3px' }} />
+                <div style={{ width: `${product.techTinkScore?.processingPower || product.scores?.processingPower || 92}%`, height: '100%', background: 'linear-gradient(90deg, hsl(var(--accent-purple)), hsl(var(--accent-cyan)))', borderRadius: '3px' }} />
               </div>
             </div>
           </div>
