@@ -184,7 +184,9 @@ async function main() {
     existing = db.get('SELECT * FROM users WHERE mobile = ?', mobile);
   }
 
-  const hashed = hashPassword(password);
+  const hashed = typeof globalThis.Bun !== 'undefined'
+    ? await Bun.password.hash(password, { algorithm: 'argon2id' })
+    : hashPassword(password);
 
   if (existing) {
     // Promote and update existing account

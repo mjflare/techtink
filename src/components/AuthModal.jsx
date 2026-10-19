@@ -258,12 +258,12 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
             <form onSubmit={handleLogin} className="animate-fade-in">
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={inputGroupStyle}>
-                  <label style={labelStyle}>ایمیل</label>
+                  <label style={labelStyle}>ایمیل یا شماره همراه</label>
                   <div style={inputWrapperStyle}>
                     <Mail size={16} style={inputIconStyle} />
                     <input
-                      type="email"
-                      placeholder="example@email.com"
+                      type="text"
+                      placeholder="ایمیل یا شماره همراه (مثال: 09121234567)"
                       required
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}

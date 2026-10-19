@@ -20,7 +20,12 @@ pub struct RegisterInput {
 
 #[derive(Debug, Deserialize)]
 pub struct LoginInput {
-    pub identifier: String, // email or mobile
+    pub identifier: Option<String>,
+    pub login: Option<String>,
+    pub email: Option<String>,
+    pub mobile: Option<String>,
+    pub phone: Option<String>,
+    pub username: Option<String>,
     pub password: String,
 }
 
@@ -121,24 +126,76 @@ pub async fn register(
     }))
 }
 
+fn normalize_iranian_mobile(input: &str) -> Option<String> {
+    if input.is_empty() {
+        return None;
+    }
+    let mut s = String::new();
+    for ch in input.chars() {
+        match ch {
+            '۰' | '٠' => s.push('0'),
+            '۱' | '١' => s.push('1'),
+            '۲' | '٢' => s.push('2'),
+            '۳' | '٣' => s.push('3'),
+            '۴' | '٤' => s.push('4'),
+            '۵' | '٥' => s.push('5'),
+            '۶' | '٦' => s.push('6'),
+            '۷' | '٧' => s.push('7'),
+            '۸' | '٨' => s.push('8'),
+            '۹' | '٩' => s.push('9'),
+            c if c.is_ascii_digit() => s.push(c),
+            _ => {}
+        }
+    }
+    if s.starts_with("98") {
+        s = format!("0{}", &s[2..]);
+    } else if s.len() == 10 && s.starts_with('9') {
+        s = format!("0{}", s);
+    }
+    if s.len() == 11 && s.starts_with("09") {
+        Some(s)
+    } else {
+        None
+    }
+}
+
 pub async fn login(
     State(state): State<AppState>,
     Json(input): Json<LoginInput>,
 ) -> Result<Json<AuthResponse>, AppError> {
-    let id_clean = input.identifier.trim();
+    let raw_id = input
+        .identifier
+        .or(input.login)
+        .or(input.email)
+        .or(input.mobile)
+        .or(input.phone)
+        .or(input.username)
+        .unwrap_or_default();
+    let id_clean = raw_id.trim();
+
     if id_clean.is_empty() || input.password.is_empty() {
         return Err(AppError::BadRequest(
             "شناسه کاربری (شماره همراه یا ایمیل) و کلمه عبور الزامی است.".to_string(),
         ));
     }
 
-    let user: Option<User> = sqlx::query_as(
-        "SELECT * FROM users WHERE mobile = ? OR email = ? LIMIT 1",
-    )
-    .bind(id_clean)
-    .bind(id_clean)
-    .fetch_optional(&state.pool)
-    .await?;
+    let norm_m = normalize_iranian_mobile(id_clean);
+    let id_lower = id_clean.to_lowercase();
+
+    let user: Option<User> = if let Some(ref m) = norm_m {
+        sqlx::query_as("SELECT * FROM users WHERE mobile = ? OR email = ? LIMIT 1")
+            .bind(m)
+            .bind(&id_lower)
+            .fetch_optional(&state.pool)
+            .await?
+    } else {
+        sqlx::query_as("SELECT * FROM users WHERE email = ? OR mobile = ? OR name = ? LIMIT 1")
+            .bind(&id_lower)
+            .bind(id_clean)
+            .bind(id_clean)
+            .fetch_optional(&state.pool)
+            .await?
+    };
 
     let user = match user {
         Some(u) => u,
