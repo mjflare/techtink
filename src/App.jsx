@@ -523,6 +523,7 @@ function App() {
         comparedLaptops={comparedLaptops}
         toggleCompare={toggleCompare}
         cartItems={cartItems}
+        setCartItems={setCartItems}
         cartCount={cartCount}
         cartSubtotal={cartSubtotal}
         onOpenCart={() => setIsCartOpen(true)}
