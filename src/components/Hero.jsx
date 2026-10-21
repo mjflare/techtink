@@ -16,6 +16,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   // Animation Progress: 0.0 to 1.0 (Scrubbed smoothly by scroll gestures)
   const [progress, setProgress] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
+  const isDismissedRef = useRef(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const isTransitioningRef = useRef(false);
   const [isMounted, setIsMounted] = useState(true);
@@ -127,7 +128,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   }, []);
 
   const handleProceedToStore = () => {
-    if (isDismissed || isTransitioningRef.current) return;
+    if (isDismissedRef.current || isTransitioningRef.current) return;
+    isDismissedRef.current = true;
     setIsTransitioning(true);
     isTransitioningRef.current = true;
     targetProgressRef.current = 1.18;
@@ -138,8 +140,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
     setTimeout(() => {
       setIsMounted(false);
-      const el = document.getElementById('shopping-center') || document.getElementById('catalog');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
     }, 700);
   };
 
@@ -547,14 +547,13 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       setProgress(p);
 
       // Dismiss only if user deliberately scrolls beyond 1.12
-      if (p >= 1.12 && targetProgressRef.current >= 1.12 && !isDismissed) {
+      if (p >= 1.12 && targetProgressRef.current >= 1.12 && !isDismissedRef.current) {
+        isDismissedRef.current = true;
         setIsDismissed(true);
         document.body.style.overflow = '';
         setTimeout(() => {
           setIsMounted(false);
-          const el = document.getElementById('shopping-center') || document.getElementById('catalog');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }, 650);
+        }, 700);
       }
 
       // Camera Choreography (Adaptive framing for both mobile portrait and desktop widescreen)
