@@ -7,7 +7,6 @@ import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import PromotionBanner from './components/PromotionBanner.jsx';
-import InteractiveBentoGrid from './components/InteractiveBentoGrid.jsx';
 import ProductShowcase from './components/ProductShowcase.jsx';
 import LaptopCatalog from './components/LaptopCatalog.jsx';
 import LaptopCustomizerModal from './components/LaptopCustomizerModal.jsx';
@@ -355,13 +354,6 @@ function App() {
           <PromotionBanner 
             config={homepageConfig?.promotion}
             onExploreClick={() => {
-              const el = document.getElementById('catalog');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-          />
-
-          <InteractiveBentoGrid 
-            onExploreCatalog={() => {
               const el = document.getElementById('catalog');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
