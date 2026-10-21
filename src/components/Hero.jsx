@@ -18,7 +18,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
 
-  // Momentum scrubbing refs (Tuned for an even longer, deliberate, cinema-grade scrub journey)
+  // Momentum scrubbing refs (Tuned for an extended, deliberate, cinema-grade scrub journey)
   const currentProgressRef = useRef(0);
   const targetProgressRef = useRef(0);
   const animationFrameRef = useRef(null);
@@ -37,7 +37,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     // Ultra-tuned scroll sensitivity for an extended, satisfying scrub distance
     const handleWheel = (e) => {
       e.preventDefault();
-      // Reduced from 0.00042 to 0.00025 for a longer, cinematic experience
       const delta = e.deltaY * 0.00025;
       targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
@@ -52,7 +51,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       touchStartYRef.current = currentY;
 
       if (e.cancelable) e.preventDefault();
-      // Reduced touch delta to 0.00065 for smooth swipe control
       const delta = diffY * 0.00065;
       targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
@@ -108,7 +106,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     targetProgressRef.current = val;
   };
 
-  // 2. THREE.JS 3D ENGINE (Laptop & Macrodata Refinement Number Crunching Focus)
+  // 2. THREE.JS 3D ENGINE (Sterile Lumon White Colorway & Macrodata Refinement Focus)
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -126,10 +124,11 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // --- Scene & Camera ---
+    // --- Scene & Camera (Sterile Lumon Off-White Environment) ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050a0e);
-    scene.fog = new THREE.FogExp2(0x050a0e, 0.075);
+    const lumonWhiteColor = new THREE.Color(0xf0f5f4); // Pristine Lumon White
+    scene.background = lumonWhiteColor;
+    scene.fog = new THREE.FogExp2(0xf0f5f4, 0.045);
 
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
     camera.position.set(0, 3.2, 7.8);
@@ -145,7 +144,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.2;
 
     // --- High-Resolution Dynamic CRT Offscreen Canvas ---
     const screenCanvas = document.createElement('canvas');
@@ -156,65 +155,87 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     screenTexture.minFilter = THREE.LinearFilter;
     screenTexture.magFilter = THREE.LinearFilter;
 
-    // --- Studio Lighting ---
-    const ambientLight = new THREE.AmbientLight(0x112622, 1.5);
+    // --- Sterile Lumon Lighting (Bright, shadowless corporate perfection) ---
+    const ambientLight = new THREE.AmbientLight(0xdcf0ec, 1.9); // Diffuse sterile white/mint
     scene.add(ambientLight);
 
-    // Overhead Fluorescent Panel Light
-    const ceilingLight = new THREE.DirectionalLight(0xe4fdf9, 2.2);
-    ceilingLight.position.set(0, 7.5, 2.5);
+    // Overhead Clinical White Fluorescent Key Light
+    const ceilingLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    ceilingLight.position.set(0, 8, 2.5);
     ceilingLight.castShadow = true;
     ceilingLight.shadow.mapSize.width = 1024;
     ceilingLight.shadow.mapSize.height = 1024;
     ceilingLight.shadow.bias = -0.001;
     scene.add(ceilingLight);
 
-    // Glowing CRT Phosphor Point Light (Projects onto laptop keyboard, chassis and desk)
-    const crtScreenLight = new THREE.PointLight(0x00ffb4, 0, 4.5);
+    // Glowing CRT Phosphor Point Light (Bright green glow from the screen)
+    const crtScreenLight = new THREE.PointLight(0x00ffb4, 0, 4.8);
     crtScreenLight.position.set(0, 1.45, 0.1);
     scene.add(crtScreenLight);
 
-    // Rim studio accent
-    const rimLight = new THREE.PointLight(0x38bdf8, 1.2, 8);
-    rimLight.position.set(-3.5, 3.2, -1.2);
-    scene.add(rimLight);
+    // Mint side fill light
+    const fillLight = new THREE.PointLight(0x5eead4, 0.8, 8);
+    fillLight.position.set(-3.5, 3.2, -1.2);
+    scene.add(fillLight);
 
     const group = new THREE.Group();
     scene.add(group);
 
-    // --- 1. LIMINAL OFFICE ROOM (Severance Floor Grid & Overhead Bars) ---
+    // --- 1. STERILE LUMON WHITE BACK WALL WITH ARCHITECTURAL DIVISION SEAMS ---
+    const wallGeo = new THREE.PlaneGeometry(36, 14);
+    const wallMat = new THREE.MeshStandardMaterial({
+      color: 0xfafcfc, // Clinical white wall
+      roughness: 0.35,
+      metalness: 0.05
+    });
+    const backWall = new THREE.Mesh(wallGeo, wallMat);
+    backWall.position.set(0, 5, -4.5);
+    backWall.receiveShadow = true;
+    group.add(backWall);
+
+    // Minimal architectural wall seams (Vertical & Horizontal divider lines)
+    for (let x = -8; x <= 8; x += 4) {
+      const seamGeo = new THREE.BoxGeometry(0.015, 12, 0.01);
+      const seamMat = new THREE.MeshBasicMaterial({ color: 0xd1dedc });
+      const seam = new THREE.Mesh(seamGeo, seamMat);
+      seam.position.set(x, 5, -4.49);
+      group.add(seam);
+    }
+
+    // --- 2. ICONIC LUMON SEAFOAM GREEN CARPET FLOOR ---
     const floorGeo = new THREE.PlaneGeometry(36, 36);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x081a17,
-      roughness: 0.82,
-      metalness: 0.15
+      color: 0x0f2d26, // Iconic Lumon carpet green
+      roughness: 0.8,
+      metalness: 0.12
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     group.add(floor);
 
-    const gridHelper = new THREE.GridHelper(30, 30, 0x00ffb4, 0x0f2b26);
+    // Crisp white/mint grid helper lines
+    const gridHelper = new THREE.GridHelper(30, 30, 0x00e5a3, 0x1b4d42);
     gridHelper.position.y = 0.005;
     gridHelper.material.opacity = 0.35;
     gridHelper.material.transparent = true;
     group.add(gridHelper);
 
-    // Overhead Fluorescent Light Bars
+    // Overhead Fluorescent Light Fixtures (Crisp white housing)
     for (let i = -1; i <= 1; i++) {
-      const fixGeo = new THREE.BoxGeometry(0.5, 0.08, 4.5);
-      const fixMat = new THREE.MeshBasicMaterial({ color: 0xecfffa });
+      const fixGeo = new THREE.BoxGeometry(0.55, 0.08, 4.6);
+      const fixMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const fixMesh = new THREE.Mesh(fixGeo, fixMat);
-      fixMesh.position.set(i * 3.8, 5.5, 0);
+      fixMesh.position.set(i * 3.8, 5.6, 0);
       group.add(fixMesh);
     }
 
-    // --- 2. THE DESK (Minimalist Executive Workstation) ---
+    // --- 3. PRISTINE LUMON WHITE MATTE DESK ---
     const deskTopGeo = new THREE.BoxGeometry(3.6, 0.1, 1.8);
     const deskMat = new THREE.MeshStandardMaterial({
-      color: 0x112421,
-      roughness: 0.32,
-      metalness: 0.28
+      color: 0xffffff, // Pure pristine white lacquer desk
+      roughness: 0.22,
+      metalness: 0.1
     });
     const deskTop = new THREE.Mesh(deskTopGeo, deskMat);
     deskTop.position.set(0, 1.1, 0);
@@ -222,9 +243,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     deskTop.receiveShadow = true;
     group.add(deskTop);
 
-    // Chrome legs
+    // Brushed Chrome Legs
     const legGeo = new THREE.CylinderGeometry(0.038, 0.038, 1.1, 16);
-    const legMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.2 });
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.15 });
     [[-1.65, -0.7], [1.65, -0.7], [-1.65, 0.7], [1.65, 0.7]].forEach(([x, z]) => {
       const leg = new THREE.Mesh(legGeo, legMat);
       leg.position.set(x, 0.55, z);
@@ -232,31 +253,30 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       group.add(leg);
     });
 
-    // --- 3. LUXURY PACKAGING BOX (Unboxes in Stage 1) ---
+    // --- 4. MINIMALIST APPLE/LUMON WHITE LUXURY PACKAGING BOX ---
     const boxGroup = new THREE.Group();
     boxGroup.position.set(-0.75, 1.18, 0.2);
     group.add(boxGroup);
 
     const boxBaseGeo = new THREE.BoxGeometry(1.05, 0.24, 0.82);
-    const boxMat = new THREE.MeshStandardMaterial({ color: 0x141b22, roughness: 0.45, metalness: 0.3 });
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.05 });
     const boxBase = new THREE.Mesh(boxBaseGeo, boxMat);
     boxBase.castShadow = true;
     boxBase.receiveShadow = true;
     boxGroup.add(boxBase);
 
     const boxLidGeo = new THREE.BoxGeometry(1.07, 0.1, 0.84);
-    const boxLidMat = new THREE.MeshStandardMaterial({ color: 0x1c2630, roughness: 0.35, metalness: 0.4 });
+    const boxLidMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.18, metalness: 0.05 });
     const boxLid = new THREE.Mesh(boxLidGeo, boxLidMat);
     boxLid.position.set(0, 0.14, 0);
     boxLid.castShadow = true;
     boxGroup.add(boxLid);
 
-    // --- 4. THE 3D LAPTOP (The Star of the Scene) ---
+    // --- 5. THE 3D LAPTOP (Deep Space Gray Aluminum - Crisp contrast on white desk) ---
     const laptopGroup = new THREE.Group();
     laptopGroup.position.set(0, 1.18, 0);
     group.add(laptopGroup);
 
-    // Base Chassis
     const baseGeo = new THREE.BoxGeometry(1.22, 0.034, 0.84);
     const chassisMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
@@ -268,7 +288,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     laptopBase.receiveShadow = true;
     laptopGroup.add(laptopBase);
 
-    // Milled Keyboard Deck with Phosphor Backlight Underglow
+    // Keyboard Deck Inset
     const kbGeo = new THREE.BoxGeometry(1.02, 0.008, 0.46);
     const kbMat = new THREE.MeshStandardMaterial({
       color: 0x070b12,
@@ -288,19 +308,19 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     trackpad.position.set(0, 0.018, 0.25);
     laptopGroup.add(trackpad);
 
-    // Screen Hinge Pivot
+    // Screen Hinge
     const screenHinge = new THREE.Group();
     screenHinge.position.set(0, 0.02, -0.42);
     laptopGroup.add(screenHinge);
 
-    // Screen Lid Back Shell
+    // Screen Lid Back
     const lidGeo = new THREE.BoxGeometry(1.22, 0.84, 0.025);
     const screenLid = new THREE.Mesh(lidGeo, chassisMat);
     screenLid.position.set(0, 0.42, 0);
     screenLid.castShadow = true;
     screenHinge.add(screenLid);
 
-    // OLED Display Panel (Dynamic Canvas Texture with Severance Numbers)
+    // OLED Display Panel
     const displayGeo = new THREE.PlaneGeometry(1.16, 0.79);
     const displayMat = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false });
     const display = new THREE.Mesh(displayGeo, displayMat);
@@ -309,7 +329,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
     screenHinge.rotation.x = Math.PI / 2; // Flat / Closed initially
 
-    // --- 5. FLOATING 3D MACRODATA REFINEMENT DATA CUBES ---
+    // --- 6. FLOATING 3D MACRODATA REFINEMENT DATA CUBES ---
     const cubeGroup = new THREE.Group();
     group.add(cubeGroup);
 
@@ -335,7 +355,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       floatCubes.push({ mesh, speed: 0.5 + Math.random() });
     }
 
-    // --- 6. DYNAMIC NUMBER CRUNCHING CANVAS FUNCTION ---
+    // --- 7. DYNAMIC NUMBER CRUNCHING CANVAS FUNCTION ---
     let frameTicker = 0;
     const drawSeveranceDisplay = (scrubProgress) => {
       frameTicker++;
@@ -375,7 +395,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           72
         );
 
-        // Macrodata Refinement Number Bins Grid (Crunching & Sorting Numbers)
+        // Macrodata Refinement Number Bins Grid
         const cols = 9;
         const rows = 5;
         const startX = 36;
@@ -383,13 +403,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
         for (let r = 0; r < rows; r++) {
           for (let col = 0; col < cols; col++) {
-            // Numbers jitter, sort, and bounce in clusters
             const numSeed = ((r * cols + col) * 47 + Math.floor(frameTicker / 12)) % 9999;
             const numStr = String(numSeed).padStart(4, '0');
             const isScary = (r + col + Math.floor(frameTicker / 24)) % 4 === 0;
 
             if (completion >= 100) {
-              screenCtx.fillStyle = '#00e5a3'; // Peaceful harmonious phosphor at 100%
+              screenCtx.fillStyle = '#00e5a3';
             } else {
               screenCtx.fillStyle = isScary ? '#ffffff' : '#00e5a3';
             }
@@ -424,7 +443,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     // --- Main Render Loop ---
     let firstFrame = true;
     const render = () => {
-      // Lerp scrub progress
       currentProgressRef.current += (targetProgressRef.current - currentProgressRef.current) * 0.12;
       const p = currentProgressRef.current;
       setProgress(p);
@@ -439,8 +457,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }, 650);
       }
 
-      // Camera Choreography Focused 100% on the Laptop:
-      // Starts wide (surveillance) -> dollies in to dramatic 3/4 macro view of laptop & screen
+      // Camera Choreography:
       const progressClamped = Math.min(0.85, p);
       const camTargetZ = THREE.MathUtils.lerp(7.8, 2.5, progressClamped / 0.85);
       const camTargetY = THREE.MathUtils.lerp(3.2, 1.48, progressClamped / 0.85);
@@ -472,7 +489,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       const lidOpen = THREE.MathUtils.clamp((p - 0.26) / 0.28, 0, 1);
       screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
 
-      // CRT Light Glow (Floods onto chassis and desk)
+      // CRT Light Glow (Floods onto chassis and white desk)
       const crtGlow = THREE.MathUtils.clamp((p - 0.35) / 0.24, 0, 1);
       crtScreenLight.intensity = crtGlow * 4.2;
 
@@ -525,7 +542,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
   const p = Math.max(0, Math.min(1.15, progress));
 
-  // Telemetry Chapters (Factual, zero slogans)
+  // Telemetry Chapters (Clean Lumon Swiss Telemetry)
   let sceneIndex = '01';
   let sceneTag = 'SECTOR 01 // ARRIVAL & PACKAGING DISASSEMBLY';
   let sceneSub = 'UNSEAL MATTE COMPOSITE ENCLOSURE';
@@ -557,8 +574,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         width: '100vw',
         height: '100svh',
         zIndex: 9999,
-        background: '#050a0e',
-        color: '#ffffff',
+        background: '#f0f5f4', // Lumon pristine off-white portal background
+        color: '#0f172a',
         overflow: 'hidden',
         userSelect: 'none',
         transform: `translateY(-${curtainLift}%)`,
@@ -581,46 +598,46 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }} 
       />
 
-      {/* SEVERANCE ENGINE LOADING HUD */}
+      {/* SEVERANCE ENGINE LOADING HUD (Pristine Lumon White Aesthetic) */}
       {!isEngineReady && (
         <div style={{
           position: 'absolute',
           inset: 0,
           zIndex: 60,
-          background: '#050a0e',
+          background: '#f0f5f4',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
           gap: '16px',
-          color: '#00e5a3'
+          color: '#0f2d26'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3' }} />
-            <span className="font-tech" style={{ fontSize: '0.82rem', fontWeight: 900, letterSpacing: '2.5px' }}>
+            <span className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '2.5px', color: '#0f2d26' }}>
               LUMON MDR-04 ENGINE // INITIALIZING...
             </span>
           </div>
 
-          <div style={{ width: '220px', height: '2px', background: 'rgba(0, 229, 163, 0.15)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ width: '220px', height: '3px', background: 'rgba(0, 229, 163, 0.25)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{ width: `${loadingPercent}%`, height: '100%', background: '#00e5a3', boxShadow: '0 0 8px #00e5a3', transition: 'width 0.1s linear' }} />
           </div>
 
-          <span className="font-tech" style={{ fontSize: '0.62rem', color: '#64748b', letterSpacing: '1px' }}>
+          <span className="font-tech" style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '1px' }}>
             COMPILING RETINA SHADERS & 3D ASSETS
           </span>
         </div>
       )}
 
-      {/* Cinematic Letterboxing Bars */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#020406', zIndex: 30, borderBottom: '1px solid rgba(0, 229, 163, 0.1)' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#020406', zIndex: 30, borderTop: '1px solid rgba(0, 229, 163, 0.1)' }} />
+      {/* Cinematic Letterboxing Bars (Lumon Deep Slate with Mint Laser Seams) */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderBottom: '1.5px solid #00e5a3' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderTop: '1.5px solid #00e5a3' }} />
 
       {/* Viewfinder Crosshairs */}
-      <div style={{ position: 'absolute', top: '50px', left: '36px', width: '14px', height: '14px', borderTop: '1px solid rgba(0, 229, 163, 0.4)', borderLeft: '1px solid rgba(0, 229, 163, 0.4)', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', top: '50px', right: '36px', width: '14px', height: '14px', borderTop: '1px solid rgba(0, 229, 163, 0.4)', borderRight: '1px solid rgba(0, 229, 163, 0.4)', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', bottom: '50px', left: '36px', width: '14px', height: '14px', borderBottom: '1px solid rgba(0, 229, 163, 0.4)', borderLeft: '1px solid rgba(0, 229, 163, 0.4)', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', bottom: '50px', right: '36px', width: '14px', height: '14px', borderBottom: '1px solid rgba(0, 229, 163, 0.4)', borderRight: '1px solid rgba(0, 229, 163, 0.4)', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', top: '50px', left: '36px', width: '14px', height: '14px', borderTop: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', top: '50px', right: '36px', width: '14px', height: '14px', borderTop: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: '50px', left: '36px', width: '14px', height: '14px', borderBottom: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: '50px', right: '36px', width: '14px', height: '14px', borderBottom: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
 
       {/* TOP VIEWFINDER HUD */}
       <div 
@@ -637,10 +654,10 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         dir="ltr"
       >
         <div>
-          <span className="font-tech" style={{ fontSize: '0.74rem', fontWeight: 900, letterSpacing: '2.5px', color: '#00e5a3' }}>
+          <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: '2.5px', color: '#0f2d26' }}>
             LUMON // TECHTINK DIVISION
           </span>
-          <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block', letterSpacing: '1px' }}>
+          <span style={{ fontSize: '0.62rem', color: '#475569', display: 'block', letterSpacing: '1px' }}>
             TERMINAL 04 · SEVERED LEVEL
           </span>
         </div>
@@ -658,47 +675,51 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               onClick={() => handleJumpToScene(s.val)}
               className="font-tech"
               style={{
-                background: sceneIndex === `0${s.id}` ? 'rgba(0, 229, 163, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                border: `1px solid ${sceneIndex === `0${s.id}` ? '#00e5a3' : 'rgba(255, 255, 255, 0.1)'}`,
-                color: sceneIndex === `0${s.id}` ? '#00e5a3' : '#94a3b8',
+                background: sceneIndex === `0${s.id}` ? 'rgba(0, 229, 163, 0.2)' : 'rgba(255, 255, 255, 0.8)',
+                border: `1.5px solid ${sceneIndex === `0${s.id}` ? '#00e5a3' : '#cbd5e1'}`,
+                color: sceneIndex === `0${s.id}` ? '#0f2d26' : '#475569',
                 padding: '4px 10px',
                 borderRadius: '4px',
                 fontSize: '0.65rem',
+                fontWeight: 700,
                 cursor: 'pointer',
                 letterSpacing: '1px',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                backdropFilter: 'blur(8px)'
               }}
             >
               {s.label}
             </button>
           ))}
 
+          {/* Persian Quick Skip Button */}
           <button
             type="button"
             onClick={handleProceedToStore}
-            className="font-tech"
             style={{
-              background: 'rgba(0, 229, 163, 0.12)',
-              border: '1px solid rgba(0, 229, 163, 0.45)',
+              background: '#0d1816',
+              border: '1.5px solid #00e5a3',
               color: '#00e5a3',
-              fontSize: '0.68rem',
+              fontSize: '0.74rem',
               fontWeight: 800,
-              padding: '5px 12px',
-              borderRadius: '4px',
+              padding: '6px 14px',
+              borderRadius: '6px',
               cursor: 'pointer',
-              letterSpacing: '1px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              fontFamily: 'var(--font-sans)',
+              direction: 'rtl',
+              boxShadow: '0 4px 12px rgba(0, 229, 163, 0.25)'
             }}
           >
-            <span>STORE [ESC]</span>
-            <ArrowDown size={11} />
+            <span>ورود به فروشگاه [ESC]</span>
+            <ArrowDown size={13} />
           </button>
         </div>
       </div>
 
-      {/* BOTTOM TELEMETRY & EXTENDED WIGGLE-ROOM CONTROLLER */}
+      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON */}
       <div 
         style={{
           position: 'absolute',
@@ -718,9 +739,13 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
             <span 
               className="font-tech"
               style={{
-                fontSize: '0.68rem',
+                fontSize: '0.72rem',
                 fontWeight: 800,
-                color: '#00e5a3',
+                color: '#0f2d26',
+                background: 'rgba(0, 229, 163, 0.2)',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                border: '1px solid #00e5a3',
                 letterSpacing: '1.5px'
               }}
             >
@@ -733,7 +758,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
             style={{
               margin: 0,
               fontSize: '0.68rem',
-              color: '#64748b',
+              color: '#475569',
               letterSpacing: '0.5px'
             }}
           >
@@ -741,31 +766,32 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           </p>
         </div>
 
-        {/* Dynamic Action: Wiggle Room Proceed Button vs Scrub Dial */}
+        {/* Dynamic Action: BIG PERSIAN PROCEED BUTTON vs SCRUB DIAL */}
         {isAtPlateau ? (
           <button
             type="button"
             onClick={handleProceedToStore}
-            className="font-tech"
             style={{
-              background: 'linear-gradient(135deg, rgba(0, 229, 163, 0.25), rgba(56, 189, 248, 0.25))',
-              border: '1px solid #00e5a3',
-              color: '#ffffff',
-              padding: '8px 18px',
-              borderRadius: '6px',
-              fontSize: '0.75rem',
-              fontWeight: 800,
-              letterSpacing: '1.5px',
+              background: 'linear-gradient(135deg, #00e5a3 0%, #059669 100%)',
+              border: '2px solid #ffffff',
+              color: '#041713',
+              padding: '16px 36px',
+              borderRadius: '16px',
+              fontSize: '1.05rem',
+              fontWeight: 900,
+              fontFamily: 'var(--font-sans)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 0 20px rgba(0, 229, 163, 0.35)',
-              animation: 'pulseGlow 2s infinite'
+              gap: '12px',
+              boxShadow: '0 12px 36px rgba(0, 229, 163, 0.55), 0 0 0 3px rgba(255, 255, 255, 0.4)',
+              animation: 'pulseGlow 2s infinite',
+              direction: 'rtl'
             }}
           >
-            <Check size={14} color="#00e5a3" />
-            <span>PROCEED TO STORE →</span>
+            <Check size={22} strokeWidth={3} />
+            <span>ورود به فروشگاه تک‌تینک</span>
+            <ArrowDown size={18} strokeWidth={2.5} />
           </button>
         ) : (
           <div 
@@ -773,16 +799,22 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              cursor: 'pointer'
+              gap: '14px',
+              cursor: 'pointer',
+              background: 'rgba(255, 255, 255, 0.8)',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              border: '1px solid #cbd5e1',
+              backdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.04)'
             }}
           >
             <div style={{ textAlign: 'right' }}>
-              <div className="font-tech" style={{ fontSize: '0.82rem', fontWeight: 900, color: '#00e5a3', letterSpacing: '1px' }}>
+              <div className="font-tech" style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f2d26', letterSpacing: '1px' }}>
                 {Math.min(100, Math.round(p / 0.82 * 100))}%
               </div>
-              <div className="font-tech" style={{ fontSize: '0.58rem', color: '#64748b', letterSpacing: '1px' }}>
-                SCROLL TO CRUNCH
+              <div style={{ fontSize: '0.62rem', color: '#475569', fontWeight: 700, fontFamily: 'var(--font-sans)', direction: 'rtl' }}>
+                اسکرول برای پردازش داده‌ها
               </div>
             </div>
 
@@ -790,14 +822,14 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               width: '18px',
               height: '28px',
               borderRadius: '8px',
-              border: '1.5px solid rgba(0, 229, 163, 0.4)',
+              border: '1.5px solid #00e5a3',
               display: 'flex',
               justifyContent: 'center',
               paddingTop: '5px'
             }}>
               <div 
                 style={{
-                  width: '3px',
+                  width: '3.5px',
                   height: '6px',
                   borderRadius: '2px',
                   background: '#00e5a3',
@@ -813,8 +845,14 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 16px rgba(0, 229, 163, 0.25); }
-          50% { box-shadow: 0 0 28px rgba(0, 229, 163, 0.5); }
+          0%, 100% { 
+            box-shadow: 0 12px 36px rgba(0, 229, 163, 0.55), 0 0 0 3px rgba(255, 255, 255, 0.5);
+            transform: scale(1);
+          }
+          50% { 
+            box-shadow: 0 16px 48px rgba(0, 229, 163, 0.8), 0 0 0 5px rgba(255, 255, 255, 0.8);
+            transform: scale(1.02);
+          }
         }
       `}} />
     </div>
