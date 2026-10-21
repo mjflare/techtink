@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   ArrowLeft, Play, Sparkles, Heart, Zap, Rocket, 
-  CheckCircle, Coffee, Smile, ShieldCheck, ThumbsUp
+  CheckCircle, Coffee, Smile, ShieldCheck, ThumbsUp, ChevronDown
 } from 'lucide-react';
 
 export default function Hero({ config, onExploreClick, onSecondaryClick }) {
@@ -526,8 +526,64 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
       </div>
 
+      {/* 3. SCROLL DOWN TO ENTER SHOPPING CENTER (Lando Norris Welcome Interaction) */}
+      <div 
+        className="tt-scroll-enter-bar"
+        onClick={() => {
+          const el = document.getElementById('shopping-center') || document.getElementById('catalog');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
+          marginTop: '36px',
+          paddingTop: '16px',
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+      >
+        <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <span>ورود به فروشگاه و مشاهده مدل‌ها</span>
+          <span className="font-tech" style={{ fontSize: '0.72rem', color: currentTheme.accentColor, opacity: 0.9 }}>[ SCROLL DOWN ]</span>
+        </span>
+
+        {/* Animated Mouse Wheel & Bouncing Arrow */}
+        <div style={{
+          width: '20px',
+          height: '32px',
+          borderRadius: '12px',
+          border: '2px solid var(--border-glass)',
+          display: 'flex',
+          justifyContent: 'center',
+          paddingTop: '6px'
+        }}>
+          <div className="tt-scroll-dot" style={{ width: '4px', height: '6px', borderRadius: '4px', background: currentTheme.accentColor }} />
+        </div>
+        <ChevronDown size={18} className="tt-bouncing-arrow" style={{ color: currentTheme.accentColor }} />
+      </div>
+
       {/* Motion Graphics Keyframe Animations */}
       <style dangerouslySetInnerHTML={{__html: `
+        @keyframes mouseScrollDot {
+          0% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(10px); opacity: 0; }
+        }
+
+        @keyframes bounceArrow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(5px); }
+        }
+
+        .tt-scroll-dot {
+          animation: mouseScrollDot 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+        }
+
+        .tt-bouncing-arrow {
+          animation: bounceArrow 1.6s ease-in-out infinite;
+        }
+
         .tt-hero-container {
           display: grid;
           grid-template-columns: 1fr;

@@ -5,6 +5,7 @@ import 'sonner/dist/styles.css';
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
+import LandoPreloader from './components/LandoPreloader.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import PromotionBanner from './components/PromotionBanner.jsx';
 import ProductShowcase from './components/ProductShowcase.jsx';
@@ -37,6 +38,22 @@ function App() {
   const [homepageConfig, setHomepageConfig] = useState(null);
   const [siteSettings, setSiteSettings] = useState(null);
   const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
+
+  // Lando Norris Style Welcome Preloader (0% to 100% Shutter Reveal)
+  const [showPreloader, setShowPreloader] = useState(() => {
+    try {
+      return !sessionStorage.getItem('tt_preloader_seen');
+    } catch {
+      return true;
+    }
+  });
+
+  const handlePreloaderComplete = () => {
+    try {
+      sessionStorage.setItem('tt_preloader_seen', 'true');
+    } catch {}
+    setShowPreloader(false);
+  };
 
   // Compute compared laptop objects
   const comparedLaptops = useMemo(() => {
@@ -294,6 +311,9 @@ function App() {
 
   return (
     <div>
+      {/* LANDO NORRIS SPEED-COUNTER PRELOADER & WELCOME REVEAL */}
+      {showPreloader && <LandoPreloader onComplete={handlePreloaderComplete} />}
+
       {/* 0. HIGH-CRAFT TOAST NOTIFICATION SYSTEM (SONNER) */}
       <Toaster 
         position="top-center" 
@@ -351,29 +371,31 @@ function App() {
             onSecondaryClick={() => handleTabChange('blog')}
           />
 
-          <PromotionBanner 
-            config={homepageConfig?.promotion}
-            onExploreClick={() => {
-              const el = document.getElementById('catalog');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-          />
+          <div id="shopping-center" style={{ scrollMarginTop: '80px' }}>
+            <PromotionBanner 
+              config={homepageConfig?.promotion}
+              onExploreClick={() => {
+                const el = document.getElementById('catalog');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+            />
 
-          <ProductShowcase 
-            config={homepageConfig?.showcase}
-            onSelectProduct={handleSelectProduct}
-            onAddToCart={handleAddToCart}
-          />
+            <ProductShowcase 
+              config={homepageConfig?.showcase}
+              onSelectProduct={handleSelectProduct}
+              onAddToCart={handleAddToCart}
+            />
 
-          <LaptopCatalog 
-            laptops={laptops} 
-            onCustomize={setSelectedLaptop}
-            onCompare={toggleCompare}
-            compareList={compareList}
-            onSelectProduct={handleSelectProduct}
-            onAddToCart={handleAddToCart}
-            searchQuery={searchQuery}
-          />
+            <LaptopCatalog 
+              laptops={laptops} 
+              onCustomize={setSelectedLaptop}
+              onCompare={toggleCompare}
+              compareList={compareList}
+              onSelectProduct={handleSelectProduct}
+              onAddToCart={handleAddToCart}
+              searchQuery={searchQuery}
+            />
+          </div>
         </main>
       )}
 
