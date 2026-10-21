@@ -762,7 +762,7 @@ export default function ProductEditorModal({
                 </span>
               </h2>
               <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                مدیریت زوایای گالری، ارتقای سخت‌افزار، شوکیس تعاملی اپل و استخراج هوشمند مشخصات
+                مدیریت زوایای گالری، ارتقای سخت‌افزار، کاوش تعاملی پرچمدار و استخراج هوشمند مشخصات
               </div>
             </div>
           </div>
@@ -984,7 +984,7 @@ export default function ProductEditorModal({
               { id: 'specs', label: 'مشخصات سخت‌افزار', icon: Cpu },
               { id: 'gallery', label: 'گالری چندزاویه‌ای', icon: Image, badge: '۴ زاویه' },
               { id: 'upgrades', label: 'ارتقای سخت‌افزاری', icon: Layers, badge: 'RAM/SSD' },
-              { id: 'flagship', label: 'مدل ۳ بعدی و شوکیس اپل', icon: Rotate3d, badge: '3D / Apple' },
+              { id: 'flagship', label: 'کاوش تعاملی پرچمدار', icon: Sparkles, badge: 'Flagship' },
               { id: 'review', label: 'نقد و بررسی زنده', icon: BookOpen, badge: 'Studio' }
             ].map(tab => (
               <button
@@ -1581,10 +1581,10 @@ export default function ProductEditorModal({
                     <div>
                       <h4 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Sparkles size={16} color="hsl(var(--accent-cyan))" />
-                        استودیو پیکربندی شوکیس تعاملی اپل (Flagship Showcase Builder)
+                        استودیو پیکربندی کاوش تعاملی پرچمدار (Flagship Showcase Builder)
                       </h4>
                       <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                        فعال‌سازی شوکیس تعاملی اسکرول‌محور با استانداردهای بازاریابی پرچمدار اپل
+                        فعال‌سازی کاوش تعاملی اسکرول‌محور با استانداردهای مهندسی و ارائه پرچمدار
                       </p>
                     </div>
 
@@ -1594,7 +1594,7 @@ export default function ProductEditorModal({
                       onClick={() => {
                         const generated = generateFlagshipFromSpecs(formData.name, formData.specs, formData.chassis);
                         setFormData(prev => ({ ...prev, flagshipShowcase: generated }));
-                        setParseNotice('⚡ سناریوی چهار مرحله‌ای اپل بر اساس مشخصات این لپ‌تاپ تولید شد!');
+                        setParseNotice('⚡ سناریوی چهار مرحله‌ای کاوش سخت‌افزار بر اساس مشخصات این لپ‌تاپ تولید شد!');
                         setTimeout(() => setParseNotice(''), 4000);
                       }}
                       style={{
@@ -1650,7 +1650,7 @@ export default function ProductEditorModal({
                         }} />
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                            {formData.enable_3d_viewer !== false ? 'نمایشگر ۳D برای این محصول فعال است' : 'نمایشگر ۳D غیرفعال است (صرفاً گالری و شوکیس اپل نمایش داده می‌شود)'}
+                            {formData.enable_3d_viewer !== false ? 'نمایشگر ۳D برای این محصول فعال است' : 'نمایشگر ۳D غیرفعال است (کاوش تعاملی پرچمدار نمایش داده می‌شود)'}
                           </div>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>
                             با خاموش کردن این گزینه، دکمه و موتور سه‌بعدی برای این لپ‌تاپ بارگذاری نخواهد شد.
@@ -1690,10 +1690,10 @@ export default function ProductEditorModal({
                   <div className="glass-panel" style={{ padding: '14px 18px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
-                        وضعیت شوکیس تعاملی اپل برای این دستگاه
+                        وضعیت کاوش تعاملی پرچمدار برای این دستگاه
                       </div>
                       <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        اگر فعال باشد، ماژول اسکرول تعاملی، اشعه ایکس و شبیه‌ساز فن در صفحه محصول رندر می‌شود.
+                        اگر فعال باشد، ماژول اسکرول تعاملی، چرخش پرسپکتیو و مشخصات فنی در صفحه محصول رندر می‌شود.
                       </div>
                     </div>
 
@@ -1736,7 +1736,7 @@ export default function ProductEditorModal({
                   </div>
 
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.03)', padding: '12px', borderRadius: '10px' }}>
-                    💡 <strong>نکته طراحی اپل:</strong> برای مشاهده و بررسی رفتار حرکتی، چرخش ۳ بعدی و اشعه ایکس این ماژول، تب پیش‌نمایش در سمت راست را بر روی <strong>«شوکیس پرچمدار اپل»</strong> قرار دهید.
+                    💡 <strong>نکته طراحی:</strong> برای مشاهده و بررسی رفتار حرکتی این ماژول، تب پیش‌نمایش در سمت راست را بر روی <strong>«کاوش تعاملی پرچمدار»</strong> قرار دهید.
                   </div>
                 </div>
               )}
@@ -1863,7 +1863,7 @@ export default function ProductEditorModal({
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
                     { id: 'card', label: 'کارت کالا و مشخصات' },
-                    { id: 'flagship', label: 'شوکیس پرچمدار اپل (Apple 3D)' },
+                    { id: 'flagship', label: 'کاوش تعاملی پرچمدار' },
                     { id: 'review', label: 'نقد و بررسی زنده' }
                   ].map(pt => (
                     <button
@@ -1939,14 +1939,9 @@ export default function ProductEditorModal({
                   </div>
                 )}
 
-                {/* 2. Apple Flagship & 3D Model Live Preview */}
+                {/* 2. Flagship Live Preview */}
                 {previewSubTab === 'flagship' && (
                   <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <LaptopModelViewer 
-                      modelUrl={formData.model3d_url || '/models/laptop-flagship.glb'}
-                      productName={formData.name || 'لپ‌تاپ'}
-                      specs={previewProduct.shortSpecs || {}}
-                    />
                     <AppleFlagshipShowcase 
                       product={previewProduct} 
                       onSelectProduct={() => {}} 

@@ -3,14 +3,13 @@ import {
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
   Cpu, HardDrive, Monitor, ArrowLeftRight, Plus, ShoppingCart, MessageSquare, 
   Send, User, ArrowRight, ArrowLeft, Check, Sparkles, Download, Eye,
-  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X, Rotate3d
+  ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
-import LaptopModelViewer from './LaptopModelViewer.jsx';
 
 function ProductPageLoadingAnimation() {
   const [activeStep, setActiveStep] = useState(0);
@@ -227,12 +226,6 @@ export default function ProductPage({
 
   // Tab navigation inside product page
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'review', 'drivers', 'comments'
-  const [showcaseMode, setShowcaseMode] = useState(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return 'story';
-    }
-    return '3d';
-  });
 
   // Selected upgrades
   const [selectedRam, setSelectedRam] = useState(0);
@@ -411,12 +404,6 @@ export default function ProductPage({
   const totalPrice = unitPrice * quantity;
 
   const isComparing = compareList.includes(product.id);
-  const has3DViewer = Boolean(
-    product &&
-    product.enable_3d_viewer !== false &&
-    product.specs?.enable_3d_viewer !== false &&
-    (product.model3d_url || product.specs?.model3d_url)
-  );
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
   const review = product.expertReview || {};
@@ -1149,89 +1136,21 @@ export default function ProductPage({
               </h3>
             </div>
             <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '0.825rem' }}>
-              کاوش پیوسته سخت‌افزار با اسکرول، بررسی متریال شاسی، شفافیت نمایشگر و توان پردازشی با سبک پرچمدار اپل
+              کاوش پیوسته سخت‌افزار با اسکرول، بررسی متریال شاسی، شفافیت نمایشگر و اوج توان پردازشی
             </p>
           </div>
 
-          {/* Segmented Mode Switcher */}
-          {has3DViewer ? (
-            <div 
-              style={{
-                display: 'inline-flex',
-                padding: '4px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-glass)',
-                gap: '4px'
-              }}
-            >
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setShowcaseMode('3d')}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '0.8rem',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: showcaseMode === '3d' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
-                  color: showcaseMode === '3d' ? '#fff' : 'var(--text-secondary)',
-                  fontWeight: showcaseMode === '3d' ? 700 : 500,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease'
-                }}
-              >
-                <Rotate3d size={14} />
-                <span>مدل سه‌بعدی ۳۶۰°</span>
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setShowcaseMode('story')}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '0.8rem',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: showcaseMode === 'story' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
-                  color: showcaseMode === 'story' ? '#fff' : 'var(--text-secondary)',
-                  fontWeight: showcaseMode === 'story' ? 700 : 500,
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease'
-                }}
-              >
-                <Sparkles size={14} />
-                <span>شوکیس استوری اپل</span>
-              </button>
-            </div>
-          ) : (
-            <div className="badge badge-glow" style={{ fontSize: '0.8rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Sparkles size={14} />
-              <span>شوکیس اختصاصی پرچمدار</span>
-            </div>
-          )}
+          <div className="badge badge-glow" style={{ fontSize: '0.8rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Sparkles size={14} />
+            <span>کاوش تعاملی سخت‌افزار</span>
+          </div>
         </div>
 
-        {has3DViewer && showcaseMode === '3d' ? (
-          <LaptopModelViewer 
-            modelUrl={product.model3d_url || product.specs?.model3d_url || '/models/laptop-flagship.glb'} 
-            productName={product.name}
-            specs={product.shortSpecs || {}}
-            onAddToCart={handleAddToCart}
-          />
-        ) : (
-          <AppleFlagshipShowcase 
-            product={product} 
-            onSelectProduct={onSelectProduct} 
-            onAddToCart={handleAddToCart} 
-          />
-        )}
+        <AppleFlagshipShowcase 
+          product={product} 
+          onSelectProduct={onSelectProduct} 
+          onAddToCart={handleAddToCart} 
+        />
       </section>
 
       {/* Navigation Tabs for Detailed Sections */}

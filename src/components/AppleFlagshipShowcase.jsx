@@ -16,6 +16,7 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
   }
 
   const trackRef = useRef(null);
+  const stageRef = useRef(null);
   const cardRef = useRef(null);
   const [activeStage, setActiveStage] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -222,6 +223,50 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
     }, 600);
   }, [stages.length]);
 
+  // Active center lock on wheel: locks user on center during the animation
+  useEffect(() => {
+    const stageEl = stageRef.current;
+    if (!stageEl) return;
+
+    const handleWheel = (e) => {
+      const p = currentProgressRef.current;
+      const delta = e.deltaY;
+
+      // Scrolling down and animation is not yet complete:
+      // Lock user on the center showcase and advance animation
+      if (delta > 0 && p < 0.98) {
+        e.preventDefault();
+        const step = (delta / 480) * 0.14;
+        targetProgressRef.current = Math.min(1.0, targetProgressRef.current + Math.max(0.015, step));
+      }
+      // Scrolling up and animation is not at the start:
+      // Lock user on the center showcase and rewind animation
+      else if (delta < 0 && p > 0.02) {
+        e.preventDefault();
+        const step = (Math.abs(delta) / 480) * 0.14;
+        targetProgressRef.current = Math.max(0.0, targetProgressRef.current - Math.max(0.015, step));
+      }
+    };
+
+    stageEl.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      stageEl.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
+  // Instant skip past the showcase
+  const handleSkipShowcase = useCallback(() => {
+    targetProgressRef.current = 1.0;
+    currentProgressRef.current = 1.0;
+    setScrollProgress(1.0);
+    setActiveStage(stages.length - 1);
+    if (trackRef.current) {
+      const rect = trackRef.current.getBoundingClientRect();
+      const targetScrollY = window.scrollY + rect.bottom - 40;
+      window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+    }
+  }, [stages.length]);
+
   // Tactile Mouse Parallax
   const handlePointerMove = (e) => {
     if (!cardRef.current) return;
@@ -273,15 +318,16 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
         margin: '24px 0 60px'
       }}
     >
-      {/* Sticky Stage Viewport */}
+      {/* Sticky Stage Viewport - Centered in viewport */}
       <div 
+        ref={stageRef}
         className="apple-showcase-sticky"
         style={{
           position: 'sticky',
-          top: '76px',
-          height: 'calc(100vh - 90px)',
-          minHeight: '620px',
-          maxHeight: '940px',
+          top: 'max(16px, calc(50vh - 350px))',
+          height: 'calc(100vh - 80px)',
+          minHeight: '600px',
+          maxHeight: '920px',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
@@ -302,8 +348,17 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span className="badge badge-glow" style={{ fontSize: '0.78rem', padding: '4px 12px', fontWeight: 700 }}>
                 <Sparkles size={13} style={{ marginLeft: '5px' }} />
-                شوکیس بازاریابی پرچمدار اپل‌استایل
+                کاوش تخصصی و روایت مهندسی پرچمدار
               </span>
+              {scrollProgress < 0.98 ? (
+                <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.12)', color: 'hsl(var(--accent-cyan))', fontSize: '0.72rem', fontWeight: 700 }}>
+                  قفل تمرکز: اسکرول برای مشاهده مراحل
+                </span>
+              ) : (
+                <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.12)', color: 'hsl(var(--accent-green))', fontSize: '0.72rem', fontWeight: 700 }}>
+                  ✓ بررسی ۴ فصل کامل شد
+                </span>
+              )}
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 فصل {currentStage.number} از ۰۴
               </span>
@@ -684,7 +739,7 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
           </div>
         </div>
 
-        {/* Bottom Helper Bar: Scroll Indicator Tip */}
+        {/* Bottom Helper Bar: Scroll Indicator Tip & Center Lock Controls */}
         <div 
           style={{
             display: 'flex',
@@ -696,13 +751,38 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
             color: 'var(--text-secondary)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ArrowDown size={13} color="hsl(var(--accent-cyan))" />
-            <span>با اسکرول کردن به پایین، فصل‌های بعدی مهندسی پرچمدار نمایش داده می‌شوند.</span>
+            <span>
+              {scrollProgress < 0.98 
+                ? 'نمایشگر در مرکز قفل است؛ با اسکرول ماوس یا لمس، فصل‌های سخت‌افزار ورق می‌خورند.'
+                : 'کاوش تمام فصل‌ها به پایان رسید؛ می‌توانید به سمت مشخصات تفصیلی اسکرول کنید.'}
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <CheckCircle2 size={13} color="hsl(var(--accent-green))" />
-            <span>تضمین اصالت ۱۰۰٪ فابریک تک‌تینک</span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {scrollProgress < 0.98 && (
+              <button
+                type="button"
+                onClick={handleSkipShowcase}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'hsl(var(--accent-cyan))',
+                  fontSize: '0.75rem',
+                  cursor: 'pointer',
+                  padding: '2px 6px',
+                  fontWeight: 700,
+                  textDecoration: 'underline'
+                }}
+              >
+                رد شدن از انیمیشن ↓
+              </button>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircle2 size={13} color="hsl(var(--accent-green))" />
+              <span>تضمین اصالت ۱۰۰٪ فابریک تک‌تینک</span>
+            </div>
           </div>
         </div>
       </div>
