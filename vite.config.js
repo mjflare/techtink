@@ -10,6 +10,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    chunkSizeWarningLimit: 600,
     rolldownOptions: {
       external: ['@google/model-viewer'],
       onwarn(warning, defaultHandler) {
@@ -17,6 +18,32 @@ export default defineConfig({
           return;
         }
         defaultHandler(warning);
+      },
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: 'three-vendor',
+              test: /[\\/]node_modules[\\/]three[\\/]/,
+              priority: 40,
+            },
+            {
+              name: 'react-vendor',
+              test: /[\\/]node_modules[\\/](?:react|react-dom|scheduler|react-router-dom)[\\/]/,
+              priority: 30,
+            },
+            {
+              name: 'lucide-icons',
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              priority: 20,
+            },
+            {
+              name: 'vendor',
+              test: /[\\/]node_modules[\\/]/,
+              priority: 10,
+            },
+          ],
+        },
       },
     },
     rollupOptions: {

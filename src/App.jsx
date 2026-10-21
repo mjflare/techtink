@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react';
 import { ArrowLeftRight, MapPin, Phone, Clock, ExternalLink, ShoppingCart, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import 'sonner/dist/styles.css';
@@ -10,21 +10,23 @@ import AnnouncementBar from './components/AnnouncementBar.jsx';
 import PromotionBanner from './components/PromotionBanner.jsx';
 import ProductShowcase from './components/ProductShowcase.jsx';
 import LaptopCatalog from './components/LaptopCatalog.jsx';
-import LaptopCustomizerModal from './components/LaptopCustomizerModal.jsx';
-import SpecCompareModal from './components/SpecCompareModal.jsx';
 import CartDrawer from './components/CartDrawer.jsx';
-import CheckoutModal from './components/CheckoutModal.jsx';
-import SupportSection from './components/SupportSection.jsx';
-import BlogSection from './components/BlogSection.jsx';
-import AdminDashboard from './components/AdminDashboard.jsx';
-import AuthModal from './components/AuthModal.jsx';
-import ProductPage from './components/ProductPage.jsx';
-import AboutUsModal from './components/AboutUsModal.jsx';
-import UserDashboard from './components/UserDashboard.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
-import DemoNoticeModal from './components/DemoNoticeModal.jsx';
 import { trackPageView } from './utils/analytics.js';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './components/SocialLogos.jsx';
+
+// Lazy-loaded heavy views & modals for optimal code-splitting and pristine mobile performance
+const ProductPage = lazy(() => import('./components/ProductPage.jsx'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'));
+const SupportSection = lazy(() => import('./components/SupportSection.jsx'));
+const BlogSection = lazy(() => import('./components/BlogSection.jsx'));
+const UserDashboard = lazy(() => import('./components/UserDashboard.jsx'));
+const SpecCompareModal = lazy(() => import('./components/SpecCompareModal.jsx'));
+const LaptopCustomizerModal = lazy(() => import('./components/LaptopCustomizerModal.jsx'));
+const CheckoutModal = lazy(() => import('./components/CheckoutModal.jsx'));
+const AuthModal = lazy(() => import('./components/AuthModal.jsx'));
+const AboutUsModal = lazy(() => import('./components/AboutUsModal.jsx'));
+const DemoNoticeModal = lazy(() => import('./components/DemoNoticeModal.jsx'));
 
 function App() {
   const [activeTab, setActiveTab] = useState('store'); // 'store', 'product', 'compare', 'support', 'blog', 'admin'
@@ -451,16 +453,18 @@ function App() {
       {/* 2. DEDICATED PRODUCT PAGE */}
       {activeTab === 'product' && selectedProductSlug && (
         <main>
-          <ProductPage 
-            productSlug={selectedProductSlug}
-            onBack={handleGoToShop}
-            onAddToCart={handleAddToCart}
-            onCompare={toggleCompare}
-            compareList={compareList}
-            currentUser={currentUser}
-            onOpenAuth={() => setIsAuthModalOpen(true)}
-            onSelectProduct={handleSelectProduct}
-          />
+          <Suspense fallback={<div className="container" style={{ padding: '80px 20px', textAlign: 'center', color: 'hsl(var(--accent-cyan))' }}>در حال بارگذاری مشخصات لپ‌تاپ...</div>}>
+            <ProductPage 
+              productSlug={selectedProductSlug}
+              onBack={handleGoToShop}
+              onAddToCart={handleAddToCart}
+              onCompare={toggleCompare}
+              compareList={compareList}
+              currentUser={currentUser}
+              onOpenAuth={() => setIsAuthModalOpen(true)}
+              onSelectProduct={handleSelectProduct}
+            />
+          </Suspense>
         </main>
       )}
 
@@ -478,36 +482,48 @@ function App() {
               </button>
             </div>
           ) : (
-            <SpecCompareModal 
-              compareList={compareList} 
-              laptops={laptops} 
-              onClose={handleGoToShop} 
-              onAddToCart={handleAddToCart}
-              onSelectProduct={handleSelectProduct}
-            />
+            <Suspense fallback={<div style={{ padding: '40px', color: 'hsl(var(--accent-cyan))' }}>در حال آماده‌سازی جدول مقایسه...</div>}>
+              <SpecCompareModal 
+                compareList={compareList} 
+                laptops={laptops} 
+                onClose={handleGoToShop} 
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+              />
+            </Suspense>
           )}
         </main>
       )}
 
       {/* 4. SUPPORT & BLOG VIEWS */}
-      {activeTab === 'support' && <SupportSection />}
-      {activeTab === 'blog' && <BlogSection onSelectProduct={handleSelectProduct} />}
+      {activeTab === 'support' && (
+        <Suspense fallback={<div className="container" style={{ padding: '60px 20px', textAlign: 'center', color: 'hsl(var(--accent-cyan))' }}>در حال بارگذاری بخش پشتیبانی...</div>}>
+          <SupportSection />
+        </Suspense>
+      )}
+      {activeTab === 'blog' && (
+        <Suspense fallback={<div className="container" style={{ padding: '60px 20px', textAlign: 'center', color: 'hsl(var(--accent-cyan))' }}>در حال بارگذاری وبلاگ...</div>}>
+          <BlogSection onSelectProduct={handleSelectProduct} />
+        </Suspense>
+      )}
 
       {/* 5. ADMIN PORTAL */}
       {(activeTab === 'admin' || (activeTab === 'account' && currentUser?.role === 'admin')) && (
         <main>
-          <AdminDashboard 
-            user={currentUser} 
-            onLogout={handleLogout} 
-            siteSettings={siteSettings}
-            onSettingsUpdated={(updated) => setSiteSettings(prev => ({ ...prev, ...updated }))}
-            onHomepageConfigUpdated={() => {
-              fetch('/api/homepage')
-                .then(res => res.json())
-                .then(data => { if (data && !data.error) setHomepageConfig(data); })
-                .catch(() => {});
-            }}
-          />
+          <Suspense fallback={<div className="container" style={{ padding: '80px 20px', textAlign: 'center', color: 'hsl(var(--accent-cyan))' }}>در حال بارگذاری پنل مدیریت تک‌تینک...</div>}>
+            <AdminDashboard 
+              user={currentUser} 
+              onLogout={handleLogout} 
+              siteSettings={siteSettings}
+              onSettingsUpdated={(updated) => setSiteSettings(prev => ({ ...prev, ...updated }))}
+              onHomepageConfigUpdated={() => {
+                fetch('/api/homepage')
+                  .then(res => res.json())
+                  .then(data => { if (data && !data.error) setHomepageConfig(data); })
+                  .catch(() => {});
+              }}
+            />
+          </Suspense>
         </main>
       )}
 
@@ -515,18 +531,20 @@ function App() {
       {activeTab === 'account' && currentUser?.role !== 'admin' && (
         <main>
           {currentUser ? (
-            <UserDashboard 
-              user={currentUser} 
-              onLogout={handleLogout} 
-              onSelectProduct={handleSelectProduct} 
-              onGoToStore={handleGoToShop} 
-              onGoToSupport={() => handleTabChange('support')} 
-              onGoToAdmin={() => handleTabChange('admin')}
-              onUpdateUser={(u) => {
-                setCurrentUser(u);
-                try { localStorage.setItem('user', JSON.stringify(u)); } catch {}
-              }} 
-            />
+            <Suspense fallback={<div className="container" style={{ padding: '80px 20px', textAlign: 'center', color: 'hsl(var(--accent-cyan))' }}>در حال بارگذاری داشبورد کاربری...</div>}>
+              <UserDashboard 
+                user={currentUser} 
+                onLogout={handleLogout} 
+                onSelectProduct={handleSelectProduct} 
+                onGoToStore={handleGoToShop} 
+                onGoToSupport={() => handleTabChange('support')} 
+                onGoToAdmin={() => handleTabChange('admin')}
+                onUpdateUser={(u) => {
+                  setCurrentUser(u);
+                  try { localStorage.setItem('user', JSON.stringify(u)); } catch {}
+                }} 
+              />
+            </Suspense>
           ) : (
             <div className="container" style={{ paddingTop: '80px', paddingBottom: '100px', textAlign: 'center' }}>
               <div className="glass-panel" style={{ maxWidth: '500px', margin: '0 auto', padding: '40px 28px', borderRadius: '24px' }}>
@@ -546,11 +564,13 @@ function App() {
       {/* MODALS & OVERLAYS */}
       {/* Quick Customizer Modal */}
       {selectedLaptop && (
-        <LaptopCustomizerModal 
-          laptop={selectedLaptop} 
-          onClose={() => setSelectedLaptop(null)}
-          onAddToCart={handleAddToCart}
-        />
+        <Suspense fallback={null}>
+          <LaptopCustomizerModal 
+            laptop={selectedLaptop} 
+            onClose={() => setSelectedLaptop(null)}
+            onAddToCart={handleAddToCart}
+          />
+        </Suspense>
       )}
 
       {/* Cart Drawer */}
@@ -572,26 +592,30 @@ function App() {
 
       {/* Iranian Checkout Modal */}
       {isCheckoutOpen && (
-        <CheckoutModal 
-          cartItems={cartItems}
-          onClose={() => setIsCheckoutOpen(false)}
-          onClearCart={() => setCartItems([])}
-          user={currentUser}
-          onOpenAuth={handleRequireAuthForCheckout}
-        />
+        <Suspense fallback={null}>
+          <CheckoutModal 
+            cartItems={cartItems}
+            onClose={() => setIsCheckoutOpen(false)}
+            onClearCart={() => setCartItems([])}
+            user={currentUser}
+            onOpenAuth={handleRequireAuthForCheckout}
+          />
+        </Suspense>
       )}
 
       {/* Customer Login & Registration Modal */}
-      <AuthModal 
-        isOpen={isAuthModalOpen}
-        onClose={() => {
-          setIsAuthModalOpen(false);
-          setAuthNotice(null);
-          setPendingCheckout(false);
-        }}
-        onLogin={handleLoginSuccess}
-        notice={authNotice}
-      />
+      <Suspense fallback={null}>
+        <AuthModal 
+          isOpen={isAuthModalOpen}
+          onClose={() => {
+            setIsAuthModalOpen(false);
+            setAuthNotice(null);
+            setPendingCheckout(false);
+          }}
+          onLogin={handleLoginSuccess}
+          notice={authNotice}
+        />
+      </Suspense>
 
       {/* Interactive Floating Bottom Action Island (Dynamically realigned based on browser screen size) */}
       <InteractiveFloatingIsland
@@ -789,22 +813,26 @@ function App() {
       </footer>
 
       {/* About Us & Showroom Location Modal */}
-      <AboutUsModal
-        isOpen={isAboutUsOpen}
-        onClose={() => setIsAboutUsOpen(false)}
-        onOpenSupport={() => handleTabChange('support')}
-      />
+      <Suspense fallback={null}>
+        <AboutUsModal
+          isOpen={isAboutUsOpen}
+          onClose={() => setIsAboutUsOpen(false)}
+          onOpenSupport={() => handleTabChange('support')}
+        />
+      </Suspense>
 
       {/* Demo Mode Notice Modal */}
-      <DemoNoticeModal
-        settings={siteSettings}
-        isOpen={isDemoNoticeOpen}
-        onClose={() => {
-          try { sessionStorage.setItem('techtink_demo_notice_dismissed', '1'); } catch {}
-          setIsDemoNoticeOpen(false);
-        }}
-        onOpenAdmin={() => handleTabChange('admin')}
-      />
+      <Suspense fallback={null}>
+        <DemoNoticeModal
+          settings={siteSettings}
+          isOpen={isDemoNoticeOpen}
+          onClose={() => {
+            try { sessionStorage.setItem('techtink_demo_notice_dismissed', '1'); } catch {}
+            setIsDemoNoticeOpen(false);
+          }}
+          onOpenAdmin={() => handleTabChange('admin')}
+        />
+      </Suspense>
     </div>
   );
 }

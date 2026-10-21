@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown, Package } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { handleImageError } from '../utils/imageFallback.js';
-import { DemoHeaderBadge } from './DemoNoticeModal.jsx';
+import { DemoHeaderBadge } from './DemoHeaderBadge.jsx';
 
 export default function Header({ 
   activeTab, 
