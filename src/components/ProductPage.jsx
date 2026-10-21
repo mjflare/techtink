@@ -762,67 +762,70 @@ export default function ProductPage({
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
               gap: '10px',
-              marginBottom: '24px'
+              marginBottom: '24px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box'
             }}>
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Cpu size={13} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} /> پردازنده
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={configuredCpu}>
                   {configuredCpu}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Zap size={13} color="hsl(var(--accent-green))" /> کارت گرافیک
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Zap size={13} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} /> کارت گرافیک
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={shortSpecs.gpu}>
                   {shortSpecs.gpu}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Layers size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Layers size={13} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} /> حافظه رم (RAM)
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={configuredRam}>
                   {configuredRam}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <HardDrive size={13} color="hsl(var(--accent-cyan))" /> حافظه داخلی (SSD)
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <HardDrive size={13} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} /> حافظه داخلی (SSD)
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={configuredStorage}>
                   {configuredStorage}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Monitor size={13} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} /> نمایشگر
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={configuredDisplay}>
                   {configuredDisplay}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Battery size={13} color="hsl(var(--accent-green))" /> ظرفیت باتری
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Battery size={13} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} /> ظرفیت باتری
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={shortSpecs.battery || '50Wh Battery'}>
                   {shortSpecs.battery || '50Wh Battery'}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <Layers size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem', minWidth: 0 }}>
+                  <Layers size={13} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} /> جنس بدنه و شاسی
                 </div>
-                <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', minWidth: 0 }} title={shortSpecs.chassis}>
                   {shortSpecs.chassis}
                 </div>
               </div>
@@ -1174,61 +1177,67 @@ export default function ProductPage({
         </div>
 
         {/* Mobile Compact 2-Column Specs Deck */}
-        <section aria-label="مشخصات کلیدی سریع سخت‌افزار" style={{ marginBottom: '18px' }}>
+        <section aria-label="مشخصات کلیدی سریع سخت‌افزار" style={{ marginBottom: '18px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>
             مشخصات کلیدی سخت‌افزار:
           </div>
           <div className="product-mobile-specs-grid">
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Cpu size={12} color="hsl(var(--accent-cyan))" /> پردازنده
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="spec-label">
+                <Cpu size={12} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                <span>پردازنده</span>
+              </div>
+              <span className="font-tech spec-value" title={configuredCpu}>
                 {configuredCpu}
               </span>
             </div>
 
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Zap size={12} color="hsl(var(--accent-green))" /> کارت گرافیک
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="spec-label">
+                <Zap size={12} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                <span>کارت گرافیک</span>
+              </div>
+              <span className="font-tech spec-value" title={shortSpecs.gpu}>
                 {shortSpecs.gpu}
               </span>
             </div>
 
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Layers size={12} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
+              <div className="spec-label">
+                <Layers size={12} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
+                <span>حافظه رم (RAM)</span>
+              </div>
+              <span className="font-tech spec-value" title={configuredRam}>
                 {configuredRam}
               </span>
             </div>
 
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <HardDrive size={12} color="hsl(var(--accent-cyan))" /> حافظه ذخیره (SSD)
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
+              <div className="spec-label">
+                <HardDrive size={12} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                <span>حافظه ذخیره (SSD)</span>
+              </div>
+              <span className="font-tech spec-value" title={configuredStorage}>
                 {configuredStorage}
               </span>
             </div>
 
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Monitor size={12} color="hsl(var(--accent-cyan))" /> نمایشگر
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="spec-label">
+                <Monitor size={12} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+                <span>نمایشگر</span>
+              </div>
+              <span className="font-tech spec-value" title={configuredDisplay}>
                 {configuredDisplay}
               </span>
             </div>
 
             <div className="product-mobile-spec-item">
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Layers size={12} color="hsl(var(--accent-green))" /> شاسی و متریال
-              </span>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="spec-label">
+                <Layers size={12} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+                <span>شاسی و متریال</span>
+              </div>
+              <span className="spec-value" style={{ direction: 'rtl', textAlign: 'right' }} title={shortSpecs.chassis}>
                 {shortSpecs.chassis}
               </span>
             </div>
@@ -1236,13 +1245,13 @@ export default function ProductPage({
         </section>
 
         {/* Mobile Hardware Configurator */}
-        <section aria-label="پیکربندی قطعات سفارشی" style={{ marginBottom: '22px' }}>
+        <section aria-label="پیکربندی قطعات سفارشی" style={{ marginBottom: '22px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           <div style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '12px' }}>
             پیکربندی قطعات سفارشی:
           </div>
 
           {/* CPU Options / Info on Mobile */}
-          <div style={{ marginBottom: '14px' }}>
+          <div style={{ marginBottom: '14px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
             <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Cpu size={14} color="hsl(var(--accent-cyan))" />
               <span>پردازنده مرکزی (CPU):</span>
@@ -1264,16 +1273,16 @@ export default function ProductPage({
                 ))}
               </div>
             ) : (
-              <div className="glass-panel" style={{ padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.7rem', fontWeight: 700 }}>
+              <div className="glass-panel" style={{ padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '100%', boxSizing: 'border-box', minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0 }}>
                     {cpuBadge}
                   </span>
-                  <span className="font-tech" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr' }}>
+                  <span className="font-tech" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
                     {configuredCpu}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.7rem', color: 'hsl(var(--accent-green))', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.7rem', color: 'hsl(var(--accent-green))', fontWeight: 600, flexShrink: 0 }}>
                   استاندارد
                 </span>
               </div>

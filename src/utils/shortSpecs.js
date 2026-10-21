@@ -210,9 +210,12 @@ export function parseShortChassis(str) {
   if (!str) return 'تمام آلومینیوم';
   if (/carbon|کربن/i.test(str)) return 'فیبر کربن';
   if (/magnesium|منیزیم/i.test(str)) return 'آلیاژ منیزیم';
+  if (/titanium|تیتانیوم/i.test(str)) return 'آلیاژ تیتانیوم';
   if (/polycarbonate|پلی‌کربنات/i.test(str)) return 'پلی‌کربنات مقاوم';
+  if (/unibody/i.test(str)) return 'آلومینیوم Unibody';
   if (/aluminum|aluminium|آلومینیوم/i.test(str)) return 'تمام آلومینیوم';
-  return str;
+  const clean = str.split('(')[0].replace(/برس‌خورده|صنعتی|استاندارد.*$/gi, '').trim();
+  return clean || 'تمام آلومینیوم';
 }
 
 export function getShortSpecs(product) {
