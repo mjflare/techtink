@@ -1,5 +1,7 @@
 // Admin API: dashboard, products/variants/stock, orders, comments, users, blog, FAQ, tickets, settings.
 import { Router } from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
 import { db, getSettings, setSetting, getSetting } from '../db.js';
 import { requireAdmin, publicUser, hashPassword, normalizeMobile } from '../auth.js';
 import { serializeProduct } from '../products.js';
@@ -1133,6 +1135,271 @@ r.post('/system/gc', (_req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'خطا در اجرای آزادسازی حافظه: ' + err.message });
+  }
+});
+
+// ---------- Media & 3D Assets Manager ----------
+const PROJECT_ROOT = path.resolve('.');
+const UPLOADS_DIR = path.resolve('public/uploads');
+const UPLOADS_IMAGES = path.resolve('public/uploads/images');
+const UPLOADS_MODELS = path.resolve('public/uploads/models');
+const PUBLIC_MODELS = path.resolve('public/models');
+
+for (const dir of [UPLOADS_DIR, UPLOADS_IMAGES, UPLOADS_MODELS, PUBLIC_MODELS]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
+const ALLOWED_IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.svg', '.gif', '.avif']);
+const ALLOWED_MODEL_EXTS = new Set(['.glb', '.gltf', '.bin', '.obj', '.usdz']);
+
+const getMimeType = (filename) => {
+  const ext = path.extname(filename).toLowerCase();
+  switch (ext) {
+    case '.glb': return 'model/gltf-binary';
+    case '.gltf': return 'model/gltf+json';
+    case '.bin': return 'application/octet-stream';
+    case '.webp': return 'image/webp';
+    case '.png': return 'image/png';
+    case '.jpg':
+    case '.jpeg': return 'image/jpeg';
+    case '.svg': return 'image/svg+xml';
+    case '.gif': return 'image/gif';
+    case '.avif': return 'image/avif';
+    default: return 'application/octet-stream';
+  }
+};
+
+const scanDirFiles = (dirPath, webPrefix, typeFilter = null) => {
+  const results = [];
+  if (!fs.existsSync(dirPath)) return results;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    for (const ent of entries) {
+      if (!ent.isFile()) continue;
+      const ext = path.extname(ent.name).toLowerCase();
+      const isModel = ALLOWED_MODEL_EXTS.has(ext);
+      const isImage = ALLOWED_IMAGE_EXTS.has(ext);
+      if (!isModel && !isImage) continue;
+      if (typeFilter === 'model' && !isModel) continue;
+      if (typeFilter === 'image' && !isImage) continue;
+
+      const fullPath = path.join(dirPath, ent.name);
+      const stat = fs.statSync(fullPath);
+      const webUrl = `${webPrefix}/${ent.name}`.replace(/\/+/g, '/');
+
+      results.push({
+        name: ent.name,
+        path: webUrl,
+        type: isModel ? 'model' : 'image',
+        size: stat.size,
+        mimeType: getMimeType(ent.name),
+        modifiedAt: stat.mtime.toISOString(),
+        directory: webPrefix
+      });
+    }
+  } catch (err) {
+    console.warn(`[MediaManager] Error scanning ${dirPath}:`, err);
+  }
+  return results;
+};
+
+// 1. List all 3D models and images (combines database & disk files)
+r.get('/media/list', (_req, res) => {
+  try {
+    const diskModels1 = scanDirFiles(PUBLIC_MODELS, '/models', 'model');
+    const diskModels2 = scanDirFiles(UPLOADS_MODELS, '/uploads/models', 'model');
+    const diskImages = scanDirFiles(UPLOADS_IMAGES, '/uploads/images', 'image');
+
+    const allDisks = [...diskModels1, ...diskModels2, ...diskImages];
+
+    for (const f of allDisks) {
+      try {
+        db.run(
+          `INSERT OR IGNORE INTO media_assets (name, path, type, size, mime_type, source) VALUES (?, ?, ?, ?, ?, ?)`,
+          f.name, f.path, f.type, f.size, f.mimeType, f.directory.includes('/models') ? 'system' : 'upload'
+        );
+      } catch {}
+    }
+
+    const dbAssets = db.all('SELECT * FROM media_assets ORDER BY id DESC');
+    const assetMap = new Map();
+    for (const f of allDisks) assetMap.set(f.path, f);
+    for (const row of dbAssets) {
+      if (!assetMap.has(row.path)) {
+        assetMap.set(row.path, {
+          name: row.name,
+          path: row.path,
+          type: row.type,
+          size: row.size,
+          mimeType: row.mime_type,
+          modifiedAt: row.created_at,
+          directory: path.dirname(row.path)
+        });
+      }
+    }
+
+    const all = Array.from(assetMap.values());
+    const models = all.filter(a => a.type === 'model');
+    const images = all.filter(a => a.type === 'image');
+
+    res.json({
+      models,
+      images,
+      totalModels: models.length,
+      totalImages: images.length,
+      directories: ['/models', '/uploads/models', '/uploads/images']
+    });
+  } catch (err) {
+    console.error('[MediaManager] list error:', err);
+    res.status(500).json({ error: 'خطا در بارگذاری فهرست فایل‌ها: ' + err.message });
+  }
+});
+
+// 2. Scan custom server directory
+r.post('/media/scan', (req, res) => {
+  try {
+    let { directory = '' } = req.body || {};
+    directory = directory.trim();
+    if (!directory) {
+      return res.status(400).json({ error: 'مسیر دایرکتوری الزامی است.' });
+    }
+
+    let relative = directory.replace(/^\/+/, '');
+    if (relative.startsWith('models')) {
+      relative = path.join('public', relative);
+    } else if (relative.startsWith('uploads')) {
+      relative = path.join('public', relative);
+    }
+    const resolved = path.resolve(PROJECT_ROOT, relative);
+    if (!resolved.startsWith(PROJECT_ROOT)) {
+      return res.status(403).json({ error: 'دسترسی به خارج از پروژه مجاز نیست.' });
+    }
+
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
+      return res.status(404).json({ error: `دایرکتوری ${directory} یافت نشد.` });
+    }
+
+    let webPrefix = '/' + path.relative(path.resolve('public'), resolved).replace(/\\/g, '/');
+    if (webPrefix.startsWith('/.')) webPrefix = '/' + path.relative(PROJECT_ROOT, resolved).replace(/\\/g, '/');
+
+    const files = scanDirFiles(resolved, webPrefix);
+
+    for (const f of files) {
+      try {
+        db.run(
+          `INSERT OR IGNORE INTO media_assets (name, path, type, size, mime_type, source) VALUES (?, ?, ?, ?, ?, ?)`,
+          f.name, f.path, f.type, f.size, f.mimeType, 'scan'
+        );
+      } catch {}
+    }
+
+    res.json({ directory, count: files.length, files });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در اسکن دایرکتوری: ' + err.message });
+  }
+});
+
+// 3. Upload file directly from local device (base64 JSON payload)
+r.post('/media/upload', (req, res) => {
+  try {
+    const { filename, data, type } = req.body || {};
+    if (!filename || !data) {
+      return res.status(400).json({ error: 'نام فایل و داده‌های باینری (Base64) الزامی است.' });
+    }
+
+    const ext = path.extname(filename).toLowerCase();
+    const isModel = ALLOWED_MODEL_EXTS.has(ext) || type === 'model';
+    const isImage = ALLOWED_IMAGE_EXTS.has(ext) || type === 'image';
+
+    if (!isModel && !isImage) {
+      return res.status(400).json({
+        error: `پسوند ${ext} مجاز نیست. فرمت‌های ۳D مجاز: .glb, .gltf, .obj و فرمت‌های تصویر مجاز: .webp, .jpg, .png, .svg`
+      });
+    }
+
+    const cleanBase64 = String(data).replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+
+    if (buffer.length === 0) {
+      return res.status(400).json({ error: 'محتوای فایل خالی است.' });
+    }
+    if (buffer.length > 60 * 1024 * 1024) {
+      return res.status(400).json({ error: 'حجم فایل بیش از ۶۰ مگابایت است.' });
+    }
+
+    const targetDir = isModel ? UPLOADS_MODELS : UPLOADS_IMAGES;
+    const webPrefix = isModel ? '/uploads/models' : '/uploads/images';
+
+    const rawName = path.basename(filename, ext).replace(/[^a-zA-Z0-9_\u0600-\u06FF-]/g, '_').slice(0, 50);
+    const safeFilename = `${rawName || 'asset'}-${Date.now().toString(36)}${ext}`;
+    const destinationPath = path.join(targetDir, safeFilename);
+
+    fs.writeFileSync(destinationPath, buffer);
+
+    const distTargetDir = path.resolve('dist', isModel ? 'uploads/models' : 'uploads/images');
+    if (fs.existsSync(path.resolve('dist'))) {
+      if (!fs.existsSync(distTargetDir)) fs.mkdirSync(distTargetDir, { recursive: true });
+      try { fs.copyFileSync(destinationPath, path.join(distTargetDir, safeFilename)); } catch {}
+    }
+
+    const webUrl = `${webPrefix}/${safeFilename}`;
+    const mimeType = getMimeType(safeFilename);
+    const assetType = isModel ? 'model' : 'image';
+
+    try {
+      db.run(
+        `INSERT OR REPLACE INTO media_assets (name, path, type, size, mime_type, source) VALUES (?, ?, ?, ?, ?, ?)`,
+        safeFilename, webUrl, assetType, buffer.length, mimeType, 'upload'
+      );
+    } catch (e) {
+      console.warn('[MediaManager] Failed to record in media_assets:', e);
+    }
+
+    res.json({
+      success: true,
+      url: webUrl,
+      filename: safeFilename,
+      size: buffer.length,
+      type: assetType,
+      mimeType
+    });
+  } catch (err) {
+    console.error('[MediaManager] upload error:', err);
+    res.status(500).json({ error: 'خطا در ذخیره‌سازی فایل: ' + err.message });
+  }
+});
+
+// 4. Delete file
+r.delete('/media', (req, res) => {
+  try {
+    const { path: filePath } = req.body || {};
+    if (!filePath || typeof filePath !== 'string') {
+      return res.status(400).json({ error: 'مسیر فایل الزامی است.' });
+    }
+
+    if (filePath === '/models/laptop-flagship.glb') {
+      return res.status(403).json({ error: 'مدل پرچمدار اصلی سیستم محافظت شده است و قابل حذف نیست.' });
+    }
+
+    if (!filePath.startsWith('/uploads/')) {
+      return res.status(403).json({ error: 'فقط فایل‌های پوشه uploads قابل حذف هستند.' });
+    }
+
+    const diskPath = path.resolve('public', filePath.replace(/^\/+/, ''));
+    if (fs.existsSync(diskPath)) {
+      try { fs.unlinkSync(diskPath); } catch {}
+    }
+
+    const distPath = path.resolve('dist', filePath.replace(/^\/+/, ''));
+    if (fs.existsSync(distPath)) {
+      try { fs.unlinkSync(distPath); } catch {}
+    }
+
+    db.run('DELETE FROM media_assets WHERE path = ?', filePath);
+
+    res.json({ success: true, path: filePath });
+  } catch (err) {
+    res.status(500).json({ error: 'خطا در حذف فایل: ' + err.message });
   }
 });
 

@@ -144,8 +144,9 @@ app.post(
     }
   }
 );
-app.use(express.json({ limit: '2mb' }));
-app.use(express.text({ type: ['text/*', 'application/json'], limit: '2mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.text({ type: ['text/*', 'application/json'], limit: '50mb' }));
 app.use((req, _res, next) => {
   // If beacon sent text/plain containing JSON, parse it
   if (typeof req.body === 'string' && req.body.startsWith('{') && req.body.endsWith('}')) {
@@ -153,6 +154,30 @@ app.use((req, _res, next) => {
   }
   next();
 });
+
+// Static Media & 3D Assets Serving (/uploads, /models)
+const uploadsDir = path.resolve('public/uploads');
+const imagesDir = path.join(uploadsDir, 'images');
+const modelsDir = path.join(uploadsDir, 'models');
+if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
+if (!fs.existsSync(modelsDir)) fs.mkdirSync(modelsDir, { recursive: true });
+
+const staticModelOptions = {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.glb')) {
+      res.setHeader('Content-Type', 'model/gltf-binary');
+    } else if (filePath.endsWith('.gltf')) {
+      res.setHeader('Content-Type', 'model/gltf+json');
+    }
+  }
+};
+
+app.use('/uploads', express.static(uploadsDir, staticModelOptions));
+if (fs.existsSync(path.resolve('uploads'))) {
+  app.use('/uploads', express.static(path.resolve('uploads'), staticModelOptions));
+}
+app.use('/models', express.static(path.resolve('public/models'), staticModelOptions));
+
 app.use(attachUser);
 
 app.use('/api/auth', authRateLimiter);

@@ -7,7 +7,7 @@ import {
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
-  Megaphone, Ticket, Globe, Mail, Activity, Lock, KeyRound, Send
+  Megaphone, Ticket, Globe, Mail, Activity, Lock, KeyRound, Send, Rotate3d
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getHardwareBadges } from '../utils/shortSpecs.js';
@@ -22,6 +22,7 @@ import DemoNoticeModal from './DemoNoticeModal.jsx';
 import ViewerAnalytics from './ViewerAnalytics.jsx';
 import AdminWebmail from './AdminWebmail.jsx';
 import ResourceMonitor from './ResourceMonitor.jsx';
+import MediaAssetsManager from './MediaAssetsManager.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated, onHomepageConfigUpdated }) {
@@ -1177,6 +1178,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       tabs: [
         { id: 'inventory', label: 'انبارداری و ورود/خروج بار', icon: Truck, badge: 'حواله‌ها' },
         { id: 'products', label: 'محصولات و موجودی انبار', icon: Package, badge: products.length > 0 ? `${products.length} کالا` : null },
+        { id: 'media_assets', label: 'رسانه‌ها، تصاویر و مدل‌های ۳D', icon: Rotate3d, badge: '۳D / مدیا' },
         { id: 'orders', label: 'سفارشات مشتریان', icon: ShoppingCart, badge: orders.length > 0 ? `${orders.length}` : null },
         { id: 'warranties', label: 'کارت‌های گارانتی و اصالت کالا', icon: ShieldCheck, badge: 'گارانتی' },
         { id: 'appointments', label: 'نوبت‌های تست شوروم و ارتقا', icon: Calendar, badge: appointments.length > 0 ? `${appointments.length}` : null }
@@ -1995,6 +1997,11 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
             </table>
           </div>
         </div>
+      )}
+
+      {/* 2.1. MEDIA & 3D ASSETS MANAGER */}
+      {activeSection === 'media_assets' && (
+        <MediaAssetsManager token={authToken} />
       )}
 
       {/* 2.2. INVENTORY & LOGISTICS MANAGEMENT */}

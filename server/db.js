@@ -492,6 +492,30 @@ function migrate() {
     `);
   } catch {}
 
+  // 3D Models and Media Assets Storage Table
+  try {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS media_assets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        path TEXT UNIQUE NOT NULL,
+        type TEXT NOT NULL,
+        size INTEGER NOT NULL DEFAULT 0,
+        mime_type TEXT,
+        source TEXT DEFAULT 'upload',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_media_assets_type ON media_assets(type);
+      CREATE INDEX IF NOT EXISTS idx_media_assets_path ON media_assets(path);
+    `);
+
+    // Ensure core 3D flagship model is registered
+    db.run(
+      `INSERT OR IGNORE INTO media_assets (name, path, type, size, mime_type, source) VALUES (?, ?, ?, ?, ?, ?)`,
+      'laptop-flagship.glb', '/models/laptop-flagship.glb', 'model', 177828, 'model/gltf-binary', 'system'
+    );
+  } catch {}
+
   // Seed default coupons if table is empty
   try {
     const couponCount = db.get("SELECT COUNT(*) AS c FROM coupons")?.c || 0;

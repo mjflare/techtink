@@ -55,3 +55,9 @@ certs/
 *.pem
 techtink.service
 techtink.service.tmp
+
+# Uploaded user media & models
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/images/.gitkeep
+!public/uploads/models/.gitkeep

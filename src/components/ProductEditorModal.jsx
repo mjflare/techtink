@@ -12,6 +12,7 @@ import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
+import AssetSelector from './AssetSelector.jsx';
 
 // Suggested tech photos for quick insertion in product reviews
 const TECH_PHOTO_PRESETS = [
@@ -1193,6 +1194,25 @@ export default function ProductEditorModal({
                         placeholder="گارانتی ۶ ماهه طلایی استوک تک‌تینک" 
                       />
                     </div>
+
+                    <div style={{ gridColumn: '1 / -1', marginTop: '6px' }}>
+                      <AssetSelector
+                        label="تصویر اصلی و کاور محصول (Main Hero Image)"
+                        value={formData.images[0] || formData.image || ''}
+                        onChange={url => {
+                          const newImgs = [...(formData.images || [])];
+                          newImgs[0] = url;
+                          setFormData(prev => ({
+                            ...prev,
+                            images: newImgs,
+                            image: url
+                          }));
+                        }}
+                        type="image"
+                        placeholder="آپلود عکس محلی، مسیر سرور یا لینک اینترنتی"
+                        helperText="تصویر اصلی دستگاه در کارت محصول و هدر ویترین فروشگاه نمایش داده می‌شود."
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -1356,7 +1376,7 @@ export default function ProductEditorModal({
                   </div>
 
                   {/* 4 Designated View Slots */}
-                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                     {[
                       { idx: 0, label: 'زاویه ۱: نمای روبرو و کاور (Front Hero)', desc: 'تصویر اصلی نمایشگر و شاسی' },
                       { idx: 1, label: 'زاویه ۲: کیبورد و تاچ‌پد (Keyboard & Palmrest)', desc: 'جزئیات تایپ و دکمه‌ها' },
@@ -1365,48 +1385,96 @@ export default function ProductEditorModal({
                     ].map(slot => {
                       const curUrl = formData.images[slot.idx] || '';
                       return (
-                        <div key={slot.idx} className="glass-panel" style={{ padding: '14px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--accent-cyan))' }}>
-                            {slot.label}
-                          </div>
-                          
-                          {/* Thumbnail preview */}
-                          <div style={{
-                            width: '100%',
-                            height: '110px',
-                            borderRadius: '8px',
-                            background: 'rgba(0,0,0,0.2)',
-                            border: '1px solid var(--border-glass)',
-                            overflow: 'hidden',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            {curUrl ? (
-                              <img src={curUrl} alt={slot.label} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                            ) : (
-                              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>بدون تصویر</span>
-                            )}
-                          </div>
-
-                          <input
-                            type="text"
+                        <div key={slot.idx} className="glass-panel" style={{ padding: '16px', borderRadius: '14px' }}>
+                          <AssetSelector
+                            compact
+                            label={slot.label}
                             value={curUrl}
-                            onChange={e => {
-                              const newImgs = [...formData.images];
-                              newImgs[slot.idx] = e.target.value;
+                            onChange={url => {
+                              const newImgs = [...(formData.images || [])];
+                              newImgs[slot.idx] = url;
                               setFormData(prev => ({
                                 ...prev,
                                 images: newImgs,
-                                image: slot.idx === 0 ? e.target.value : prev.image
+                                image: slot.idx === 0 ? url : (prev.image || url)
                               }));
                             }}
-                            placeholder="https://images.unsplash.com/..."
-                            style={{ fontSize: '0.75rem', direction: 'ltr', fontFamily: 'var(--font-code)' }}
+                            type="image"
+                            placeholder="آپلود فایل، مسیر سرور یا لینک مستقیم"
+                            helperText={slot.desc}
                           />
                         </div>
                       );
                     })}
+                  </div>
+
+                  {/* Additional Gallery Photos (if more than 4) */}
+                  {formData.images.length > 4 && (
+                    <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        تصاویر تکمیلی و جزئیات بیشتر گالری:
+                      </div>
+                      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                        {formData.images.slice(4).map((extraUrl, extraIdx) => {
+                          const realIdx = 4 + extraIdx;
+                          return (
+                            <div key={realIdx} className="glass-panel" style={{ padding: '16px', borderRadius: '14px', position: 'relative' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newImgs = formData.images.filter((_, i) => i !== realIdx);
+                                  setFormData(prev => ({ ...prev, images: newImgs }));
+                                }}
+                                title="حذف این تصویر"
+                                style={{
+                                  position: 'absolute',
+                                  top: '12px',
+                                  left: '12px',
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: 'none',
+                                  color: '#ef4444',
+                                  borderRadius: '6px',
+                                  padding: '4px',
+                                  cursor: 'pointer',
+                                  zIndex: 2
+                                }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                              <AssetSelector
+                                compact
+                                label={`تصویر تکمیلی ${extraIdx + 5}`}
+                                value={extraUrl}
+                                onChange={url => {
+                                  const newImgs = [...formData.images];
+                                  newImgs[realIdx] = url;
+                                  setFormData(prev => ({ ...prev, images: newImgs }));
+                                }}
+                                type="image"
+                                placeholder="آپلود فایل، مسیر سرور یا لینک مستقیم"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Extra Photo Button */}
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      className="btn btn-glass"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          images: [...(prev.images || []), '']
+                        }));
+                      }}
+                      style={{ fontSize: '0.8rem', padding: '10px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Plus size={15} /> افزودن زاویه یا تصویر جانبی جدید به گالری
+                    </button>
                   </div>
                 </div>
               )}
@@ -1673,16 +1741,16 @@ export default function ProductEditorModal({
                     </div>
 
                     <div style={{ opacity: formData.enable_3d_viewer !== false ? 1 : 0.6, pointerEvents: formData.enable_3d_viewer !== false ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                        آدرس فایل سه‌بعدی (.glb / .gltf):
-                      </label>
-                      <input 
-                        type="text"
-                        className="font-code"
+                      <AssetSelector
+                        label="فایل مدل سه‌بعدی محصول (3D GLB / GLTF Model)"
                         value={formData.model3d_url || ''}
-                        onChange={e => setFormData(prev => ({ ...prev, model3d_url: e.target.value }))}
-                        placeholder="مثال: /models/laptop-flagship.glb یا https://..."
-                        style={{ direction: 'ltr', fontSize: '0.8rem', padding: '10px 14px', borderRadius: '10px', width: '100%' }}
+                        onChange={url => setFormData(prev => ({ ...prev, model3d_url: url }))}
+                        type="model"
+                        placeholder="/models/laptop-flagship.glb یا آپلود فایل لوکال"
+                        helperText="می‌توانید مدل ۳D (.glb) را مستقیماً از سیستم آپلود کنید، از دایرکتوری‌های سرور انتخاب نمایید، یا آدرس اینترنتی بدهید."
+                        presets={[
+                          { label: 'مدل پرچمدار پیش‌فرض', url: '/models/laptop-flagship.glb' }
+                        ]}
                       />
                     </div>
                   </div>
