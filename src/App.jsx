@@ -351,7 +351,7 @@ function App() {
             onSecondaryClick={() => handleTabChange('blog')}
           />
 
-          <div id="shopping-center" style={{ scrollMarginTop: '80px' }}>
+          <div id="shopping-center" className="lumon-store-entrance" style={{ scrollMarginTop: '80px' }}>
             <PromotionBanner 
               config={homepageConfig?.promotion}
               onExploreClick={() => {

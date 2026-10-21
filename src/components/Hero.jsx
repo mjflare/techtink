@@ -16,6 +16,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   // Animation Progress: 0.0 to 1.0 (Scrubbed smoothly by scroll gestures)
   const [progress, setProgress] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const isTransitioningRef = useRef(false);
   const [isMounted, setIsMounted] = useState(true);
 
   // Momentum scrubbing refs (Physics inertia & silky momentum glide)
@@ -116,16 +118,23 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   }, [isDismissed]);
 
   const handleProceedToStore = () => {
+    if (isDismissed || isTransitioningRef.current) return;
+    setIsTransitioning(true);
+    isTransitioningRef.current = true;
     targetProgressRef.current = 1.18;
     currentProgressRef.current = 1.12;
     setProgress(1.0);
-    setIsDismissed(true);
-    document.body.style.overflow = '';
+
+    // Dynamic cinematic camera surge towards CRT screen, then curtain lift
     setTimeout(() => {
-      setIsMounted(false);
-      const el = document.getElementById('shopping-center') || document.getElementById('catalog');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 650);
+      setIsDismissed(true);
+      document.body.style.overflow = '';
+      setTimeout(() => {
+        setIsMounted(false);
+        const el = document.getElementById('shopping-center') || document.getElementById('catalog');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 700);
+    }, 220);
   };
 
   // 2. THREE.JS 3D ENGINE (Sterile Lumon White Colorway & Macrodata Refinement Focus)
@@ -289,7 +298,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
     // --- 4. AUTHENTIC NATURAL KRAFT CARDBOARD PACKAGING BOX ---
     const boxGroup = new THREE.Group();
-    boxGroup.position.set(-0.85, 1.18, 0.15);
+    boxGroup.position.set(-0.85, 1.25, 0.15); // Sits on desk top
     group.add(boxGroup);
 
     // Natural Cardboard Materials (Matte Kraft tan)
@@ -309,34 +318,34 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       metalness: 0.04
     });
 
-    // Outer Bottom Tray (Generously sized to nest the laptop inside)
-    const boxBaseGeo = new THREE.BoxGeometry(1.34, 0.16, 0.94);
+    // Outer Bottom Tray (height: 0.20)
+    const boxBaseGeo = new THREE.BoxGeometry(1.36, 0.20, 0.96);
     const boxBase = new THREE.Mesh(boxBaseGeo, kraftBaseMat);
     boxBase.castShadow = true;
     boxBase.receiveShadow = true;
     boxGroup.add(boxBase);
 
     // Inner protective cradle insert
-    const insertGeo = new THREE.BoxGeometry(1.26, 0.05, 0.86);
+    const insertGeo = new THREE.BoxGeometry(1.28, 0.05, 0.88);
     const boxInsert = new THREE.Mesh(insertGeo, kraftInnerMat);
-    boxInsert.position.set(0, 0.065, 0);
+    boxInsert.position.set(0, 0.075, 0);
     boxGroup.add(boxInsert);
 
-    // Box Lid Group (for precision lift & tilt animation)
+    // Box Lid Group (Closed flush over the base initially)
     const lidGroup = new THREE.Group();
-    lidGroup.position.set(0, 0.09, 0);
+    lidGroup.position.set(0, 0.03, 0);
     boxGroup.add(lidGroup);
 
-    const boxLidGeo = new THREE.BoxGeometry(1.36, 0.14, 0.96);
+    const boxLidGeo = new THREE.BoxGeometry(1.38, 0.16, 0.98);
     const boxLid = new THREE.Mesh(boxLidGeo, kraftBaseMat);
     boxLid.castShadow = true;
     boxLid.receiveShadow = true;
     lidGroup.add(boxLid);
 
     // Center Packing Tape Strip
-    const tapeGeo = new THREE.BoxGeometry(1.365, 0.005, 0.16);
+    const tapeGeo = new THREE.BoxGeometry(1.385, 0.005, 0.16);
     const tape = new THREE.Mesh(tapeGeo, kraftTapeMat);
-    tape.position.set(0, 0.073, 0);
+    tape.position.set(0, 0.082, 0);
     lidGroup.add(tape);
 
     // Minimal Shipping / Fragile sticker on lid corner
@@ -344,12 +353,13 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const labelMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
     const label = new THREE.Mesh(labelGeo, labelMat);
     label.rotation.x = -Math.PI / 2;
-    label.position.set(0.42, 0.074, 0.28);
+    label.position.set(0.42, 0.083, 0.28);
     lidGroup.add(label);
 
     // --- 5. THE 3D LAPTOP (Deep Space Gray Aluminum - Crisp contrast on white desk) ---
     const laptopGroup = new THREE.Group();
-    laptopGroup.position.set(-0.85, 1.24, 0.15); // Starts nestled inside the Kraft cardboard box
+    laptopGroup.position.set(-0.85, 1.25, 0.15);
+    laptopGroup.visible = false; // Closed packaging initially - laptop is completely concealed
     group.add(laptopGroup);
 
     const baseGeo = new THREE.BoxGeometry(1.22, 0.034, 0.84);
@@ -550,9 +560,16 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       const endY = isNarrow ? 1.60 : 1.48;
       const endX = isNarrow ? 0.12 : 0.42;
 
-      const camTargetZ = THREE.MathUtils.lerp(startZ, endZ, progressClamped / 0.85);
-      const camTargetY = THREE.MathUtils.lerp(startY, endY, progressClamped / 0.85);
-      const camTargetX = THREE.MathUtils.lerp(0, endX, progressClamped / 0.85) + (mouseRef.current.x * (isNarrow ? 0.10 : 0.3));
+      let camTargetZ = THREE.MathUtils.lerp(startZ, endZ, progressClamped / 0.85);
+      let camTargetY = THREE.MathUtils.lerp(startY, endY, progressClamped / 0.85);
+      let camTargetX = THREE.MathUtils.lerp(0, endX, progressClamped / 0.85) + (mouseRef.current.x * (isNarrow ? 0.10 : 0.3));
+
+      // Dramatic cinematic camera push towards screen during transition into store
+      if (isTransitioningRef.current) {
+        camTargetZ = 1.7;
+        camTargetY = 1.45;
+        camTargetX = 0;
+      }
 
       camera.position.x += (camTargetX - camera.position.x) * 0.08;
       camera.position.y += (camTargetY - camera.position.y) * 0.08;
@@ -560,32 +577,43 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       camera.lookAt(0, 1.25, 0);
 
       // --- Physical Accurate Unboxing Sequence ---
-      // Stage 1: Cardboard Box Lid slides vertically up with vacuum glide (p: 0.02 -> 0.14)
-      const lidLift = THREE.MathUtils.clamp((p - 0.02) / 0.12, 0, 1);
-      lidGroup.position.y = 0.09 + (lidLift * 0.45);
+      // Firmly closed packaging initially (p < 0.08)
+      if (p < 0.08) {
+        laptopGroup.visible = false;
+        lidGroup.position.set(0, 0.03, 0);
+        lidGroup.rotation.set(0, 0, 0);
+        boxGroup.position.set(-0.85, 1.25, 0.15);
+        screenHinge.rotation.x = Math.PI / 2;
+      } else {
+        laptopGroup.visible = true;
 
-      // Stage 2: Lid tilts and rests to the side; Laptop emerges and glides to center stage (p: 0.12 -> 0.28)
-      const unboxSlide = THREE.MathUtils.clamp((p - 0.12) / 0.16, 0, 1);
+        // Stage 1: Cardboard Box Lid slides vertically up with vacuum glide (p: 0.08 -> 0.22)
+        const lidLift = THREE.MathUtils.clamp((p - 0.08) / 0.14, 0, 1);
+        lidGroup.position.y = 0.03 + (lidLift * 0.52);
 
-      // Lid smoothly rotates and rests naturally on the desk
-      lidGroup.position.x = -unboxSlide * 0.65;
-      lidGroup.position.z = -unboxSlide * 0.35;
-      lidGroup.position.y = 0.09 + 0.45 - (unboxSlide * 0.38);
-      lidGroup.rotation.z = unboxSlide * 0.14;
-      lidGroup.rotation.x = -unboxSlide * 0.16;
+        // Stage 2: Lid tilts and rests to the side; Laptop emerges and glides to center stage (p: 0.20 -> 0.38)
+        const unboxSlide = THREE.MathUtils.clamp((p - 0.20) / 0.18, 0, 1);
 
-      // Cardboard Box Base gently rests on the left of the desk
-      boxGroup.position.x = THREE.MathUtils.lerp(-0.85, -1.35, unboxSlide);
-      boxGroup.position.z = THREE.MathUtils.lerp(0.15, -0.15, unboxSlide);
+        // Lid smoothly rotates and rests naturally on the desk
+        lidGroup.position.x = -unboxSlide * 0.70;
+        lidGroup.position.z = -unboxSlide * 0.35;
+        lidGroup.position.y = 0.03 + 0.52 - (unboxSlide * 0.44);
+        lidGroup.rotation.z = unboxSlide * 0.14;
+        lidGroup.rotation.x = -unboxSlide * 0.16;
 
-      // Laptop emerges from the packaging tray and glides to center
-      laptopGroup.position.x = THREE.MathUtils.lerp(-0.85, 0, unboxSlide);
-      laptopGroup.position.y = THREE.MathUtils.lerp(1.24, 1.18, unboxSlide);
-      laptopGroup.position.z = THREE.MathUtils.lerp(0.15, 0, unboxSlide);
+        // Cardboard Box Base gently rests on the left of the desk
+        boxGroup.position.x = THREE.MathUtils.lerp(-0.85, -1.35, unboxSlide);
+        boxGroup.position.z = THREE.MathUtils.lerp(0.15, -0.15, unboxSlide);
 
-      // Stage 3: Laptop Display opens smoothly (p: 0.26 -> 0.52)
-      const lidOpen = THREE.MathUtils.clamp((p - 0.24) / 0.26, 0, 1);
-      screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
+        // Laptop emerges from the packaging tray and glides to center
+        laptopGroup.position.x = THREE.MathUtils.lerp(-0.85, 0, unboxSlide);
+        laptopGroup.position.y = THREE.MathUtils.lerp(1.25, 1.18, unboxSlide);
+        laptopGroup.position.z = THREE.MathUtils.lerp(0.15, 0, unboxSlide);
+
+        // Stage 3: Laptop Display opens smoothly (p: 0.36 -> 0.60)
+        const lidOpen = THREE.MathUtils.clamp((p - 0.36) / 0.24, 0, 1);
+        screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
+      }
 
       // CRT Light Glow (Floods onto chassis and white desk)
       const crtGlow = THREE.MathUtils.clamp((p - 0.35) / 0.24, 0, 1);
@@ -663,7 +691,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         touchAction: 'none', // Prevents browser overscroll & pull-to-refresh on mobile
         transform: `translateY(-${curtainLift}%)`,
         opacity: isDismissed ? 0.96 : 1,
-        transition: isDismissed ? 'transform 0.65s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.65s ease' : 'none'
+        borderBottom: (isDismissed || isTransitioning) ? '3.5px solid #00e5a3' : 'none',
+        boxShadow: (isDismissed || isTransitioning) ? '0 24px 70px rgba(0, 229, 163, 0.75)' : 'none',
+        transition: isDismissed ? 'transform 0.70s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.70s ease, box-shadow 0.3s ease' : 'none'
       }}
     >
       {/* 3D WebGL Canvas */}
@@ -722,7 +752,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', left: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
       <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', right: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
 
-      {/* TOP VIEWFINDER HUD (Brand & Subtext + Quick Skip) */}
+      {/* TOP VIEWFINDER HUD (Clean Brand Identity + Quick Skip) */}
       <div 
         style={{
           position: 'absolute',
@@ -738,17 +768,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3', display: 'inline-block' }} />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: isMobile ? '0.85rem' : '0.98rem', fontWeight: 900, color: '#0f2d26', fontFamily: 'var(--font-sans)' }}>
-                {brandTitle}
-              </span>
-              <span className="font-tech" style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px' }}>
-                / TechTink
-              </span>
-            </div>
-            <span style={{ fontSize: isMobile ? '0.62rem' : '0.68rem', color: '#475569', display: 'block', fontWeight: 600, fontFamily: 'var(--font-sans)', direction: 'rtl' }}>
-              الهام گرفته شده از سریال severance
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: isMobile ? '0.85rem' : '0.98rem', fontWeight: 900, color: '#0f2d26', fontFamily: 'var(--font-sans)' }}>
+              {brandTitle}
+            </span>
+            <span className="font-tech" style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px' }}>
+              / TechTink
             </span>
           </div>
         </div>
@@ -782,7 +807,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         </div>
       </div>
 
-      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON (Brand & Subtext + Action) */}
+      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON (Brand & Subtle Subtext + Action) */}
       <div 
         style={{
           position: 'absolute',
@@ -798,10 +823,10 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }}
       >
         <div style={{ textAlign: isMobile ? 'center' : 'right', direction: 'rtl', width: isMobile ? '100%' : 'auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '8px', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '8px', marginBottom: '2px' }}>
             <span 
               style={{
-                fontSize: isMobile ? '1.05rem' : '1.24rem',
+                fontSize: isMobile ? '1.05rem' : '1.22rem',
                 fontWeight: 900,
                 color: '#0f2d26',
                 fontFamily: 'var(--font-sans)',
@@ -811,9 +836,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
                 gap: '8px'
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3' }} />
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 8px #00e5a3' }} />
               {brandTitle}
-              <span className="font-tech" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px', direction: 'ltr' }}>
+              <span className="font-tech" style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px', direction: 'ltr' }}>
                 TechTink
               </span>
             </span>
@@ -822,11 +847,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           <p 
             style={{
               margin: 0,
-              fontSize: isMobile ? '0.70rem' : '0.80rem',
-              color: '#475569',
-              fontWeight: 600,
+              fontSize: '0.62rem',
+              color: '#94a3b8',
+              fontWeight: 500,
               fontFamily: 'var(--font-sans)',
-              letterSpacing: '0px'
+              letterSpacing: '0px',
+              opacity: 0.72
             }}
           >
             الهام گرفته شده از سریال severance

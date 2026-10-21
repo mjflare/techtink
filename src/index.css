@@ -1,46 +1,46 @@
 :root, [data-theme="light"] {
-  /* HSL Accent Colors (Royal & Vivid Light Mode Colors) */
-  --accent-cyan: 200 95% 42%;    /* Royal Cyan #0284c7 */
-  --accent-purple: 262 80% 52%;  /* Cyber Violet #7c3aed */
-  --accent-green: 150 70% 36%;   /* Emerald Green #059669 */
-  --accent-red: 350 80% 54%;     /* Ruby Red #e11d48 */
-  --accent-pink: 328 85% 58%;
+  /* Lumon Industries Colorway (Authentic Severance Aesthetic) */
+  --accent-cyan: 162 90% 40%;    /* Lumon CRT Phosphor Mint #00e5a3 */
+  --accent-purple: 174 76% 36%;  /* Lumon Macrodata Teal #0d9488 */
+  --accent-green: 160 84% 34%;   /* Lumon Seafoam Emerald #059669 */
+  --accent-red: 350 80% 54%;     /* Severe Alert Ruby #e11d48 */
+  --accent-pink: 162 90% 40%;
 
-  /* Surface & Base Backgrounds - Apple Frost & Pure Whites */
-  --bg-dark: 210 40% 98%;        /* Crisp light slate #f8fafc */
+  /* Surface & Base Backgrounds - Sterile Lumon Off-White & Pure Lacquer Whites */
+  --bg-dark: 168 18% 96%;        /* Sterile Lumon Off-White #f0f5f4 */
   --bg-panel: 0 0% 100%;         /* Pure white #ffffff */
 
-  /* High Contrast Typography for Crystal Clarity */
-  --text-primary: #0f172a;       /* Deep slate #0f172a */
-  --text-secondary: #475569;     /* Medium slate #475569 */
-  --text-muted: #64748b;
-  --text-placeholder: #94a3b8;
+  /* High Contrast Lumon Typography (Severed Floor Seafoam Pine) */
+  --text-primary: #0f2d26;       /* Lumon Deep Pine #0f2d26 */
+  --text-secondary: #33534b;     /* Lumon Medium Pine #33534b */
+  --text-muted: #52796f;         /* Lumon Muted Seafoam Slate */
+  --text-placeholder: #84a98c;
 
-  /* iPhone Liquid Glass Properties (Crisp Light Mode Glassmorphism) */
-  --border-glass: rgba(0, 0, 0, 0.08);
-  --border-glass-hover: rgba(0, 0, 0, 0.16);
-  --glass-bg: rgba(255, 255, 255, 0.88);
+  /* Clinical Glass & Architectural Panel Properties */
+  --border-glass: rgba(15, 45, 38, 0.09);
+  --border-glass-hover: rgba(0, 229, 163, 0.45);
+  --glass-bg: rgba(255, 255, 255, 0.92);
   --glass-bg-hover: #ffffff;
-  --glass-card-bg: rgba(255, 255, 255, 0.94);
+  --glass-card-bg: rgba(255, 255, 255, 0.95);
   --glass-specular: inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
-  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
-  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --glass-shadow: 0 10px 30px rgba(15, 45, 38, 0.05), 0 1px 3px rgba(15, 45, 38, 0.03);
+  --card-shadow: 0 4px 20px rgba(15, 45, 38, 0.04), 0 1px 2px rgba(15, 45, 38, 0.02);
   --modal-bg: #ffffff;
-  --modal-header-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  --modal-header-bg: linear-gradient(135deg, #f0f5f4 0%, #e5f0ec 100%);
   --input-bg: #ffffff;
-  --input-border: rgba(0, 0, 0, 0.14);
+  --input-border: rgba(15, 45, 38, 0.15);
   --btn-glass-bg: #ffffff;
-  --btn-glass-hover: #f8fafc;
+  --btn-glass-hover: #f0f5f4;
 
-  /* Ambient Aurora Refraction Glows */
-  --ambient-glow-1: rgba(56, 189, 248, 0.12);
-  --ambient-glow-2: rgba(244, 114, 182, 0.08);
+  /* Ambient Severance Glows (Lumon Mint Phosphor & Deep Pine) */
+  --ambient-glow-1: rgba(0, 229, 163, 0.09);
+  --ambient-glow-2: rgba(15, 45, 38, 0.05);
 
   /* Tables & Lists */
-  --table-stripe: rgba(0, 0, 0, 0.02);
-  --table-border: rgba(0, 0, 0, 0.06);
-  --scrollbar-thumb: rgba(0, 0, 0, 0.18);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
+  --table-stripe: rgba(15, 45, 38, 0.02);
+  --table-border: rgba(15, 45, 38, 0.07);
+  --scrollbar-thumb: rgba(15, 45, 38, 0.18);
+  --scrollbar-thumb-hover: rgba(0, 229, 163, 0.5);
 
   /* Typography */
   --font-sans: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
@@ -96,6 +96,22 @@ body {
   -webkit-font-smoothing: antialiased;
   direction: rtl; /* RTL default layout */
   transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+}
+
+/* Lumon Shop Entrance Animation */
+@keyframes lumonShopEntrance {
+  0% {
+    opacity: 0.6;
+    transform: translateY(28px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lumon-store-entrance {
+  animation: lumonShopEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 #root {
