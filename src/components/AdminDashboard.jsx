@@ -9,7 +9,7 @@ import {
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
   Megaphone, Ticket, Globe, Mail, Activity, Lock, KeyRound, Send, Rotate3d
 } from 'lucide-react';
-import { formatPrice } from '../utils/formatPrice.js';
+import { formatPrice, cleanGrade } from '../utils/formatPrice.js';
 import { getHardwareBadges } from '../utils/shortSpecs.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
@@ -777,7 +777,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       slug: p.slug || '',
       brand: p.brand || p.specs?.brand || '',
       model: p.model || p.specs?.model || '',
-      grade: p.grade || p.specs?.grade || 'گرید ++A اروپایی (تمیز در حد نو)',
+      grade: cleanGrade(p.grade || p.specs?.grade),
       category: p.category || 'ورک استیشن',
       series: p.series || '',
       basePrice: p.basePrice || 0,
@@ -835,7 +835,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       slug: dataToSave.slug || dataToSave.name.toLowerCase().replace(/[\s]+/g, '-'),
       brand: dataToSave.brand,
       model: dataToSave.model,
-      grade: dataToSave.grade,
+      grade: cleanGrade(dataToSave.grade),
       category: dataToSave.category,
       series: dataToSave.series,
       basePrice: Number(dataToSave.basePrice),
@@ -1349,7 +1349,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
             پنل مدیریت <span className="gradient-text">تک‌تینک</span>
           </h1>
           <p style={{ color: 'var(--text-secondary)' }}>
-            مدیریت موجودی انبار، قیمت‌گذاری به تومان، وبلاگ، سفارش‌ها، دیتابیس و اتصال به ترب
+            مدیریت موجودی انبار، قیمت‌گذاری به میلیون تومان، وبلاگ، سفارش‌ها، دیتابیس و اتصال به ترب
           </p>
         </div>
 
@@ -1626,7 +1626,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
               <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
                 <div className="glass-card" style={{ padding: '24px', position: 'relative', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: '-10px', left: '-10px', width: '80px', height: '80px', background: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.2), transparent 70%)', pointerEvents: 'none' }} />
-                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>درآمد کل حاصل از فروش (تومان)</div>
+                  <div style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '8px' }}>درآمد کل حاصل از فروش (میلیون تومان)</div>
                   <div className="font-code gradient-text" style={{ fontSize: '1.85rem', fontWeight: 900 }}>
                     {formatPrice(stats.totalRevenue || stats.revenue || 0)}
                   </div>
@@ -1888,7 +1888,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   <th style={{ padding: '12px' }}>تصویر</th>
                   <th style={{ padding: '12px' }}>نام لپ‌تاپ و سازندگان</th>
                   <th style={{ padding: '12px' }}>دسته‌بندی</th>
-                  <th style={{ padding: '12px' }}>قیمت پایه (تومان)</th>
+                  <th style={{ padding: '12px' }}>قیمت پایه (میلیون تومان)</th>
                   <th style={{ padding: '12px' }}>موجودی</th>
                   <th style={{ padding: '12px' }}>شارژ سریع</th>
                   <th style={{ padding: '12px', textAlign: 'center' }}>بخش‌های تخصصی و عملیات</th>

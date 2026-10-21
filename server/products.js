@@ -5,6 +5,15 @@ const parse = (s, fallback) => {
   try { return JSON.parse(s); } catch { return fallback; }
 };
 
+export function cleanGrade(raw) {
+  if (!raw) return 'A+';
+  const str = String(raw).toUpperCase().trim();
+  if (str.includes('B+') || str.includes('+B')) return 'B+';
+  if (str.includes('A+') || str.includes('++A') || str.includes('A++') || str.includes('+A')) return 'A+';
+  if (str.includes('A')) return 'A';
+  return 'A+';
+}
+
 export function serializeProduct(p, { full = false } = {}) {
   const rating = db.get("SELECT AVG(rating) AS avg, COUNT(*) AS c FROM comments WHERE product_id = ? AND status = 'approved'", p.id);
   const specs = parse(p.specs, {});
@@ -27,12 +36,12 @@ export function serializeProduct(p, { full = false } = {}) {
     repairability: 89
   };
 
-  // Determine Brand, Model, and Grade
+  // Determine Brand, Model, and Grade (strictly A+, A, B+)
   const rawName = p.name || '';
   const firstWord = rawName.split(' ')[0] || '';
   const brand = p.brand || specs.brand || (['Lenovo', 'HP', 'Dell', 'Asus', 'Apple', 'Acer', 'MSI'].includes(firstWord) ? firstWord : 'TechTink');
   const model = p.model || specs.model || (rawName.startsWith(brand) ? rawName.slice(brand.length).trim() : rawName);
-  const grade = p.grade || specs.grade || 'گرید ++A اروپایی (تمیز در حد نو)';
+  const grade = cleanGrade(p.grade || specs.grade);
 
   // Benchmark scores (0-100 scale for charts, kept for compatibility)
   const benchmarks = specs.benchmarks || {

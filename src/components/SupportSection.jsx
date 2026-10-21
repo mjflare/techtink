@@ -5,6 +5,7 @@ import {
   ShieldCheck, ArrowRight, Truck, CheckCircle2, AlertCircle, 
   Copy, Check, Sparkles, User, Phone, Mail, FileCheck
 } from 'lucide-react';
+import { formatPrice, cleanGrade } from '../utils/formatPrice.js';
 
 export default function SupportSection() {
   const [faqs, setFaqs] = useState([]);
@@ -554,7 +555,7 @@ export default function SupportSection() {
                     <option value="">-- لطفاً دستگاه مورد نظر خود را انتخاب نمایید --</option>
                     {laptops.map(lap => (
                       <option key={lap.id} value={lap.id}>
-                        {lap.brand} {lap.model} ({lap.grade ? `گرید ${lap.grade} - ` : ''}{lap.price?.toLocaleString('fa-IR')} تومان)
+                        {lap.brand} {lap.model} ({lap.grade ? `گرید ${cleanGrade(lap.grade)} - ` : ''}{formatPrice(lap.price)})
                       </option>
                     ))}
                   </select>

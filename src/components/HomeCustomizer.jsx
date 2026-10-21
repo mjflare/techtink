@@ -4,7 +4,7 @@ import {
   Check, AlertCircle, Eye, Tag, Clock, ArrowLeft, Image, 
   Sliders, Plus, Trash2, CheckCircle2, Shield, Calendar, Ticket
 } from 'lucide-react';
-import { formatPrice } from '../utils/formatPrice.js';
+import { formatPrice, cleanGrade } from '../utils/formatPrice.js';
 import { 
   JALALI_MONTH_NAMES, 
   getDaysInJalaliMonth, 
@@ -1108,7 +1108,7 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
                         <span className="badge" style={{ fontSize: '0.6rem', padding: '1px 5px' }}>{p.category}</span>
                         {p.grade && (
                           <span className="badge" style={{ fontSize: '0.6rem', padding: '1px 5px', background: 'hsla(var(--accent-purple), 0.2)' }}>
-                            {p.grade}
+                            {cleanGrade(p.grade)}
                           </span>
                         )}
                       </div>

@@ -7,7 +7,7 @@ import {
   FileText, ChevronDown, ChevronUp, Monitor, HardDrive, Battery, 
   Activity, Flame, RefreshCw, Radio, Rotate3d
 } from 'lucide-react';
-import { formatPrice } from '../utils/formatPrice.js';
+import { formatPrice, cleanGrade, toMillionsToman, parseToman } from '../utils/formatPrice.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
@@ -31,7 +31,7 @@ const IRANIAN_LAPTOP_PRESETS = [
       slug: 'hp-zbook-fury-16-g9',
       brand: 'HP',
       model: 'ZBook Fury 16 G9',
-      grade: 'گرید ++A اروپایی (تمیز در حد نو)',
+      grade: 'A+',
       category: 'ورک استیشن',
       series: 'سری ZBook',
       badge: 'ورک‌استیشن پرچمدار',
@@ -91,7 +91,7 @@ const IRANIAN_LAPTOP_PRESETS = [
       slug: 'dell-precision-5570',
       brand: 'Dell',
       model: 'Precision 5570',
-      grade: 'گرید ++A اروپایی (تمیز در حد نو)',
+      grade: 'A+',
       category: 'ورک استیشن',
       series: 'سری Precision',
       badge: 'لوکس‌ترین ورک‌استیشن',
@@ -148,7 +148,7 @@ const IRANIAN_LAPTOP_PRESETS = [
       slug: 'lenovo-thinkpad-t14',
       brand: 'Lenovo',
       model: 'ThinkPad T14 Gen 2',
-      grade: 'گرید ++A اروپایی (تمیز در حد نو)',
+      grade: 'A+',
       category: 'مهندسی',
       series: 'سری ThinkPad T',
       badge: 'محبوب‌ترین اداری و مهندسی',
@@ -206,7 +206,7 @@ const IRANIAN_LAPTOP_PRESETS = [
       slug: 'apple-macbook-pro-16-m1-max',
       brand: 'Apple',
       model: 'MacBook Pro 16 M1 Max',
-      grade: 'گرید ++A اوپن‌باکس با سایکل باتری زیر ۲۰',
+      grade: 'A+',
       category: 'تولید محتوا',
       series: 'سری MacBook Pro',
       badge: 'پرچمدار اکوسیستم اپل',
@@ -308,10 +308,10 @@ function parseRawSpecs(rawText) {
   const displayMatch = t.match(/(\d{2}(?:\.\d+)?)\s*(?:اینچ|inch|\")(?:\s*(?:4K|3\.5K|2K|QHD|FHD|WUXGA|OLED|IPS|Mini-LED|120Hz|144Hz|165Hz|300Hz|لمسی|Touch|مات))*/i);
   if (displayMatch) display = displayMatch[0];
 
-  // 7. Detect Grade
+  // 7. Detect Grade (strictly A+, A, B+)
   let grade = 'A+';
-  const gradeMatch = t.match(/(?:گرید|grade)\s*([A-Za-z\+]+)/i);
-  if (gradeMatch) grade = gradeMatch[1].toUpperCase();
+  const gradeMatch = t.match(/(?:گرید|grade)\s*([A-Za-z0-9\+]+)/i);
+  if (gradeMatch) grade = cleanGrade(gradeMatch[1]);
 
   // 8. Detect Price
   let basePrice = 0;
@@ -346,7 +346,7 @@ export default function ProductEditorModal({
     slug: '',
     brand: '',
     model: '',
-    grade: 'گرید ++A اروپایی (تمیز در حد نو)',
+    grade: 'A+',
     category: 'ورک استیشن',
     series: 'سری ZBook',
     basePrice: 50000000,
@@ -401,9 +401,23 @@ export default function ProductEditorModal({
   });
 
   const [activeTab, setActiveTab] = useState('basic'); // 'basic' | 'specs' | 'gallery' | 'upgrades' | 'flagship' | 'review'
-  const [viewMode, setViewMode] = useState('split'); // 'split' | 'edit' | 'preview'
+  const [viewMode, setViewMode] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 900 ? 'edit' : 'split')); // 'split' | 'edit' | 'preview'
   const [previewSubTab, setPreviewSubTab] = useState('card'); // 'card' | 'flagship' | 'review'
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Million Toman Base Price Input State
+  const [basePriceInput, setBasePriceInput] = useState(() => toMillionsToman(initialData?.basePrice ?? 50000000));
+
+  const handleBasePriceChange = (val) => {
+    setBasePriceInput(val);
+    const parsed = parseToman(val);
+    setFormData(prev => ({ ...prev, basePrice: parsed }));
+  };
+
+  const handleQuickPrice = (millions) => {
+    setBasePriceInput(String(millions));
+    setFormData(prev => ({ ...prev, basePrice: millions * 1000000 }));
+  };
 
   // Smart Parser Tool Drawer State
   const [isParserOpen, setIsParserOpen] = useState(false);
@@ -429,13 +443,15 @@ export default function ProductEditorModal({
         ? initialData.images 
         : (defaultImg ? [defaultImg] : []);
 
+      setBasePriceInput(toMillionsToman(initialData.basePrice || 0));
+
       setFormData({
         id: initialData.id ?? null,
         name: initialData.name || '',
         slug: initialData.slug || '',
         brand: initialData.brand || '',
         model: initialData.model || '',
-        grade: initialData.grade || 'گرید ++A اروپایی (تمیز در حد نو)',
+        grade: cleanGrade(initialData.grade),
         category: initialData.category || 'ورک استیشن',
         series: initialData.series || '',
         basePrice: initialData.basePrice || 0,
@@ -479,13 +495,14 @@ export default function ProductEditorModal({
   // Apply a standard Iranian Stock Laptop preset with one click
   const handleApplyPreset = (preset) => {
     const d = preset.data;
+    setBasePriceInput(toMillionsToman(d.basePrice));
     setFormData(prev => ({
       ...prev,
       name: d.name,
       slug: d.slug,
       brand: d.brand,
       model: d.model,
-      grade: d.grade,
+      grade: cleanGrade(d.grade),
       category: d.category,
       series: d.series,
       badge: d.badge,
@@ -512,6 +529,10 @@ export default function ProductEditorModal({
     const parsed = parseRawSpecs(rawSpecsInput);
     if (!parsed) return;
 
+    if (parsed.basePrice > 0) {
+      setBasePriceInput(toMillionsToman(parsed.basePrice));
+    }
+
     setFormData(prev => {
       const brandVal = parsed.brand || prev.brand || 'Lenovo';
       const nameVal = prev.name || `${brandVal} ${parsed.cpu ? parsed.cpu.split(' ')[0] : 'Laptop'}`;
@@ -521,7 +542,7 @@ export default function ProductEditorModal({
         ...prev,
         brand: brandVal,
         category: parsed.category || prev.category,
-        grade: parsed.grade ? `گرید ${parsed.grade}` : prev.grade,
+        grade: cleanGrade(parsed.grade || prev.grade),
         basePrice: parsed.basePrice > 0 ? parsed.basePrice : prev.basePrice,
         cpuBrand: parsed.cpu.toLowerCase().includes('amd') ? 'AMD' : parsed.cpu.toLowerCase().includes('apple') ? 'Apple' : 'Intel',
         gpuBrand: parsed.gpu.toLowerCase().includes('nvidia') || parsed.gpu.toLowerCase().includes('rtx') 
@@ -652,13 +673,15 @@ export default function ProductEditorModal({
       <div 
         className="glass-panel modal-card" 
         style={{ 
-          maxWidth: isFullscreen ? '99vw' : '1280px', 
-          width: '98vw',
-          height: isFullscreen ? '98vh' : '92vh',
+          maxWidth: isFullscreen ? '100vw' : '1360px', 
+          width: '100%',
+          height: isFullscreen ? '100vh' : '94vh',
+          maxHeight: '100dvh',
           display: 'flex', 
           flexDirection: 'column',
           padding: 0,
-          overflow: 'hidden'
+          overflow: 'hidden',
+          borderRadius: isFullscreen ? '0px' : '16px'
         }}
         onClick={e => e.stopPropagation()}
       >
@@ -669,10 +692,12 @@ export default function ProductEditorModal({
           style={{ 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            padding: '14px 24px',
+            padding: '12px 18px',
             borderBottom: '1px solid var(--border-glass)',
             background: 'rgba(255, 255, 255, 0.05)',
-            flexShrink: 0
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: '10px'
           }}
         >
           <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
@@ -870,7 +895,7 @@ export default function ProductEditorModal({
               <textarea
                 value={rawSpecsInput}
                 onChange={e => setRawSpecsInput(e.target.value)}
-                placeholder="مثال: لپ تاپ اچ پی زدبوک HP ZBook 15 G6 پردازنده i7 9750H گرافیک Quadro T2000 رم 32 گیگابایت حافظه 512GB SSD صفحه نمایش 15.6 اینچ مات گرید ++A قیمت 38,500,000 تومان"
+                placeholder="مثال: لپ تاپ اچ پی زدبوک HP ZBook 15 G6 پردازنده i7 9750H گرافیک Quadro T2000 رم 32 گیگابایت حافظه 512GB SSD صفحه نمایش 15.6 اینچ مات گرید A+ قیمت 38.5 میلیون تومان"
                 rows={2}
                 style={{ flexGrow: 1, fontSize: '0.8125rem', padding: '10px 14px', borderRadius: '10px' }}
               />
@@ -905,20 +930,22 @@ export default function ProductEditorModal({
           style={{ 
             justifyContent: 'space-between', 
             alignItems: 'center', 
-            padding: '8px 24px',
+            padding: '10px 18px',
             borderBottom: '1px solid var(--border-glass)',
             background: '#f8fafc',
-            flexShrink: 0
+            flexShrink: 0,
+            flexWrap: 'wrap',
+            gap: '12px'
           }}
         >
           {/* Tabs Navigation */}
-          <div className="flex" style={{ gap: '6px', overflowX: 'auto' }}>
+          <div className="flex touch-scroll-x" style={{ gap: '6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', maxWidth: '100%', paddingBottom: '2px' }}>
             {[
               { id: 'basic', label: 'اطلاعات عمومی و قیمت', icon: Package },
               { id: 'specs', label: 'مشخصات سخت‌افزار', icon: Cpu },
               { id: 'gallery', label: 'گالری چندزاویه‌ای', icon: Image, badge: '۴ زاویه' },
               { id: 'upgrades', label: 'ارتقای سخت‌افزاری', icon: Layers, badge: 'RAM/SSD' },
-              { id: 'model3d', label: 'مدل سه‌بعدی و نمایشگر ۳D', icon: Rotate3d, badge: '3D' },
+              { id: 'model3d', label: 'مدل سه‌بعدی و ۳D', icon: Rotate3d, badge: '3D' },
               { id: 'review', label: 'نقد و بررسی زنده', icon: BookOpen, badge: 'Studio' }
             ].map(tab => (
               <button
@@ -927,20 +954,23 @@ export default function ProductEditorModal({
                 onClick={() => setActiveTab(tab.id)}
                 className="btn"
                 style={{
-                  padding: '6px 14px',
+                  minHeight: '44px',
+                  padding: '8px 14px',
                   fontSize: '0.825rem',
-                  borderRadius: '8px',
+                  fontWeight: activeTab === tab.id ? 700 : 500,
+                  borderRadius: '10px',
                   border: '1px solid',
                   borderColor: activeTab === tab.id ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
                   background: activeTab === tab.id ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
-                  color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  color: activeTab === tab.id ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  cursor: 'pointer'
                 }}
               >
-                <tab.icon size={14} color={activeTab === tab.id ? 'hsl(var(--accent-cyan))' : 'currentColor'} />
+                <tab.icon size={15} color={activeTab === tab.id ? 'hsl(var(--accent-cyan))' : 'currentColor'} />
                 <span>{tab.label}</span>
                 {tab.badge && (
                   <span className="badge" style={{ fontSize: '0.62rem', background: 'hsl(var(--accent-purple))', color: '#fff', padding: '1px 5px' }}>
@@ -953,15 +983,15 @@ export default function ProductEditorModal({
 
           {/* Quick Save Action */}
           <div className="flex" style={{ gap: '12px', alignItems: 'center', flexShrink: 0 }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              قیمت: <strong>{formatPrice(formData.basePrice)}</strong>
+            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>
+              قیمت: <strong style={{ color: 'hsl(var(--accent-cyan))' }}>{formatPrice(formData.basePrice)}</strong>
             </span>
             <button
               type="button"
               className="btn btn-primary"
               onClick={handleSubmit}
               disabled={isSaving}
-              style={{ padding: '8px 24px', fontSize: '0.875rem' }}
+              style={{ minHeight: '44px', padding: '10px 24px', fontSize: '0.875rem', fontWeight: 700 }}
             >
               {isSaving ? 'در حال ذخیره...' : mode === 'edit' ? 'ذخیره تغییرات لپ‌تاپ' : 'ثبت لپ‌تاپ در فروشگاه'}
             </button>
@@ -1036,16 +1066,57 @@ export default function ProductEditorModal({
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>گرید وضعیت ظاهری دستگاه (Grade)</label>
-                      <select
-                        value={formData.grade}
-                        onChange={e => setFormData({ ...formData, grade: e.target.value })}
-                      >
-                        <option value="گرید ++A اروپایی (تمیز در حد نو)">گرید ++A اروپایی (تمیز در حد نو)</option>
-                        <option value="گرید +A تمیز بدون خط و خش">گرید +A تمیز بدون خط و خش</option>
-                        <option value="گرید A بسیار تمیز">گرید A بسیار تمیز</option>
-                        <option value="گرید ++A اوپن‌باکس در حد آکبند">گرید ++A اوپن‌باکس در حد آکبند</option>
-                      </select>
+                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '8px', fontWeight: 600 }}>
+                        گرید کیفی دستگاه (Grade)
+                      </label>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(3, 1fr)', 
+                        gap: '8px',
+                        background: 'rgba(0,0,0,0.03)',
+                        padding: '4px',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border-glass)'
+                      }}>
+                        {[
+                          { id: 'A+', label: 'A+', desc: 'درجه یک', color: 'hsl(var(--accent-green))' },
+                          { id: 'A', label: 'A', desc: 'استاندارد', color: 'hsl(var(--accent-cyan))' },
+                          { id: 'B+', label: 'B+', desc: 'اقتصادی', color: 'hsl(var(--accent-purple))' }
+                        ].map(g => {
+                          const active = cleanGrade(formData.grade) === g.id;
+                          return (
+                            <button
+                              key={g.id}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, grade: g.id })}
+                              className="btn"
+                              style={{
+                                minHeight: '46px',
+                                padding: '6px 8px',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '2px',
+                                border: active ? `2px solid ${g.color}` : '1px solid transparent',
+                                background: active ? 'hsla(var(--accent-cyan), 0.12)' : 'transparent',
+                                boxShadow: active ? '0 0 12px hsla(var(--accent-cyan), 0.2)' : 'none',
+                                color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
+                              }}
+                            >
+                              <span style={{ fontSize: '1rem', fontWeight: 800, color: active ? g.color : 'inherit', letterSpacing: '0.05em' }}>
+                                {g.label}
+                              </span>
+                              <span style={{ fontSize: '0.65rem', opacity: active ? 0.9 : 0.6 }}>
+                                {g.desc}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div>
@@ -1076,14 +1147,54 @@ export default function ProductEditorModal({
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8125rem', marginBottom: '6px' }}>قیمت پایه (تومان)</label>
-                      <input 
-                        type="number" 
-                        className="font-code" 
-                        value={formData.basePrice} 
-                        onChange={e => setFormData({ ...formData, basePrice: Number(e.target.value) })} 
-                        style={{ direction: 'ltr' }} 
-                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '0.8125rem', fontWeight: 600 }}>قیمت پایه (میلیون تومان) *</label>
+                        <span style={{ fontSize: '0.72rem', color: 'hsl(var(--accent-cyan))', fontWeight: 600 }}>
+                          {formData.basePrice > 0 ? `معادل ${formData.basePrice.toLocaleString('fa-IR')} تومان` : '۰ تومان'}
+                        </span>
+                      </div>
+                      <div style={{ position: 'relative' }}>
+                        <input 
+                          type="text" 
+                          inputMode="decimal"
+                          className="font-code" 
+                          value={basePriceInput} 
+                          onChange={e => handleBasePriceChange(e.target.value)} 
+                          placeholder="مثلاً 74.5 یا 38"
+                          style={{ 
+                            direction: 'ltr', 
+                            paddingLeft: '96px',
+                            fontSize: '1rem',
+                            fontWeight: 700,
+                            minHeight: '44px'
+                          }} 
+                        />
+                        <span style={{
+                          position: 'absolute',
+                          left: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'var(--text-secondary)',
+                          pointerEvents: 'none'
+                        }}>
+                          میلیون تومان
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+                        {[25, 35, 45, 60, 75, 95].map(p => (
+                          <button
+                            key={p}
+                            type="button"
+                            className="btn btn-glass"
+                            onClick={() => handleQuickPrice(p)}
+                            style={{ padding: '2px 8px', fontSize: '0.7rem', borderRadius: '6px' }}
+                          >
+                            {p} م.ت
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <div>
@@ -1487,17 +1598,31 @@ export default function ProductEditorModal({
                             placeholder="عنوان گزینه ارتقا"
                             style={{ flexGrow: 1, fontSize: '0.8rem' }}
                           />
-                          <input
-                            type="number"
-                            value={item.price}
-                            onChange={e => {
-                              const list = [...formData.upgrades.ram];
-                              list[i].price = Number(e.target.value);
-                              setFormData(prev => ({ ...prev, upgrades: { ...prev.upgrades, ram: list } }));
-                            }}
-                            placeholder="تومان"
-                            style={{ width: '130px', fontSize: '0.8rem', direction: 'ltr' }}
-                          />
+                          <div style={{ position: 'relative', width: '130px', flexShrink: 0 }}>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              value={toMillionsToman(item.price)}
+                              onChange={e => {
+                                const list = [...formData.upgrades.ram];
+                                list[i].price = parseToman(e.target.value);
+                                setFormData(prev => ({ ...prev, upgrades: { ...prev.upgrades, ram: list } }));
+                              }}
+                              placeholder="0 (رایگان)"
+                              style={{ width: '100%', fontSize: '0.825rem', direction: 'ltr', paddingLeft: '44px', minHeight: '38px' }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              left: '8px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: '0.68rem',
+                              color: 'var(--text-secondary)',
+                              pointerEvents: 'none'
+                            }}>
+                              م.ت
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -1547,17 +1672,31 @@ export default function ProductEditorModal({
                             placeholder="عنوان گزینه هارد"
                             style={{ flexGrow: 1, fontSize: '0.8rem' }}
                           />
-                          <input
-                            type="number"
-                            value={item.price}
-                            onChange={e => {
-                              const list = [...formData.upgrades.storage];
-                              list[i].price = Number(e.target.value);
-                              setFormData(prev => ({ ...prev, upgrades: { ...prev.upgrades, storage: list } }));
-                            }}
-                            placeholder="تومان"
-                            style={{ width: '130px', fontSize: '0.8rem', direction: 'ltr' }}
-                          />
+                          <div style={{ position: 'relative', width: '130px', flexShrink: 0 }}>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              value={toMillionsToman(item.price)}
+                              onChange={e => {
+                                const list = [...formData.upgrades.storage];
+                                list[i].price = parseToman(e.target.value);
+                                setFormData(prev => ({ ...prev, upgrades: { ...prev.upgrades, storage: list } }));
+                              }}
+                              placeholder="0 (رایگان)"
+                              style={{ width: '100%', fontSize: '0.825rem', direction: 'ltr', paddingLeft: '44px', minHeight: '38px' }}
+                            />
+                            <span style={{
+                              position: 'absolute',
+                              left: '8px',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              fontSize: '0.68rem',
+                              color: 'var(--text-secondary)',
+                              pointerEvents: 'none'
+                            }}>
+                              م.ت
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => {
@@ -1836,7 +1975,7 @@ export default function ProductEditorModal({
                           {formData.name || 'نام لپ‌تاپ'}
                         </h3>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          {formData.brand} • {formData.grade}
+                          {formData.brand} • گرید {cleanGrade(formData.grade)}
                         </div>
                         <div className="gradient-text font-code" style={{ fontSize: '1.15rem', fontWeight: 'bold', marginTop: '6px' }}>
                           {formatPrice(formData.basePrice)}

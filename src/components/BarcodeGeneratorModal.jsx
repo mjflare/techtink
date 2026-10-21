@@ -3,6 +3,7 @@ import {
   X, Printer, Barcode as BarcodeIcon, QrCode, Tag, 
   Copy, Check, Layers, Sliders, Eye, Sparkles 
 } from 'lucide-react';
+import { formatPrice, cleanGrade } from '../utils/formatPrice.js';
 
 // Code 128 Subtype B Patterns (107 patterns, each 11 modules wide, stop is 13 modules)
 const CODE128_B_PATTERNS = [
@@ -325,7 +326,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
                     onChange={e => setShowPrice(e.target.checked)} 
                     style={{ accentColor: 'hsl(var(--accent-cyan))' }}
                   />
-                  <span>نمایش قیمت فروش مصوب به تومان</span>
+                  <span>نمایش قیمت فروش مصوب (میلیون تومان)</span>
                 </label>
                 <label className="flex" style={{ alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                   <input 
@@ -414,7 +415,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
                     </div>
                     {selectedProduct?.grade && (
                       <div style={{ border: '1px solid #000', padding: '1px 4px', fontSize: '8px', fontWeight: 800, borderRadius: '2px' }}>
-                        Grade {selectedProduct.grade}
+                        Grade {cleanGrade(selectedProduct.grade)}
                       </div>
                     )}
                   </div>
@@ -432,7 +433,7 @@ export default function BarcodeGeneratorModal({ isOpen, onClose, product = null,
                       )}
                       {showPrice && selectedProduct?.price && (
                         <div style={{ marginTop: '2px', fontWeight: 900, fontSize: '10px' }}>
-                          قیمت: {selectedProduct.price.toLocaleString('fa-IR')} تومان
+                          قیمت: {formatPrice(selectedProduct.price)}
                         </div>
                       )}
                     </div>

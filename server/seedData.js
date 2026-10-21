@@ -4,7 +4,7 @@ export const LAPTOPS = [
     "name": "HP ZBook Fury 16 G9 Workstation",
     "brand": "HP",
     "model": "ZBook Fury 16 G9",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "قدرتمندترین ورک‌استیشن استوک بازار با پردازنده ۲۴ رشته‌ای و گرافیک رندرینگ سنگین RTX A2000",
     "category": "ورک استیشن",
     "series": "سری ZBook",
@@ -46,7 +46,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ZBook Fury 16 G9",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 96,
         "batteryLife": 82,
@@ -129,7 +129,7 @@ export const LAPTOPS = [
     "name": "Dell Precision 5570 Slim Workstation",
     "brand": "Dell",
     "model": "Precision 5570",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "شاهکار مهندسی دل با نمایشگر بدون حاشیه 4K+، بدنه فیبر کربن و گرافیک قدرتمند RTX A2000",
     "category": "ورک استیشن",
     "series": "سری Precision",
@@ -171,7 +171,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "Precision 5570",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 95,
         "batteryLife": 86,
@@ -246,7 +246,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad P1 Gen 5",
     "brand": "Lenovo",
     "model": "ThinkPad P1 Gen 5",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "ورک‌استیشن باریک و سبک تینک‌پد با نمایشگر ۱۶ اینچ ۱۶۵ هرتز، فیبر کربن و گرافیک RTX A2000",
     "category": "ورک استیشن",
     "series": "سری ThinkPad",
@@ -288,7 +288,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad P1 Gen 5",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 95,
         "batteryLife": 88,
@@ -363,7 +363,7 @@ export const LAPTOPS = [
     "name": "HP ZBook Studio G8",
     "brand": "HP",
     "model": "ZBook Studio G8",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "ورک‌استیشن اسلیم و لوکس مناسب تدوین، معماری و طراحی با پردازنده ۸ هسته‌ای و گرافیک RTX 3070",
     "category": "تولید محتوا",
     "series": "سری ZBook",
@@ -405,7 +405,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ZBook Studio G8",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 93,
         "batteryLife": 85,
@@ -480,7 +480,7 @@ export const LAPTOPS = [
     "name": "HP ZBook Firefly 14 G8",
     "brand": "HP",
     "model": "ZBook Firefly 14 G8",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "سبک‌ترین ورک‌استیشن صنعتی دنیا با وزن ۱.۳۵ کیلوگرم و گرافیک مجزا برای مهندسان و مدیران",
     "category": "فوق سبک",
     "series": "سری ZBook",
@@ -522,7 +522,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ZBook Firefly 14 G8",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 90,
         "batteryLife": 92,
@@ -605,7 +605,7 @@ export const LAPTOPS = [
     "name": "Dell Precision 7560 Heavy Workstation",
     "brand": "Dell",
     "model": "Precision 7560",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "تانک پردازشی دل برای رندرهای شبانه‌روزی، سالیدورک و تدوین حرفه‌ای با گرافیک ۶ گیگابایت RTX A3000",
     "category": "ورک استیشن",
     "series": "سری Precision",
@@ -647,7 +647,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "Precision 7560",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 94,
         "batteryLife": 82,
@@ -726,7 +726,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad T14 Gen 2",
     "brand": "Lenovo",
     "model": "ThinkPad T14 Gen 2",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "محبوب‌ترین لپ‌تاپ استوک ایران برای برنامه‌نویسی، ترید، حسابداری و تایپ با گرافیک مجزا",
     "category": "تولید محتوا",
     "series": "سری ThinkPad",
@@ -768,7 +768,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad T14 Gen 2",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 91,
         "batteryLife": 88,
@@ -841,7 +841,7 @@ export const LAPTOPS = [
     },
     "highlights": [
       "کیبورد ارگونومیک افسانه‌ای ThinkPad با ترک‌پوینت قرمز (TrackPoint) و کلیدهای دقیق",
-      "گرید کیفی ++A استوک وارداتی تمیز بدون خط و خش به همراه شارژر اصلی لنوو",
+      "گرید کیفی A+ استوک وارداتی تمیز بدون خط و خش به همراه شارژر اصلی لنوو",
       "دارای استاندارد مقاومت فیزیکی نظامی ارتش آمریکا MIL-STD-810H",
       "مهلت تست ۷ روزه سلامت فنی و باتری تضمین‌شده فروشگاه تک‌تینک"
     ]
@@ -851,7 +851,7 @@ export const LAPTOPS = [
     "name": "Lenovo Legion 5 Pro 16ACH6H",
     "brand": "Lenovo",
     "model": "Legion 5 Pro 16ACH6H",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "قدرتمندترین گیمینگ بازار استوک با پردازنده ۸ هسته‌ای رایزن، گرافیک ۱۴۰ وات و نمایشگر ۱۶۵ هرتز 2.5K",
     "category": "گیمینگ",
     "series": "سری Legion",
@@ -893,7 +893,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "Legion 5 Pro 16ACH6H",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 94,
         "batteryLife": 78,
@@ -968,7 +968,7 @@ export const LAPTOPS = [
     "name": "HP EliteBook 840 G8",
     "brand": "HP",
     "model": "EliteBook 840 G8",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "الترابوک اداری و مدیریتی فوق‌العاده شیک با شاسی تمام آلومینیوم و وزن ۱.۳ کیلوگرم",
     "category": "فوق سبک",
     "series": "سری EliteBook",
@@ -1010,7 +1010,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "EliteBook 840 G8",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 90,
         "batteryLife": 91,
@@ -1089,7 +1089,7 @@ export const LAPTOPS = [
     "name": "Dell Latitude 5410",
     "brand": "Dell",
     "model": "Latitude 5410",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "اقتصادی‌ترین و کم‌استهلاک‌ترین لپ‌تاپ استوک بازار با استقامت بدنه بالا و شارژدهی مطلوب",
     "category": "اقتصادی",
     "series": "سری Latitude",
@@ -1131,7 +1131,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "Latitude 5410",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 87,
         "batteryLife": 90,
@@ -1207,7 +1207,7 @@ export const LAPTOPS = [
     "name": "HP ZBook 15 G6 Workstation",
     "brand": "HP",
     "model": "ZBook 15 G6",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "محبوب‌ترین ورک‌استیشن صنعتی و مهندسی بازار ایران با بدنه تمام آلومینیوم و گرافیک Quadro T2000",
     "category": "ورک استیشن",
     "series": "سری ZBook",
@@ -1249,7 +1249,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ZBook 15 G6",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 92,
         "batteryLife": 84,
@@ -1328,7 +1328,7 @@ export const LAPTOPS = [
     "name": "HP ZBook 17 G6 Heavy Workstation",
     "brand": "HP",
     "model": "ZBook 17 G6",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "تانک پردازش سنگین و رندرینگ بدون توقف با نمایشگر غول‌پیکر ۱۷.۳ اینچ و کارت گرافیک Quadro RTX 3000",
     "category": "ورک استیشن",
     "series": "سری ZBook",
@@ -1370,7 +1370,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ZBook 17 G6",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 94,
         "batteryLife": 78,
@@ -1449,7 +1449,7 @@ export const LAPTOPS = [
     "name": "Dell Precision 7550 Workstation",
     "brand": "Dell",
     "model": "Precision 7550",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "ورک‌استیشن افسانه‌ای نسل ۱۰ دل با پردازنده ۸ هسته‌ای i7-10850H، خنک‌کننده اتاق بخار و گرافیک RTX 3000",
     "category": "ورک استیشن",
     "series": "سری Precision",
@@ -1491,7 +1491,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "Precision 7550",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 94,
         "batteryLife": 85,
@@ -1570,7 +1570,7 @@ export const LAPTOPS = [
     "name": "Dell Precision 3561 Mobile Workstation",
     "brand": "Dell",
     "model": "Precision 3561",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "ورک‌استیشن نسل ۱۱ با وزن سبک ۱.۷۹ کیلوگرم، پردازنده قدرتمند هشت هسته‌ای و کیبورد عددی کامل",
     "category": "ورک استیشن",
     "series": "سری Precision",
@@ -1612,7 +1612,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "Precision 3561",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 93,
         "batteryLife": 86,
@@ -1691,7 +1691,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad P53 Workstation",
     "brand": "Lenovo",
     "model": "ThinkPad P53",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "شاهکار کلاسیک تینک‌پد با کیبورد افسانه‌ای ضدآب، گرافیک قدرتمند رندرینگ Quadro RTX 3000 و نمایشگر کالیبره",
     "category": "ورک استیشن",
     "series": "سری ThinkPad P",
@@ -1733,7 +1733,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad P53",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 93,
         "batteryLife": 82,
@@ -1812,7 +1812,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad P15 Gen 2",
     "brand": "Lenovo",
     "model": "ThinkPad P15 Gen 2",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "نهایت قدرت مهندسی و شبیه‌سازی با پردازنده ۸ هسته‌ای Core i7-11850H و گرافیک RTX A3000",
     "category": "ورک استیشن",
     "series": "سری ThinkPad P",
@@ -1854,7 +1854,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad P15 Gen 2",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 96,
         "batteryLife": 84,
@@ -1933,7 +1933,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad X1 Carbon Gen 9",
     "brand": "Lenovo",
     "model": "ThinkPad X1 Carbon Gen 9",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "شاهکار اولترابوک‌های تجاری دنیا؛ وزن خیره‌کننده ۱.۱۳ کیلوگرم با شاسی فیبر کربن و نسبت تصویر ۱۶:۱۰",
     "category": "فوق سبک",
     "series": "سری ThinkPad X1",
@@ -1975,7 +1975,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad X1 Carbon Gen 9",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 95,
         "batteryLife": 93,
@@ -2046,7 +2046,7 @@ export const LAPTOPS = [
     "name": "Lenovo ThinkPad T14s Gen 2 AMD",
     "brand": "Lenovo",
     "model": "ThinkPad T14s Gen 2 AMD",
-    "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+    "grade": "A+",
     "tagline": "نهایت بازدهی باتری و سرعت پردازش با پردازنده ۸ هسته‌ای و ۱۶ رشته‌ای Ryzen 7 PRO 5850U و وزن ۱.۲۸ کیلوگرم",
     "category": "مهندسی",
     "series": "سری ThinkPad T",
@@ -2088,7 +2088,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Lenovo",
       "model": "ThinkPad T14s Gen 2 AMD",
-      "grade": "گرید ++A اروپایی (تمیز در حد نو)",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 93,
         "batteryLife": 95,
@@ -2159,7 +2159,7 @@ export const LAPTOPS = [
     "name": "Apple MacBook Pro 16 M1 Max",
     "brand": "Apple",
     "model": "MacBook Pro 16 M1 Max",
-    "grade": "گرید ++A اوپن‌باکس با سایکل باتری زیر ۲۰",
+    "grade": "A+",
     "tagline": "قدرت بی‌پایان اپل سیلیکون با ۳۲ هسته گرافیکی، ۳۲ گیگابایت حافظه یکپارچه و نمایشگر Liquid Retina XDR",
     "category": "تولید محتوا",
     "series": "سری MacBook Pro",
@@ -2201,7 +2201,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Apple",
       "model": "MacBook Pro 16 M1 Max",
-      "grade": "گرید ++A اوپن‌باکس با سایکل باتری زیر ۲۰",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 99,
         "batteryLife": 98,
@@ -2268,7 +2268,7 @@ export const LAPTOPS = [
     "name": "Apple MacBook Pro 14 M1 Pro",
     "brand": "Apple",
     "model": "MacBook Pro 14 M1 Pro",
-    "grade": "گرید ++A اوپن‌باکس در حد آکبند",
+    "grade": "A+",
     "tagline": "کامل‌ترین مک‌بوک برای برنامه‌نویسان و تولیدکنندگان محتوا؛ بی‌صدا، پرقدرت و شارژدهی تا ۱۷ ساعت",
     "category": "تولید محتوا",
     "series": "سری MacBook Pro",
@@ -2310,7 +2310,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Apple",
       "model": "MacBook Pro 14 M1 Pro",
-      "grade": "گرید ++A اوپن‌باکس در حد آکبند",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 98,
         "batteryLife": 96,
@@ -2381,7 +2381,7 @@ export const LAPTOPS = [
     "name": "Apple MacBook Air M2 13.6\"",
     "brand": "Apple",
     "model": "MacBook Air M2",
-    "grade": "گرید ++A اروپایی در حد نو",
+    "grade": "A+",
     "tagline": "طراحی مدرن با حاشیه‌های باریک، بریدگی دوربین ۱۰۸۰p، وزن ۱.۲۴ کیلوگرم و شارژدهی ۱۸ ساعته بدون فن",
     "category": "فوق سبک",
     "series": "سری MacBook Air",
@@ -2423,7 +2423,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Apple",
       "model": "MacBook Air M2",
-      "grade": "گرید ++A اروپایی در حد نو",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 96,
         "batteryLife": 99,
@@ -2490,7 +2490,7 @@ export const LAPTOPS = [
     "name": "Microsoft Surface Laptop Studio",
     "brand": "Microsoft",
     "model": "Surface Laptop Studio",
-    "grade": "گرید ++A تمیز بدون خط و خش",
+    "grade": "A+",
     "tagline": "تبدیل‌پذیرترین لپ‌تاپ سه‌حالته برای طراحان و معماران؛ لولای Dynamic Woven و گرافیک RTX 3050 Ti",
     "category": "تولید محتوا",
     "series": "سری Surface",
@@ -2532,7 +2532,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Microsoft",
       "model": "Surface Laptop Studio",
-      "grade": "گرید ++A تمیز بدون خط و خش",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 95,
         "batteryLife": 88,
@@ -2599,7 +2599,7 @@ export const LAPTOPS = [
     "name": "Microsoft Surface Laptop 4 15\"",
     "brand": "Microsoft",
     "model": "Surface Laptop 4",
-    "grade": "گرید ++A اروپایی تمیز",
+    "grade": "A+",
     "tagline": "تجربه تایپ لوکس با استراحتگاه فلزی، نسبت صفحه ۳:۲ طلایی برای وب‌گردی و مطالعه و کیبورد کاملاً بی‌صدا",
     "category": "مهندسی",
     "series": "سری Surface",
@@ -2641,7 +2641,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Microsoft",
       "model": "Surface Laptop 4",
-      "grade": "گرید ++A اروپایی تمیز",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 92,
         "batteryLife": 94,
@@ -2708,7 +2708,7 @@ export const LAPTOPS = [
     "name": "Asus ROG Strix G15 G513RM",
     "brand": "Asus",
     "model": "ROG Strix G15 G513RM",
-    "grade": "گرید ++A در حد نو",
+    "grade": "A+",
     "tagline": "غول گیمینگ با نمایشگر فوق‌سریع ۳۰۰ هرتز، پردازنده نسل ۶ رایزن و گرافیک پرقدرت RTX 3060 با توان ۱۴۰ وات",
     "category": "گیمینگ",
     "series": "سری ROG Strix",
@@ -2750,7 +2750,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Asus",
       "model": "ROG Strix G15 G513RM",
-      "grade": "گرید ++A در حد نو",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 95,
         "batteryLife": 82,
@@ -2825,7 +2825,7 @@ export const LAPTOPS = [
     "name": "Asus ROG Zephyrus G14",
     "brand": "Asus",
     "model": "ROG Zephyrus G14 GA401QM",
-    "grade": "گرید ++A اروپایی تمیز",
+    "grade": "A+",
     "tagline": "سبک‌ترین اولترابوک گیمینگ ۱۴ اینچ با پردازنده Ryzen 9، گرافیک RTX 3060، نمایشگر QHD 120Hz و درب AniMe Matrix",
     "category": "گیمینگ",
     "series": "سری ROG Zephyrus",
@@ -2867,7 +2867,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Asus",
       "model": "ROG Zephyrus G14 GA401QM",
-      "grade": "گرید ++A اروپایی تمیز",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 96,
         "batteryLife": 90,
@@ -2942,7 +2942,7 @@ export const LAPTOPS = [
     "name": "Dell XPS 15 9510",
     "brand": "Dell",
     "model": "XPS 15 9510",
-    "grade": "گرید ++A تمیز در حد آکبند",
+    "grade": "A+",
     "tagline": "زیباترین لپ‌تاپ ویندوزی دنیا با نمایشگر لمسی 3.5K OLED بدون حاشیه، بدنه آلومینیوم CNC و فیبر کربن",
     "category": "تولید محتوا",
     "series": "سری XPS",
@@ -2984,7 +2984,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "Dell",
       "model": "XPS 15 9510",
-      "grade": "گرید ++A تمیز در حد آکبند",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 96,
         "batteryLife": 85,
@@ -3055,7 +3055,7 @@ export const LAPTOPS = [
     "name": "HP ProBook 450 G8",
     "brand": "HP",
     "model": "ProBook 450 G8",
-    "grade": "گرید ++A اروپایی بسیار تمیز",
+    "grade": "A+",
     "tagline": "لپ‌تاپ تجاری اقتصادی و بسیار پرفروش با پردازنده نسل ۱۱، گرافیک مجزای MX450 و بدنه آلومینیومی نقره‌ای",
     "category": "مهندسی",
     "series": "سری ProBook",
@@ -3097,7 +3097,7 @@ export const LAPTOPS = [
     "specs": {
       "brand": "HP",
       "model": "ProBook 450 G8",
-      "grade": "گرید ++A اروپایی بسیار تمیز",
+      "grade": "A+",
       "techTinkScore": {
         "overall": 90,
         "batteryLife": 89,

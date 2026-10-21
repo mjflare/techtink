@@ -6,7 +6,7 @@ import {
   ThumbsUp, ThumbsDown, BookOpen, Layers, BarChart2, Zap, FileText, Battery, X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatPrice } from '../utils/formatPrice.js';
+import { formatPrice, cleanGrade } from '../utils/formatPrice.js';
 import { getShortSpecs, getHardwareBadges, parseShortRam, parseShortStorage, parseShortDisplay, parseShortCpu } from '../utils/shortSpecs.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
@@ -682,7 +682,7 @@ export default function ProductPage({
                 gap: '4px'
               }}>
                 <CheckCircle size={13} />
-                {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
+                {product.grade ? `گرید ${cleanGrade(product.grade)}` : 'گرید A+'}
               </span>
             </div>
 
@@ -1067,7 +1067,7 @@ export default function ProductPage({
               gap: '4px'
             }}>
               <CheckCircle size={12} />
-              {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
+              {product.grade ? `گرید ${cleanGrade(product.grade)}` : 'گرید A+'}
             </span>
             {product.badge && (
               <span className="badge badge-glow" style={{ fontSize: '0.72rem' }}>

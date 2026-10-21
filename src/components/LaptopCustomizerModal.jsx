@@ -201,7 +201,7 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
       {/* Footer */}
       <div className="flex modal-footer-mobile-stack" style={{ padding: '24px', borderTop: '1px solid var(--border-glass)', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.02)' }}>
         <div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>قیمت نهایی به تومان</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>قیمت نهایی (میلیون تومان)</div>
           <div className="gradient-text font-tech" style={{ fontSize: '1.75rem', fontWeight: 800 }}>
             {formatPrice(totalPrice)}
           </div>

@@ -470,6 +470,14 @@ function migrate() {
   try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE orders ADD COLUMN coupon_code TEXT;"); } catch {}
 
+  // Strictly normalize all product grades to A+, A, B+ with zero clarifications
+  try {
+    db.run("UPDATE products SET grade = 'A+' WHERE grade LIKE '%A++%' OR grade LIKE '%++A%' OR grade LIKE '%A+%' OR grade LIKE '%+A%'");
+    db.run("UPDATE products SET grade = 'B+' WHERE grade LIKE '%B+%' OR grade LIKE '%+B%'");
+    db.run("UPDATE products SET grade = 'A' WHERE grade LIKE '%گرید A%' OR grade = 'A'");
+    db.run("UPDATE products SET grade = 'A+' WHERE grade IS NULL OR grade = '' OR grade NOT IN ('A+', 'A', 'B+')");
+  } catch {}
+
   try {
     db.exec(`
       CREATE TABLE IF NOT EXISTS coupons (
