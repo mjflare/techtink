@@ -1,744 +1,759 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDown, Cpu } from 'lucide-react';
+import { ChevronDown, Cpu, Sparkles, ArrowDown, Package, Laptop, Smile, ShoppingBag } from 'lucide-react';
 
 export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const c = config || {};
   if (c.active === false) return null;
 
-  const heroRef = useRef(null);
+  const trackRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const rafRef = useRef(null);
 
-  // Scroll-driven parallax
+  // Scroll-Scrubbed Progress: 0.0 at top of track, 1.0 when track finishes
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      if (!heroRef.current) return;
-      const rect = heroRef.current.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const progress = Math.max(0, Math.min(1, -rect.top / (vh * 0.65)));
-      setScrollProgress(progress);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (!trackRef.current) return;
+          const rect = trackRef.current.getBoundingClientRect();
+          const totalScrollDistance = trackRef.current.offsetHeight - window.innerHeight;
+          if (totalScrollDistance <= 0) return;
+          
+          // -rect.top is how much we have scrolled into the track
+          const progress = Math.max(0, Math.min(1, -rect.top / totalScrollDistance));
+          setScrollProgress(progress);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Mouse-follow parallax
+  // Subtle Mouse Parallax
   const handleMouseMove = useCallback((e) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
+    if (!trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => setMouse({ x, y }));
   }, []);
 
-  const handleScrollDown = () => {
+  // Jump straight to store
+  const handleSkipToStore = () => {
     const el = document.getElementById('shopping-center') || document.getElementById('catalog');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Parallax offsets from mouse (centered at 0.5)
-  const mx = (mouse.x - 0.5) * 2;  // -1 to 1
+  // Jump to specific step in the scroll story
+  const handleJumpToStep = (targetProgress) => {
+    if (!trackRef.current) return;
+    const trackTop = trackRef.current.offsetTop;
+    const totalScrollDistance = trackRef.current.offsetHeight - window.innerHeight;
+    const targetY = trackTop + (totalScrollDistance * targetProgress);
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  };
+
+  const p = scrollProgress;
+
+  // Math helpers for smooth scrub ranges
+  const clamp = (val, min = 0, max = 1) => Math.max(min, Math.min(max, val));
+  const range = (val, start, end) => clamp((val - start) / (end - start));
+
+  // --- STORY TIMELINE VALUES SCRUBBED BY SCROLL ---
+  // Phase 1: Unboxing (0.0 -> 0.32)
+  const boxFlapOpen = range(p, 0.04, 0.22); // Flaps fold open
+  const laptopAscend = range(p, 0.12, 0.32); // Laptop floats up out of box & glides to desk
+  const boxDissolve = range(p, 0.26, 0.40); // Box fades out once laptop is placed
+
+  // Phase 2: Opening screen & illumination (0.32 -> 0.65)
+  const lidOpen = range(p, 0.32, 0.56); // Lid opens from 0 to 90 degrees
+  const screenGlow = range(p, 0.44, 0.65); // Screen turns on, casts light cone
+  const smileSpread = range(p, 0.48, 0.70); // Character face lights up, smile widens
+
+  // Phase 3: High speed & pure joy (0.65 -> 0.88)
+  const handType = range(p, 0.60, 0.88); // Hand on keyboard typing
+  const particlesBurst = range(p, 0.65, 0.86); // Floating delight hearts, stars, sparks
+  const speedMetrics = range(p, 0.68, 0.88); // High-performance specs popup
+
+  // Phase 4: Glide into shopping center (0.88 -> 1.0)
+  const sceneExitOpacity = 1 - range(p, 0.90, 1.0);
+  const sceneExitScale = 1 - range(p, 0.90, 1.0) * 0.1;
+
+  // Parallax offsets
+  const mx = (mouse.x - 0.5) * 2;
   const my = (mouse.y - 0.5) * 2;
 
-  const contentOpacity = 1 - scrollProgress * 2;
-  const contentScale = 1 - scrollProgress * 0.12;
-  const contentY = scrollProgress * -50;
+  // Story Chapters based on scroll position
+  let currentStep = 1;
+  let stepTag = 'مرحله ۱ / ۳: تحویل و آنباکس جعبه';
+  let stepTitleLine1 = 'خرید لپ‌تاپ رویایی و';
+  let stepTitleLine2 = 'آنباکس با نهایت هیجان';
+  let stepSub = 'بسته اورجینال تک‌تینک به دست شما می‌رسد. اسکرول کنید تا جعبه باز شود...';
+  let stepIcon = Package;
+
+  if (p >= 0.30 && p < 0.65) {
+    currentStep = 2;
+    stepTag = 'مرحله ۲ / ۳: روشن شدن آنی و کیفیت تصویر';
+    stepTitleLine1 = 'باز کردن در لپ‌تاپ و';
+    stepTitleLine2 = 'روشنایی خیره‌کننده نمایشگر';
+    stepSub = 'روشن شدن فوق‌سریع در چند ثانیه بدون کوچک‌ترین صدای مزاحم فن.';
+    stepIcon = Laptop;
+  } else if (p >= 0.65) {
+    currentStep = 3;
+    stepTag = 'مرحله ۳ / ۳: نهایت سرعت و لبخند رضایت';
+    stepTitleLine1 = 'لذت کار با لپ‌تاپی که';
+    stepTitleLine2 = 'همیشه همراهتونه';
+    stepSub = 'اجرای روان سنگین‌ترین برنامه‌ها با نهایت آرامش خاطر و گارانتی طلایی.';
+    stepIcon = Smile;
+  }
+
+  const StepIconComp = stepIcon;
 
   return (
-    <div ref={heroRef} className="tt-hero" onMouseMove={handleMouseMove}>
-      <div
-        className="tt-hero-stage"
+    <div 
+      ref={trackRef} 
+      className="tt-scroll-story-track"
+      style={{
+        height: '300vh', // Provides a comfortable 3x viewport scroll distance to scrub through the story
+        position: 'relative',
+        background: '#06080e'
+      }}
+      onMouseMove={handleMouseMove}
+    >
+      {/* STICKY FULLSCREEN VIEWPORT FRAME */}
+      <div 
+        className="tt-scroll-story-sticky"
         style={{
-          opacity: Math.max(0, contentOpacity),
-          transform: `scale(${contentScale}) translateY(${contentY}px)`,
+          position: 'sticky',
+          top: 0,
+          width: '100%',
+          height: '100svh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          opacity: sceneExitOpacity,
+          transform: `scale(${sceneExitScale})`,
+          willChange: 'transform, opacity'
         }}
       >
-        {/* Deep dark background */}
-        <div className="tt-hero-bg" />
+        {/* Background Ambient Glows & Tech Grid */}
+        <div style={{ position: 'absolute', inset: 0, background: '#06080e', zIndex: 0 }} />
+        
+        {/* Dynamic Light Cast from Screen onto entire room as lid opens */}
+        <div 
+          style={{
+            position: 'absolute',
+            top: '45%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '650px',
+            height: '650px',
+            borderRadius: '50%',
+            background: `radial-gradient(circle, hsla(var(--accent-cyan), ${0.12 * screenGlow}) 0%, hsla(var(--accent-purple), ${0.08 * screenGlow}) 45%, transparent 70%)`,
+            filter: 'blur(90px)',
+            pointerEvents: 'none',
+            zIndex: 1,
+            transition: 'background 0.1s linear'
+          }} 
+        />
 
-        {/* Interactive mouse glow */}
-        <div className="tt-hero-glow" style={{
-          left: `${mouse.x * 100}%`,
-          top: `${mouse.y * 100}%`,
-        }} />
+        {/* Subtle Engineering Blueprint Grid */}
+        <div 
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 1,
+            backgroundImage: `
+              linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px)
+            `,
+            backgroundSize: '70px 70px',
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
+            pointerEvents: 'none'
+          }}
+        />
 
-        {/* Subtle grid */}
-        <div className="tt-hero-grid" />
+        {/* 1. TOP HEADER HUD */}
+        <div 
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '20px 28px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: '#ffffff'
+          }}
+          dir="ltr"
+        >
+          {/* Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '9px',
+              background: 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 0 16px hsla(var(--accent-cyan), 0.4)'
+            }}>
+              <Cpu size={17} color="#ffffff" />
+            </div>
+            <div>
+              <span className="font-tech" style={{ fontSize: '0.88rem', fontWeight: 900, letterSpacing: '2px', color: '#ffffff' }}>
+                TECHTINK
+              </span>
+              <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block', letterSpacing: '1px' }}>
+                ISFAHAN · HIGH-END COMPUTING
+              </span>
+            </div>
+          </div>
 
-        {/* ANIMATED SCENE: The Story */}
-        <div className="tt-hero-scene" style={{
-          transform: `translate(${mx * -6}px, ${my * -4}px)`,
-        }}>
-          <svg viewBox="0 0 800 500" className="tt-scene-svg" aria-hidden="true">
+          {/* Interactive Story Scrubber Pills */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {[
+              { id: 1, label: 'جعبه‌گشایی', progress: 0.15 },
+              { id: 2, label: 'روشن شدن', progress: 0.48 },
+              { id: 3, label: 'نهایت لذت و سرعت', progress: 0.78 }
+            ].map(step => (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => handleJumpToStep(step.progress)}
+                style={{
+                  background: currentStep === step.id ? 'hsla(var(--accent-cyan), 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                  border: `1px solid ${currentStep === step.id ? 'hsl(var(--accent-cyan))' : 'rgba(255, 255, 255, 0.1)'}`,
+                  color: currentStep === step.id ? '#ffffff' : '#94a3b8',
+                  padding: '4px 12px',
+                  borderRadius: '100px',
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: currentStep === step.id ? 'hsl(var(--accent-cyan))' : '#64748b'
+                }} />
+                <span>{step.label}</span>
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleSkipToStore}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.18)',
+                color: '#ffffff',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                padding: '5px 14px',
+                borderRadius: '100px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              <span>ورود مستقیم به فروشگاه</span>
+              <ArrowDown size={13} />
+            </button>
+          </div>
+        </div>
+
+        {/* 2. CENTER STAGE: THE SCROLL-SCRUBBED SVG STORY SCENE */}
+        <div 
+          style={{
+            position: 'relative',
+            zIndex: 5,
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: `translate(${mx * -8}px, ${my * -6}px)`,
+            transition: 'transform 0.15s ease-out'
+          }}
+        >
+          <svg 
+            viewBox="0 0 880 500" 
+            style={{ 
+              width: 'min(92%, 840px)', 
+              height: 'auto', 
+              maxHeight: '62vh',
+              overflow: 'visible' 
+            }}
+          >
             <defs>
               {/* Gradients */}
-              <linearGradient id="hg-hoodie" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="sc-hoodie" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="hsl(var(--accent-cyan))" />
                 <stop offset="100%" stopColor="hsl(var(--accent-purple))" />
               </linearGradient>
-              <linearGradient id="hg-screen" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#0f172a" />
+
+              <linearGradient id="sc-screen" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0a0f1d" />
                 <stop offset="100%" stopColor="#1e1b4b" />
               </linearGradient>
-              <linearGradient id="hg-lid" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#e2e8f0" />
-                <stop offset="100%" stopColor="#94a3b8" />
+
+              <linearGradient id="sc-chassis" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#cbd5e1" />
+                <stop offset="100%" stopColor="#64748b" />
               </linearGradient>
-              <linearGradient id="hg-desk" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="rgba(255,255,255,0.02)" />
-                <stop offset="50%" stopColor="rgba(255,255,255,0.05)" />
-                <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
-              </linearGradient>
-              <linearGradient id="hg-box" x1="0%" y1="0%" x2="100%" y2="100%">
+
+              <linearGradient id="sc-box" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#d97706" />
                 <stop offset="100%" stopColor="#92400e" />
               </linearGradient>
-              <linearGradient id="hg-screen-light" x1="50%" y1="0%" x2="50%" y2="100%">
-                <stop offset="0%" stopColor="hsla(var(--accent-cyan), 0.35)" />
-                <stop offset="100%" stopColor="transparent" />
-              </linearGradient>
 
-              <filter id="hg-blur" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="12" />
-              </filter>
-              <filter id="hg-glow" x="-30%" y="-30%" width="160%" height="160%">
-                <feGaussianBlur stdDeviation="6" result="b" />
-                <feComposite in="SourceGraphic" in2="b" operator="over" />
+              <filter id="sc-glow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="8" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
               </filter>
             </defs>
 
-            {/* ====== LAYER 0: AMBIENT LIGHT FROM SCREEN ====== */}
-            <ellipse cx="420" cy="290" rx="160" ry="120"
-              fill="hsla(var(--accent-cyan), 0.08)" filter="url(#hg-blur)" className="tt-ambient-pulse" />
+            {/* === DESK SURFACE === */}
+            <line x1="80" y1="390" x2="800" y2="390" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2.5" strokeLinecap="round" />
+            <rect x="90" y="391" width="700" height="6" rx="3" fill="rgba(255, 255, 255, 0.03)" />
 
-            {/* Screen light cone on person */}
-            <polygon points="460,245 300,200 310,320 420,340"
-              fill="hsla(var(--accent-cyan), 0.06)" />
+            {/* === STAGE 1: DELIVERY BOX (Interactively Unboxes with Scroll) === */}
+            {boxDissolve < 1 && (
+              <g 
+                style={{
+                  opacity: 1 - boxDissolve,
+                  transform: `translate(${230}px, ${315 + (boxDissolve * 15)}px)`,
+                  transformOrigin: '275px 360px',
+                  transition: 'opacity 0.1s linear'
+                }}
+              >
+                {/* Main Box Cube */}
+                <rect x="0" y="25" width="85" height="55" rx="5" fill="url(#sc-box)" stroke="#b45309" strokeWidth="1.5" />
+                
+                {/* Brand Stamp on Box */}
+                <text x="42" y="58" textAnchor="middle" fill="rgba(255, 255, 255, 0.7)" fontSize="11" fontWeight="900" fontFamily="var(--font-tech)">
+                  TECHTINK
+                </text>
+                <text x="42" y="70" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="7" fontWeight="600">
+                  ORIGINAL SEAL
+                </text>
 
-            {/* ====== LAYER 1: DESK ====== */}
-            <path d="M 120 390 L 680 390" stroke="rgba(255,255,255,0.08)" strokeWidth="2" />
-            <rect x="130" y="391" width="540" height="6" rx="3" fill="url(#hg-desk)" />
+                {/* Left Flap: Folds outward as scrollProgress rises (0 to 110 deg) */}
+                <g style={{ transform: `rotate(${-boxFlapOpen * 115}deg)`, transformOrigin: '0px 25px', transition: 'transform 0.05s linear' }}>
+                  <polygon points="0,25 -22,8 18,8 20,25" fill="#f59e0b" opacity="0.95" />
+                </g>
 
-            {/* ====== LAYER 2: OPENED DELIVERY BOX (on the left) ====== */}
-            <g className="tt-box-group" transform="translate(155, 310)">
-              {/* Box body */}
-              <rect x="0" y="20" width="65" height="50" rx="4" fill="url(#hg-box)" opacity="0.85" />
-              {/* Box flap open left */}
-              <path d="M 0 20 L -10 8 L 20 8 L 20 20 Z" fill="#b45309" opacity="0.9" />
-              {/* Box flap open right */}
-              <path d="M 65 20 L 75 6 L 45 6 L 45 20 Z" fill="#b45309" opacity="0.9" />
-              {/* TT label on box */}
-              <text x="32" y="50" textAnchor="middle" fill="rgba(255,255,255,0.6)"
-                fontSize="10" fontWeight="800" fontFamily="var(--font-tech, monospace)" letterSpacing="1">TT</text>
-              {/* Packing tissue sticking out */}
-              <path d="M 20 15 Q 28 2 36 12 Q 44 0 48 14" fill="none"
-                stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeLinecap="round" />
-            </g>
+                {/* Right Flap: Folds outward as scrollProgress rises */}
+                <g style={{ transform: `rotate(${boxFlapOpen * 115}deg)`, transformOrigin: '85px 25px', transition: 'transform 0.05s linear' }}>
+                  <polygon points="85,25 107,8 67,8 65,25" fill="#f59e0b" opacity="0.95" />
+                </g>
 
-            {/* ====== LAYER 3: COFFEE MUG ====== */}
-            <g className="tt-coffee" transform="translate(600, 335)">
-              <rect x="0" y="16" width="26" height="34" rx="5" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5" />
-              <path d="M 26 22 C 35 22 35 40 26 40" fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.8" />
-              {/* Steam */}
-              <path className="tt-steam-a" d="M 8 10 Q 6 2 10 -4" fill="none"
-                stroke="hsla(var(--accent-cyan), 0.4)" strokeWidth="1.5" strokeLinecap="round" />
-              <path className="tt-steam-b" d="M 14 12 Q 18 4 14 -2" fill="none"
-                stroke="hsla(var(--accent-cyan), 0.3)" strokeWidth="1.5" strokeLinecap="round" />
-              <path className="tt-steam-c" d="M 20 10 Q 22 2 18 -4" fill="none"
-                stroke="hsla(var(--accent-cyan), 0.25)" strokeWidth="1.5" strokeLinecap="round" />
-            </g>
-
-            {/* ====== LAYER 4: THE PERSON ====== */}
-            <g className="tt-person">
-              {/* Body / Hoodie */}
-              <path d="M 270 390 C 268 330 280 275 310 258
-                       C 330 248 365 252 375 295
-                       C 380 315 380 390 380 390 Z"
-                fill="url(#hg-hoodie)" />
-
-              {/* Left arm reaching to laptop */}
-              <path d="M 300 290 Q 340 318 390 330 Q 420 338 445 340"
-                fill="none" stroke="url(#hg-hoodie)" strokeWidth="18"
-                strokeLinecap="round" strokeLinejoin="round" />
-
-              {/* Hand typing */}
-              <g className="tt-hand-type" transform="translate(440, 335)">
-                <ellipse cx="6" cy="3" rx="7" ry="5" fill="#fed7aa" />
-                <path d="M 5 5 Q 11 3 15 6" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
-                <path d="M 3 8 Q 9 7 13 10" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
+                {/* Protective Foam & Wrapping Cushion */}
+                <path d="M 15 22 Q 42 12 70 22" fill="none" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="2" strokeDasharray="3 3" />
               </g>
+            )}
 
-              {/* Head group (breathing/bob) */}
-              <g className="tt-head-bob">
+            {/* === THE LAPTOP (Rises out of box -> lands on desk -> lid opens -> screen glows) === */}
+            {/*
+                Interpolated Laptop Position:
+                Starts at (260, 310) inside box when laptopAscend = 0
+                Lifts up to y: 220 when laptopAscend = 0.5
+                Lands at desk center (430, 260) when laptopAscend = 1.0
+            */}
+            {(() => {
+              const startX = 270;
+              const targetX = 440;
+              const currentX = startX + (targetX - startX) * laptopAscend;
+
+              // Arc upward in Y
+              const arcY = Math.sin(laptopAscend * Math.PI) * -55;
+              const startY = 310;
+              const targetY = 265;
+              const currentY = (startY + (targetY - startY) * laptopAscend) + arcY;
+
+              return (
+                <g transform={`translate(${currentX}, ${currentY})`}>
+                  {/* Laptop Base / Keyboard Chassis */}
+                  <polygon 
+                    points="0,95 150,95 165,108 -15,108" 
+                    fill="url(#sc-chassis)" 
+                    stroke="rgba(255, 255, 255, 0.2)" 
+                    strokeWidth="1" 
+                  />
+
+                  {/* Trackpad */}
+                  <rect x="55" y="99" width="38" height="7" rx="2" fill="rgba(255, 255, 255, 0.25)" />
+
+                  {/* Backlit Keyboard */}
+                  <polygon points="12,96 138,96 132,103 18,103" fill="#0f172a" />
+                  <line 
+                    x1="22" y1="99" x2="128" y2="99" 
+                    stroke="hsl(var(--accent-cyan))" 
+                    strokeWidth="1.2" 
+                    opacity={0.3 + (screenGlow * 0.7)} 
+                    strokeDasharray="4 2" 
+                  />
+
+                  {/* SCREEN LIGHT CAST CONE (Shoots out onto character face as lid opens) */}
+                  {screenGlow > 0 && (
+                    <polygon 
+                      points="40,25 150,25 20,110 -150,110" 
+                      fill="hsla(var(--accent-cyan), 0.08)" 
+                      opacity={screenGlow} 
+                      filter="url(#sc-glow)"
+                    />
+                  )}
+
+                  {/* SCREEN LID (Opens up via perspective scaling based on scroll lidOpen: 0 -> 1) */}
+                  {/*
+                      When lidOpen = 0 (flat/closed): lid rests flat on base
+                      When lidOpen = 1 (upright): lid is open at 105 degrees
+                  */}
+                  <g 
+                    style={{
+                      transformOrigin: '75px 95px',
+                      transform: `scaleY(${Math.max(0.08, lidOpen)}) translateY(${(1 - Math.max(0.08, lidOpen)) * 95}px)`,
+                      transition: 'transform 0.05s linear'
+                    }}
+                  >
+                    {/* Bezel Outer Frame */}
+                    <polygon points="45,10 155,10 145,95 35,95" fill="#0a0e1a" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" />
+                    
+                    {/* Glowing OLED Display */}
+                    <polygon 
+                      points="49,14 151,14 142,91 40,91" 
+                      fill="url(#sc-screen)" 
+                    />
+
+                    {/* Active Desktop OS & Visualizer Lines (Illuminate as screenGlow rises) */}
+                    {screenGlow > 0.1 && (
+                      <g opacity={screenGlow}>
+                        {/* Traffic light window controls */}
+                        <circle cx="56" cy="21" r="1.8" fill="#f43f5e" />
+                        <circle cx="62" cy="21" r="1.8" fill="#f59e0b" />
+                        <circle cx="68" cy="21" r="1.8" fill="#10b981" />
+
+                        {/* Animated Code Streams */}
+                        <line x1="56" y1="30" x2="115" y2="30" stroke="hsl(var(--accent-cyan))" strokeWidth="2.5" strokeLinecap="round" />
+                        <line x1="60" y1="38" x2="135" y2="38" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="60" y1="46" x2="105" y2="46" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="54" y1="54" x2="95" y2="54" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="54" y1="62" x2="120" y2="62" stroke="hsl(var(--accent-cyan))" strokeWidth="2" strokeLinecap="round" />
+
+                        {/* Benchmark Speed Graph Wave */}
+                        <path 
+                          d="M 50 78 Q 70 65 88 74 T 120 66 T 140 73" 
+                          fill="none" 
+                          stroke="hsl(var(--accent-cyan))" 
+                          strokeWidth="2.5" 
+                          strokeLinecap="round" 
+                        />
+                      </g>
+                    )}
+
+                    {/* Screen Brand Watermark */}
+                    <circle cx="95" cy="52" r="12" fill="hsl(var(--accent-cyan))" opacity={screenGlow * 0.15} filter="url(#sc-glow)" />
+                  </g>
+                </g>
+              );
+            })()}
+
+            {/* === THE PERSON (Reacts with pure joy, smile, glowing headphones, typing hands) === */}
+            <g transform="translate(180, 0)">
+              {/* Torso / Hoodie */}
+              <path 
+                d="M 120 390 C 115 320 135 260 175 240 C 205 230 240 235 255 285 C 260 305 260 390 260 390 Z" 
+                fill="url(#sc-hoodie)" 
+              />
+
+              {/* Head & Smiling Face */}
+              <g 
+                style={{
+                  transform: `translateY(${Math.sin(p * Math.PI * 4) * -3}px) rotate(${smileSpread * 3}deg)`,
+                  transformOrigin: '190px 200px',
+                  transition: 'transform 0.05s linear'
+                }}
+              >
                 {/* Neck */}
-                <rect x="318" y="228" width="14" height="22" rx="4" fill="#fed7aa" />
-                {/* Head */}
-                <ellipse cx="325" cy="210" rx="24" ry="28" fill="#fed7aa" />
+                <rect x="180" y="210" width="16" height="24" rx="4" fill="#fed7aa" />
+                
+                {/* Head / Face */}
+                <ellipse cx="188" cy="190" rx="24" ry="28" fill="#fed7aa" />
 
-                {/* Happy closed-eye smile */}
-                <path d="M 332 213 Q 340 222 347 213" fill="none" stroke="#c2410c" strokeWidth="2.2" strokeLinecap="round" />
-                {/* Blush */}
-                <circle cx="340" cy="216" r="4.5" fill="#f43f5e" opacity="0.3" />
-                {/* Happy squinting eye */}
-                <path d="M 334 204 Q 340 199 346 204" fill="none" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" />
+                {/* Screen Light Reflection on Face */}
+                {screenGlow > 0 && (
+                  <ellipse cx="194" cy="192" rx="16" ry="22" fill="hsla(var(--accent-cyan), 0.18)" opacity={screenGlow} />
+                )}
 
-                {/* Hair */}
-                <path d="M 303 212 C 299 185 318 175 342 180 C 355 183 358 200 350 208 C 344 196 332 192 315 196 Z" fill="#0f172a" />
-                <circle cx="307" cy="192" r="11" fill="#0f172a" />
+                {/* Smiling Mouth: Morphs from neutral curve to big joyous smile as smileSpread rises */}
+                <path 
+                  d={smileSpread > 0.4 ? "M 194 196 Q 205 208 214 196" : "M 195 198 Q 203 203 211 198"} 
+                  fill="none" 
+                  stroke="#c2410c" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                />
 
-                {/* Headphones */}
-                <path d="M 310 198 C 310 178 340 178 340 196" fill="none"
-                  stroke="hsl(var(--accent-cyan))" strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                <ellipse cx="311" cy="207" rx="4" ry="7" fill="hsl(var(--accent-cyan))" opacity="0.85" />
-              </g>
-            </g>
+                {/* Cheerful Cheek Blush */}
+                <circle cx="204" cy="198" r="5" fill="#f43f5e" opacity={0.15 + (smileSpread * 0.35)} />
 
-            {/* ====== LAYER 5: THE LAPTOP ====== */}
-            <g className="tt-laptop" transform="translate(380, 245)">
-              {/* Base */}
-              <polygon points="0,100 150,100 165,115 -15,115" fill="url(#hg-lid)" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-              {/* Trackpad */}
-              <rect x="55" y="104" width="38" height="8" rx="2" fill="rgba(255,255,255,0.2)" />
-              {/* Keyboard glow */}
-              <polygon points="12,101 138,101 132,108 18,108" fill="#0f172a" opacity="0.9" />
-              <path d="M 22 103 L 128 103 M 20 106 L 130 106" stroke="hsl(var(--accent-cyan))"
-                strokeWidth="0.8" opacity="0.5" strokeDasharray="4 3" />
+                {/* Confident, Joyful Eyes */}
+                {smileSpread > 0.4 ? (
+                  /* Happy Crinkled Squinting Eyes (Pure joy!) */
+                  <path d="M 196 186 Q 202 180 208 186" fill="none" stroke="#0f172a" strokeWidth="2.6" strokeLinecap="round" />
+                ) : (
+                  /* Curious Alert Eye */
+                  <circle cx="202" cy="184" r="2.5" fill="#0f172a" />
+                )}
 
-              {/* Screen bezel */}
-              <polygon points="52,8 162,8 150,100 40,100" fill="#0f172a" />
-              {/* Screen display */}
-              <polygon points="56,12 158,12 147,96 46,96" fill="url(#hg-screen)" />
+                {/* Stylish Hair */}
+                <path d="M 166 190 C 163 162 184 152 208 158 C 220 162 222 178 214 186 C 208 174 198 170 180 174 Z" fill="#0f172a" />
+                <circle cx="170" cy="170" r="11" fill="#0f172a" />
 
-              {/* Code/UI lines on screen */}
-              <g opacity="0.8">
-                <circle cx="62" cy="18" r="1.8" fill="#f43f5e" />
-                <circle cx="68" cy="18" r="1.8" fill="#f59e0b" />
-                <circle cx="74" cy="18" r="1.8" fill="#10b981" />
-
-                <line x1="62" y1="28" x2="125" y2="28" stroke="hsl(var(--accent-cyan))" strokeWidth="2.5" strokeLinecap="round" className="tt-code-1" />
-                <line x1="65" y1="36" x2="105" y2="36" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" className="tt-code-2" />
-                <line x1="65" y1="44" x2="135" y2="44" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" className="tt-code-3" />
-                <line x1="60" y1="52" x2="95" y2="52" stroke="#10b981" strokeWidth="2" strokeLinecap="round" className="tt-code-4" />
-                <line x1="60" y1="60" x2="118" y2="60" stroke="hsl(var(--accent-cyan))" strokeWidth="2" strokeLinecap="round" className="tt-code-5" />
-
-                {/* Mini performance graph */}
-                <path d="M 55 82 Q 72 70 90 78 T 125 68 T 145 76"
-                  fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="2.5" strokeLinecap="round" className="tt-wave" />
+                {/* Noise-Cancelling Headphones */}
+                <path d="M 172 178 C 172 156 204 156 204 176" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="3.2" strokeLinecap="round" />
+                <ellipse cx="173" cy="186" rx="5" ry="9" fill="hsl(var(--accent-cyan))" />
               </g>
 
-              {/* Screen glow halo */}
-              <ellipse cx="105" cy="55" r="20" fill="hsl(var(--accent-cyan))" opacity="0.08" filter="url(#hg-glow)" />
+              {/* Typing Hand: Moves to keyboard as handType scrub progresses */}
+              {(() => {
+                // When p < 0.5: hand rests comfortably at side/desk
+                // When p >= 0.5: arm reaches smoothly onto keyboard
+                const armExtendX = 160 + (handType * 90);
+                const armExtendY = 270 + (handType * 20);
+                const handX = 220 + (handType * 95);
+                const handY = 280 + (handType * 15);
+
+                return (
+                  <g>
+                    {/* Arm */}
+                    <path 
+                      d={`M 160 270 Q ${armExtendX} ${armExtendY} ${handX} ${handY}`} 
+                      fill="none" 
+                      stroke="url(#sc-hoodie)" 
+                      strokeWidth="18" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                    
+                    {/* Hand & Fingers */}
+                    <g transform={`translate(${handX}, ${handY})`}>
+                      <ellipse cx="6" cy="3" rx="7" ry="5" fill="#fed7aa" />
+                      <path d="M 5 5 Q 11 3 15 6" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
+                      <path d="M 3 8 Q 9 7 13 10" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
+                    </g>
+                  </g>
+                );
+              })()}
             </g>
 
-            {/* ====== LAYER 6: FLOATING STORY ELEMENTS ====== */}
+            {/* === STAGE 3 FLOATING DELIGHT BADGES (Burst out as scroll reaches Phase 3) === */}
+            {particlesBurst > 0 && (
+              <g opacity={particlesBurst}>
+                {/* 1. ❤️ Satisfaction Heart */}
+                <g 
+                  style={{
+                    transform: `translate(${210}px, ${140 - (particlesBurst * 25)}px) scale(${particlesBurst})`,
+                    transformOrigin: '210px 140px',
+                    transition: 'transform 0.05s linear'
+                  }}
+                >
+                  <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-purple))" strokeWidth="1.5" />
+                  <path d="M 0 5 C 0 5 -7 1 -7 -3 C -7 -5 -5 -6.5 -3 -6.5 C -1.5 -6.5 -0.5 -5.5 0 -4 C 0.5 -5.5 1.5 -6.5 3 -6.5 C 5 -6.5 7 -5 7 -3 C 7 1 0 5 0 5 Z" fill="#f43f5e" />
+                </g>
 
-            {/* 🎁 Delivered package checkmark (story: it arrived!) */}
-            <g className="tt-float-1" opacity="0.9">
-              <circle cx="0" cy="0" r="22" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-              <path d="M -7 0 L -2 5 L 8 -5" fill="none" stroke="hsl(var(--accent-green))" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <text y="11" textAnchor="middle" fill="rgba(255,255,255,0.3)" fontSize="5" fontFamily="var(--font-tech, monospace)">DELIVERED</text>
-            </g>
+                {/* 2. ⚡ Speed Spark */}
+                <g 
+                  style={{
+                    transform: `translate(${640}px, ${160 - (particlesBurst * 30)}px) scale(${particlesBurst})`,
+                    transformOrigin: '640px 160px',
+                    transition: 'transform 0.05s linear'
+                  }}
+                >
+                  <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" />
+                  <path d="M 2 -8 L -3 0 L 1 0 L -2 8 L 5 -1 L 1 -1 Z" fill="#fbbf24" />
+                </g>
 
-            {/* ⭐ 5-star rating (story: they love it!) */}
-            <g className="tt-float-2" opacity="0.9">
-              <circle cx="0" cy="0" r="20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-              {/* 5 tiny stars */}
-              <g transform="translate(-12, -3)">
-                {[0, 6, 12, 18, 24].map((offset, i) => (
-                  <polygon key={i} points={`${offset+3},0 ${offset+3.8},-2 ${offset+6},-2 ${offset+4.2},-0.5 ${offset+4.8},2 ${offset+3},0.8 ${offset+1.2},2 ${offset+1.8},-0.5 ${offset},−2 ${offset+2.2},-2`}
-                    fill="#fbbf24" />
-                ))}
+                {/* 3. ⭐ 5-Star Unconditional Quality */}
+                <g 
+                  style={{
+                    transform: `translate(${700}px, ${260 - (particlesBurst * 20)}px) scale(${particlesBurst})`,
+                    transformOrigin: '700px 260px',
+                    transition: 'transform 0.05s linear'
+                  }}
+                >
+                  <circle cx="0" cy="0" r="20" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
+                  <text x="0" y="5" textAnchor="middle" fill="#fbbf24" fontSize="12" fontWeight="900">
+                    ★★★★★
+                  </text>
+                </g>
+
+                {/* 4. 🚀 Rocket Icon */}
+                <g 
+                  style={{
+                    transform: `translate(${160}px, ${250 - (particlesBurst * 25)}px) scale(${particlesBurst})`,
+                    transformOrigin: '160px 250px',
+                    transition: 'transform 0.05s linear'
+                  }}
+                >
+                  <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" />
+                  <path d="M -2 6 L 0 2 L 4 -2 C 6 -4 7 -3 7 -1 L 5 3 L 1 5 Z" fill="hsl(var(--accent-cyan))" />
+                  <path d="M -4 8 Q -1 6 -2 4" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+                </g>
               </g>
-            </g>
+            )}
 
-            {/* 💜 Heart of satisfaction */}
-            <g className="tt-float-3" opacity="0.9">
-              <circle cx="0" cy="0" r="18" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-              <path d="M 0 6 C 0 6 -8 1 -8 -3 C -8 -5.5 -6 -7 -4 -7 C -2 -7 -1 -6 0 -4.5 C 1 -6 2 -7 4 -7 C 6 -7 8 -5.5 8 -3 C 8 1 0 6 0 6 Z"
-                fill="#f43f5e" />
+            {/* Steaming Coffee Mug on Desk Right */}
+            <g transform="translate(680, 340)">
+              <rect x="0" y="15" width="24" height="32" rx="4" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
+              <path d="M 24 20 C 32 20 32 36 24 36" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
+              {/* Coffee Heart */}
+              <circle cx="12" cy="30" r="3.5" fill="hsl(var(--accent-cyan))" opacity="0.6" />
+              {/* Rising steam */}
+              <path d="M 8 10 Q 6 3 10 -3" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+              <path d="M 16 10 Q 18 3 14 -3" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
             </g>
-
-            {/* ⚡ Performance spark */}
-            <g className="tt-float-4" opacity="0.9">
-              <circle cx="0" cy="0" r="17" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-              <path d="M 2 -8 L -3 0 L 1 0 L -2 8 L 5 -1 L 1 -1 Z" fill="#fbbf24" />
-            </g>
-
-            {/* 🚀 Rocket (story: fast delivery/performance) */}
-            <g className="tt-float-5" opacity="0.9">
-              <circle cx="0" cy="0" r="19" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" />
-              <path d="M -2 7 L 0 2 L 4 -2 C 6 -4 8 -3 8 -1 L 5 3 L 1 5 Z" fill="hsl(var(--accent-cyan))" />
-              <path d="M -5 9 Q -2 7 -3 5" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-            </g>
-
-            {/* ====== LAYER 7: SPARKLE PARTICLES ====== */}
-            <circle className="tt-spark-1" cx="250" cy="180" r="1.5" fill="hsl(var(--accent-cyan))" />
-            <circle className="tt-spark-2" cx="550" cy="200" r="1.2" fill="#a855f7" />
-            <circle className="tt-spark-3" cx="480" cy="160" r="1" fill="#fbbf24" />
-            <circle className="tt-spark-4" cx="200" cy="250" r="1.3" fill="hsl(var(--accent-green))" />
-            <circle className="tt-spark-5" cx="620" cy="280" r="1" fill="hsl(var(--accent-cyan))" />
-            <circle className="tt-spark-6" cx="350" cy="140" r="0.8" fill="#f43f5e" />
-            <circle className="tt-spark-7" cx="170" cy="350" r="1" fill="#a855f7" />
-            <circle className="tt-spark-8" cx="660" cy="170" r="1.2" fill="hsl(var(--accent-cyan))" />
           </svg>
         </div>
 
-        {/* ====== FLOATING STORY ELEMENTS (HTML layer with stronger parallax) ====== */}
-        <div className="tt-hero-floaters" style={{
-          transform: `translate(${mx * -20}px, ${my * -15}px)`,
-        }} />
+        {/* 3. BOTTOM SCRUBBER CONTROLLER & STORY CAPTION */}
+        <div 
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            padding: '16px 28px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            gap: '24px'
+          }}
+          dir="rtl"
+        >
+          {/* Left: Dynamic Story Caption tied to Scroll */}
+          <div style={{ maxWidth: '580px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span 
+                className="font-tech"
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: 'hsl(var(--accent-cyan))',
+                  background: 'hsla(var(--accent-cyan), 0.12)',
+                  padding: '3px 10px',
+                  borderRadius: '100px',
+                  border: '1px solid hsla(var(--accent-cyan), 0.25)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <StepIconComp size={13} />
+                <span>{stepTag}</span>
+              </span>
+            </div>
 
-        {/* ====== TEXT CONTENT OVERLAY ====== */}
-        <div className="tt-hero-content">
-          {/* Top bar */}
-          <div className="tt-hero-topbar" dir="ltr">
-            <div className="tt-hero-brand">
-              <div className="tt-hero-brand-icon"><Cpu size={18} color="#fff" /></div>
-              <div>
-                <span className="tt-hero-brand-name font-tech">TECHTINK</span>
-                <span className="tt-hero-brand-sub">ISFAHAN · IRAN</span>
-              </div>
-            </div>
-            <div className="tt-hero-status">
-              <span className="tt-hero-dot" />
-              <span className="font-tech" style={{ fontSize: '0.68rem', color: '#475569', letterSpacing: '1px' }}>ONLINE</span>
-            </div>
+            <h1 style={{
+              margin: 0,
+              fontSize: 'clamp(1.3rem, 3.2vw, 2.2rem)',
+              fontWeight: 800,
+              lineHeight: 1.25,
+              color: '#ffffff',
+              letterSpacing: '-0.3px'
+            }}>
+              <span>{stepTitleLine1} </span>
+              <span className="gradient-text">{stepTitleLine2}</span>
+            </h1>
+
+            <p style={{
+              margin: '8px 0 0',
+              fontSize: 'clamp(0.8rem, 1.4vw, 0.92rem)',
+              color: '#94a3b8',
+              lineHeight: 1.6
+            }}>
+              {stepSub}
+            </p>
           </div>
 
-          {/* Bottom: Title + scroll CTA */}
-          <div className="tt-hero-bottom">
-            <div className="tt-hero-text">
-              <h1 className="tt-hero-title">
-                <span className="tt-hero-line1">لذت کار با لپ‌تاپی که</span>
-                <span className="tt-hero-line2 gradient-text">همیشه همراهتونه</span>
-              </h1>
-              <p className="tt-hero-sub">تست‌شده · گارانتی طلایی · ارسال سراسر ایران</p>
-
-              <div className="tt-hero-badges" dir="ltr">
-                <div className="tt-badge-item">
-                  <span className="tt-badge-num font-tech">99.4%</span>
-                  <span className="tt-badge-label">رضایت خریداران</span>
-                </div>
-                <div className="tt-badge-sep" />
-                <div className="tt-badge-item">
-                  <span className="tt-badge-num font-tech" style={{ color: 'hsl(var(--accent-cyan))' }}>7 DAY</span>
-                  <span className="tt-badge-label">تست بی‌قید و شرط</span>
-                </div>
-                <div className="tt-badge-sep" />
-                <div className="tt-badge-item">
-                  <span className="tt-badge-num font-tech" style={{ color: 'hsl(var(--accent-green))' }}>24 MO</span>
-                  <span className="tt-badge-label">ضمانت تعویض</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="tt-hero-scroll" onClick={handleScrollDown}>
-              <span className="tt-scroll-text">
-                ورود به فروشگاه
-                <span className="font-tech tt-scroll-tag">SCROLL</span>
+          {/* Right: Scroll Progress Dial & Enter Store Prompt */}
+          <div 
+            onClick={handleSkipToStore}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              flexShrink: 0
+            }}
+          >
+            {/* Progress Percentage Ticker */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff' }}>
+                {Math.round(p * 100)}%
               </span>
-              <div className="tt-mouse-icon">
-                <div className="tt-mouse-wheel" />
-              </div>
-              <ChevronDown size={16} className="tt-chevron-bounce" />
+              <span className="font-tech" style={{ fontSize: '0.68rem', color: 'hsl(var(--accent-cyan))' }}>
+                [SCROLL DOWN]
+              </span>
             </div>
+
+            {/* Glowing Mouse Wheel Animation */}
+            <div style={{
+              width: '20px',
+              height: '32px',
+              borderRadius: '12px',
+              border: '2px solid rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              justifyContent: 'center',
+              paddingTop: '6px',
+              position: 'relative'
+            }}>
+              <div 
+                style={{
+                  width: '4px',
+                  height: '7px',
+                  borderRadius: '3px',
+                  background: 'hsl(var(--accent-cyan))',
+                  transform: `translateY(${p * 12}px)`,
+                  boxShadow: '0 0 8px hsl(var(--accent-cyan))',
+                  transition: 'transform 0.05s linear'
+                }} 
+              />
+            </div>
+
+            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
+              ورود به فروشگاه
+            </span>
           </div>
         </div>
+
+        {/* Global Progress Track Line pinned to very bottom */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '3px', background: 'rgba(255, 255, 255, 0.06)' }}>
+          <div 
+            style={{
+              height: '100%',
+              width: `${p * 100}%`,
+              background: 'linear-gradient(90deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))',
+              boxShadow: '0 0 10px hsla(var(--accent-cyan), 0.8)',
+              transition: 'width 0.05s linear'
+            }}
+          />
+        </div>
       </div>
-
-      {/* Scroll transition overlay */}
-      <div className="tt-hero-overlay" style={{ opacity: scrollProgress * 0.7 }} />
-
-      <style dangerouslySetInnerHTML={{__html: `
-        .tt-hero {
-          position: relative;
-          height: 100svh;
-          min-height: 600px;
-          overflow: hidden;
-        }
-        .tt-hero-stage {
-          position: sticky;
-          top: 0;
-          width: 100%;
-          height: 100svh;
-          min-height: 600px;
-          will-change: transform, opacity;
-          transform-origin: center center;
-        }
-        .tt-hero-bg {
-          position: absolute;
-          inset: 0;
-          background: #06080e;
-        }
-        .tt-hero-glow {
-          position: absolute;
-          width: 600px;
-          height: 600px;
-          border-radius: 50%;
-          background: radial-gradient(circle, hsla(var(--accent-cyan), 0.15) 0%, hsla(var(--accent-purple), 0.08) 40%, transparent 70%);
-          filter: blur(90px);
-          pointer-events: none;
-          z-index: 1;
-          transform: translate(-50%, -50%);
-          transition: left 0.4s ease-out, top 0.4s ease-out;
-        }
-        .tt-hero-grid {
-          position: absolute;
-          inset: 0;
-          z-index: 1;
-          background-image:
-            linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-          background-size: 80px 80px;
-          mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%);
-          -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%);
-        }
-
-        /* ====== ANIMATED SCENE ====== */
-        .tt-hero-scene {
-          position: absolute;
-          inset: 0;
-          z-index: 2;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.3s ease-out;
-          pointer-events: none;
-        }
-        .tt-scene-svg {
-          width: min(90%, 750px);
-          height: auto;
-          max-height: 70vh;
-        }
-
-        /* Character animations */
-        .tt-head-bob {
-          animation: headBob 3.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-          transform-origin: 325px 230px;
-        }
-        .tt-hand-type {
-          animation: handType 0.8s ease-in-out infinite;
-        }
-
-        /* Steam */
-        .tt-steam-a { animation: steamRise 2.4s ease-out infinite; }
-        .tt-steam-b { animation: steamRise 2.4s ease-out infinite 0.6s; }
-        .tt-steam-c { animation: steamRise 2.4s ease-out infinite 1.2s; }
-
-        /* Box subtle sway */
-        .tt-box-group {
-          animation: boxWiggle 4s ease-in-out infinite;
-          transform-origin: 188px 350px;
-        }
-
-        /* Ambient screen pulse */
-        .tt-ambient-pulse {
-          animation: ambientPulse 4s ease-in-out infinite;
-        }
-
-        /* Code line shimmer */
-        .tt-code-1 { animation: codeShimmer 3s ease-in-out infinite; }
-        .tt-code-2 { animation: codeShimmer 3s ease-in-out infinite 0.3s; }
-        .tt-code-3 { animation: codeShimmer 3s ease-in-out infinite 0.6s; }
-        .tt-code-4 { animation: codeShimmer 3s ease-in-out infinite 0.9s; }
-        .tt-code-5 { animation: codeShimmer 3s ease-in-out infinite 1.2s; }
-
-        /* Wave graph animation */
-        .tt-wave {
-          stroke-dasharray: 200;
-          stroke-dashoffset: 200;
-          animation: waveDraw 2.5s ease-out 0.5s forwards, wavePulse 3s ease-in-out 3s infinite;
-        }
-
-        /* Floating story badges */
-        .tt-float-1 { transform: translate(185px, 165px); animation: floatA 5s ease-in-out infinite; }
-        .tt-float-2 { transform: translate(600px, 165px); animation: floatB 5.5s ease-in-out infinite 0.5s; }
-        .tt-float-3 { transform: translate(160px, 260px); animation: floatC 4.5s ease-in-out infinite 1s; }
-        .tt-float-4 { transform: translate(640px, 290px); animation: floatD 5s ease-in-out infinite 0.8s; }
-        .tt-float-5 { transform: translate(550px, 140px); animation: floatE 4.8s ease-in-out infinite 1.3s; }
-
-        /* Sparkle particles */
-        .tt-spark-1 { animation: sparkle 2.5s ease-in-out infinite; }
-        .tt-spark-2 { animation: sparkle 3s ease-in-out infinite 0.5s; }
-        .tt-spark-3 { animation: sparkle 2.8s ease-in-out infinite 1s; }
-        .tt-spark-4 { animation: sparkle 3.2s ease-in-out infinite 0.3s; }
-        .tt-spark-5 { animation: sparkle 2.6s ease-in-out infinite 0.8s; }
-        .tt-spark-6 { animation: sparkle 3.5s ease-in-out infinite 1.5s; }
-        .tt-spark-7 { animation: sparkle 2.9s ease-in-out infinite 0.7s; }
-        .tt-spark-8 { animation: sparkle 3.1s ease-in-out infinite 1.2s; }
-
-        /* ====== KEYFRAMES ====== */
-        @keyframes headBob {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-3px) rotate(1.5deg); }
-        }
-        @keyframes handType {
-          0%, 100% { transform: translate(440px, 335px) translateY(0); }
-          30% { transform: translate(440px, 335px) translateY(-2.5px); }
-          70% { transform: translate(440px, 335px) translateY(1px); }
-        }
-        @keyframes steamRise {
-          0% { transform: translateY(0) scale(0.8); opacity: 0; }
-          30% { opacity: 0.6; }
-          100% { transform: translateY(-14px) scale(1.2); opacity: 0; }
-        }
-        @keyframes boxWiggle {
-          0%, 100% { transform: translate(155px, 310px) rotate(0deg); }
-          25% { transform: translate(155px, 310px) rotate(-1deg); }
-          75% { transform: translate(155px, 310px) rotate(0.5deg); }
-        }
-        @keyframes ambientPulse {
-          0%, 100% { opacity: 0.08; transform: scale(1); }
-          50% { opacity: 0.14; transform: scale(1.05); }
-        }
-        @keyframes codeShimmer {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 0.4; }
-        }
-        @keyframes waveDraw {
-          to { stroke-dashoffset: 0; }
-        }
-        @keyframes wavePulse {
-          0%, 100% { opacity: 0.8; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes floatA {
-          0%, 100% { transform: translate(185px, 165px) translateY(0); }
-          50% { transform: translate(185px, 165px) translateY(-12px); }
-        }
-        @keyframes floatB {
-          0%, 100% { transform: translate(600px, 165px) translateY(0) rotate(0deg); }
-          50% { transform: translate(600px, 165px) translateY(-10px) rotate(5deg); }
-        }
-        @keyframes floatC {
-          0%, 100% { transform: translate(160px, 260px) translateY(0) scale(1); }
-          50% { transform: translate(160px, 260px) translateY(-8px) scale(1.08); }
-        }
-        @keyframes floatD {
-          0%, 100% { transform: translate(640px, 290px) translateY(0) rotate(0deg); }
-          50% { transform: translate(640px, 290px) translateY(-11px) rotate(-6deg); }
-        }
-        @keyframes floatE {
-          0%, 100% { transform: translate(550px, 140px) translateY(0); }
-          50% { transform: translate(550px, 140px) translateY(-9px); }
-        }
-        @keyframes sparkle {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.8); }
-        }
-
-        /* ====== TEXT CONTENT ====== */
-        .tt-hero-content {
-          position: absolute;
-          inset: 0;
-          z-index: 10;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 24px 28px;
-          color: #fff;
-          direction: rtl;
-          pointer-events: none;
-        }
-        .tt-hero-content > * { pointer-events: auto; }
-
-        .tt-hero-topbar {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          animation: fadeUp 0.8s cubic-bezier(0.23,1,0.32,1) 0.1s both;
-        }
-        .tt-hero-brand { display: flex; align-items: center; gap: 10px; }
-        .tt-hero-brand-icon {
-          width: 34px; height: 34px; border-radius: 10px;
-          background: linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)));
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 0 20px hsla(var(--accent-cyan), 0.4);
-        }
-        .tt-hero-brand-name { display: block; font-size: 0.88rem; font-weight: 900; letter-spacing: 2.5px; color: #fff; }
-        .tt-hero-brand-sub { display: block; font-size: 0.6rem; color: #475569; letter-spacing: 1.5px; }
-        .tt-hero-status { display: flex; align-items: center; gap: 6px; }
-        .tt-hero-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: hsl(var(--accent-green));
-          box-shadow: 0 0 8px hsl(var(--accent-green));
-          animation: dotPulse 2s ease-in-out infinite;
-        }
-
-        .tt-hero-bottom {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 20px;
-        }
-        .tt-hero-text {
-          animation: fadeUp 0.8s cubic-bezier(0.23,1,0.32,1) 0.3s both;
-        }
-        .tt-hero-title {
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-        }
-        .tt-hero-line1 {
-          font-size: clamp(1.1rem, 3vw, 1.8rem);
-          font-weight: 500;
-          color: #94a3b8;
-        }
-        .tt-hero-line2 {
-          font-size: clamp(1.8rem, 5vw, 3.5rem);
-          font-weight: 900;
-          letter-spacing: -1px;
-          line-height: 1.1;
-        }
-        .tt-hero-sub {
-          margin-top: 10px;
-          font-size: clamp(0.72rem, 1.4vw, 0.85rem);
-          color: #475569;
-          letter-spacing: 0.5px;
-          font-weight: 500;
-        }
-        .tt-hero-badges {
-          display: inline-flex;
-          align-items: center;
-          gap: 14px;
-          margin-top: 16px;
-          padding: 10px 18px;
-          border-radius: 12px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-        }
-        .tt-badge-item { text-align: center; }
-        .tt-badge-num {
-          display: block;
-          font-size: clamp(0.85rem, 1.8vw, 1.1rem);
-          font-weight: 800;
-          color: #fff;
-          line-height: 1.2;
-        }
-        .tt-badge-label {
-          display: block;
-          font-size: 0.6rem;
-          color: #64748b;
-          margin-top: 1px;
-          direction: rtl;
-        }
-        .tt-badge-sep {
-          width: 1px;
-          height: 24px;
-          background: rgba(255,255,255,0.08);
-        }
-
-        .tt-hero-scroll {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          cursor: pointer;
-          user-select: none;
-          animation: fadeUp 0.8s cubic-bezier(0.23,1,0.32,1) 0.6s both;
-          transition: transform 0.2s ease;
-          flex-shrink: 0;
-        }
-        .tt-hero-scroll:hover { transform: translateY(-2px); }
-        .tt-scroll-text {
-          font-size: 0.72rem;
-          font-weight: 600;
-          color: #64748b;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          white-space: nowrap;
-        }
-        .tt-scroll-tag {
-          font-size: 0.6rem;
-          color: hsl(var(--accent-cyan));
-          letter-spacing: 1.5px;
-        }
-        .tt-mouse-icon {
-          width: 18px; height: 28px;
-          border-radius: 10px;
-          border: 1.5px solid rgba(255,255,255,0.12);
-          display: flex; justify-content: center;
-          padding-top: 5px;
-        }
-        .tt-mouse-wheel {
-          width: 2.5px; height: 5px;
-          border-radius: 2px;
-          background: hsl(var(--accent-cyan));
-          animation: mouseWheel 1.8s ease-in-out infinite;
-        }
-        .tt-chevron-bounce {
-          color: hsl(var(--accent-cyan));
-          animation: chevBounce 1.8s ease-in-out infinite;
-        }
-
-        .tt-hero-overlay {
-          position: absolute;
-          inset: 0;
-          background: var(--bg-main, #fff);
-          pointer-events: none;
-          z-index: 20;
-        }
-
-        /* ====== UTILITY KEYFRAMES ====== */
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(24px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes dotPulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.35; }
-        }
-        @keyframes mouseWheel {
-          0% { transform: translateY(0); opacity: 1; }
-          100% { transform: translateY(10px); opacity: 0; }
-        }
-        @keyframes chevBounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(4px); }
-        }
-
-        /* ====== MOBILE ====== */
-        @media (max-width: 700px) {
-          .tt-hero-content { padding: 18px 16px; }
-          .tt-scene-svg { width: 95%; max-height: 55vh; margin-top: 20px; }
-          .tt-hero-bottom {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 18px;
-          }
-          .tt-hero-scroll {
-            align-self: center;
-          }
-          .tt-hero-badges { gap: 10px; padding: 8px 12px; }
-          .tt-badge-label { font-size: 0.55rem; }
-          .tt-float-1, .tt-float-2, .tt-float-3, .tt-float-4, .tt-float-5 {
-            opacity: 0.6;
-          }
-        }
-
-        /* ====== REDUCED MOTION ====== */
-        @media (prefers-reduced-motion: reduce) {
-          .tt-head-bob, .tt-hand-type, .tt-steam-a, .tt-steam-b, .tt-steam-c,
-          .tt-box-group, .tt-ambient-pulse, .tt-float-1, .tt-float-2, .tt-float-3,
-          .tt-float-4, .tt-float-5, .tt-spark-1, .tt-spark-2, .tt-spark-3,
-          .tt-spark-4, .tt-spark-5, .tt-spark-6, .tt-spark-7, .tt-spark-8,
-          .tt-code-1, .tt-code-2, .tt-code-3, .tt-code-4, .tt-code-5,
-          .tt-wave, .tt-mouse-wheel, .tt-chevron-bounce, .tt-hero-dot {
-            animation: none !important;
-          }
-          .tt-hero-topbar, .tt-hero-text, .tt-hero-scroll {
-            animation: none !important;
-            opacity: 1 !important;
-          }
-        }
-      `}} />
     </div>
   );
 }
