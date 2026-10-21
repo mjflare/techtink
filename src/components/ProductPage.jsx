@@ -12,6 +12,196 @@ import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
 
+function ProductPageLoadingAnimation() {
+  const [activeStep, setActiveStep] = useState(0);
+  const steps = [
+    'دریافت اطلاعات سنسورها و فرکانس بوست پردازنده...',
+    'محاسبه بنچمارک‌های گرافیک و تست پایداری...',
+    'بارگذاری شوکیس تعاملی و ماژول مشخصات مهندسی...'
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveStep(prev => (prev + 1) % steps.length);
+    }, 1100);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="container" style={{ padding: '80px 20px', minHeight: '75vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Central Glass Card */}
+      <div 
+        className="glass-card animate-fade-in"
+        style={{
+          padding: '44px 32px',
+          borderRadius: '28px',
+          maxWidth: '520px',
+          width: '100%',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
+          border: '1px solid var(--border-glass)'
+        }}
+      >
+        {/* Ambient Neon Atmosphere */}
+        <div style={{
+          position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)',
+          width: '260px', height: '260px',
+          background: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.25) 0%, transparent 70%)',
+          filter: 'blur(50px)', pointerEvents: 'none'
+        }} />
+        <div style={{
+          position: 'absolute', bottom: '-40px', right: '15%',
+          width: '200px', height: '200px',
+          background: 'radial-gradient(circle, hsla(var(--accent-purple), 0.2) 0%, transparent 70%)',
+          filter: 'blur(50px)', pointerEvents: 'none'
+        }} />
+
+        {/* Holographic Chipset Emblem with Dual Laser Rings */}
+        <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 22px' }}>
+          {/* Outer Laser Ring */}
+          <div 
+            style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              border: '2px solid transparent',
+              borderTopColor: 'hsl(var(--accent-cyan))',
+              borderRightColor: 'hsl(var(--accent-purple))',
+              animation: 'spinLoaderFast 1.3s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite'
+            }} 
+          />
+          {/* Counter Dashed Tracer Ring */}
+          <div 
+            style={{
+              position: 'absolute', inset: '6px', borderRadius: '50%',
+              border: '1.5px dashed hsla(var(--accent-cyan), 0.4)',
+              animation: 'spinLoaderReverse 3s linear infinite'
+            }} 
+          />
+          {/* Inner Chip Core with Breathing Glow */}
+          <div 
+            style={{
+              position: 'absolute', inset: '13px', borderRadius: '18px',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 249, 255, 0.75))',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+              backdropFilter: 'blur(12px)',
+              animation: 'chipPulse 2.2s ease-in-out infinite'
+            }}
+          >
+            <Cpu size={34} style={{ color: 'hsl(var(--accent-cyan))', filter: 'drop-shadow(0 0 10px hsla(var(--accent-cyan), 0.5))' }} />
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.3px' }}>
+          <span className="gradient-text">در حال بارگذاری تفصیلی مشخصات دستگاه...</span>
+        </h3>
+
+        {/* Dynamic Telemetry Status Ticker */}
+        <div style={{ minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+          <span 
+            key={activeStep} 
+            className="animate-fade-in"
+            style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            <Sparkles size={13} style={{ color: 'hsl(var(--accent-purple))', flexShrink: 0 }} />
+            {steps[activeStep]}
+          </span>
+        </div>
+
+        {/* Fluid Shimmer Progress Track */}
+        <div style={{
+          width: '100%', height: '5px', borderRadius: '100px',
+          background: 'rgba(0, 0, 0, 0.06)', overflow: 'hidden', position: 'relative'
+        }}>
+          <div 
+            style={{
+              position: 'absolute', top: 0, bottom: 0, width: '45%',
+              background: 'linear-gradient(90deg, transparent, hsl(var(--accent-cyan)), hsl(var(--accent-purple)), transparent)',
+              borderRadius: '100px',
+              animation: 'shimmerSlide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+            }} 
+          />
+        </div>
+
+        {/* Micro Telemetry Pills */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '22px', flexWrap: 'wrap' }}>
+          {[
+            { label: 'سنسورهای حرارتی', color: 'hsl(var(--accent-cyan))' },
+            { label: 'پایگاه داده قطعات', color: 'hsl(var(--accent-green))' },
+            { label: 'رندرینگ سه‌بعدی', color: 'hsl(var(--accent-purple))' }
+          ].map((pill, i) => (
+            <span
+              key={i}
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                padding: '4px 10px',
+                borderRadius: '100px',
+                background: 'rgba(0, 0, 0, 0.03)',
+                border: '1px solid var(--border-glass)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: pill.color, boxShadow: `0 0 6px ${pill.color}` }} />
+              {pill.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Skeleton Ghost Wireframe Preview */}
+      <div 
+        style={{
+          marginTop: '32px',
+          maxWidth: '920px',
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px',
+          opacity: 0.38,
+          pointerEvents: 'none'
+        }}
+      >
+        <div style={{ height: '240px', borderRadius: '24px', background: 'rgba(0,0,0,0.03)', border: '1px dashed var(--border-glass)', animation: 'skeletonGlow 2s ease-in-out infinite' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', justifyContent: 'center' }}>
+          <div style={{ height: '28px', width: '65%', borderRadius: '10px', background: 'rgba(0,0,0,0.04)', animation: 'skeletonGlow 2s ease-in-out infinite 0.2s' }} />
+          <div style={{ height: '18px', width: '85%', borderRadius: '8px', background: 'rgba(0,0,0,0.03)', animation: 'skeletonGlow 2s ease-in-out infinite 0.4s' }} />
+          <div style={{ height: '38px', width: '45%', borderRadius: '12px', background: 'rgba(0,0,0,0.04)', marginTop: '8px', animation: 'skeletonGlow 2s ease-in-out infinite 0.6s' }} />
+        </div>
+      </div>
+
+      {/* Embedded CSS Animations */}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes spinLoaderFast {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes spinLoaderReverse {
+          0% { transform: rotate(360deg); }
+          100% { transform: rotate(0deg); }
+        }
+        @keyframes chipPulse {
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px hsla(var(--accent-cyan), 0.3)); }
+          50% { transform: scale(1.05); filter: drop-shadow(0 0 16px hsla(var(--accent-cyan), 0.6)); }
+        }
+        @keyframes shimmerSlide {
+          0% { left: -45%; }
+          100% { left: 100%; }
+        }
+        @keyframes skeletonGlow {
+          0%, 100% { opacity: 0.35; }
+          50% { opacity: 0.75; }
+        }
+      `}} />
+    </div>
+  );
+}
+
 export default function ProductPage({ 
   productSlug, 
   onBack, 
@@ -183,13 +373,7 @@ export default function ProductPage({
   }, [product]);
 
   if (loading) {
-    return (
-      <div className="container" style={{ padding: '120px 24px', textAlign: 'center' }}>
-        <div className="gradient-text font-code" style={{ fontSize: '1.5rem', marginBottom: '16px' }}>
-          در حال بارگذاری مشخصات تفصیلی لپ‌تاپ...
-        </div>
-      </div>
-    );
+    return <ProductPageLoadingAnimation />;
   }
 
   if (error || !product) {
