@@ -1302,6 +1302,48 @@ details[open] summary ~ * {
 
 .apple-showcase-sticky {
   contain: layout style;
+  transition: box-shadow 400ms ease, border-color 400ms ease;
+}
+
+.apple-showcase-pill-btn {
+  position: relative;
+  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+.apple-showcase-pill-btn:hover {
+  transform: translateY(-1px);
+}
+.apple-showcase-pill-btn:active {
+  transform: scale(0.96);
+}
+
+.apple-showcase-callout {
+  animation: appleShowcaseFloat 5s ease-in-out infinite;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 300ms ease;
+}
+
+@keyframes appleShowcaseFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes appleHeroGlowPulse {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.apple-glow-pulse {
+  animation: appleHeroGlowPulse 4s ease-in-out infinite;
 }
 
 @media (max-width: 860px) {
@@ -1319,6 +1361,7 @@ details[open] summary ~ * {
     position: static !important;
     max-width: 100% !important;
     margin-top: 8px !important;
+    animation: none !important;
   }
 }
 
