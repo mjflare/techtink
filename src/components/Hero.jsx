@@ -85,7 +85,18 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const currentTheme = moodThemes[mood];
 
   return (
-    <div className="container" style={{ paddingTop: '20px', paddingBottom: '36px', overflowX: 'clip' }}>
+    <div 
+      className="container" 
+      style={{ 
+        minHeight: 'calc(100svh - 90px)', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'space-between', 
+        paddingTop: '20px', 
+        paddingBottom: '24px', 
+        overflowX: 'clip' 
+      }}
+    >
       
       {/* 2-Column Responsive Layout: Text on Left, Motion Graphic on Right */}
       <div className="tt-hero-container">

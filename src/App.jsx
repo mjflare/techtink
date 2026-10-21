@@ -40,18 +40,9 @@ function App() {
   const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
 
   // Lando Norris Style Welcome Preloader (0% to 100% Shutter Reveal)
-  const [showPreloader, setShowPreloader] = useState(() => {
-    try {
-      return !sessionStorage.getItem('tt_preloader_seen');
-    } catch {
-      return true;
-    }
-  });
+  const [showPreloader, setShowPreloader] = useState(true);
 
   const handlePreloaderComplete = () => {
-    try {
-      sessionStorage.setItem('tt_preloader_seen', 'true');
-    } catch {}
     setShowPreloader(false);
   };
 
