@@ -65,7 +65,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose, onAddT
               مقایسه تخصصی و چارت عملکرد لپ‌تاپ‌ها ({compareLaptops.length} مدل)
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.825rem', marginTop: '4px', margin: 0 }}>
-              مقایسه امتیاز تک‌تینک و مشخصات فنی تفصیلی رو در رو با راهنمای رنگی اختصاصی
+              مقایسه امتیاز و مشخصات قطعات لپ‌تاپ‌ها در کنار هم با راهنمای رنگی اختصاصی
             </p>
           </div>
           <button 
@@ -267,7 +267,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose, onAddT
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '1.2rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Layers size={20} color="hsl(var(--accent-purple))" />
-                جدول مقایسه قطعات و مشخصات فنی تفصیلی
+                جدول مقایسه قطعات و مشخصات سخت‌افزاری
               </h3>
               <span className="compare-swipe-hint" style={{ fontSize: '0.78rem', color: 'hsl(var(--accent-cyan))', fontWeight: 600 }}>
                 👈 جدول را به چپ و راست بکشید

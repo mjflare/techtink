@@ -475,7 +475,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
                     }} 
                   />
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                    شبیه‌ساز توربو بوست و محفظه بخار
+                    شبیه‌ساز قدرت و خنک‌کننده دستگاه
                   </span>
                 </div>
 

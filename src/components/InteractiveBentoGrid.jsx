@@ -49,14 +49,14 @@ export default function InteractiveBentoGrid({ onExploreCatalog }) {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
           <span className="badge badge-glow" style={{ fontSize: '0.8rem', padding: '4px 14px' }}>
             <Award size={14} style={{ marginLeft: '4px' }} />
-            تفاوت استانداردهای مهندسی تک‌تینک
+            چرا خرید از تک‌تینک؟
           </span>
         </div>
         <h2 style={{ fontSize: 'clamp(1.6rem, 3.5vw, 2.4rem)', fontWeight: 800, margin: '0 0 10px' }}>
-          چرا حرفه‌ای‌ها <span className="gradient-text">تک‌تینک</span> را انتخاب می‌کنند؟
+          خیال راحت با استانداردهای <span className="gradient-text">تک‌تینک</span>
         </h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '640px', margin: '0 auto', lineHeight: 1.7 }}>
-          در تک‌تینک هر لپ‌تاپ پیش از تحویل، تحت تست‌های طاقت‌فرسای فیزیکی و نرم‌افزاری قرار می‌گیرد تا آسودگی خاطر یک سیستم نو را با قیمتی استثنایی تجربه کنید.
+          در تک‌تینک تمام لپ‌تاپ‌ها قبل از ارسال، تست فنی کامل می‌شوند تا دستگاهی کاملاً سالم، تمیز و با ضمانت معتبر تحویل بگیرید.
         </p>
       </div>
 
@@ -123,7 +123,7 @@ export default function InteractiveBentoGrid({ onExploreCatalog }) {
             </div>
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '20px' }}>
-              هیچ دستگاهی بدون گذراندن موفقیت‌آمیز چک‌لیست ۴ مرحله‌ای پایداری حرارتی و مدار تغذیه، برچسب گارانتی طلایی دریافت نمی‌کند:
+              تمام دستگاه‌ها باید این ۴ تست اصلی را با موفقیت پشت سر بگذارند تا تایید نهایی شوند:
             </p>
 
             {/* Interactive Checklist */}

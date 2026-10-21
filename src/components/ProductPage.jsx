@@ -15,9 +15,9 @@ import LaptopModelViewer from './LaptopModelViewer.jsx';
 function ProductPageLoadingAnimation() {
   const [activeStep, setActiveStep] = useState(0);
   const steps = [
-    'دریافت اطلاعات سنسورها و فرکانس بوست پردازنده...',
-    'محاسبه بنچمارک‌های گرافیک و تست پایداری...',
-    'بارگذاری شوکیس تعاملی و ماژول مشخصات مهندسی...'
+    'دریافت اطلاعات پردازنده و کارت گرافیک...',
+    'بررسی سرعت قطعات و نتایج تست‌ها...',
+    'آماده‌سازی مدل سه‌بعدی و مشخصات لپ‌تاپ...'
   ];
 
   useEffect(() => {
@@ -95,7 +95,7 @@ function ProductPageLoadingAnimation() {
 
         {/* Title */}
         <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.3px' }}>
-          <span className="gradient-text">در حال بارگذاری تفصیلی مشخصات دستگاه...</span>
+          <span className="gradient-text">در حال بارگذاری مشخصات دستگاه...</span>
         </h3>
 
         {/* Dynamic Telemetry Status Ticker */}
@@ -128,9 +128,9 @@ function ProductPageLoadingAnimation() {
         {/* Micro Telemetry Pills */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '22px', flexWrap: 'wrap' }}>
           {[
-            { label: 'سنسورهای حرارتی', color: 'hsl(var(--accent-cyan))' },
-            { label: 'پایگاه داده قطعات', color: 'hsl(var(--accent-green))' },
-            { label: 'رندرینگ سه‌بعدی', color: 'hsl(var(--accent-purple))' }
+            { label: 'دمای خنک‌کننده', color: 'hsl(var(--accent-cyan))' },
+            { label: 'سلامت قطعات', color: 'hsl(var(--accent-green))' },
+            { label: 'مدل سه‌بعدی', color: 'hsl(var(--accent-purple))' }
           ].map((pill, i) => (
             <span
               key={i}
@@ -1327,10 +1327,10 @@ export default function ProductPage({
               <div>
                 <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
                   <Layers size={22} color="hsl(var(--accent-cyan))" />
-                  مشخصات فنی تفصیلی و مهندسی قطعات
+                  مشخصات کامل قطعات دستگاه
                 </h2>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '4px' }}>
-                  معماری سخت‌افزاری، فرکانس‌ها، نوع قطعات و استانداردهای ارتباطی دستگاه
+                  اطلاعات دقیق پردازنده، کارت گرافیک، حافظه رم، حافظه SSD، نمایشگر و اتصالات
                 </p>
               </div>
             </div>
