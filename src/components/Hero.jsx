@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
-import { ArrowDown, Cpu, Check, Loader2 } from 'lucide-react';
+import { ArrowDown, Check } from 'lucide-react';
 
 export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const c = config || {};
@@ -13,12 +13,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const [isEngineReady, setIsEngineReady] = useState(false);
   const [loadingPercent, setLoadingPercent] = useState(15);
 
-  // Animation Progress: 0.0 to 1.0 (Scrubbed by scroll gestures)
+  // Animation Progress: 0.0 to 1.0 (Scrubbed smoothly by scroll gestures)
   const [progress, setProgress] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
 
-  // Momentum scrubbing refs (Tuned for longer, deliberate, weighted physical scroll feel)
+  // Momentum scrubbing refs (Tuned for an even longer, deliberate, cinema-grade scrub journey)
   const currentProgressRef = useRef(0);
   const targetProgressRef = useRef(0);
   const animationFrameRef = useRef(null);
@@ -34,12 +34,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Fine-tuned scroll sensitivity for longer, more deliberate storytelling
+    // Ultra-tuned scroll sensitivity for an extended, satisfying scrub distance
     const handleWheel = (e) => {
       e.preventDefault();
-      // Reduced sensitivity from 0.0011 to 0.00042 for a longer, cinematic scrub distance
-      const delta = e.deltaY * 0.00042;
-      targetProgressRef.current = Math.max(0, Math.min(1.12, targetProgressRef.current + delta));
+      // Reduced from 0.00042 to 0.00025 for a longer, cinematic experience
+      const delta = e.deltaY * 0.00025;
+      targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
 
     const handleTouchStart = (e) => {
@@ -52,18 +52,18 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       touchStartYRef.current = currentY;
 
       if (e.cancelable) e.preventDefault();
-      // Reduced touch delta from 0.0025 to 0.0011 for smooth swipe control
-      const delta = diffY * 0.0011;
-      targetProgressRef.current = Math.max(0, Math.min(1.12, targetProgressRef.current + delta));
+      // Reduced touch delta to 0.00065 for smooth swipe control
+      const delta = diffY * 0.00065;
+      targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
 
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault();
-        targetProgressRef.current = Math.min(1.12, targetProgressRef.current + 0.06);
+        targetProgressRef.current = Math.min(1.15, targetProgressRef.current + 0.04);
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
-        targetProgressRef.current = Math.max(0, targetProgressRef.current - 0.06);
+        targetProgressRef.current = Math.max(0, targetProgressRef.current - 0.04);
       } else if (e.key === 'Escape') {
         e.preventDefault();
         handleProceedToStore();
@@ -91,10 +91,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     };
   }, [isDismissed]);
 
-  // Proceed to store action (Clean transition with curtain lift)
   const handleProceedToStore = () => {
-    targetProgressRef.current = 1.15;
-    currentProgressRef.current = 1.1;
+    targetProgressRef.current = 1.18;
+    currentProgressRef.current = 1.12;
     setProgress(1.0);
     setIsDismissed(true);
     document.body.style.overflow = '';
@@ -109,11 +108,10 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     targetProgressRef.current = val;
   };
 
-  // 2. THREE.JS 3D SEVERANCE ENGINE (High detail character & liminal environment)
+  // 2. THREE.JS 3D ENGINE (Laptop & Macrodata Refinement Number Crunching Focus)
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    // Simulate quick shader compile ticker
     let loadTimer = setInterval(() => {
       setLoadingPercent(prev => {
         if (prev >= 95) {
@@ -122,16 +120,16 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }
         return prev + 25;
       });
-    }, 70);
+    }, 60);
 
     const canvas = canvasRef.current;
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // --- Scene & Renderer ---
+    // --- Scene & Camera ---
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x050a0e); // Eerie Lumon Seafoam Dark
-    scene.fog = new THREE.FogExp2(0x050a0e, 0.07);
+    scene.background = new THREE.Color(0x050a0e);
+    scene.fog = new THREE.FogExp2(0x050a0e, 0.075);
 
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
     camera.position.set(0, 3.2, 7.8);
@@ -147,50 +145,48 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.25;
 
-    // --- Dynamic CRT Offscreen Canvas ---
+    // --- High-Resolution Dynamic CRT Offscreen Canvas ---
     const screenCanvas = document.createElement('canvas');
-    screenCanvas.width = 512;
-    screenCanvas.height = 320;
+    screenCanvas.width = 640;
+    screenCanvas.height = 400;
     const screenCtx = screenCanvas.getContext('2d');
     const screenTexture = new THREE.CanvasTexture(screenCanvas);
     screenTexture.minFilter = THREE.LinearFilter;
     screenTexture.magFilter = THREE.LinearFilter;
 
-    // --- Lighting ---
-    const ambientLight = new THREE.AmbientLight(0x132724, 1.4);
+    // --- Studio Lighting ---
+    const ambientLight = new THREE.AmbientLight(0x112622, 1.5);
     scene.add(ambientLight);
 
-    // Overhead Lumon Fluorescent Bar Light
-    const ceilingLight = new THREE.DirectionalLight(0xe4fdf9, 2.0);
+    // Overhead Fluorescent Panel Light
+    const ceilingLight = new THREE.DirectionalLight(0xe4fdf9, 2.2);
     ceilingLight.position.set(0, 7.5, 2.5);
     ceilingLight.castShadow = true;
     ceilingLight.shadow.mapSize.width = 1024;
     ceilingLight.shadow.mapSize.height = 1024;
-    ceilingLight.shadow.camera.near = 0.5;
-    ceilingLight.shadow.camera.far = 16;
     ceilingLight.shadow.bias = -0.001;
     scene.add(ceilingLight);
 
-    // CRT Screen Phosphor Glow Point (casts on keyboard & face)
-    const crtScreenLight = new THREE.PointLight(0x00ffb4, 0, 4.2);
-    crtScreenLight.position.set(0, 1.42, 0.1);
+    // Glowing CRT Phosphor Point Light (Projects onto laptop keyboard, chassis and desk)
+    const crtScreenLight = new THREE.PointLight(0x00ffb4, 0, 4.5);
+    crtScreenLight.position.set(0, 1.45, 0.1);
     scene.add(crtScreenLight);
 
     // Rim studio accent
-    const rimLight = new THREE.PointLight(0x38bdf8, 1.1, 7);
-    rimLight.position.set(-3.8, 3.2, -1.2);
+    const rimLight = new THREE.PointLight(0x38bdf8, 1.2, 8);
+    rimLight.position.set(-3.5, 3.2, -1.2);
     scene.add(rimLight);
 
     const group = new THREE.Group();
     scene.add(group);
 
-    // --- 1. LIMINAL OFFICE ROOM (Severance Floor Grid & Fluorescents) ---
-    const floorGeo = new THREE.PlaneGeometry(32, 32);
+    // --- 1. LIMINAL OFFICE ROOM (Severance Floor Grid & Overhead Bars) ---
+    const floorGeo = new THREE.PlaneGeometry(36, 36);
     const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x091c18, // Lumon carpet green
-      roughness: 0.8,
+      color: 0x081a17,
+      roughness: 0.82,
       metalness: 0.15
     });
     const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -198,22 +194,22 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     floor.receiveShadow = true;
     group.add(floor);
 
-    const gridHelper = new THREE.GridHelper(28, 28, 0x00ffb4, 0x11312b);
+    const gridHelper = new THREE.GridHelper(30, 30, 0x00ffb4, 0x0f2b26);
     gridHelper.position.y = 0.005;
-    gridHelper.material.opacity = 0.32;
+    gridHelper.material.opacity = 0.35;
     gridHelper.material.transparent = true;
     group.add(gridHelper);
 
-    // Overhead Fluorescent Fixtures
+    // Overhead Fluorescent Light Bars
     for (let i = -1; i <= 1; i++) {
-      const fixGeo = new THREE.BoxGeometry(0.5, 0.08, 4.2);
+      const fixGeo = new THREE.BoxGeometry(0.5, 0.08, 4.5);
       const fixMat = new THREE.MeshBasicMaterial({ color: 0xecfffa });
       const fixMesh = new THREE.Mesh(fixGeo, fixMat);
-      fixMesh.position.set(i * 3.8, 5.4, 0);
+      fixMesh.position.set(i * 3.8, 5.5, 0);
       group.add(fixMesh);
     }
 
-    // --- 2. THE DESK (Minimalist Mid-Century Executive Desk) ---
+    // --- 2. THE DESK (Minimalist Executive Workstation) ---
     const deskTopGeo = new THREE.BoxGeometry(3.6, 0.1, 1.8);
     const deskMat = new THREE.MeshStandardMaterial({
       color: 0x112421,
@@ -236,7 +232,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       group.add(leg);
     });
 
-    // --- 3. THE PACKAGING BOX (Unboxes smoothly in Stage 1) ---
+    // --- 3. LUXURY PACKAGING BOX (Unboxes in Stage 1) ---
     const boxGroup = new THREE.Group();
     boxGroup.position.set(-0.75, 1.18, 0.2);
     group.add(boxGroup);
@@ -255,24 +251,25 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     boxLid.castShadow = true;
     boxGroup.add(boxLid);
 
-    // --- 4. THE 3D LAPTOP ---
+    // --- 4. THE 3D LAPTOP (The Star of the Scene) ---
     const laptopGroup = new THREE.Group();
     laptopGroup.position.set(0, 1.18, 0);
     group.add(laptopGroup);
 
-    const baseGeo = new THREE.BoxGeometry(1.18, 0.032, 0.82);
+    // Base Chassis
+    const baseGeo = new THREE.BoxGeometry(1.22, 0.034, 0.84);
     const chassisMat = new THREE.MeshStandardMaterial({
       color: 0x1e293b,
-      metalness: 0.9,
-      roughness: 0.22
+      metalness: 0.92,
+      roughness: 0.2
     });
     const laptopBase = new THREE.Mesh(baseGeo, chassisMat);
     laptopBase.castShadow = true;
     laptopBase.receiveShadow = true;
     laptopGroup.add(laptopBase);
 
-    // Keyboard Deck Inset
-    const kbGeo = new THREE.BoxGeometry(0.98, 0.008, 0.44);
+    // Milled Keyboard Deck with Phosphor Backlight Underglow
+    const kbGeo = new THREE.BoxGeometry(1.02, 0.008, 0.46);
     const kbMat = new THREE.MeshStandardMaterial({
       color: 0x070b12,
       roughness: 0.6,
@@ -284,212 +281,45 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     keyboard.position.set(0, 0.018, -0.06);
     laptopGroup.add(keyboard);
 
-    // Trackpad
-    const padGeo = new THREE.BoxGeometry(0.34, 0.004, 0.22);
+    // Precision Glass Trackpad
+    const padGeo = new THREE.BoxGeometry(0.36, 0.004, 0.23);
     const padMat = new THREE.MeshStandardMaterial({ color: 0x2c384a, roughness: 0.2, metalness: 0.5 });
     const trackpad = new THREE.Mesh(padGeo, padMat);
     trackpad.position.set(0, 0.018, 0.25);
     laptopGroup.add(trackpad);
 
-    // Screen Hinge
+    // Screen Hinge Pivot
     const screenHinge = new THREE.Group();
-    screenHinge.position.set(0, 0.02, -0.41);
+    screenHinge.position.set(0, 0.02, -0.42);
     laptopGroup.add(screenHinge);
 
-    // Screen Lid Back
-    const lidGeo = new THREE.BoxGeometry(1.18, 0.82, 0.024);
+    // Screen Lid Back Shell
+    const lidGeo = new THREE.BoxGeometry(1.22, 0.84, 0.025);
     const screenLid = new THREE.Mesh(lidGeo, chassisMat);
-    screenLid.position.set(0, 0.41, 0);
+    screenLid.position.set(0, 0.42, 0);
     screenLid.castShadow = true;
     screenHinge.add(screenLid);
 
-    // Display Panel
-    const displayGeo = new THREE.PlaneGeometry(1.12, 0.77);
+    // OLED Display Panel (Dynamic Canvas Texture with Severance Numbers)
+    const displayGeo = new THREE.PlaneGeometry(1.16, 0.79);
     const displayMat = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false });
     const display = new THREE.Mesh(displayGeo, displayMat);
-    display.position.set(0, 0.41, 0.014);
+    display.position.set(0, 0.42, 0.014);
     screenHinge.add(display);
 
-    screenHinge.rotation.x = Math.PI / 2; // Starts flat/closed
+    screenHinge.rotation.x = Math.PI / 2; // Flat / Closed initially
 
-    // --- 5. HIGH-DETAIL SEVERANCE CHARACTER (Mark S. / Lumon Worker) ---
-    const characterGroup = new THREE.Group();
-    characterGroup.position.set(0, 1.1, 0.85);
-    group.add(characterGroup);
-
-    // A. Tailored Charcoal Suit Jacket
-    const suitMat = new THREE.MeshStandardMaterial({ color: 0x0e1722, roughness: 0.72, metalness: 0.12 });
-    const shirtMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
-    const tieMat = new THREE.MeshStandardMaterial({ color: 0x1e3a5f, roughness: 0.5, metalness: 0.2 });
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xf3cca9, roughness: 0.45 });
-
-    // Torso Base
-    const torsoGeo = new THREE.CylinderGeometry(0.25, 0.21, 0.82, 16);
-    const torso = new THREE.Mesh(torsoGeo, suitMat);
-    torso.position.set(0, 0.36, 0);
-    torso.castShadow = true;
-    characterGroup.add(torso);
-
-    // Left and Right Suit Lapels
-    const lapelGeo = new THREE.BoxGeometry(0.08, 0.38, 0.02);
-    const leftLapel = new THREE.Mesh(lapelGeo, suitMat);
-    leftLapel.position.set(-0.1, 0.5, 0.2);
-    leftLapel.rotation.set(0.1, 0.1, -0.2);
-    characterGroup.add(leftLapel);
-
-    const rightLapel = new THREE.Mesh(lapelGeo, suitMat);
-    rightLapel.position.set(0.1, 0.5, 0.2);
-    rightLapel.rotation.set(0.1, -0.1, 0.2);
-    characterGroup.add(rightLapel);
-
-    // Collared White Dress Shirt V-neck
-    const shirtGeo = new THREE.BoxGeometry(0.12, 0.28, 0.02);
-    const shirt = new THREE.Mesh(shirtGeo, shirtMat);
-    shirt.position.set(0, 0.55, 0.19);
-    characterGroup.add(shirt);
-
-    // Slate Blue Tie with Silver Tie Bar
-    const tieGeo = new THREE.BoxGeometry(0.045, 0.32, 0.015);
-    const tie = new THREE.Mesh(tieGeo, tieMat);
-    tie.position.set(0, 0.48, 0.21);
-    characterGroup.add(tie);
-
-    const tieBarGeo = new THREE.BoxGeometry(0.04, 0.008, 0.008);
-    const tieBarMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.1 });
-    const tieBar = new THREE.Mesh(tieBarGeo, tieBarMat);
-    tieBar.position.set(0, 0.52, 0.22);
-    characterGroup.add(tieBar);
-
-    // Lumon Blue Lanyard & Security Identification Badge
-    const lanyardGeo = new THREE.TorusGeometry(0.16, 0.008, 8, 24, Math.PI);
-    const lanyardMat = new THREE.MeshBasicMaterial({ color: 0x0284c7 });
-    const lanyard = new THREE.Mesh(lanyardGeo, lanyardMat);
-    lanyard.position.set(0, 0.68, 0.14);
-    lanyard.rotation.x = Math.PI / 2.3;
-    characterGroup.add(lanyard);
-
-    const badgeGeo = new THREE.BoxGeometry(0.085, 0.13, 0.012);
-    const badgeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
-    const badge = new THREE.Mesh(badgeGeo, badgeMat);
-    badge.position.set(0.08, 0.41, 0.23);
-    characterGroup.add(badge);
-
-    // Badge Photo strip & Lumon Blue logo block
-    const badgePhotoGeo = new THREE.BoxGeometry(0.065, 0.05, 0.002);
-    const badgePhotoMat = new THREE.MeshBasicMaterial({ color: 0x0369a1 });
-    const badgePhoto = new THREE.Mesh(badgePhotoGeo, badgePhotoMat);
-    badgePhoto.position.set(0.08, 0.43, 0.24);
-    characterGroup.add(badgePhoto);
-
-    // B. Anatomical Head with Detailed Hair, Ears, and Natural Gaze
-    const headGroup = new THREE.Group();
-    headGroup.position.set(0, 0.84, 0);
-    characterGroup.add(headGroup);
-
-    const neckGeo = new THREE.CylinderGeometry(0.075, 0.085, 0.15, 12);
-    const neck = new THREE.Mesh(neckGeo, skinMat);
-    headGroup.add(neck);
-
-    const headGeo = new THREE.SphereGeometry(0.165, 24, 24);
-    const head = new THREE.Mesh(headGeo, skinMat);
-    head.position.set(0, 0.18, 0);
-    head.scale.set(0.96, 1.14, 1.02);
-    head.castShadow = true;
-    headGroup.add(head);
-
-    // Sculpted Nose Bridge
-    const noseGeo = new THREE.ConeGeometry(0.024, 0.06, 8);
-    const nose = new THREE.Mesh(noseGeo, skinMat);
-    nose.position.set(0, 0.18, 0.17);
-    nose.rotation.x = Math.PI / 2;
-    headGroup.add(nose);
-
-    // Sculpted Ears
-    const earGeo = new THREE.SphereGeometry(0.035, 12, 12);
-    const leftEar = new THREE.Mesh(earGeo, skinMat);
-    leftEar.position.set(-0.16, 0.18, 0);
-    leftEar.scale.set(0.4, 1.2, 0.8);
-    headGroup.add(leftEar);
-
-    const rightEar = new THREE.Mesh(earGeo, skinMat);
-    rightEar.position.set(0.16, 0.18, 0);
-    rightEar.scale.set(0.4, 1.2, 0.8);
-    headGroup.add(rightEar);
-
-    // Mark S. Layered Signature Side-Part Haircut
-    const hairGeo = new THREE.SphereGeometry(0.175, 20, 20, 0, Math.PI * 2, 0, Math.PI / 2.1);
-    const hairMat = new THREE.MeshStandardMaterial({ color: 0x0a1017, roughness: 0.7, metalness: 0.1 });
-    const hair = new THREE.Mesh(hairGeo, hairMat);
-    hair.position.set(0, 0.22, -0.015);
-    headGroup.add(hair);
-
-    // Hair Side Part Fringe
-    const fringeGeo = new THREE.BoxGeometry(0.14, 0.05, 0.08);
-    const fringe = new THREE.Mesh(fringeGeo, hairMat);
-    fringe.position.set(-0.06, 0.31, 0.1);
-    fringe.rotation.set(-0.2, 0.1, -0.15);
-    headGroup.add(fringe);
-
-    // C. Articulated Arms, Hands & Individual Knuckle Fingers
-    const armGeo = new THREE.CylinderGeometry(0.058, 0.05, 0.56, 12);
-    const leftArm = new THREE.Mesh(armGeo, suitMat);
-    leftArm.position.set(-0.28, 0.36, -0.2);
-    leftArm.rotation.set(0.72, 0, 0.28);
-    characterGroup.add(leftArm);
-
-    const rightArm = new THREE.Mesh(armGeo, suitMat);
-    rightArm.position.set(0.28, 0.36, -0.2);
-    rightArm.rotation.set(0.72, 0, -0.28);
-    characterGroup.add(rightArm);
-
-    // Hands with Articulated Home-Row Fingers
-    const createDetailedHand = (isLeft) => {
-      const hGroup = new THREE.Group();
-      // Palm
-      const palmGeo = new THREE.BoxGeometry(0.07, 0.024, 0.08);
-      const palm = new THREE.Mesh(palmGeo, skinMat);
-      hGroup.add(palm);
-
-      // Thumb
-      const thumbGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.045, 8);
-      const thumb = new THREE.Mesh(thumbGeo, skinMat);
-      thumb.position.set(isLeft ? 0.038 : -0.038, -0.005, 0.01);
-      thumb.rotation.set(0.3, 0, isLeft ? -0.6 : 0.6);
-      hGroup.add(thumb);
-
-      // 4 Fingers
-      const fingerList = [];
-      for (let i = 0; i < 4; i++) {
-        const fGeo = new THREE.CylinderGeometry(0.01, 0.009, 0.052, 8);
-        const finger = new THREE.Mesh(fGeo, skinMat);
-        const xOffset = (i - 1.5) * 0.017;
-        finger.position.set(xOffset, 0, -0.055);
-        finger.rotation.x = Math.PI / 2.8;
-        hGroup.add(finger);
-        fingerList.push(finger);
-      }
-      return { hGroup, fingerList };
-    };
-
-    const leftHandData = createDetailedHand(true);
-    leftHandData.hGroup.position.set(-0.16, 0.095, -0.5);
-    characterGroup.add(leftHandData.hGroup);
-
-    const rightHandData = createDetailedHand(false);
-    rightHandData.hGroup.position.set(0.16, 0.095, -0.5);
-    characterGroup.add(rightHandData.hGroup);
-
-    // 6. Floating Macrodata Cubes
+    // --- 5. FLOATING 3D MACRODATA REFINEMENT DATA CUBES ---
     const cubeGroup = new THREE.Group();
     group.add(cubeGroup);
 
     const floatCubes = [];
-    for (let i = 0; i < 7; i++) {
-      const cGeo = new THREE.BoxGeometry(0.13, 0.13, 0.13);
+    for (let i = 0; i < 9; i++) {
+      const cGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
       const cMat = new THREE.MeshStandardMaterial({
         color: 0x00e5a3,
         emissive: 0x00e5a3,
-        emissiveIntensity: 0.35,
+        emissiveIntensity: 0.4,
         roughness: 0.2,
         metalness: 0.85,
         transparent: true,
@@ -497,84 +327,95 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       });
       const mesh = new THREE.Mesh(cGeo, cMat);
       mesh.position.set(
-        (Math.random() - 0.5) * 3.2,
-        1.4 + Math.random() * 1.6,
-        (Math.random() - 0.5) * 2.2
+        (Math.random() - 0.5) * 3.5,
+        1.3 + Math.random() * 1.8,
+        (Math.random() - 0.5) * 2.5
       );
       cubeGroup.add(mesh);
-      floatCubes.push({ mesh, speed: 0.6 + Math.random() });
+      floatCubes.push({ mesh, speed: 0.5 + Math.random() });
     }
 
-    // --- Dynamic CRT Canvas Screen Drawing Function (Severance Macrodata Refinement) ---
+    // --- 6. DYNAMIC NUMBER CRUNCHING CANVAS FUNCTION ---
     let frameTicker = 0;
     const drawSeveranceDisplay = (scrubProgress) => {
       frameTicker++;
       screenCtx.fillStyle = '#05110f';
-      screenCtx.fillRect(0, 0, 512, 320);
+      screenCtx.fillRect(0, 0, 640, 400);
 
       // CRT Scanlines
       screenCtx.fillStyle = 'rgba(0, 229, 163, 0.035)';
-      for (let y = 0; y < 320; y += 4) {
-        screenCtx.fillRect(0, y, 512, 1.5);
+      for (let y = 0; y < 400; y += 4) {
+        screenCtx.fillRect(0, y, 640, 1.5);
       }
 
-      if (scrubProgress > 0.32) {
+      if (scrubProgress > 0.28) {
         // Lumon Terminal Header
         screenCtx.fillStyle = '#00e5a3';
-        screenCtx.font = 'bold 13px monospace';
-        screenCtx.fillText('LUMON INDUSTRIES // TECHTINK MDR-04', 24, 32);
+        screenCtx.font = 'bold 14px monospace';
+        screenCtx.fillText('LUMON INDUSTRIES // TECHTINK MDR-04', 30, 36);
 
         screenCtx.fillStyle = '#5eead4';
-        screenCtx.font = '10px monospace';
-        screenCtx.fillText('DATA STREAM: SIENNA_CLUSTER // CALIBRATED', 24, 48);
+        screenCtx.font = '11px monospace';
+        screenCtx.fillText('DATA STREAM: SIENNA_CLUSTER // ACTIVE CRUNCHING', 30, 54);
 
         // Completion calculation: reaches 100% when scrub reaches 0.82
-        const completion = Math.min(100, Math.round(Math.max(0, (scrubProgress - 0.35) / 0.47) * 100));
+        const completion = Math.min(100, Math.round(Math.max(0, (scrubProgress - 0.32) / 0.50) * 100));
 
-        if (completion >= 100) {
-          screenCtx.fillStyle = '#00ffb4';
-          screenCtx.font = 'bold 12px monospace';
-          screenCtx.fillText('TEMPER STATUS: 100% BALANCED // REFINEMENT ACCORD REACHED', 24, 64);
-        } else {
-          screenCtx.fillText(`TEMPER: WOE [${Math.round(completion * 0.4)}%]  DREAD [${Math.round(completion * 0.2)}%]  FROLIC [${completion}%]`, 24, 64);
-        }
+        // Macrodata 4 Bins Status Ticker
+        const woe = Math.min(100, Math.round(completion * 0.95));
+        const dread = Math.min(100, Math.round(completion * 0.88));
+        const malice = Math.min(100, Math.round(completion * 0.76));
+        const frolic = completion;
 
-        // Macrodata Refinement Numbers Grid
-        const cols = 8;
-        const rows = 4;
+        screenCtx.fillStyle = completion >= 100 ? '#00ffb4' : '#5eead4';
+        screenCtx.font = '11px monospace';
+        screenCtx.fillText(
+          `[01] WOE ${woe}%   [02] DREAD ${dread}%   [03] MALICE ${malice}%   [04] FROLIC ${frolic}%`,
+          30,
+          72
+        );
+
+        // Macrodata Refinement Number Bins Grid (Crunching & Sorting Numbers)
+        const cols = 9;
+        const rows = 5;
         const startX = 36;
-        const startY = 92;
+        const startY = 104;
 
         for (let r = 0; r < rows; r++) {
           for (let col = 0; col < cols; col++) {
-            const numSeed = ((r * cols + col) * 41 + Math.floor(frameTicker / 14)) % 9999;
+            // Numbers jitter, sort, and bounce in clusters
+            const numSeed = ((r * cols + col) * 47 + Math.floor(frameTicker / 12)) % 9999;
             const numStr = String(numSeed).padStart(4, '0');
-            const isScary = (r + col + Math.floor(frameTicker / 28)) % 5 === 0;
+            const isScary = (r + col + Math.floor(frameTicker / 24)) % 4 === 0;
 
             if (completion >= 100) {
-              screenCtx.fillStyle = '#00e5a3'; // All harmonious at 100%
+              screenCtx.fillStyle = '#00e5a3'; // Peaceful harmonious phosphor at 100%
             } else {
               screenCtx.fillStyle = isScary ? '#ffffff' : '#00e5a3';
             }
-            screenCtx.font = isScary && completion < 100 ? 'bold 14px monospace' : '12px monospace';
+            screenCtx.font = isScary && completion < 100 ? 'bold 15px monospace' : '13px monospace';
 
-            const jitter = isScary && completion < 100 ? Math.sin(frameTicker * 0.2 + r) * 2 : 0;
-            screenCtx.fillText(numStr, startX + col * 56, startY + r * 38 + jitter);
+            const jitter = isScary && completion < 100 ? Math.sin(frameTicker * 0.25 + r) * 2.5 : 0;
+            screenCtx.fillText(numStr, startX + col * 64, startY + r * 36 + jitter);
           }
         }
 
-        // Progress Bar
-        const barWidth = 464;
+        // Progress Bar & Seal
+        const barWidth = 580;
         const fillWidth = barWidth * (completion / 100);
-        screenCtx.fillStyle = '#0f3d37';
-        screenCtx.fillRect(24, 260, barWidth, 14);
+        screenCtx.fillStyle = '#0e3a34';
+        screenCtx.fillRect(30, 310, barWidth, 16);
 
         screenCtx.fillStyle = '#00e5a3';
-        screenCtx.fillRect(24, 260, fillWidth, 14);
+        screenCtx.fillRect(30, 310, fillWidth, 16);
 
         screenCtx.fillStyle = '#ffffff';
-        screenCtx.font = 'bold 10px monospace';
-        screenCtx.fillText(`REFINEMENT COMPLETION: ${completion}% ${completion >= 100 ? '[COMPLETE - ALL BINS SEALED]' : ''}`, 28, 292);
+        screenCtx.font = 'bold 11px monospace';
+        screenCtx.fillText(
+          `REFINEMENT COMPLETION: ${completion}% ${completion >= 100 ? '[100% COMPLETE // ALL 4 BINS EQUALIZED]' : '[SORTING ACTIVE NUMBERS...]' }`,
+          34,
+          348
+        );
       }
 
       screenTexture.needsUpdate = true;
@@ -588,8 +429,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       const p = currentProgressRef.current;
       setProgress(p);
 
-      // Only dismiss if user deliberately scrolls beyond 1.08 (gives ample wiggle room at the end!)
-      if (p >= 1.08 && targetProgressRef.current >= 1.08 && !isDismissed) {
+      // Dismiss only if user deliberately scrolls beyond 1.12
+      if (p >= 1.12 && targetProgressRef.current >= 1.12 && !isDismissed) {
         setIsDismissed(true);
         setTimeout(() => {
           setIsMounted(false);
@@ -598,81 +439,55 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }, 650);
       }
 
-      // Camera Choreography
-      // 0.0 -> 0.82: camera dollies smoothly in
-      // 0.82 -> 1.05: camera rests at comfortable contemplation angle with gentle mouse tilt
+      // Camera Choreography Focused 100% on the Laptop:
+      // Starts wide (surveillance) -> dollies in to dramatic 3/4 macro view of laptop & screen
       const progressClamped = Math.min(0.85, p);
-      const camTargetZ = THREE.MathUtils.lerp(7.8, 3.1, progressClamped / 0.85);
-      const camTargetY = THREE.MathUtils.lerp(3.2, 1.55, progressClamped / 0.85);
-      const camTargetX = THREE.MathUtils.lerp(0, 0.32, progressClamped / 0.85) + (mouseRef.current.x * 0.35);
+      const camTargetZ = THREE.MathUtils.lerp(7.8, 2.5, progressClamped / 0.85);
+      const camTargetY = THREE.MathUtils.lerp(3.2, 1.48, progressClamped / 0.85);
+      const camTargetX = THREE.MathUtils.lerp(0, 0.42, progressClamped / 0.85) + (mouseRef.current.x * 0.3);
 
       camera.position.x += (camTargetX - camera.position.x) * 0.08;
       camera.position.y += (camTargetY - camera.position.y) * 0.08;
       camera.position.z += (camTargetZ - camera.position.z) * 0.08;
       camera.lookAt(0, 1.25, 0);
 
-      // Subtle breathing chest expansion
-      const breath = Math.sin(frameTicker * 0.04) * 0.006;
-      torso.scale.set(1 + breath, 1, 1 + breath);
-
-      // Stage 1: Unboxing (p: 0.0 -> 0.30)
-      const lidLift = THREE.MathUtils.clamp((p - 0.04) / 0.22, 0, 1);
+      // Stage 1: Unboxing (p: 0.0 -> 0.28)
+      const lidLift = THREE.MathUtils.clamp((p - 0.03) / 0.22, 0, 1);
       boxLid.position.y = 0.14 + (lidLift * 0.45);
       boxLid.rotation.z = lidLift * 0.22;
 
-      const boxFade = THREE.MathUtils.clamp((p - 0.22) / 0.14, 0, 1);
+      const boxFade = THREE.MathUtils.clamp((p - 0.20) / 0.14, 0, 1);
       boxGroup.position.y = 1.18 - (boxFade * 0.6);
       boxBase.material.opacity = 1 - boxFade;
       boxLid.material.opacity = 1 - boxFade;
       boxBase.material.transparent = true;
       boxLid.material.transparent = true;
 
-      // Stage 2: Laptop Position & Lid Opening (p: 0.30 -> 0.60)
+      // Stage 2: Laptop Position & Lid Opening (p: 0.28 -> 0.58)
       const laptopSlide = THREE.MathUtils.clamp((p - 0.08) / 0.24, 0, 1);
       laptopGroup.position.x = THREE.MathUtils.lerp(-0.75, 0, laptopSlide);
       laptopGroup.position.z = THREE.MathUtils.lerp(0.2, 0, laptopSlide);
 
-      // Lid rotation
-      const lidOpen = THREE.MathUtils.clamp((p - 0.28) / 0.28, 0, 1);
-      screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.22, lidOpen);
+      // Screen Lid rotates open smoothly
+      const lidOpen = THREE.MathUtils.clamp((p - 0.26) / 0.28, 0, 1);
+      screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
 
-      // CRT Light Glow
-      const crtGlow = THREE.MathUtils.clamp((p - 0.38) / 0.24, 0, 1);
-      crtScreenLight.intensity = crtGlow * 3.6;
+      // CRT Light Glow (Floods onto chassis and desk)
+      const crtGlow = THREE.MathUtils.clamp((p - 0.35) / 0.24, 0, 1);
+      crtScreenLight.intensity = crtGlow * 4.2;
 
-      // Stage 3 & 4: Character Head Gaze & Serene Smile
-      // When p < 0.82: head looks down at screen
-      // When p >= 0.82 (Completion Plateau): head gently tilts up with proud, serene satisfaction
-      const isRefined = p >= 0.82;
-      const headGazeDown = THREE.MathUtils.clamp((p - 0.3) / 0.3, 0, 1);
-      const headSereneLift = THREE.MathUtils.clamp((p - 0.82) / 0.15, 0, 1);
-
-      const targetHeadX = THREE.MathUtils.lerp(
-        THREE.MathUtils.lerp(-0.15, 0.24, headGazeDown),
-        0.05, // Looks up pleasantly at the viewer
-        headSereneLift
-      );
-      headGroup.rotation.x = targetHeadX;
-      headGroup.rotation.y = THREE.MathUtils.lerp(-0.2, 0, headGazeDown);
-
-      // Individual Knuckle Finger Typing Movements
-      if (p > 0.52 && p < 0.86) {
-        const typeTick = frameTicker * 0.25;
-        leftHandData.fingerList.forEach((f, idx) => {
-          f.position.y = Math.sin(typeTick + idx * 1.5) * 0.008;
-        });
-        rightHandData.fingerList.forEach((f, idx) => {
-          f.position.y = Math.cos(typeTick + idx * 1.5) * 0.008;
-        });
+      // Backlit Keyboard Glow Pulse
+      if (p > 0.4) {
+        kbMat.emissiveIntensity = 0.15 + (Math.sin(frameTicker * 0.08) * 0.06);
       }
 
-      // Floating Cubes Orbit
-      const cubeOpacity = THREE.MathUtils.clamp((p - 0.6) / 0.2, 0, 1);
+      // Floating 3D Cubes Orbit
+      const cubeOpacity = THREE.MathUtils.clamp((p - 0.55) / 0.2, 0, 1);
       floatCubes.forEach(({ mesh, speed }, idx) => {
         mesh.material.opacity = cubeOpacity * 0.85;
-        mesh.rotation.x += 0.008 * speed;
-        mesh.rotation.y += 0.012 * speed;
-        mesh.position.y += Math.sin(frameTicker * 0.02 * speed + idx) * 0.0025;
+        mesh.rotation.x += 0.009 * speed;
+        mesh.rotation.y += 0.014 * speed;
+        mesh.position.y += Math.sin(frameTicker * 0.02 * speed + idx) * 0.0028;
       });
 
       drawSeveranceDisplay(p);
@@ -708,9 +523,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
   if (!isMounted) return null;
 
-  const p = Math.max(0, Math.min(1.12, progress));
+  const p = Math.max(0, Math.min(1.15, progress));
 
-  // Sector chapters
+  // Telemetry Chapters (Factual, zero slogans)
   let sceneIndex = '01';
   let sceneTag = 'SECTOR 01 // ARRIVAL & PACKAGING DISASSEMBLY';
   let sceneSub = 'UNSEAL MATTE COMPOSITE ENCLOSURE';
@@ -721,16 +536,15 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     sceneSub = 'OLED 500 NITS CALIBRATION INITIATED';
   } else if (p >= 0.58 && p < 0.82) {
     sceneIndex = '03';
-    sceneTag = 'SECTOR 03 // MACRODATA REFINEMENT & ACTIVE FLOW';
-    sceneSub = 'SORTING SCARY NUMBERS // FROLIC COEFFICIENT MAX';
+    sceneTag = 'SECTOR 03 // MACRODATA REFINEMENT & BIN SORTING';
+    sceneSub = 'CRUNCHING NUMBERS // WOE · DREAD · MALICE · FROLIC';
   } else if (p >= 0.82) {
     sceneIndex = '04';
-    sceneTag = 'SECTOR 04 // 100% REFINEMENT COMPLETED';
-    sceneSub = 'ALL TEMPERS EQUALIZED // READY FOR PRODUCTION';
+    sceneTag = 'SECTOR 04 // 100% REFINEMENT EQUILIBRIUM';
+    sceneSub = 'ALL 4 BINS EQUALIZED // READY FOR PRODUCTION';
   }
 
-  // Curtain lift only triggers past 1.05
-  const curtainLift = isDismissed ? 100 : Math.max(0, (p - 1.04) / 0.08) * 100;
+  const curtainLift = isDismissed ? 100 : Math.max(0, (p - 1.06) / 0.08) * 100;
   const isAtPlateau = p >= 0.82;
 
   return (
@@ -767,7 +581,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }} 
       />
 
-      {/* QUICK SEVERANCE ENGINE LOADING HUD */}
+      {/* SEVERANCE ENGINE LOADING HUD */}
       {!isEngineReady && (
         <div style={{
           position: 'absolute',
@@ -835,7 +649,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           {[
             { id: 1, label: '01 UNBOX', val: 0.14 },
             { id: 2, label: '02 BOOT', val: 0.45 },
-            { id: 3, label: '03 REFINE', val: 0.72 },
+            { id: 3, label: '03 CRUNCH', val: 0.72 },
             { id: 4, label: '04 COMPLETE', val: 0.90 }
           ].map(s => (
             <button
@@ -965,10 +779,10 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           >
             <div style={{ textAlign: 'right' }}>
               <div className="font-tech" style={{ fontSize: '0.82rem', fontWeight: 900, color: '#00e5a3', letterSpacing: '1px' }}>
-                {Math.min(100, Math.round(p / 0.85 * 100))}%
+                {Math.min(100, Math.round(p / 0.82 * 100))}%
               </div>
               <div className="font-tech" style={{ fontSize: '0.58rem', color: '#64748b', letterSpacing: '1px' }}>
-                SCROLL TO REFINE
+                SCROLL TO CRUNCH
               </div>
             </div>
 
