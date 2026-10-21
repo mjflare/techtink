@@ -329,6 +329,14 @@ pub async fn serialize_product(
     };
 
     let description = if full { p.description.clone() } else { None };
+    let enable_3d_viewer = specs_val
+        .get("enable_3d_viewer")
+        .and_then(|v| v.as_bool())
+        .or_else(|| {
+            p.model3d_url
+                .as_deref()
+                .map(|u| !u.is_empty() && u != "none" && u != "disabled")
+        });
 
     SerializedProduct {
         id: p.id,
@@ -361,6 +369,7 @@ pub async fn serialize_product(
         cpu_brand,
         gpu_brand,
         model3d_url: p.model3d_url.clone(),
+        enable_3d_viewer,
         tech_tink_score,
         benchmarks,
         expert_review,

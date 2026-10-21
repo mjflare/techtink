@@ -447,6 +447,7 @@ export default function ProductEditorModal({
     },
     flagshipShowcase: null,
     model3d_url: '/models/laptop-flagship.glb',
+    enable_3d_viewer: true,
     expertReview: {
       intro: '',
       pros: '',
@@ -519,6 +520,7 @@ export default function ProductEditorModal({
         upgrades: initialData.upgrades || { ram: [], storage: [], display: [] },
         flagshipShowcase: initialData.specs?.flagshipShowcase || initialData.flagshipShowcase || null,
         model3d_url: initialData.model3d_url || initialData.specs?.model3d_url || '/models/laptop-flagship.glb',
+        enable_3d_viewer: initialData.enable_3d_viewer !== false && initialData.specs?.enable_3d_viewer !== false,
         expertReview: {
           intro: initialData.expertReview?.intro || '',
           pros: Array.isArray(initialData.expertReview?.pros) ? initialData.expertReview.pros.join('\n') : (initialData.expertReview?.pros || ''),
@@ -667,12 +669,14 @@ export default function ProductEditorModal({
       ...formData,
       basePrice: Number(formData.basePrice),
       stock: Number(formData.stock),
+      enable_3d_viewer: formData.enable_3d_viewer !== false,
       chassis: chassisVal,
       images: Array.isArray(formData.images) && formData.images.length > 0 ? formData.images : (formData.image ? [formData.image] : []),
       upgrades: formData.upgrades || { ram: [], storage: [], display: [] },
       specs: {
         ...formData.specs,
         chassis: chassisVal,
+        enable_3d_viewer: formData.enable_3d_viewer !== false,
         flagshipShowcase: finalFlagship
       },
       flagshipShowcase: finalFlagship,
@@ -1598,34 +1602,82 @@ export default function ProductEditorModal({
                   </div>
 
                   {/* 3D Model Configuration (GLB / GLTF) */}
-                  <div className="glass-panel" style={{ padding: '16px 18px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="glass-panel" style={{ padding: '16px 18px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'hsl(var(--accent-cyan))' }}>
-                          <Rotate3d size={16} /> فایل مدل سه‌بعدی تعاملی ۳۶۰ درجه (.glb / .gltf)
+                          <Rotate3d size={16} /> نمایشگر سه‌بعدی تعاملی ۳۶۰ درجه (3D Model Viewer)
                         </div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                          آدرس فایل سه‌بعدی استاندارد وب برای چرخش ۳۶۰ درجه، بزرگ‌نمایی و نمایش واقعیت افزوده (AR).
+                          امکان چرخش ۳۶۰ درجه، زوم سه‌بعدی و نمایش تعاملی محصول با موتور WebGL / Three.js
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-glass"
-                        onClick={() => setFormData(prev => ({ ...prev, model3d_url: '/models/laptop-flagship.glb' }))}
-                        style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <RefreshCw size={13} /> استفاده از مدل پیش‌فرض پرچمدار
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-glass"
+                          onClick={() => setFormData(prev => ({ ...prev, model3d_url: '/models/laptop-flagship.glb' }))}
+                          style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <RefreshCw size={13} /> استفاده از مدل پیش‌فرض
+                        </button>
+                      </div>
                     </div>
 
-                    <input 
-                      type="text"
-                      className="font-code"
-                      value={formData.model3d_url || ''}
-                      onChange={e => setFormData(prev => ({ ...prev, model3d_url: e.target.value }))}
-                      placeholder="مثال: /models/laptop-flagship.glb یا https://..."
-                      style={{ direction: 'ltr', fontSize: '0.8rem', padding: '10px 14px', borderRadius: '10px' }}
-                    />
+                    {/* Apple-style Toggle for 3D Viewer */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 14px',
+                      borderRadius: '10px',
+                      background: formData.enable_3d_viewer !== false ? 'rgba(56, 189, 248, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                      border: formData.enable_3d_viewer !== false ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid var(--border-glass)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '10px',
+                          height: '10px',
+                          borderRadius: '50%',
+                          backgroundColor: formData.enable_3d_viewer !== false ? 'hsl(var(--accent-green))' : 'var(--text-muted)',
+                          boxShadow: formData.enable_3d_viewer !== false ? '0 0 8px hsl(var(--accent-green))' : 'none'
+                        }} />
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.82rem' }}>
+                            {formData.enable_3d_viewer !== false ? 'نمایشگر ۳D برای این محصول فعال است' : 'نمایشگر ۳D غیرفعال است (صرفاً گالری و شوکیس اپل نمایش داده می‌شود)'}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>
+                            با خاموش کردن این گزینه، دکمه و موتور سه‌بعدی برای این لپ‌تاپ بارگذاری نخواهد شد.
+                          </div>
+                        </div>
+                      </div>
+
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                        <input 
+                          type="checkbox"
+                          checked={formData.enable_3d_viewer !== false}
+                          onChange={e => setFormData(prev => ({ ...prev, enable_3d_viewer: e.target.checked }))}
+                          style={{ width: '18px', height: '18px', accentColor: 'hsl(var(--accent-cyan))' }}
+                        />
+                        <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                          {formData.enable_3d_viewer !== false ? 'فعال' : 'غیرفعال'}
+                        </span>
+                      </label>
+                    </div>
+
+                    <div style={{ opacity: formData.enable_3d_viewer !== false ? 1 : 0.6, pointerEvents: formData.enable_3d_viewer !== false ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                        آدرس فایل سه‌بعدی (.glb / .gltf):
+                      </label>
+                      <input 
+                        type="text"
+                        className="font-code"
+                        value={formData.model3d_url || ''}
+                        onChange={e => setFormData(prev => ({ ...prev, model3d_url: e.target.value }))}
+                        placeholder="مثال: /models/laptop-flagship.glb یا https://..."
+                        style={{ direction: 'ltr', fontSize: '0.8rem', padding: '10px 14px', borderRadius: '10px', width: '100%' }}
+                      />
+                    </div>
                   </div>
 
                   {/* Toggle Enable/Disable */}

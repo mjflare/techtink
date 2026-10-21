@@ -227,6 +227,8 @@ pub struct ProductInput {
     pub chassis: Option<String>,
     #[serde(rename = "model3d_url")]
     pub model3d_url: Option<String>,
+    #[serde(rename = "enable_3d_viewer")]
+    pub enable_3d_viewer: Option<bool>,
     pub upgrades: Option<Value>,
 }
 
@@ -255,7 +257,10 @@ async fn save_product(
         return Err(AppError::BadRequest("این نامک قبلاً استفاده شده است.".to_string()));
     }
 
-    let specs_json = b.specs.unwrap_or_else(|| json!({}));
+    let mut specs_json = b.specs.unwrap_or_else(|| json!({}));
+    if let Some(enable_3d) = b.enable_3d_viewer {
+        specs_json["enable_3d_viewer"] = serde_json::Value::Bool(enable_3d);
+    }
     let specs_str = specs_json.to_string();
 
     let cpu_brand = b.cpu_brand.unwrap_or_else(|| {

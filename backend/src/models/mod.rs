@@ -128,6 +128,8 @@ pub struct SerializedProduct {
     pub gpu_brand: String,
     #[serde(rename = "model3d_url")]
     pub model3d_url: Option<String>,
+    #[serde(rename = "enable_3d_viewer")]
+    pub enable_3d_viewer: Option<bool>,
     #[serde(rename = "techTinkScore")]
     pub tech_tink_score: serde_json::Value,
     pub benchmarks: serde_json::Value,

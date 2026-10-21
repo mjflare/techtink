@@ -94,6 +94,10 @@ export default function ProductPage({
       })
       .then(data => {
         setProduct(data);
+        const canUse3d = data.enable_3d_viewer !== false && 
+                         data.specs?.enable_3d_viewer !== false && 
+                         Boolean(data.model3d_url || data.specs?.model3d_url);
+        setShowcaseMode(canUse3d ? '3d' : 'story');
         setSelectedRam(0);
         setSelectedStorage(0);
         setSelectedDisplay(0);
@@ -208,6 +212,12 @@ export default function ProductPage({
   const totalPrice = unitPrice * quantity;
 
   const isComparing = compareList.includes(product.id);
+  const has3DViewer = Boolean(
+    product &&
+    product.enable_3d_viewer !== false &&
+    product.specs?.enable_3d_viewer !== false &&
+    (product.model3d_url || product.specs?.model3d_url)
+  );
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
   const review = product.expertReview || {};
@@ -944,64 +954,71 @@ export default function ProductPage({
           </div>
 
           {/* Segmented Mode Switcher */}
-          <div 
-            style={{
-              display: 'inline-flex',
-              padding: '4px',
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid var(--border-glass)',
-              gap: '4px'
-            }}
-          >
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setShowcaseMode('3d')}
+          {has3DViewer ? (
+            <div 
               style={{
-                padding: '6px 14px',
-                fontSize: '0.8rem',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: showcaseMode === '3d' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
-                color: showcaseMode === '3d' ? '#fff' : 'var(--text-secondary)',
-                fontWeight: showcaseMode === '3d' ? 700 : 500,
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 200ms ease'
+                display: 'inline-flex',
+                padding: '4px',
+                borderRadius: '12px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid var(--border-glass)',
+                gap: '4px'
               }}
             >
-              <Rotate3d size={14} />
-              <span>مدل سه‌بعدی ۳۶۰°</span>
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setShowcaseMode('story')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.8rem',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: showcaseMode === 'story' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
-                color: showcaseMode === 'story' ? '#fff' : 'var(--text-secondary)',
-                fontWeight: showcaseMode === 'story' ? 700 : 500,
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 200ms ease'
-              }}
-            >
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowcaseMode('3d')}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '0.8rem',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: showcaseMode === '3d' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
+                  color: showcaseMode === '3d' ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: showcaseMode === '3d' ? 700 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease'
+                }}
+              >
+                <Rotate3d size={14} />
+                <span>مدل سه‌بعدی ۳۶۰°</span>
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowcaseMode('story')}
+                style={{
+                  padding: '6px 14px',
+                  fontSize: '0.8rem',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: showcaseMode === 'story' ? 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))' : 'transparent',
+                  color: showcaseMode === 'story' ? '#fff' : 'var(--text-secondary)',
+                  fontWeight: showcaseMode === 'story' ? 700 : 500,
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 200ms ease'
+                }}
+              >
+                <Sparkles size={14} />
+                <span>شوکیس استوری اپل</span>
+              </button>
+            </div>
+          ) : (
+            <div className="badge badge-glow" style={{ fontSize: '0.8rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <Sparkles size={14} />
-              <span>شوکیس استوری اپل</span>
-            </button>
-          </div>
+              <span>شوکیس اختصاصی پرچمدار</span>
+            </div>
+          )}
         </div>
 
-        {showcaseMode === '3d' ? (
+        {has3DViewer && showcaseMode === '3d' ? (
           <LaptopModelViewer 
             modelUrl={product.model3d_url || product.specs?.model3d_url || '/models/laptop-flagship.glb'} 
             productName={product.name}
