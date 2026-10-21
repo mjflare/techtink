@@ -18,52 +18,74 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const [isDismissed, setIsDismissed] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
 
-  // Momentum scrubbing refs (Tuned for an extended, deliberate, cinema-grade scrub journey)
+  // Momentum scrubbing refs (Physics inertia & silky momentum glide)
   const currentProgressRef = useRef(0);
   const targetProgressRef = useRef(0);
-  const animationFrameRef = useRef(null);
+  const velocityRef = useRef(0);
   const touchStartYRef = useRef(0);
+  const touchLastYRef = useRef(0);
+  const touchLastTimeRef = useRef(0);
+  const touchVelocityRef = useRef(0);
+  const animationFrameRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 640 : false);
 
   // Mouse coords for camera parallax
   const mouseRef = useRef({ x: 0, y: 0 });
 
-  // 1. SCROLL-PINNING & GESTURE INTERCEPTION (Keeps page still while scrubbing)
+  // 1. SCROLL-PINNING & GESTURE INTERCEPTION WITH PHYSICS MOMENTUM
   useEffect(() => {
     if (isDismissed) return;
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Ultra-tuned scroll sensitivity (more sensitive, perfectly balanced for modern trackpads and mice)
+    // Momentum-driven wheel handler
     const handleWheel = (e) => {
       e.preventDefault();
-      const delta = e.deltaY * 0.00036;
-      targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
+      const wheelImpulse = e.deltaY * 0.00034;
+      velocityRef.current += wheelImpulse;
+      // Cap maximum impulse to keep motion controllable
+      velocityRef.current = Math.max(-0.06, Math.min(0.06, velocityRef.current));
     };
 
     const handleTouchStart = (e) => {
       touchStartYRef.current = e.touches[0].clientY;
+      touchLastYRef.current = e.touches[0].clientY;
+      touchLastTimeRef.current = performance.now();
+      touchVelocityRef.current = 0;
+      velocityRef.current = 0; // stop prior inertia when a new touch gesture begins
     };
 
     const handleTouchMove = (e) => {
       const currentY = e.touches[0].clientY;
-      const diffY = touchStartYRef.current - currentY;
-      touchStartYRef.current = currentY;
+      const currentTime = performance.now();
+      const diffY = touchLastYRef.current - currentY;
+      const dt = Math.max(1, currentTime - touchLastTimeRef.current);
+
+      touchLastYRef.current = currentY;
+      touchLastTimeRef.current = currentTime;
 
       if (e.cancelable) e.preventDefault();
       // Responsive touch delta tuned for mobile screens
       const delta = diffY * 0.0010;
       targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
+
+      // Calculate flick velocity (progress delta per frame)
+      touchVelocityRef.current = (diffY / dt) * 0.014;
+    };
+
+    const handleTouchEnd = () => {
+      // Transfer finger flick velocity into momentum inertia
+      velocityRef.current = Math.max(-0.05, Math.min(0.05, touchVelocityRef.current));
     };
 
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault();
-        targetProgressRef.current = Math.min(1.15, targetProgressRef.current + 0.04);
+        velocityRef.current += 0.015;
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
         e.preventDefault();
-        targetProgressRef.current = Math.max(0, targetProgressRef.current - 0.04);
+        velocityRef.current -= 0.015;
       } else if (e.key === 'Escape') {
         e.preventDefault();
         handleProceedToStore();
@@ -78,6 +100,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     window.addEventListener('wheel', handleWheel, { passive: false });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('mousemove', handleMouseMove);
 
@@ -85,6 +108,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mousemove', handleMouseMove);
       document.body.style.overflow = originalOverflow;
@@ -102,10 +126,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       const el = document.getElementById('shopping-center') || document.getElementById('catalog');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }, 650);
-  };
-
-  const handleJumpToScene = (val) => {
-    targetProgressRef.current = val;
   };
 
   // 2. THREE.JS 3D ENGINE (Sterile Lumon White Colorway & Macrodata Refinement Focus)
@@ -495,10 +515,18 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       screenTexture.needsUpdate = true;
     };
 
-    // --- Main Render Loop ---
+    // --- Main Render Loop with Physics Momentum ---
     let firstFrame = true;
     const render = () => {
-      currentProgressRef.current += (targetProgressRef.current - currentProgressRef.current) * 0.12;
+      // Apply momentum velocity with silky exponential friction
+      if (Math.abs(velocityRef.current) > 0.00002) {
+        targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + velocityRef.current));
+        velocityRef.current *= 0.90; // smooth momentum decay
+      } else {
+        velocityRef.current = 0;
+      }
+
+      currentProgressRef.current += (targetProgressRef.current - currentProgressRef.current) * 0.14;
       const p = currentProgressRef.current;
       setProgress(p);
 
@@ -614,27 +642,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
   const p = Math.max(0, Math.min(1.15, progress));
 
-  // Telemetry Chapters (Clean Lumon Swiss Telemetry)
-  let sceneIndex = '01';
-  let sceneTag = 'SECTOR 01 // ARRIVAL & PACKAGING DISASSEMBLY';
-  let sceneSub = 'UNSEAL MATTE COMPOSITE ENCLOSURE';
-
-  if (p >= 0.28 && p < 0.58) {
-    sceneIndex = '02';
-    sceneTag = 'SECTOR 02 // CRT TERMINAL BOOT & PHOSPHOR LINK';
-    sceneSub = 'OLED 500 NITS CALIBRATION INITIATED';
-  } else if (p >= 0.58 && p < 0.82) {
-    sceneIndex = '03';
-    sceneTag = 'SECTOR 03 // MACRODATA REFINEMENT & BIN SORTING';
-    sceneSub = 'CRUNCHING NUMBERS // WOE · DREAD · MALICE · FROLIC';
-  } else if (p >= 0.82) {
-    sceneIndex = '04';
-    sceneTag = 'SECTOR 04 // 100% REFINEMENT EQUILIBRIUM';
-    sceneSub = 'ALL 4 BINS EQUALIZED // READY FOR PRODUCTION';
-  }
-
   const curtainLift = isDismissed ? 100 : Math.max(0, (p - 1.06) / 0.08) * 100;
   const isAtPlateau = p >= 0.82;
+  const brandTitle = config?.brandName || 'تک‌تینک';
 
   return (
     <div 
@@ -688,7 +698,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3' }} />
             <span className="font-tech" style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: 900, letterSpacing: '2px', color: '#0f2d26' }}>
-              LUMON MDR-04 ENGINE // INITIALIZING...
+              TECHTINK ENGINE // INITIALIZING...
             </span>
           </div>
 
@@ -712,7 +722,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', left: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
       <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', right: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
 
-      {/* TOP VIEWFINDER HUD (Responsive Desktop / Mobile) */}
+      {/* TOP VIEWFINDER HUD (Brand & Subtext + Quick Skip) */}
       <div 
         style={{
           position: 'absolute',
@@ -725,50 +735,25 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           alignItems: 'center',
           gap: '12px'
         }}
-        dir="ltr"
       >
-        <div>
-          <span className="font-tech" style={{ fontSize: isMobile ? '0.70rem' : '0.78rem', fontWeight: 900, letterSpacing: isMobile ? '1.5px' : '2.5px', color: '#0f2d26' }}>
-            LUMON // TECHTINK
-          </span>
-          {!isMobile && (
-            <span style={{ fontSize: '0.62rem', color: '#475569', display: 'block', letterSpacing: '1px' }}>
-              TERMINAL 04 · SEVERED LEVEL
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3', display: 'inline-block' }} />
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: isMobile ? '0.85rem' : '0.98rem', fontWeight: 900, color: '#0f2d26', fontFamily: 'var(--font-sans)' }}>
+                {brandTitle}
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px' }}>
+                / TechTink
+              </span>
+            </div>
+            <span style={{ fontSize: isMobile ? '0.62rem' : '0.68rem', color: '#475569', display: 'block', fontWeight: 600, fontFamily: 'var(--font-sans)', direction: 'rtl' }}>
+              الهام گرفته شده از سریال severance
             </span>
-          )}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Chapter Quick-Jump Buttons (Desktop Only) */}
-          {!isMobile && [
-            { id: 1, label: '01 UNBOX', val: 0.14 },
-            { id: 2, label: '02 BOOT', val: 0.45 },
-            { id: 3, label: '03 CRUNCH', val: 0.72 },
-            { id: 4, label: '04 COMPLETE', val: 0.90 }
-          ].map(s => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => handleJumpToScene(s.val)}
-              className="font-tech"
-              style={{
-                background: sceneIndex === `0${s.id}` ? 'rgba(0, 229, 163, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-                border: `1.5px solid ${sceneIndex === `0${s.id}` ? '#00e5a3' : '#cbd5e1'}`,
-                color: sceneIndex === `0${s.id}` ? '#0f2d26' : '#475569',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                letterSpacing: '1px',
-                transition: 'all 0.2s ease',
-                backdropFilter: 'blur(8px)'
-              }}
-            >
-              {s.label}
-            </button>
-          ))}
-
+        <div>
           {/* Persian Quick Skip Button */}
           <button
             type="button"
@@ -779,8 +764,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               color: '#00e5a3',
               fontSize: isMobile ? '0.68rem' : '0.74rem',
               fontWeight: 800,
-              padding: isMobile ? '5px 10px' : '6px 14px',
-              borderRadius: '6px',
+              padding: isMobile ? '6px 12px' : '7px 16px',
+              borderRadius: '8px',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -797,7 +782,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         </div>
       </div>
 
-      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON (Responsive Mobile/Desktop) */}
+      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON (Brand & Subtext + Action) */}
       <div 
         style={{
           position: 'absolute',
@@ -809,44 +794,42 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
           flexDirection: isMobile ? 'column' : 'row',
           justifyContent: isMobile ? 'flex-end' : 'space-between',
           alignItems: isMobile ? 'center' : 'flex-end',
-          gap: isMobile ? '10px' : '20px'
+          gap: isMobile ? '12px' : '20px'
         }}
-        dir="ltr"
       >
-        <div style={{ textAlign: isMobile ? 'center' : 'left', width: isMobile ? '100%' : 'auto' }}>
+        <div style={{ textAlign: isMobile ? 'center' : 'right', direction: 'rtl', width: isMobile ? '100%' : 'auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '8px', marginBottom: '4px' }}>
             <span 
-              className="font-tech"
               style={{
-                fontSize: isMobile ? '0.62rem' : '0.72rem',
-                fontWeight: 800,
+                fontSize: isMobile ? '1.05rem' : '1.24rem',
+                fontWeight: 900,
                 color: '#0f2d26',
-                background: 'rgba(0, 229, 163, 0.2)',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                border: '1px solid #00e5a3',
-                letterSpacing: isMobile ? '1px' : '1.5px',
-                maxWidth: isMobile ? '92vw' : 'none',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'inline-block'
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '-0.3px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              {sceneTag}
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3' }} />
+              {brandTitle}
+              <span className="font-tech" style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 800, letterSpacing: '1px', direction: 'ltr' }}>
+                TechTink
+              </span>
             </span>
           </div>
 
           <p 
-            className="font-tech"
             style={{
               margin: 0,
-              fontSize: isMobile ? '0.58rem' : '0.68rem',
+              fontSize: isMobile ? '0.70rem' : '0.80rem',
               color: '#475569',
-              letterSpacing: '0.5px'
+              fontWeight: 600,
+              fontFamily: 'var(--font-sans)',
+              letterSpacing: '0px'
             }}
           >
-            {sceneSub}
+            الهام گرفته شده از سریال severance
           </p>
         </div>
 
