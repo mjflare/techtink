@@ -28,38 +28,38 @@ function ProductPageLoadingAnimation() {
   }, []);
 
   return (
-    <div className="container" style={{ padding: '80px 20px', minHeight: '75vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="container" style={{ padding: '48px 16px', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       {/* Central Glass Card */}
       <div 
         className="glass-card animate-fade-in"
         style={{
-          padding: '44px 32px',
-          borderRadius: '28px',
-          maxWidth: '520px',
+          padding: '36px 20px',
+          borderRadius: '24px',
+          maxWidth: '480px',
           width: '100%',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
-          boxShadow: '0 24px 64px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.07)',
           border: '1px solid var(--border-glass)'
         }}
       >
         {/* Ambient Neon Atmosphere */}
         <div style={{
           position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)',
-          width: '260px', height: '260px',
-          background: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.25) 0%, transparent 70%)',
-          filter: 'blur(50px)', pointerEvents: 'none'
+          width: '240px', height: '240px',
+          background: 'radial-gradient(circle, hsla(var(--accent-cyan), 0.22) 0%, transparent 70%)',
+          filter: 'blur(45px)', pointerEvents: 'none'
         }} />
         <div style={{
           position: 'absolute', bottom: '-40px', right: '15%',
-          width: '200px', height: '200px',
-          background: 'radial-gradient(circle, hsla(var(--accent-purple), 0.2) 0%, transparent 70%)',
-          filter: 'blur(50px)', pointerEvents: 'none'
+          width: '180px', height: '180px',
+          background: 'radial-gradient(circle, hsla(var(--accent-purple), 0.18) 0%, transparent 70%)',
+          filter: 'blur(45px)', pointerEvents: 'none'
         }} />
 
         {/* Holographic Chipset Emblem with Dual Laser Rings */}
-        <div style={{ position: 'relative', width: '92px', height: '92px', margin: '0 auto 22px' }}>
+        <div style={{ position: 'relative', width: '84px', height: '84px', margin: '0 auto 18px' }}>
           {/* Outer Laser Ring */}
           <div 
             style={{
@@ -73,7 +73,7 @@ function ProductPageLoadingAnimation() {
           {/* Counter Dashed Tracer Ring */}
           <div 
             style={{
-              position: 'absolute', inset: '6px', borderRadius: '50%',
+              position: 'absolute', inset: '5px', borderRadius: '50%',
               border: '1.5px dashed hsla(var(--accent-cyan), 0.4)',
               animation: 'spinLoaderReverse 3s linear infinite'
             }} 
@@ -81,7 +81,7 @@ function ProductPageLoadingAnimation() {
           {/* Inner Chip Core with Breathing Glow */}
           <div 
             style={{
-              position: 'absolute', inset: '13px', borderRadius: '18px',
+              position: 'absolute', inset: '11px', borderRadius: '16px',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 249, 255, 0.75))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
@@ -89,21 +89,21 @@ function ProductPageLoadingAnimation() {
               animation: 'chipPulse 2.2s ease-in-out infinite'
             }}
           >
-            <Cpu size={34} style={{ color: 'hsl(var(--accent-cyan))', filter: 'drop-shadow(0 0 10px hsla(var(--accent-cyan), 0.5))' }} />
+            <Cpu size={30} style={{ color: 'hsl(var(--accent-cyan))', filter: 'drop-shadow(0 0 10px hsla(var(--accent-cyan), 0.5))' }} />
           </div>
         </div>
 
         {/* Title */}
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.3px' }}>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: '0 0 8px', letterSpacing: '-0.3px' }}>
           <span className="gradient-text">در حال بارگذاری مشخصات دستگاه...</span>
         </h3>
 
         {/* Dynamic Telemetry Status Ticker */}
-        <div style={{ minHeight: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+        <div style={{ minHeight: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px' }}>
           <span 
             key={activeStep} 
             className="animate-fade-in"
-            style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
           >
             <Sparkles size={13} style={{ color: 'hsl(var(--accent-purple))', flexShrink: 0 }} />
             {steps[activeStep]}
@@ -112,7 +112,7 @@ function ProductPageLoadingAnimation() {
 
         {/* Fluid Shimmer Progress Track */}
         <div style={{
-          width: '100%', height: '5px', borderRadius: '100px',
+          width: '100%', height: '4px', borderRadius: '100px',
           background: 'rgba(0, 0, 0, 0.06)', overflow: 'hidden', position: 'relative'
         }}>
           <div 
@@ -126,7 +126,7 @@ function ProductPageLoadingAnimation() {
         </div>
 
         {/* Micro Telemetry Pills */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '22px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '18px', flexWrap: 'wrap' }}>
           {[
             { label: 'دمای خنک‌کننده', color: 'hsl(var(--accent-cyan))' },
             { label: 'سلامت قطعات', color: 'hsl(var(--accent-green))' },
@@ -135,48 +135,52 @@ function ProductPageLoadingAnimation() {
             <span
               key={i}
               style={{
-                fontSize: '0.72rem',
+                fontSize: '0.7rem',
                 fontWeight: 600,
-                padding: '4px 10px',
+                padding: '3px 8px',
                 borderRadius: '100px',
                 background: 'rgba(0, 0, 0, 0.03)',
                 border: '1px solid var(--border-glass)',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '5px',
+                gap: '4px',
                 color: 'var(--text-secondary)'
               }}
             >
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: pill.color, boxShadow: `0 0 6px ${pill.color}` }} />
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: pill.color, boxShadow: `0 0 6px ${pill.color}` }} />
               {pill.label}
             </span>
           ))}
         </div>
       </div>
 
-      {/* Skeleton Ghost Wireframe Preview */}
+      {/* Skeleton Ghost Wireframe Preview - Desktop Only */}
       <div 
+        className="tt-loader-desktop-skeleton"
         style={{
-          marginTop: '32px',
-          maxWidth: '920px',
+          marginTop: '28px',
+          maxWidth: '860px',
           width: '100%',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '24px',
-          opacity: 0.38,
+          gap: '20px',
+          opacity: 0.35,
           pointerEvents: 'none'
         }}
       >
-        <div style={{ height: '240px', borderRadius: '24px', background: 'rgba(0,0,0,0.03)', border: '1px dashed var(--border-glass)', animation: 'skeletonGlow 2s ease-in-out infinite' }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', justifyContent: 'center' }}>
-          <div style={{ height: '28px', width: '65%', borderRadius: '10px', background: 'rgba(0,0,0,0.04)', animation: 'skeletonGlow 2s ease-in-out infinite 0.2s' }} />
-          <div style={{ height: '18px', width: '85%', borderRadius: '8px', background: 'rgba(0,0,0,0.03)', animation: 'skeletonGlow 2s ease-in-out infinite 0.4s' }} />
-          <div style={{ height: '38px', width: '45%', borderRadius: '12px', background: 'rgba(0,0,0,0.04)', marginTop: '8px', animation: 'skeletonGlow 2s ease-in-out infinite 0.6s' }} />
+        <div style={{ height: '220px', borderRadius: '20px', background: 'rgba(0,0,0,0.03)', border: '1px dashed var(--border-glass)', animation: 'skeletonGlow 2s ease-in-out infinite' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
+          <div style={{ height: '26px', width: '65%', borderRadius: '10px', background: 'rgba(0,0,0,0.04)', animation: 'skeletonGlow 2s ease-in-out infinite 0.2s' }} />
+          <div style={{ height: '16px', width: '85%', borderRadius: '8px', background: 'rgba(0,0,0,0.03)', animation: 'skeletonGlow 2s ease-in-out infinite 0.4s' }} />
+          <div style={{ height: '36px', width: '45%', borderRadius: '10px', background: 'rgba(0,0,0,0.04)', marginTop: '6px', animation: 'skeletonGlow 2s ease-in-out infinite 0.6s' }} />
         </div>
       </div>
 
       {/* Embedded CSS Animations */}
       <style dangerouslySetInnerHTML={{__html: `
+        .tt-loader-desktop-skeleton {
+          display: none;
+        }
         @keyframes spinLoaderFast {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -196,6 +200,11 @@ function ProductPageLoadingAnimation() {
         @keyframes skeletonGlow {
           0%, 100% { opacity: 0.35; }
           50% { opacity: 0.75; }
+        }
+        @media (min-width: 768px) {
+          .tt-loader-desktop-skeleton {
+            display: grid;
+          }
         }
       `}} />
     </div>
@@ -218,7 +227,12 @@ export default function ProductPage({
 
   // Tab navigation inside product page
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'review', 'drivers', 'comments'
-  const [showcaseMode, setShowcaseMode] = useState('3d'); // '3d' or 'story'
+  const [showcaseMode, setShowcaseMode] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'story';
+    }
+    return '3d';
+  });
 
   // Selected upgrades
   const [selectedRam, setSelectedRam] = useState(0);
@@ -287,7 +301,8 @@ export default function ProductPage({
         const canUse3d = data.enable_3d_viewer !== false && 
                          data.specs?.enable_3d_viewer !== false && 
                          Boolean(data.model3d_url || data.specs?.model3d_url);
-        setShowcaseMode(canUse3d ? '3d' : 'story');
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        setShowcaseMode(canUse3d && !isMobile ? '3d' : 'story');
         setSelectedRam(0);
         setSelectedStorage(0);
         setSelectedDisplay(0);

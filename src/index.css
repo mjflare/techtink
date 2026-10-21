@@ -66,6 +66,9 @@ html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
   touch-action: manipulation;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
 }
 
 /* Eliminate 300ms mobile tap delay and prevent accidental button text selection */
@@ -88,9 +91,17 @@ body {
   font-family: var(--font-sans);
   line-height: 1.6;
   overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
   -webkit-font-smoothing: antialiased;
   direction: rtl; /* RTL default layout */
   transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+}
+
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* iPhone Liquid Aurora Ambient Background Glows */
@@ -536,6 +547,8 @@ input:focus, select:focus, textarea:focus {
 /* Layout Utilities */
 .container {
   max-width: 1280px;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 auto;
   padding: 0 24px;
 }
