@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { ChevronDown, Cpu, Package, Laptop, Smile, ArrowDown, X, Sparkles } from 'lucide-react';
+import { Cpu, ArrowDown, Volume2, VolumeX, Eye } from 'lucide-react';
 
 export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const c = config || {};
   if (c.active === false) return null;
 
-  // Animation Progress: 0.0 to 1.0 (Scrubbed by user scroll gestures)
+  // Animation Progress: 0.0 to 1.0 (Scrubbed smoothly by user scroll gestures)
   const [progress, setProgress] = useState(0);
   const [isDismissed, setIsDismissed] = useState(false);
   const [isMounted, setIsMounted] = useState(true);
@@ -16,41 +16,40 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const animationFrameRef = useRef(null);
   const touchStartYRef = useRef(0);
 
-  // Mouse coordinates for 3D parallax
+  // Studio camera tilt & mouse parallax
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
 
-  // 1. SCROLL-LOCK & GESTURE INTERCEPTION (Keeps page 100% STILL while scrubbing)
+  // 1. SCROLL PINNING & GESTURE INTERCEPTION (Keeps camera locked in place)
   useEffect(() => {
     if (isDismissed) return;
 
-    // Lock background body scroll while interactive intro is active
+    // Lock background page scroll
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Wheel listener with passive: false so we can prevent page jumping
+    // Wheel listener with passive: false to keep scene pinned still
     const handleWheel = (e) => {
       e.preventDefault();
-      // Mouse wheel delta (fine-tuned for natural scroll feel)
-      const delta = e.deltaY * 0.0012;
+      const delta = e.deltaY * 0.0011;
       targetProgressRef.current = Math.max(0, Math.min(1.05, targetProgressRef.current + delta));
     };
 
-    // Touch listeners for mobile devices
+    // Mobile touch gestures
     const handleTouchStart = (e) => {
       touchStartYRef.current = e.touches[0].clientY;
     };
 
     const handleTouchMove = (e) => {
       const currentY = e.touches[0].clientY;
-      const diffY = touchStartYRef.current - currentY; // positive = swipe up = scroll down
+      const diffY = touchStartYRef.current - currentY;
       touchStartYRef.current = currentY;
 
       if (e.cancelable) e.preventDefault();
-      const delta = diffY * 0.0028;
+      const delta = diffY * 0.0025;
       targetProgressRef.current = Math.max(0, Math.min(1.05, targetProgressRef.current + delta));
     };
 
-    // Keyboard arrow controls
+    // Keyboard navigation
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
         e.preventDefault();
@@ -69,13 +68,13 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('keydown', handleKeyDown);
 
-    // 2. 60FPS MOMENTUM INTERPOLATION LOOP (GSAP-style smooth inertia)
+    // 2. 60FPS CINEMATIC MOMENTUM LOOP
     const updateLoop = () => {
-      // Lerp: smoothly move current towards target
-      currentProgressRef.current += (targetProgressRef.current - currentProgressRef.current) * 0.14;
+      // Smooth camera dampening
+      currentProgressRef.current += (targetProgressRef.current - currentProgressRef.current) * 0.12;
       setProgress(currentProgressRef.current);
 
-      // Once progress reaches >= 1.0, user has scrubbed past the animation!
+      // Once scrub finishes (>= 1.0), dissolve the studio viewfinder into the store
       if (currentProgressRef.current >= 0.99 && targetProgressRef.current >= 0.99) {
         setIsDismissed(true);
         document.body.style.overflow = originalOverflow;
@@ -102,7 +101,6 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     };
   }, [isDismissed]);
 
-  // Fast skip straight to shopping center
   const handleSkip = () => {
     targetProgressRef.current = 1.05;
     currentProgressRef.current = 1.0;
@@ -116,8 +114,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     }, 550);
   };
 
-  // Jump to specific chapter pill
-  const handleJumpToStep = (targetVal) => {
+  const handleJumpToScene = (targetVal) => {
     targetProgressRef.current = targetVal;
   };
 
@@ -131,61 +128,57 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
   const p = Math.max(0, Math.min(1, progress));
 
-  // Math helpers
+  // Clamped interpolation
   const clamp = (val, min = 0, max = 1) => Math.max(min, Math.min(max, val));
   const range = (val, start, end) => clamp((val - start) / (end - start));
 
-  // --- STORY TIMELINE VALUES SCRUBBED BY SCROLL ---
-  // Phase 1: Unboxing (0.0 -> 0.32)
-  const boxFlapOpen = range(p, 0.04, 0.22); // Flaps fold open
-  const laptopAscend = range(p, 0.12, 0.32); // Laptop floats up out of box & glides to desk
-  const boxDissolve = range(p, 0.26, 0.40); // Box fades out once laptop is placed
+  // --- CINEMATIC TIMELINE PARAMETERS ---
+  // Scene 1: Unboxing luxury packaging (0.00 -> 0.35)
+  const boxLidLift = range(p, 0.05, 0.24);
+  const laptopRise = range(p, 0.12, 0.35);
+  const packagingFade = range(p, 0.28, 0.42);
 
-  // Phase 2: Opening screen & illumination (0.32 -> 0.65)
-  const lidOpen = range(p, 0.32, 0.56); // Lid opens from 0 to 90 degrees
-  const screenGlow = range(p, 0.44, 0.65); // Screen turns on, casts light cone
-  const smileSpread = range(p, 0.48, 0.70); // Character face lights up, smile widens
+  // Scene 2: Anamorphic lid opening & screen light ignition (0.35 -> 0.68)
+  const lidRotation = range(p, 0.34, 0.60); // 0 to 1
+  const screenIllumination = range(p, 0.45, 0.66); // 0 to 1
+  const flareIntensity = Math.sin(range(p, 0.46, 0.64) * Math.PI); // Lens flare pulse
+  const characterWarmth = range(p, 0.48, 0.72); // Screen light on actor's face
 
-  // Phase 3: High speed & pure joy (0.65 -> 0.90)
-  const handType = range(p, 0.60, 0.88); // Hand on keyboard typing
-  const particlesBurst = range(p, 0.65, 0.86); // Floating delight hearts, stars, sparks
+  // Scene 3: Deep focus & flow typing (0.68 -> 0.92)
+  const keyboardTyping = range(p, 0.64, 0.90);
+  const actorConfidence = range(p, 0.66, 0.88);
 
-  // Curtain lift at end of story
-  const curtainLift = isDismissed ? 100 : range(p, 0.92, 1.0) * 100;
+  // Scene 4: Cinematic fade to store (0.92 -> 1.0)
+  const filmCurtainLift = isDismissed ? 100 : range(p, 0.92, 1.0) * 100;
 
-  // Parallax offsets
-  const mx = (mouse.x - 0.5) * 2;
-  const my = (mouse.y - 0.5) * 2;
+  // Camera parallax offsets
+  const camX = (mouse.x - 0.5) * 12;
+  const camY = (mouse.y - 0.5) * 8;
 
-  // Story Chapters based on scrub position
-  let currentStep = 1;
-  let stepTag = 'مرحله ۱ : تحویل بسته و آنباکس';
-  let stepTitleLine1 = 'خرید مطمئن لپ‌تاپ و';
-  let stepTitleLine2 = 'آنباکس با نهایت هیجان';
-  let stepSub = 'بسته اورجینال تک‌تینک به دست شما رسیده. با اسکرول ماوس جعبه را باز کنید...';
-  let stepIcon = Package;
+  // Minimal, professional scene telemetry (NO SLOGANS)
+  let sceneIndex = '01';
+  let sceneTag = 'SCENE 01 // UNBOXING & PRECISION CHASSIS';
+  let sceneDescription = 'Matte-anodized aluminum enclosure unsealed.';
 
-  if (p >= 0.30 && p < 0.65) {
-    currentStep = 2;
-    stepTag = 'مرحله ۲ : استارت سریع و روشنایی نمایشگر';
-    stepTitleLine1 = 'باز کردن در دستگاه و';
-    stepTitleLine2 = 'روشنایی خیره‌کننده صفحه';
-    stepSub = 'روشن شدن آنی بدون معطلی و بدون صدای فن، با نور ملایم روی چهره شما.';
-    stepIcon = Laptop;
-  } else if (p >= 0.65) {
-    currentStep = 3;
-    stepTag = 'مرحله ۳ : نهایت سرعت و لبخند رضایت';
-    stepTitleLine1 = 'لذت کار با لپ‌تاپی که';
-    stepTitleLine2 = 'همیشه همراهتونه';
-    stepSub = 'اجرای روان سنگین‌ترین کارها با اعتماد به نفس و گارانتی طلایی تک‌تینک.';
-    stepIcon = Smile;
+  if (p >= 0.35 && p < 0.68) {
+    sceneIndex = '02';
+    sceneTag = 'SCENE 02 // DISPLAY IGNITION & CALIBRATION';
+    sceneDescription = 'Ultra-retina OLED panel engaged. 500 nits calibration.';
+  } else if (p >= 0.68) {
+    sceneIndex = '03';
+    sceneTag = 'SCENE 03 // ACTIVE WORKFLOW & PERFORMANCE';
+    sceneDescription = 'Vapor chamber balanced. Whisper-quiet execution.';
   }
 
-  const StepIconComp = stepIcon;
+  // Simulated timecode (e.g. 00:00:14:18)
+  const totalFrames = Math.round(p * 240);
+  const seconds = Math.floor(totalFrames / 24);
+  const frames = totalFrames % 24;
+  const timecode = `00:00:${seconds < 10 ? '0' + seconds : seconds}:${frames < 10 ? '0' + frames : frames}`;
 
   return (
     <div 
-      className="tt-pinned-hero-portal"
+      className="tt-cinema-portal"
       onMouseMove={handleMouseMove}
       style={{
         position: 'fixed',
@@ -193,579 +186,592 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         width: '100vw',
         height: '100svh',
         zIndex: 9999,
-        background: '#06080e',
+        background: '#04060a',
         color: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         overflow: 'hidden',
         userSelect: 'none',
-        transform: `translateY(-${curtainLift}%)`,
-        opacity: isDismissed ? 0.95 : 1,
+        transform: `translateY(-${filmCurtainLift}%)`,
+        opacity: isDismissed ? 0.96 : 1,
         transition: isDismissed ? 'transform 0.65s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.65s ease' : 'none',
         willChange: 'transform, opacity'
       }}
     >
-      {/* Background Ambient Glows */}
-      <div style={{ position: 'absolute', inset: 0, background: '#06080e', zIndex: 0 }} />
+      {/* 1. CINEMATIC LETTERBOXING MATTES (Top & Bottom Anamorphic Borders) */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'clamp(20px, 3vh, 32px)', background: '#000000', zIndex: 50, borderBottom: '1px solid rgba(255,255,255,0.04)' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 'clamp(20px, 3vh, 32px)', background: '#000000', zIndex: 50, borderTop: '1px solid rgba(255,255,255,0.04)' }} />
 
-      {/* Screen Illumination Radial Bloom */}
-      <div 
-        style={{
-          position: 'absolute',
-          top: '45%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '700px',
-          height: '700px',
-          borderRadius: '50%',
-          background: `radial-gradient(circle, hsla(var(--accent-cyan), ${0.14 * screenGlow}) 0%, hsla(var(--accent-purple), ${0.08 * screenGlow}) 40%, transparent 70%)`,
-          filter: 'blur(95px)',
-          pointerEvents: 'none',
-          zIndex: 1,
-          transition: 'background 0.08s linear'
-        }} 
-      />
-
-      {/* Tech Grid Blueprint */}
+      {/* 2. CINEMA LENS VIGNETTE & 35MM FILM GRAIN */}
       <div 
         style={{
           position: 'absolute',
           inset: 0,
-          zIndex: 1,
-          backgroundImage: `
-            linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px)
-          `,
-          backgroundSize: '75px 75px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 100%)',
-          pointerEvents: 'none'
-        }}
+          background: 'radial-gradient(circle at 50% 50%, transparent 40%, rgba(2, 4, 8, 0.85) 100%)',
+          pointerEvents: 'none',
+          zIndex: 2
+        }} 
       />
 
-      {/* 1. TOP HEADER HUD */}
+      {/* 3. STUDIO LIGHTING: Overhead Cold Key Light & Warm Rim Light */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: '-10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '80vw',
+          height: '55vh',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.12) 0%, rgba(168, 85, 247, 0.05) 50%, transparent 80%)',
+          filter: 'blur(70px)',
+          pointerEvents: 'none',
+          zIndex: 1
+        }} 
+      />
+
+      {/* Anamorphic Horizontal Blue Streak Lens Flare (triggers when screen opens) */}
+      {flareIntensity > 0 && (
+        <div 
+          style={{
+            position: 'absolute',
+            top: '48%',
+            left: '5%',
+            right: '5%',
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.8) 50%, transparent 100%)',
+            boxShadow: '0 0 24px rgba(56, 189, 248, 0.9), 0 0 8px #ffffff',
+            opacity: flareIntensity,
+            filter: 'blur(1px)',
+            pointerEvents: 'none',
+            zIndex: 15,
+            transition: 'opacity 0.05s linear'
+          }}
+        />
+      )}
+
+      {/* Camera Viewfinder Crosshairs in 4 Corners */}
+      <div style={{ position: 'absolute', top: '48px', left: '32px', width: '16px', height: '16px', borderTop: '1.5px solid rgba(255,255,255,0.2)', borderLeft: '1.5px solid rgba(255,255,255,0.2)', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', top: '48px', right: '32px', width: '16px', height: '16px', borderTop: '1.5px solid rgba(255,255,255,0.2)', borderRight: '1.5px solid rgba(255,255,255,0.2)', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: '48px', left: '32px', width: '16px', height: '16px', borderBottom: '1.5px solid rgba(255,255,255,0.2)', borderLeft: '1.5px solid rgba(255,255,255,0.2)', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: '48px', right: '32px', width: '16px', height: '16px', borderBottom: '1.5px solid rgba(255,255,255,0.2)', borderRight: '1.5px solid rgba(255,255,255,0.2)', pointerEvents: 'none', zIndex: 20 }} />
+
+      {/* 4. TOP VIEWFINDER HUD (Professional Film Telemetry) */}
       <div 
         style={{
           position: 'relative',
-          zIndex: 10,
-          padding: '20px 28px',
+          zIndex: 30,
+          padding: '42px 36px 0',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}
         dir="ltr"
       >
-        {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '9px',
-            background: 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 16px hsla(var(--accent-cyan), 0.5)'
-          }}>
-            <Cpu size={17} color="#ffffff" />
-          </div>
-          <div>
-            <span className="font-tech" style={{ fontSize: '0.88rem', fontWeight: 900, letterSpacing: '2px', color: '#ffffff' }}>
-              TECHTINK
-            </span>
-            <span style={{ fontSize: '0.62rem', color: '#64748b', display: 'block', letterSpacing: '1px' }}>
-              ISFAHAN · HIGH-PERFORMANCE LAB
+        {/* Camera Metadata */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }} />
+            <span className="font-tech" style={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '1.5px', color: '#ffffff' }}>
+              REC ●
             </span>
           </div>
+
+          <div style={{ width: '1px', height: '14px', background: 'rgba(255,255,255,0.15)' }} />
+
+          <span className="font-tech" style={{ fontSize: '0.72rem', color: '#94a3b8', letterSpacing: '1px' }}>
+            {timecode}
+          </span>
+
+          <span className="font-tech" style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '1px' }}>
+            4K UHD · 2.39:1 · 60 FPS
+          </span>
         </div>
 
-        {/* Story Scrubber Pills & Fast Skip Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Scene Chapter Selectors & Exit */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {[
-            { id: 1, label: 'جعبه‌گشایی', progress: 0.15 },
-            { id: 2, label: 'روشن شدن', progress: 0.48 },
-            { id: 3, label: 'نهایت لذت و سرعت', progress: 0.78 }
-          ].map(step => (
+            { id: 1, label: '01 UNBOX', progress: 0.16 },
+            { id: 2, label: '02 BOOT', progress: 0.50 },
+            { id: 3, label: '03 WORKFLOW', progress: 0.80 }
+          ].map(s => (
             <button
-              key={step.id}
+              key={s.id}
               type="button"
-              onClick={() => handleJumpToStep(step.progress)}
+              onClick={() => handleJumpToScene(s.progress)}
+              className="font-tech"
               style={{
-                background: currentStep === step.id ? 'hsla(var(--accent-cyan), 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                border: `1px solid ${currentStep === step.id ? 'hsl(var(--accent-cyan))' : 'rgba(255, 255, 255, 0.1)'}`,
-                color: currentStep === step.id ? '#ffffff' : '#94a3b8',
-                padding: '5px 12px',
-                borderRadius: '100px',
-                fontSize: '0.72rem',
+                background: sceneIndex === `0${s.id}` ? 'rgba(56, 189, 248, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                border: `1px solid ${sceneIndex === `0${s.id}` ? 'rgba(56, 189, 248, 0.8)' : 'rgba(255, 255, 255, 0.1)'}`,
+                color: sceneIndex === `0${s.id}` ? '#38bdf8' : '#94a3b8',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '0.68rem',
                 cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
+                letterSpacing: '1px',
+                transition: 'all 0.2s ease'
               }}
             >
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: currentStep === step.id ? 'hsl(var(--accent-cyan))' : '#64748b'
-              }} />
-              <span>{step.label}</span>
+              {s.label}
             </button>
           ))}
 
           <button
             type="button"
             onClick={handleSkip}
+            className="font-tech"
             style={{
               background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.18)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               color: '#ffffff',
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              padding: '6px 14px',
-              borderRadius: '100px',
+              fontSize: '0.68rem',
+              fontWeight: 700,
+              padding: '5px 12px',
+              borderRadius: '6px',
               cursor: 'pointer',
+              letterSpacing: '1px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              fontFamily: 'var(--font-tech)'
+              gap: '6px'
             }}
           >
-            <span>SKIP TO SHOP [ESC]</span>
-            <ArrowDown size={13} />
+            <span>STORE [ESC]</span>
+            <ArrowDown size={11} />
           </button>
         </div>
       </div>
 
-      {/* 2. CENTER STAGE: THE SCROLL-SCRUBBED ANIMATION */}
+      {/* 5. MAIN CINEMATIC 3D VIEWPORT STAGE */}
       <div 
         style={{
           position: 'relative',
-          zIndex: 5,
+          zIndex: 10,
           flex: 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transform: `translate(${mx * -8}px, ${my * -6}px)`,
+          transform: `translate(${camX}px, ${camY}px)`,
           transition: 'transform 0.15s ease-out'
         }}
       >
         <svg 
-          viewBox="0 0 880 500" 
+          viewBox="0 0 960 520" 
           style={{ 
-            width: 'min(92%, 840px)', 
+            width: 'min(94%, 900px)', 
             height: 'auto', 
-            maxHeight: '62vh',
+            maxHeight: '66vh',
             overflow: 'visible' 
           }}
         >
           <defs>
-            <linearGradient id="sc-hoodie" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="hsl(var(--accent-cyan))" />
-              <stop offset="100%" stopColor="hsl(var(--accent-purple))" />
+            {/* CNC Brushed Aluminum Gradients */}
+            <linearGradient id="chassisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#475569" />
+              <stop offset="40%" stopColor="#1e293b" />
+              <stop offset="100%" stopColor="#0f172a" />
             </linearGradient>
 
-            <linearGradient id="sc-screen" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#0a0f1d" />
-              <stop offset="100%" stopColor="#1e1b4b" />
+            <linearGradient id="lidBrushed" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#334155" />
+              <stop offset="50%" stopColor="#64748b" />
+              <stop offset="100%" stopColor="#1e293b" />
             </linearGradient>
 
-            <linearGradient id="sc-chassis" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#cbd5e1" />
-              <stop offset="100%" stopColor="#64748b" />
+            <linearGradient id="screenPanel" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#020617" />
+              <stop offset="100%" stopColor="#0f172a" />
             </linearGradient>
 
-            <linearGradient id="sc-box" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#d97706" />
-              <stop offset="100%" stopColor="#92400e" />
+            {/* Luxury Packaging Box Gradient */}
+            <linearGradient id="luxuryBoxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#18181b" />
+              <stop offset="100%" stopColor="#09090b" />
             </linearGradient>
 
-            <filter id="sc-glow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="8" result="blur" />
+            {/* Studio Actor Silhouette */}
+            <linearGradient id="actorJacket" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e293b" />
+              <stop offset="100%" stopColor="#090d16" />
+            </linearGradient>
+
+            {/* Studio Rim Light Filter */}
+            <filter id="cinematicGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="12" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
 
-          {/* Desk Line */}
-          <line x1="80" y1="390" x2="800" y2="390" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="2.5" strokeLinecap="round" />
-          <rect x="90" y="391" width="700" height="6" rx="3" fill="rgba(255, 255, 255, 0.03)" />
+          {/* === CINEMATIC STUDIO TABLE WITH GLOSSY FLOOR REFLECTION === */}
+          {/* Horizon Floor Grid Line */}
+          <line x1="60" y1="410" x2="900" y2="410" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1.5" />
+          
+          {/* Table Surface with Edge Specular Highlight */}
+          <polygon points="100,410 860,410 890,418 70,418" fill="rgba(15, 23, 42, 0.7)" />
+          <line x1="70" y1="418" x2="890" y2="418" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="0.8" />
 
-          {/* STAGE 1: DELIVERY BOX (Unboxes interactively as scroll scrubs 0 -> 0.3) */}
-          {boxDissolve < 1 && (
+          {/* Soft Shadow beneath elements */}
+          <ellipse cx="490" cy="414" rx="280" ry="14" fill="#000000" opacity="0.6" filter="url(#cinematicGlow)" />
+
+          {/* === 1. LUXURY PACKAGING BOX (Opens with mechanical precision as p scrubs 0 -> 0.35) === */}
+          {packagingFade < 1 && (
             <g 
               style={{
-                opacity: 1 - boxDissolve,
-                transform: `translate(${230}px, ${315 + (boxDissolve * 15)}px)`,
-                transformOrigin: '275px 360px',
-                transition: 'opacity 0.1s linear'
+                opacity: 1 - packagingFade,
+                transform: `translate(240px, ${335 + (packagingFade * 20)}px)`,
+                transition: 'opacity 0.08s linear'
               }}
             >
-              <rect x="0" y="25" width="85" height="55" rx="5" fill="url(#sc-box)" stroke="#b45309" strokeWidth="1.5" />
+              {/* Box Base (Deep Matte Obsidian) */}
+              <rect x="0" y="24" width="96" height="52" rx="3" fill="url(#luxuryBoxGrad)" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.2" />
               
-              <text x="42" y="58" textAnchor="middle" fill="rgba(255, 255, 255, 0.7)" fontSize="11" fontWeight="900" fontFamily="var(--font-tech)">
+              {/* Laser-Etched Foil Monogram */}
+              <text x="48" y="54" textAnchor="middle" fill="rgba(255, 255, 255, 0.6)" fontSize="9" fontWeight="800" fontFamily="var(--font-tech)" letterSpacing="2">
                 TECHTINK
               </text>
-              <text x="42" y="70" textAnchor="middle" fill="rgba(255, 255, 255, 0.4)" fontSize="7" fontWeight="600">
-                ORIGINAL SEAL
-              </text>
+              <line x1="28" y1="62" x2="68" y2="62" stroke="rgba(56, 189, 248, 0.5)" strokeWidth="1" />
 
-              {/* Left Flap: Folds outward based on scroll */}
-              <g style={{ transform: `rotate(${-boxFlapOpen * 115}deg)`, transformOrigin: '0px 25px', transition: 'transform 0.05s linear' }}>
-                <polygon points="0,25 -22,8 18,8 20,25" fill="#f59e0b" opacity="0.95" />
+              {/* Box Lid / Flap: Precision mechanical lift (Angles 0 to 110 deg) */}
+              <g style={{ transform: `rotate(${-boxLidLift * 110}deg)`, transformOrigin: '0px 24px', transition: 'transform 0.05s linear' }}>
+                <polygon points="0,24 -20,6 20,6 24,24" fill="#27272a" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" />
               </g>
 
-              {/* Right Flap: Folds outward based on scroll */}
-              <g style={{ transform: `rotate(${boxFlapOpen * 115}deg)`, transformOrigin: '85px 25px', transition: 'transform 0.05s linear' }}>
-                <polygon points="85,25 107,8 67,8 65,25" fill="#f59e0b" opacity="0.95" />
+              <g style={{ transform: `rotate(${boxLidLift * 110}deg)`, transformOrigin: '96px 24px', transition: 'transform 0.05s linear' }}>
+                <polygon points="96,24 116,6 76,6 72,24" fill="#27272a" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" />
               </g>
 
-              <path d="M 15 22 Q 42 12 70 22" fill="none" stroke="rgba(255, 255, 255, 0.3)" strokeWidth="2" strokeDasharray="3 3" />
+              {/* Protective micro-fiber cloth layer */}
+              <path d="M 12 24 Q 48 16 84 24" fill="none" stroke="rgba(255, 255, 255, 0.25)" strokeWidth="1.5" strokeDasharray="3 2" />
             </g>
           )}
 
-          {/* STAGE 2: THE LAPTOP (Rises out of box -> lands on desk -> lid opens -> screen glows) */}
+          {/* === 2. THE LAPTOP (Rises out of box -> lands on studio table -> lid opens -> screen illuminates) === */}
           {(() => {
-            const startX = 270;
-            const targetX = 440;
-            const currentX = startX + (targetX - startX) * laptopAscend;
+            const startX = 275;
+            const targetX = 460;
+            const currentX = startX + (targetX - startX) * laptopRise;
 
-            const arcY = Math.sin(laptopAscend * Math.PI) * -55;
-            const startY = 310;
-            const targetY = 265;
-            const currentY = (startY + (targetY - startY) * laptopAscend) + arcY;
+            const arcY = Math.sin(laptopRise * Math.PI) * -50;
+            const startY = 328;
+            const targetY = 285;
+            const currentY = (startY + (targetY - startY) * laptopRise) + arcY;
 
             return (
               <g transform={`translate(${currentX}, ${currentY})`}>
-                {/* Base / Chassis */}
+                {/* Contact Shadow under Laptop */}
+                <ellipse cx="80" cy="110" rx="90" ry="8" fill="#000000" opacity={0.5 + (laptopRise * 0.3)} filter="url(#cinematicGlow)" />
+
+                {/* Tabletop Reflection (Glossy studio table reflection) */}
+                <g opacity={0.18 + (screenIllumination * 0.2)} transform="translate(0, 114) scale(1, -0.45)" filter="url(#cinematicGlow)">
+                  <polygon points="0,95 160,95 175,108 -15,108" fill="url(#chassisGrad)" />
+                </g>
+
+                {/* CNC Aluminum Laptop Base / Chassis */}
                 <polygon 
-                  points="0,95 150,95 165,108 -15,108" 
-                  fill="url(#sc-chassis)" 
-                  stroke="rgba(255, 255, 255, 0.2)" 
-                  strokeWidth="1" 
+                  points="0,95 160,95 175,108 -15,108" 
+                  fill="url(#chassisGrad)" 
+                  stroke="rgba(255, 255, 255, 0.35)" 
+                  strokeWidth="0.8" 
                 />
 
-                <rect x="55" y="99" width="38" height="7" rx="2" fill="rgba(255, 255, 255, 0.25)" />
+                {/* Chamfered Front Edge Reflection */}
+                <line x1="-15" y1="108" x2="175" y2="108" stroke="rgba(255, 255, 255, 0.5)" strokeWidth="0.75" />
 
-                {/* Backlit Keyboard */}
-                <polygon points="12,96 138,96 132,103 18,103" fill="#0f172a" />
+                {/* Precision Glass Trackpad */}
+                <rect x="60" y="99" width="40" height="7" rx="1.5" fill="#1e293b" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="0.6" />
+
+                {/* Milled Keyboard Deck with Individually Backlit Keys */}
+                <polygon points="12,96 148,96 142,103 18,103" fill="#090d16" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+                
+                {/* Dual Speaker Grilles on Sides */}
+                <line x1="4" y1="97" x2="4" y2="103" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" strokeDasharray="1 1" />
+                <line x1="156" y1="97" x2="156" y2="103" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" strokeDasharray="1 1" />
+
+                {/* Keyboard Backlight Underglow (powers on with screen) */}
                 <line 
-                  x1="22" y1="99" x2="128" y2="99" 
+                  x1="20" y1="99" x2="140" y2="99" 
                   stroke="hsl(var(--accent-cyan))" 
                   strokeWidth="1.2" 
-                  opacity={0.3 + (screenGlow * 0.7)} 
+                  opacity={0.15 + (screenIllumination * 0.75)} 
                   strokeDasharray="4 2" 
                 />
 
-                {/* Light Cone on Desk & Character */}
-                {screenGlow > 0 && (
+                {/* VOLUMETRIC SCREEN LIGHT (Casts authentic cone across table surface & character) */}
+                {screenIllumination > 0 && (
                   <polygon 
-                    points="40,25 150,25 20,110 -150,110" 
-                    fill="hsla(var(--accent-cyan), 0.08)" 
-                    opacity={screenGlow} 
-                    filter="url(#sc-glow)"
+                    points="45,20 160,20 20,114 -160,114" 
+                    fill="hsla(var(--accent-cyan), 0.12)" 
+                    opacity={screenIllumination} 
+                    filter="url(#cinematicGlow)"
                   />
                 )}
 
-                {/* SCREEN LID (Opens upright as user scrolls lidOpen: 0 -> 1) */}
+                {/* SCREEN LID (Opens smoothly via 3D scale/transform perspective from 0 to 90 degrees) */}
                 <g 
                   style={{
-                    transformOrigin: '75px 95px',
-                    transform: `scaleY(${Math.max(0.08, lidOpen)}) translateY(${(1 - Math.max(0.08, lidOpen)) * 95}px)`,
+                    transformOrigin: '80px 95px',
+                    transform: `scaleY(${Math.max(0.06, lidRotation)}) translateY(${(1 - Math.max(0.06, lidRotation)) * 95}px)`,
                     transition: 'transform 0.05s linear'
                   }}
                 >
-                  <polygon points="45,10 155,10 145,95 35,95" fill="#0a0e1a" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" />
+                  {/* Outer Bezel (Sleek Space Gray Matte Aluminum) */}
+                  <polygon points="45,8 165,8 152,95 38,95" fill="#090d16" stroke="rgba(255, 255, 255, 0.25)" strokeWidth="0.8" />
                   
+                  {/* Razor-thin 2.5mm Display Edge */}
                   <polygon 
-                    points="49,14 151,14 142,91 40,91" 
-                    fill="url(#sc-screen)" 
+                    points="48,11 162,11 150,92 41,92" 
+                    fill="url(#screenPanel)" 
                   />
 
-                  {/* Active Screen UI Lines */}
-                  {screenGlow > 0.1 && (
-                    <g opacity={screenGlow}>
-                      <circle cx="56" cy="21" r="1.8" fill="#f43f5e" />
-                      <circle cx="62" cy="21" r="1.8" fill="#f59e0b" />
-                      <circle cx="68" cy="21" r="1.8" fill="#10b981" />
+                  {/* Top Punch-hole Web Camera */}
+                  <circle cx="105" cy="13" r="1.2" fill="#38bdf8" opacity={screenIllumination} />
 
-                      <line x1="56" y1="30" x2="115" y2="30" stroke="hsl(var(--accent-cyan))" strokeWidth="2.5" strokeLinecap="round" />
-                      <line x1="60" y1="38" x2="135" y2="38" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
-                      <line x1="60" y1="46" x2="105" y2="46" stroke="#c084fc" strokeWidth="2" strokeLinecap="round" />
-                      <line x1="54" y1="54" x2="95" y2="54" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
-                      <line x1="54" y1="62" x2="120" y2="62" stroke="hsl(var(--accent-cyan))" strokeWidth="2" strokeLinecap="round" />
-
+                  {/* ACTIVE SCREEN CONTENT (Minimal, clean studio software workspace) */}
+                  {screenIllumination > 0.1 && (
+                    <g opacity={screenIllumination}>
+                      {/* Subtle Studio Wallpaper Wave */}
                       <path 
-                        d="M 50 78 Q 70 65 88 74 T 120 66 T 140 73" 
+                        d="M 45 65 Q 85 45 115 58 T 150 48" 
                         fill="none" 
-                        stroke="hsl(var(--accent-cyan))" 
-                        strokeWidth="2.5" 
-                        strokeLinecap="round" 
+                        stroke="hsla(var(--accent-cyan), 0.4)" 
+                        strokeWidth="1.5" 
                       />
+
+                      {/* Professional Code / Terminal Lines */}
+                      <line x1="56" y1="24" x2="110" y2="24" stroke="hsl(var(--accent-cyan))" strokeWidth="2" strokeLinecap="round" />
+                      <line x1="60" y1="32" x2="135" y2="32" stroke="#60a5fa" strokeWidth="1.6" strokeLinecap="round" />
+                      <line x1="60" y1="40" x2="105" y2="40" stroke="#c084fc" strokeWidth="1.6" strokeLinecap="round" />
+                      <line x1="54" y1="48" x2="95" y2="48" stroke="#34d399" strokeWidth="1.6" strokeLinecap="round" />
+                      <line x1="54" y1="56" x2="125" y2="56" stroke="hsl(var(--accent-cyan))" strokeWidth="1.6" strokeLinecap="round" />
+
+                      {/* Live System Performance Telemetry Strip */}
+                      <rect x="52" y="70" width="90" height="15" rx="2" fill="rgba(255,255,255,0.06)" />
+                      <text x="56" y="81" fill="#38bdf8" fontSize="6.5" fontFamily="var(--font-tech)" letterSpacing="0.5">
+                        240Hz · 0dB · 4.8GHz
+                      </text>
                     </g>
                   )}
 
-                  <circle cx="95" cy="52" r="12" fill="hsl(var(--accent-cyan))" opacity={screenGlow * 0.15} filter="url(#sc-glow)" />
+                  {/* Subtle Screen Ambient Halo */}
+                  <circle cx="105" cy="52" r="14" fill="hsl(var(--accent-cyan))" opacity={screenIllumination * 0.18} filter="url(#cinematicGlow)" />
                 </g>
               </g>
             );
           })()}
 
-          {/* STAGE 3: THE PERSON (Joyful smile, illuminated face, typing hands) */}
-          <g transform="translate(180, 0)">
-            {/* Hoodie Body */}
+          {/* === 3. THE ACTOR / CHARACTER (Professional film lighting, genuine expression) === */}
+          <g transform="translate(190, 10)">
+            {/* Actor Silhouette / Minimal Tailored Dark Jacket */}
             <path 
-              d="M 120 390 C 115 320 135 260 175 240 C 205 230 240 235 255 285 C 260 305 260 390 260 390 Z" 
-              fill="url(#sc-hoodie)" 
+              d="M 125 400 C 120 330 140 270 180 250 C 210 240 245 245 260 295 C 265 315 265 400 265 400 Z" 
+              fill="url(#actorJacket)" 
+              stroke="rgba(255, 255, 255, 0.08)"
+              strokeWidth="1"
             />
 
-            {/* Head & Smiling Face */}
+            {/* Rim Lighting Along Shoulder (Key studio edge light) */}
+            <path 
+              d="M 125 390 C 122 335 142 275 180 252" 
+              fill="none" 
+              stroke="rgba(255, 255, 255, 0.35)" 
+              strokeWidth="1.5" 
+              strokeLinecap="round" 
+            />
+
+            {/* Head & Natural Expression */}
             <g 
               style={{
-                transform: `translateY(${Math.sin(p * Math.PI * 4) * -3}px) rotate(${smileSpread * 3}deg)`,
-                transformOrigin: '190px 200px',
+                transform: `translateY(${Math.sin(p * Math.PI * 4) * -2}px) rotate(${characterWarmth * 2.5}deg)`,
+                transformOrigin: '195px 210px',
                 transition: 'transform 0.05s linear'
               }}
             >
-              <rect x="180" y="210" width="16" height="24" rx="4" fill="#fed7aa" />
-              <ellipse cx="188" cy="190" rx="24" ry="28" fill="#fed7aa" />
+              {/* Neck */}
+              <rect x="186" y="218" width="16" height="22" rx="3" fill="#fed7aa" />
+              
+              {/* Head Profile */}
+              <ellipse cx="194" cy="198" rx="22" ry="26" fill="#fed7aa" />
 
-              {/* Cyan Screen Light Reflection on Face */}
-              {screenGlow > 0 && (
-                <ellipse cx="194" cy="192" rx="16" ry="22" fill="hsla(var(--accent-cyan), 0.18)" opacity={screenGlow} />
+              {/* Cyan Volumetric Light Reflection on Actor's Face */}
+              {screenIllumination > 0 && (
+                <ellipse cx="200" cy="200" rx="15" ry="21" fill="hsla(var(--accent-cyan), 0.22)" opacity={screenIllumination} />
               )}
 
-              {/* Smiling Mouth: Morphs into wide joy as smileSpread increases */}
+              {/* Natural, Genuine Smile of Confidence (Subtle, professional, not cartoonish) */}
               <path 
-                d={smileSpread > 0.4 ? "M 194 196 Q 205 208 214 196" : "M 195 198 Q 203 203 211 198"} 
+                d={characterWarmth > 0.4 ? "M 200 206 Q 209 214 217 206" : "M 201 207 Q 208 210 215 207"} 
                 fill="none" 
-                stroke="#c2410c" 
-                strokeWidth="2.5" 
+                stroke="#9a3412" 
+                strokeWidth="2.2" 
                 strokeLinecap="round" 
               />
 
-              {/* Cheek Blush */}
-              <circle cx="204" cy="198" r="5" fill="#f43f5e" opacity={0.15 + (smileSpread * 0.35)} />
+              {/* Subtle Natural Warmth on Cheek */}
+              <circle cx="208" cy="206" r="4.5" fill="#f43f5e" opacity={0.1 + (characterWarmth * 0.25)} />
 
-              {/* Joyful Squinting Eyes */}
-              {smileSpread > 0.4 ? (
-                <path d="M 196 186 Q 202 180 208 186" fill="none" stroke="#0f172a" strokeWidth="2.6" strokeLinecap="round" />
+              {/* Expressive, Focused Eyes Looking into Screen */}
+              {characterWarmth > 0.4 ? (
+                <path d="M 202 195 Q 207 190 213 195" fill="none" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" />
               ) : (
-                <circle cx="202" cy="184" r="2.5" fill="#0f172a" />
+                <circle cx="207" cy="193" r="2.2" fill="#0f172a" />
               )}
 
-              {/* Hair */}
-              <path d="M 166 190 C 163 162 184 152 208 158 C 220 162 222 178 214 186 C 208 174 198 170 180 174 Z" fill="#0f172a" />
-              <circle cx="170" cy="170" r="11" fill="#0f172a" />
+              {/* Modern Minimalist Haircut */}
+              <path d="M 174 198 C 171 170 190 162 214 168 C 225 172 226 186 218 194 C 212 184 204 180 188 184 Z" fill="#0f172a" />
+              <circle cx="178" cy="178" r="9" fill="#0f172a" />
 
-              {/* Headphones */}
-              <path d="M 172 178 C 172 156 204 156 204 176" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="3.2" strokeLinecap="round" />
-              <ellipse cx="173" cy="186" rx="5" ry="9" fill="hsl(var(--accent-cyan))" />
+              {/* Studio Monitoring Headphones with Metallic Earcups */}
+              <path d="M 178 188 C 178 166 210 166 210 186" fill="none" stroke="#334155" strokeWidth="3" strokeLinecap="round" />
+              <ellipse cx="179" cy="195" rx="4.5" ry="8.5" fill="#0f172a" stroke="hsl(var(--accent-cyan))" strokeWidth="1" />
             </g>
 
-            {/* Arm & Typing Hand */}
+            {/* Actor Arm & Natural Typing Hands */}
             {(() => {
-              const armExtendX = 160 + (handType * 90);
-              const armExtendY = 270 + (handType * 20);
-              const handX = 220 + (handType * 95);
-              const handY = 280 + (handType * 15);
+              const armX = 165 + (keyboardTyping * 85);
+              const armY = 280 + (keyboardTyping * 18);
+              const handX = 225 + (keyboardTyping * 90);
+              const handY = 290 + (keyboardTyping * 12);
 
               return (
                 <g>
+                  {/* Sleeve */}
                   <path 
-                    d={`M 160 270 Q ${armExtendX} ${armExtendY} ${handX} ${handY}`} 
+                    d={`M 165 280 Q ${armX} ${armY} ${handX} ${handY}`} 
                     fill="none" 
-                    stroke="url(#sc-hoodie)" 
-                    strokeWidth="18" 
+                    stroke="url(#actorJacket)" 
+                    strokeWidth="16" 
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
                   />
+                  {/* Arm Rim Highlight */}
+                  <path 
+                    d={`M 165 278 Q ${armX} ${armY - 2} ${handX} ${handY - 2}`} 
+                    fill="none" 
+                    stroke="rgba(255, 255, 255, 0.25)" 
+                    strokeWidth="1" 
+                    strokeLinecap="round" 
+                  />
+                  
+                  {/* Natural Hands Resting & Typing on Keys */}
                   <g transform={`translate(${handX}, ${handY})`}>
-                    <ellipse cx="6" cy="3" rx="7" ry="5" fill="#fed7aa" />
-                    <path d="M 5 5 Q 11 3 15 6" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M 3 8 Q 9 7 13 10" stroke="#fed7aa" strokeWidth="2.5" strokeLinecap="round" />
+                    <ellipse cx="6" cy="3" rx="6.5" ry="4.5" fill="#fed7aa" />
+                    <path d="M 5 5 Q 11 3 14 6" stroke="#fed7aa" strokeWidth="2.2" strokeLinecap="round" />
+                    <path d="M 3 8 Q 9 7 12 10" stroke="#fed7aa" strokeWidth="2.2" strokeLinecap="round" />
                   </g>
                 </g>
               );
             })()}
           </g>
 
-          {/* STAGE 3 FLOATING DELIGHT BADGES (Burst as scrub reaches 65%+) */}
-          {particlesBurst > 0 && (
-            <g opacity={particlesBurst}>
-              <g 
-                style={{
-                  transform: `translate(${210}px, ${140 - (particlesBurst * 25)}px) scale(${particlesBurst})`,
-                  transformOrigin: '210px 140px'
-                }}
-              >
-                <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-purple))" strokeWidth="1.5" />
-                <path d="M 0 5 C 0 5 -7 1 -7 -3 C -7 -5 -5 -6.5 -3 -6.5 C -1.5 -6.5 -0.5 -5.5 0 -4 C 0.5 -5.5 1.5 -6.5 3 -6.5 C 5 -6.5 7 -5 7 -3 C 7 1 0 5 0 5 Z" fill="#f43f5e" />
-              </g>
-
-              <g 
-                style={{
-                  transform: `translate(${640}px, ${160 - (particlesBurst * 30)}px) scale(${particlesBurst})`,
-                  transformOrigin: '640px 160px'
-                }}
-              >
-                <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" />
-                <path d="M 2 -8 L -3 0 L 1 0 L -2 8 L 5 -1 L 1 -1 Z" fill="#fbbf24" />
-              </g>
-
-              <g 
-                style={{
-                  transform: `translate(${700}px, ${260 - (particlesBurst * 20)}px) scale(${particlesBurst})`,
-                  transformOrigin: '700px 260px'
-                }}
-              >
-                <circle cx="0" cy="0" r="20" fill="rgba(255, 255, 255, 0.06)" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
-                <text x="0" y="5" textAnchor="middle" fill="#fbbf24" fontSize="12" fontWeight="900">
-                  ★★★★★
-                </text>
-              </g>
-
-              <g 
-                style={{
-                  transform: `translate(${160}px, ${250 - (particlesBurst * 25)}px) scale(${particlesBurst})`,
-                  transformOrigin: '160px 250px'
-                }}
-              >
-                <circle cx="0" cy="0" r="18" fill="rgba(255, 255, 255, 0.06)" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" />
-                <path d="M -2 6 L 0 2 L 4 -2 C 6 -4 7 -3 7 -1 L 5 3 L 1 5 Z" fill="hsl(var(--accent-cyan))" />
-                <path d="M -4 8 Q -1 6 -2 4" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
-              </g>
-            </g>
-          )}
-
-          {/* Steaming Coffee Mug */}
-          <g transform="translate(680, 340)">
-            <rect x="0" y="15" width="24" height="32" rx="4" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
-            <path d="M 24 20 C 32 20 32 36 24 36" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.5" />
-            <circle cx="12" cy="30" r="3.5" fill="hsl(var(--accent-cyan))" opacity="0.6" />
-            <path d="M 8 10 Q 6 3 10 -3" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
-            <path d="M 16 10 Q 18 3 14 -3" fill="none" stroke="hsl(var(--accent-cyan))" strokeWidth="1.5" strokeLinecap="round" opacity="0.3" />
+          {/* Minimal Ceramic Mug on Side Table */}
+          <g transform="translate(710, 360)">
+            <rect x="0" y="14" width="22" height="30" rx="3" fill="#18181b" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.2" />
+            <path d="M 22 18 C 29 18 29 33 22 33" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.2" />
+            {/* Subtle rising steam */}
+            <path d="M 8 9 Q 6 3 9 -3" fill="none" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1.2" strokeLinecap="round" />
+            <path d="M 14 9 Q 16 3 13 -3" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1.2" strokeLinecap="round" />
           </g>
         </svg>
       </div>
 
-      {/* 3. BOTTOM CAPTION & PROGRESS TAPE */}
+      {/* 6. BOTTOM TELEMETRY BAR & SCRUBBER (Zero slogans, pure cinematic HUD) */}
       <div 
         style={{
           position: 'relative',
-          zIndex: 10,
-          padding: '16px 28px 24px',
+          zIndex: 30,
+          padding: '0 36px 38px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'flex-end',
           gap: '24px'
         }}
-        dir="rtl"
+        dir="ltr"
       >
-        {/* Caption */}
-        <div style={{ maxWidth: '580px' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        {/* Left: Shot Telemetry & Scene Details (Factual, cinematic, no slogans) */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span 
               className="font-tech"
               style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: 'hsl(var(--accent-cyan))',
-                background: 'hsla(var(--accent-cyan), 0.12)',
-                padding: '3px 10px',
-                borderRadius: '100px',
-                border: '1px solid hsla(var(--accent-cyan), 0.25)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
+                fontSize: '0.68rem',
+                fontWeight: 800,
+                color: '#38bdf8',
+                letterSpacing: '1.5px',
+                background: 'rgba(56, 189, 248, 0.1)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                border: '1px solid rgba(56, 189, 248, 0.25)'
               }}
             >
-              <StepIconComp size={13} />
-              <span>{stepTag}</span>
+              {sceneTag}
             </span>
           </div>
 
-          <h1 style={{
-            margin: 0,
-            fontSize: 'clamp(1.3rem, 3.2vw, 2.2rem)',
-            fontWeight: 800,
-            lineHeight: 1.25,
-            color: '#ffffff',
-            letterSpacing: '-0.3px'
-          }}>
-            <span>{stepTitleLine1} </span>
-            <span className="gradient-text">{stepTitleLine2}</span>
-          </h1>
-
-          <p style={{
-            margin: '8px 0 0',
-            fontSize: 'clamp(0.8rem, 1.4vw, 0.92rem)',
-            color: '#94a3b8',
-            lineHeight: 1.6
-          }}>
-            {stepSub}
+          <p 
+            className="font-tech"
+            style={{
+              margin: 0,
+              fontSize: '0.78rem',
+              color: '#94a3b8',
+              letterSpacing: '0.5px'
+            }}
+          >
+            {sceneDescription}
           </p>
         </div>
 
-        {/* Scroll Indicator & Progress */}
+        {/* Right: Wheel Dial & Progress */}
         <div 
           onClick={handleSkip}
           style={{
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '6px',
+            gap: '12px',
             cursor: 'pointer',
-            userSelect: 'none',
-            flexShrink: 0
+            userSelect: 'none'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 800, color: '#ffffff' }}>
+          <div style={{ textAlign: 'right' }}>
+            <div className="font-tech" style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ffffff', letterSpacing: '1px' }}>
               {Math.round(p * 100)}%
-            </span>
-            <span className="font-tech" style={{ fontSize: '0.68rem', color: 'hsl(var(--accent-cyan))' }}>
-              [SCROLL TO SCRUB]
-            </span>
+            </div>
+            <div className="font-tech" style={{ fontSize: '0.62rem', color: '#64748b', letterSpacing: '1px' }}>
+              SCROLL TO SCRUB
+            </div>
           </div>
 
+          {/* Precision Mouse Wheel Indicator */}
           <div style={{
-            width: '20px',
-            height: '32px',
-            borderRadius: '12px',
-            border: '2px solid rgba(255, 255, 255, 0.25)',
+            width: '18px',
+            height: '28px',
+            borderRadius: '9px',
+            border: '1.5px solid rgba(255, 255, 255, 0.25)',
             display: 'flex',
             justifyContent: 'center',
-            paddingTop: '6px'
+            paddingTop: '5px'
           }}>
             <div 
               style={{
-                width: '4px',
-                height: '7px',
-                borderRadius: '3px',
-                background: 'hsl(var(--accent-cyan))',
-                transform: `translateY(${p * 12}px)`,
-                boxShadow: '0 0 8px hsl(var(--accent-cyan))',
+                width: '3px',
+                height: '6px',
+                borderRadius: '2px',
+                background: '#38bdf8',
+                transform: `translateY(${p * 10}px)`,
+                boxShadow: '0 0 6px #38bdf8',
                 transition: 'transform 0.05s linear'
               }} 
             />
           </div>
-
-          <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>
-            اسکرول کنید تا انیمیشن اجرا شود
-          </span>
         </div>
       </div>
 
-      {/* Progress Bar at Bottom */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '3px', background: 'rgba(255, 255, 255, 0.06)' }}>
+      {/* Thin Scrub Track at Edge */}
+      <div style={{ position: 'absolute', bottom: 'clamp(20px, 3vh, 32px)', left: 0, width: '100%', height: '2px', background: 'rgba(255, 255, 255, 0.06)', zIndex: 51 }}>
         <div 
           style={{
             height: '100%',
             width: `${p * 100}%`,
-            background: 'linear-gradient(90deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))',
-            boxShadow: '0 0 10px hsla(var(--accent-cyan), 0.8)',
+            background: 'linear-gradient(90deg, #38bdf8, #a855f7)',
+            boxShadow: '0 0 8px rgba(56, 189, 248, 0.8)',
             transition: 'width 0.05s linear'
           }}
         />
