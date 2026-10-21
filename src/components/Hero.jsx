@@ -647,6 +647,12 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         firstFrame = false;
       }
 
+      // Once dismissed and curtain has cleared, stop render loop completely to free GPU for shop scrolling
+      if (isDismissedRef.current && p >= 1.13) {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        return;
+      }
+
       animationFrameRef.current = requestAnimationFrame(render);
     };
 

@@ -5,6 +5,7 @@ import 'sonner/dist/styles.css';
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
+import FlagshipHero from './components/FlagshipHero.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import PromotionBanner from './components/PromotionBanner.jsx';
 import ProductShowcase from './components/ProductShowcase.jsx';
@@ -352,6 +353,15 @@ function App() {
           />
 
           <div id="shopping-center" style={{ scrollMarginTop: '80px' }}>
+            <FlagshipHero 
+              config={homepageConfig?.hero}
+              onExploreClick={() => {
+                const el = document.getElementById('catalog');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              onSecondaryClick={() => handleTabChange('blog')}
+            />
+
             <PromotionBanner 
               config={homepageConfig?.promotion}
               onExploreClick={() => {
