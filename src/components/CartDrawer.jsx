@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, onCheckoutClick, user, onOpenAuth }) {
   if (!isOpen) return null;
@@ -83,7 +84,7 @@ export default function CartDrawer({ isOpen, onClose, cartItems, setCartItems, o
                   transition: 'transform 140ms var(--ease-out), border-color 140ms var(--ease-out)'
                 }}
               >
-                <img src={item.image} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: '8px' }} />
+                <img src={item.image} alt={item.name} onError={handleImageError} style={{ width: '80px', height: '80px', minWidth: '80px', minHeight: '80px', objectFit: 'contain', borderRadius: '8px', background: 'rgba(0,0,0,0.03)', flexShrink: 0 }} />
                 
                 <div style={{ flexGrow: 1 }}>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '0.9375rem' }}>{item.name}</h4>

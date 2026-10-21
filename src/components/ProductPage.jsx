@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
+import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 
@@ -552,12 +553,13 @@ export default function ProductPage({
         
         {/* Right column: Gallery */}
         <div>
-          <div className="glass-card" style={{ padding: '16px', overflow: 'hidden', position: 'relative', marginBottom: '14px', background: 'radial-gradient(circle at 50% 60%, rgba(56, 189, 248, 0.08) 0%, var(--glass-card-bg) 75%)' }}>
+          <div className="glass-card product-gallery-frame" style={{ padding: '16px', overflow: 'hidden', position: 'relative', marginBottom: '14px', width: '100%', minHeight: '320px', maxHeight: '440px', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img 
               src={images[activeImage] || product.image} 
               alt={product.name} 
               className="product-main-img"
-              style={{ width: '100%', height: 'auto', maxHeight: '420px', aspectRatio: '16/10', objectFit: 'contain', borderRadius: '12px', display: 'block', filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.14))', transition: 'transform 260ms var(--ease-out)' }}
+              onError={handleImageError}
+              style={{ width: '100%', height: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '12px', display: 'block', filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.14))', transition: 'transform 260ms var(--ease-out)' }}
             />
             {product.badge && (
               <span className="badge badge-glow" style={{ position: 'absolute', top: '20px', right: '20px' }}>
@@ -610,7 +612,7 @@ export default function ProductPage({
                     overflow: 'hidden'
                   }}
                 >
-                  <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  <img src={img} alt="" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
                 </button>
               ))}
             </div>
@@ -1780,7 +1782,9 @@ export default function ProductPage({
                 style={{ flexDirection: 'column', overflow: 'hidden', cursor: 'pointer' }}
                 onClick={() => onSelectProduct && onSelectProduct(rel.slug)}
               >
-                <img src={rel.image} alt={rel.name} style={{ width: '100%', height: '180px', objectFit: 'cover' }} />
+                <div className="related-product-img-wrapper">
+                  <img src={rel.image} alt={rel.name} loading="lazy" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
                 <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <h3 style={{ fontSize: '1.125rem', marginBottom: '4px' }}>{rel.name}</h3>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginBottom: '16px' }}>{rel.tagline}</p>

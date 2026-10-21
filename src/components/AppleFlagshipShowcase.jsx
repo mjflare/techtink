@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getHardwareBadges, getShortSpecs } from '../utils/shortSpecs.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddToCart }) {
   if (!product) return null;
@@ -501,6 +502,8 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
                 position: 'relative',
                 width: '100%',
                 maxWidth: '460px',
+                aspectRatio: '16 / 10',
+                minHeight: '260px',
                 transform: isHovered
                   ? `perspective(1000px) rotateX(${activeTransform.rotateX + tilt.x}deg) rotateY(${activeTransform.rotateY + tilt.y}deg) translateY(${activeTransform.translateY}px) scale3d(${activeTransform.scale * 1.02}, ${activeTransform.scale * 1.02}, 1.02)`
                   : `perspective(1000px) rotateX(${activeTransform.rotateX}deg) rotateY(${activeTransform.rotateY}deg) translateY(${activeTransform.translateY}px) scale3d(${activeTransform.scale}, ${activeTransform.scale}, 1)`,
@@ -513,8 +516,10 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
               <img
                 src={activeImg}
                 alt={product.name}
+                onError={handleImageError}
                 style={{
                   width: '100%',
+                  height: '100%',
                   maxHeight: '360px',
                   objectFit: 'contain',
                   display: 'block',

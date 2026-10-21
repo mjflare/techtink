@@ -8,6 +8,7 @@ import {
   Activity, Flame, RefreshCw, Radio, Rotate3d
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
@@ -1901,7 +1902,8 @@ export default function ProductEditorModal({
                         <img 
                           src={formData.image} 
                           alt={formData.name} 
-                          style={{ width: '140px', height: '100px', objectFit: 'contain', borderRadius: '10px', border: '1px solid var(--border-glass)' }} 
+                          onError={handleImageError}
+                          style={{ width: '140px', height: '100px', minWidth: '140px', minHeight: '100px', objectFit: 'contain', borderRadius: '10px', border: '1px solid var(--border-glass)', background: 'rgba(0,0,0,0.03)' }} 
                         />
                       )}
                       <div style={{ flexGrow: 1 }}>

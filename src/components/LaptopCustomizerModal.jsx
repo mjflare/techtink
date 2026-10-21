@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, Cpu, HardDrive, Monitor, Plus } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) {
   if (!laptop) return null;
@@ -66,7 +67,9 @@ export default function LaptopCustomizerModal({ laptop, onClose, onAddToCart }) 
 
         {/* Left Col: Image & Summary */}
         <div style={{ flex: '1' }}>
-          <img src={laptop.image} alt={laptop.name} style={{ width: '100%', borderRadius: '12px', marginBottom: '24px' }} />
+          <div style={{ width: '100%', minHeight: '220px', aspectRatio: '16/10', borderRadius: '12px', background: 'rgba(0,0,0,0.03)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+            <img src={laptop.image} alt={laptop.name} onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           
           <div className="glass-card" style={{ padding: '20px' }}>
             <h3 style={{ marginBottom: '16px', fontSize: '1.25rem' }}>خلاصه قطعات انتخابی</h3>

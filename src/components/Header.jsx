@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { ShoppingCart, Search, Menu, MonitorSmartphone, User, Shield, LogOut, X, ArrowLeftRight, Sun, Moon, ArrowLeft, ChevronDown, Package } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 import { DemoHeaderBadge } from './DemoNoticeModal.jsx';
 
 export default function Header({ 
@@ -276,7 +277,8 @@ export default function Header({
                         <img 
                           src={item.images?.[0] || '/vite.svg'} 
                           alt={item.name} 
-                          style={{ width: '44px', height: '44px', objectFit: 'contain', borderRadius: '8px', background: 'var(--table-stripe)', flexShrink: 0, padding: '2px', border: '1px solid var(--border-glass)' }}
+                          onError={handleImageError}
+                          style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px', objectFit: 'contain', borderRadius: '8px', background: 'var(--table-stripe)', flexShrink: 0, padding: '2px', border: '1px solid var(--border-glass)' }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -543,7 +545,8 @@ export default function Header({
                         <img 
                           src={item.images?.[0] || '/vite.svg'} 
                           alt={item.name} 
-                          style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }}
+                          onError={handleImageError}
+                          style={{ width: '40px', height: '40px', minWidth: '40px', minHeight: '40px', objectFit: 'contain', borderRadius: '6px', flexShrink: 0 }}
                         />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

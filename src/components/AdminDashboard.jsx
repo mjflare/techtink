@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getHardwareBadges } from '../utils/shortSpecs.js';
+import { handleImageError } from '../utils/imageFallback.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
 import ProductEditorModal from './ProductEditorModal.jsx';
 import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
@@ -1860,7 +1861,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                   .map((p, idx) => (
                     <tr key={p.id} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent', borderBottom: '1px solid var(--border-glass)' }}>
                       <td style={{ padding: '12px' }}>
-                        <img src={p.image} alt="" style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px' }} />
+                        <img src={p.image} alt="" onError={handleImageError} style={{ width: '48px', height: '48px', minWidth: '48px', minHeight: '48px', objectFit: 'contain', borderRadius: '6px', background: 'rgba(0,0,0,0.04)' }} />
                       </td>
                       <td style={{ padding: '12px' }}>
                         <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>

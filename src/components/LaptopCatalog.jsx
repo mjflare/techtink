@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function LaptopCatalog({ 
   laptops, 
@@ -488,14 +489,17 @@ export default function LaptopCatalog({
           return (
             <div key={laptop.id} className="glass-card flex animate-fade-in" style={{ flexDirection: 'column', overflow: 'hidden' }}>
               <div 
-                style={{ position: 'relative', cursor: 'pointer', overflow: 'hidden' }}
+                className="catalog-card-img-wrapper"
+                style={{ cursor: 'pointer' }}
                 onClick={handleProductClick}
               >
                 <img 
                   src={laptop.image} 
                   alt={laptop.name} 
                   className="catalog-card-img"
-                  style={{ width: '100%', height: '220px', objectFit: 'cover', transition: 'transform 0.3s ease' }} 
+                  loading="lazy"
+                  onError={handleImageError}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }} 
                 />
                 <div style={{ position: 'absolute', top: '12px', right: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   {laptop.badge && <span className="badge badge-glow">{laptop.badge}</span>}

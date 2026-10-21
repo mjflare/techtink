@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles, Cpu, Zap, Battery, ArrowLeft, ShieldCheck, CheckCircle2, Award, Laptop } from 'lucide-react';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function FlagshipHero({ config, onExploreClick, onSecondaryClick }) {
   const c = config || {};
@@ -234,6 +235,10 @@ export default function FlagshipHero({ config, onExploreClick, onSecondaryClick 
                 src={imageUrl} 
                 alt="Flagship Laptop Workstation"
                 onLoad={() => setImageLoaded(true)}
+                onError={(e) => {
+                  handleImageError(e);
+                  setImageLoaded(true);
+                }}
                 style={{
                   width: '100%',
                   height: '100%',

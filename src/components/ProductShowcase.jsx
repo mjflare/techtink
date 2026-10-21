@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Eye, ShoppingCart, Award, ArrowLeft, Check, Cpu, Zap, HardDrive } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function ProductShowcase({ config, onSelectProduct, onAddToCart }) {
   if (!config || !config.active || !config.products || config.products.length === 0) {
@@ -155,6 +156,8 @@ export default function ProductShowcase({ config, onSelectProduct, onAddToCart }
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                minHeight: '260px',
+                aspectRatio: '16 / 10',
                 padding: '20px',
                 cursor: 'pointer'
               }}
@@ -172,10 +175,12 @@ export default function ProductShowcase({ config, onSelectProduct, onAddToCart }
                 }} 
               />
               <img 
-                src={flagship.image || (flagship.images && flagship.images[0]) || '/vite.svg'} 
+                src={flagship.image || (flagship.images && flagship.images[0])} 
                 alt={flagship.name}
+                onError={handleImageError}
                 style={{
                   width: '100%',
+                  height: '100%',
                   maxHeight: '320px',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.18))',
@@ -241,6 +246,8 @@ export default function ProductShowcase({ config, onSelectProduct, onAddToCart }
                     style={{
                       position: 'relative',
                       height: '160px',
+                      minHeight: '160px',
+                      aspectRatio: '16 / 10',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -250,8 +257,9 @@ export default function ProductShowcase({ config, onSelectProduct, onAddToCart }
                     onClick={() => onSelectProduct && onSelectProduct(item.slug)}
                   >
                     <img 
-                      src={item.image || (item.images && item.images[0]) || '/vite.svg'} 
+                      src={item.image || (item.images && item.images[0])} 
                       alt={item.name} 
+                      onError={handleImageError}
                       style={{
                         maxHeight: '100%',
                         maxWidth: '100%',

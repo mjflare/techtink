@@ -1322,5 +1322,57 @@ details[open] summary ~ * {
   }
 }
 
+/* =========================================================
+   Image Layout Stability & Zero-CLS Placeholder Frames
+   ========================================================= */
+.catalog-card-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  min-height: 220px;
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.05) 0%, rgba(226, 232, 240, 0.7) 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  contain: layout style;
+}
+
+.product-gallery-frame {
+  position: relative;
+  width: 100%;
+  min-height: 280px;
+  max-height: 440px;
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(ellipse at 50% 60%, rgba(56, 189, 248, 0.08) 0%, rgba(241, 245, 249, 0.9) 75%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  contain: layout style;
+}
+
+.related-product-img-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  min-height: 180px;
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.05) 0%, rgba(226, 232, 240, 0.7) 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  contain: layout style;
+}
+
+@media (max-width: 640px) {
+  .catalog-card-img-wrapper {
+    height: 190px !important;
+    min-height: 190px !important;
+  }
+}
+
+
 
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, BarChart2, Sparkles, HelpCircle, Layers, ArrowLeftRight, Eye, ShoppingCart } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function SpecCompareModal({ compareList, laptops, onClose, onAddToCart, onSelectProduct }) {
   if (compareList.length === 0) return null;
@@ -299,7 +300,7 @@ export default function SpecCompareModal({ compareList, laptops, onClose, onAddT
                             <span className="badge" style={{ background: palette.solid, color: 'white', fontSize: '0.75rem', fontWeight: 700, marginBottom: '10px', display: 'inline-block' }}>
                               دستگاه شماره {idx + 1}
                             </span>
-                            <img src={laptop.image} alt={laptop.name} style={{ width: '100%', height: '130px', objectFit: 'cover', borderRadius: '10px', marginBottom: '12px', background: '#f1f5f9' }} />
+                            <img src={laptop.image} alt={laptop.name} onError={handleImageError} style={{ width: '100%', height: '130px', minHeight: '130px', objectFit: 'contain', borderRadius: '10px', marginBottom: '12px', background: '#f1f5f9', display: 'block' }} />
                             <div style={{ textAlign: 'left', direction: 'ltr', marginBottom: '6px' }}>
                               <div style={{ fontSize: '0.75rem', fontWeight: 800, color: palette.solid, fontFamily: 'var(--font-tech)' }}>
                                 {laptop.brand || (laptop.name?.split(' ')[0] || '')}

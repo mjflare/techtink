@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeftRight, ShoppingCart, X, Trash2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
+import { handleImageError } from '../utils/imageFallback.js';
 
 export default function InteractiveFloatingIsland({
   compareList = [],
@@ -261,7 +262,8 @@ export default function InteractiveFloatingIsland({
                 <img 
                   src={item.image} 
                   alt={item.name} 
-                  style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
+                  onError={handleImageError}
+                  style={{ width: '42px', height: '42px', minWidth: '42px', minHeight: '42px', objectFit: 'contain', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.05)' }} 
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -395,7 +397,8 @@ export default function InteractiveFloatingIsland({
                 <img 
                   src={item.image} 
                   alt={item.name} 
-                  style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.02)' }} 
+                  onError={handleImageError}
+                  style={{ width: '56px', height: '56px', minWidth: '56px', minHeight: '56px', objectFit: 'contain', borderRadius: '8px', flexShrink: 0, background: 'rgba(0,0,0,0.02)' }} 
                 />
                 <div style={{ flex: 1, minWidth: 0, paddingLeft: '20px' }}>
                   <div style={{ fontSize: '0.825rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-primary)' }}>
