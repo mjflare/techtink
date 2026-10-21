@@ -36,9 +36,11 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
 
   // 1. SCROLL-PINNING & GESTURE INTERCEPTION WITH PHYSICS MOMENTUM
   useEffect(() => {
-    if (isDismissed) return;
+    if (isDismissed) {
+      document.body.style.overflow = '';
+      return;
+    }
 
-    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     // Momentum-driven wheel handler
@@ -113,9 +115,16 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mousemove', handleMouseMove);
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = '';
     };
   }, [isDismissed]);
+
+  // Safety hook: guarantee body overflow is unlocked when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   const handleProceedToStore = () => {
     if (isDismissed || isTransitioningRef.current) return;
@@ -124,17 +133,14 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     targetProgressRef.current = 1.18;
     currentProgressRef.current = 1.12;
     setProgress(1.0);
+    setIsDismissed(true);
+    document.body.style.overflow = '';
 
-    // Dynamic cinematic camera surge towards CRT screen, then curtain lift
     setTimeout(() => {
-      setIsDismissed(true);
-      document.body.style.overflow = '';
-      setTimeout(() => {
-        setIsMounted(false);
-        const el = document.getElementById('shopping-center') || document.getElementById('catalog');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      }, 700);
-    }, 220);
+      setIsMounted(false);
+      const el = document.getElementById('shopping-center') || document.getElementById('catalog');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 700);
   };
 
   // 2. THREE.JS 3D ENGINE (Sterile Lumon White Colorway & Macrodata Refinement Focus)
@@ -543,6 +549,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       // Dismiss only if user deliberately scrolls beyond 1.12
       if (p >= 1.12 && targetProgressRef.current >= 1.12 && !isDismissed) {
         setIsDismissed(true);
+        document.body.style.overflow = '';
         setTimeout(() => {
           setIsMounted(false);
           const el = document.getElementById('shopping-center') || document.getElementById('catalog');
@@ -688,7 +695,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         color: '#0f172a',
         overflow: 'hidden',
         userSelect: 'none',
-        touchAction: 'none', // Prevents browser overscroll & pull-to-refresh on mobile
+        touchAction: isDismissed ? 'auto' : 'none',
+        pointerEvents: isDismissed ? 'none' : 'auto',
         transform: `translateY(-${curtainLift}%)`,
         opacity: isDismissed ? 0.96 : 1,
         borderBottom: (isDismissed || isTransitioning) ? '3.5px solid #00e5a3' : 'none',
