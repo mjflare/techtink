@@ -292,11 +292,6 @@ export default function ProductPage({
       })
       .then(data => {
         setProduct(data);
-        const canUse3d = data.enable_3d_viewer !== false && 
-                         data.specs?.enable_3d_viewer !== false && 
-                         Boolean(data.model3d_url || data.specs?.model3d_url);
-        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-        setShowcaseMode(canUse3d && !isMobile ? '3d' : 'story');
         setSelectedRam(0);
         setSelectedStorage(0);
         setSelectedDisplay(0);
