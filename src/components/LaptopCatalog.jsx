@@ -26,7 +26,7 @@ export default function LaptopCatalog({
   const [screenFilter, setScreenFilter] = useState('all'); // 'all', '13-14', '15-16'
   const [chassisFilter, setChassisFilter] = useState('all'); // 'all', 'aluminum', 'magnesium', 'carbon', 'polycarbonate'
   const [gradeFilter, setGradeFilter] = useState('all'); // 'all', 'A+', 'A', 'B+', 'A++'
-  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const categories = ['همه', 'گیمینگ', 'تولید محتوا', 'فوق سبک', 'ورک استیشن', 'اقتصادی'];
 
@@ -170,7 +170,6 @@ export default function LaptopCatalog({
       <style dangerouslySetInnerHTML={{__html: `
         @media (max-width: 768px) {
           .catalog-filters-panel {
-            display: ${showFiltersMobile ? 'block' : 'none'} !important;
             padding: 16px !important;
             margin-bottom: 20px !important;
           }
@@ -204,20 +203,30 @@ export default function LaptopCatalog({
         {/* Sort & Mobile filter trigger */}
         <div className="flex" style={{ gap: '8px', alignItems: 'center', flexWrap: 'wrap', width: '100%', justifyContent: 'space-between' }}>
           <button 
+            type="button"
             className="btn btn-glass"
-            onClick={() => setShowFiltersMobile(prev => !prev)}
+            onClick={() => setShowFilters(prev => !prev)}
             style={{ 
-              padding: '8px 14px', 
+              minHeight: '42px',
+              padding: '8px 16px', 
               display: 'flex', 
               alignItems: 'center', 
               gap: '8px',
-              fontSize: '0.8125rem',
-              borderColor: showFiltersMobile || activeFiltersCount > 0 ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-              background: showFiltersMobile ? 'hsla(var(--accent-cyan), 0.1)' : 'transparent'
+              fontSize: '0.85rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              borderColor: showFilters || activeFiltersCount > 0 ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+              background: showFilters ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
+              color: showFilters || activeFiltersCount > 0 ? 'hsl(var(--accent-cyan))' : 'var(--text-primary)'
             }}
           >
-            <SlidersHorizontal size={16} color={showFiltersMobile || activeFiltersCount > 0 ? 'hsl(var(--accent-cyan))' : 'currentColor'} />
-            <span>{showFiltersMobile ? 'بستن فیلترها' : 'فیلترهای پیشرفته'} {activeFiltersCount > 0 && `(${activeFiltersCount})`}</span>
+            <SlidersHorizontal size={16} color={showFilters || activeFiltersCount > 0 ? 'hsl(var(--accent-cyan))' : 'currentColor'} />
+            <span>{showFilters ? 'بستن فیلترها' : 'فیلترهای پیشرفته'}</span>
+            {activeFiltersCount > 0 && (
+              <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#fff', fontSize: '0.7rem', padding: '2px 7px', borderRadius: '10px' }}>
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
 
           <div className="glass-panel flex" style={{ padding: '6px 12px', borderRadius: '12px', alignItems: 'center', gap: '8px' }}>
@@ -256,9 +265,68 @@ export default function LaptopCatalog({
         ))}
       </div>
 
-      {/* Advanced Faceted Filter Panel (Like BestBuy / NotebookCheck / Digikala) */}
-      <div className="glass-card animate-fade-in catalog-filters-panel" style={{ padding: '20px 24px', marginBottom: '32px' }}>
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'start' }}>
+      {/* Advanced Faceted Filter Panel (Toggled via showFilters) */}
+      {showFilters && (
+        <div className="glass-card animate-fade-in catalog-filters-panel" style={{ padding: '20px 24px', marginBottom: '32px' }}>
+          {/* Panel Header with Title, Count and Close Button */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '18px',
+            paddingBottom: '14px',
+            borderBottom: '1px solid var(--border-glass)',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <SlidersHorizontal size={18} color="hsl(var(--accent-cyan))" />
+              <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                فیلترهای پیشرفته سخت‌افزاری
+              </span>
+              {activeFiltersCount > 0 && (
+                <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.2)', color: 'hsl(var(--accent-cyan))', fontSize: '0.72rem', padding: '3px 8px' }}>
+                  {activeFiltersCount} فیلتر فعال
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="btn btn-glass"
+                  style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <RotateCcw size={13} />
+                  <span>بازنشانی فیلترها</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowFilters(false)}
+                title="بستن پنل فیلترها"
+                className="btn btn-glass"
+                style={{
+                  minWidth: '38px',
+                  minHeight: '38px',
+                  padding: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'start' }}>
           
           {/* CPU Maker */}
           <div>
@@ -454,18 +522,42 @@ export default function LaptopCatalog({
 
         </div>
 
-        {/* Clear Filters bar */}
-        {activeFiltersCount > 0 && (
-          <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-glass)' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-              نمایش <strong>{filteredLaptops.length}</strong> لپ‌تاپ مطابق با مشخصات انتخابی
-            </span>
-            <button className="btn btn-glass" style={{ padding: '4px 12px', fontSize: '0.75rem' }} onClick={resetAllFilters}>
-              <RotateCcw size={12} /> بازنشانی تمام فیلترها
+        {/* Footer with summary and close button */}
+        <div className="flex" style={{
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '20px',
+          paddingTop: '14px',
+          borderTop: '1px solid var(--border-glass)',
+          flexWrap: 'wrap',
+          gap: '10px'
+        }}>
+          <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            نمایش <strong>{filteredLaptops.length}</strong> لپ‌تاپ مطابق با مشخصات انتخابی
+          </span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {activeFiltersCount > 0 && (
+              <button
+                type="button"
+                className="btn btn-glass"
+                style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                onClick={resetAllFilters}
+              >
+                <RotateCcw size={12} /> بازنشانی تمام فیلترها
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ padding: '6px 16px', fontSize: '0.8rem', fontWeight: 700 }}
+              onClick={() => setShowFilters(false)}
+            >
+              مشاهده نتایج ({filteredLaptops.length})
             </button>
           </div>
-        )}
+        </div>
       </div>
+    )}
 
       {/* Laptops Grid */}
       <div className="grid catalog-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 310px), 1fr))', gap: '24px' }}>
