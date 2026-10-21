@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
-  Sparkles, Cpu, Zap, Battery, Layers, Monitor, HardDrive, 
-  ShieldCheck, Eye, ChevronRight, Activity, Thermometer, Wind, Check,
-  Radio, Play, Pause, Flame, RefreshCw
+  Sparkles, Cpu, Zap, Layers, Monitor, HardDrive, 
+  ShieldCheck, ChevronRight, ChevronLeft, ShoppingBag, 
+  ArrowDown, CheckCircle2, SlidersHorizontal
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
@@ -14,104 +14,217 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
     return null;
   }
 
+  const trackRef = useRef(null);
+  const cardRef = useRef(null);
   const [activeStage, setActiveStage] = useState(0);
-  const [activeHotspot, setActiveHotspot] = useState(null);
-  const [workloadLevel, setWorkloadLevel] = useState(2); // 0: Idle, 1: Code, 2: 3D Render, 3: Full AI Load
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const [isXrayMode, setIsXrayMode] = useState(false);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(null);
 
-  const cardRef = useRef(null);
-  const containerRef = useRef(null);
+  const targetProgressRef = useRef(0);
+  const currentProgressRef = useRef(0);
+  const isJumpingRef = useRef(false);
 
-  const images = (product.images && product.images.length > 0) ? product.images : [product.image];
+  const images = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.image ? [product.image] : ['/assets/laptop-placeholder.png']);
 
-  // 4 Apple Storytelling Stages (Customizable by admin or auto-derived from hardware)
+  // 4 Pristine Apple Storytelling Chapters
   const defaultStages = [
     {
-      id: 'design',
+      id: 'chassis',
+      number: '۰۱',
       title: 'شاسی آلیاژی تیتانیوم و منیزیم',
-      subtitle: 'استحکام فوق‌العاده در کلاسی متفاوت با مقاومت فیزیکی نظامی MIL-STD',
+      subtitle: 'استحکام مهندسی با استاندارد نظامی MIL-STD 810H در نهایت ظرافت',
       tag: 'متریال هوافضا',
       icon: Layers,
       color: 'hsl(var(--accent-cyan))',
       imageIndex: 0,
-      description: `شاسی مهندسی‌شده ${product.name} از ترکیب آلیاژ آلومینیوم تراش‌خورده CNC و منیزیم فشرده ساخته شده که وزن دستگاه را کنترل کرده و انتقال حرارت را به حداکثر می‌رساند.`
+      description: `بدنه مهندسی‌شده ${product.name} از ترکیب آلیاژ آلومینیوم تراش‌خورده CNC و منیزیم فشرده طراحی شده است؛ ترکیبی که ضمن تضمین استحکام فوق‌العاده در برابر ضربه و خمش، انتقال حرارت را به بالاترین سطح می‌رساند.`,
+      callouts: [
+        {
+          title: 'آلیاژ مستحکم CNC',
+          desc: 'ماشین‌کاری فوق‌دقیق با مقاومت ساختاری MIL-STD',
+          align: 'top-right'
+        },
+        {
+          title: 'پوشش مات آنودایز',
+          desc: 'مقاومت پایدار در برابر جذب چربی دست و خط و خش',
+          align: 'bottom-left'
+        }
+      ]
     },
     {
       id: 'display',
+      number: '۰۲',
       title: 'نمایشگر فوق‌شفاف کالیبره‌شده',
-      subtitle: 'وضوح استثنایی با پوشش ۱۰۰٪ فضای رنگی سینمایی و روشنایی عالی',
+      subtitle: 'تفکیک رنگ سینمایی ۱۰۰٪ با روشنایی فوق‌العاده و وضوح کریستالی',
       tag: 'دقت رنگ ۱۰۰٪',
       icon: Monitor,
       color: 'hsl(var(--accent-purple))',
       imageIndex: (images.length > 1 ? 1 : 0),
-      description: 'کالیبراسیون دقیق کارخانه‌ای برای طراحان گرافیک، ادیتورهای ویدیویی و مهندسان نقشه‌کشی؛ ضد بازتاب نور مستقیم و زاویه دید عریض ۱۷۸ درجه.'
+      description: `پنل کالیبره‌شده کارخانه‌ای با زاویه دید عریض ۱۷۸ درجه، پوشش کامل طیف رنگی سینمایی و روشنایی عالی برای ادیتورهای ویدیویی حرفه‌ای، طراحان گرافیک و کدنویسی طولانی‌مدت بدون ایجاد خستگی چشم.`,
+      callouts: [
+        {
+          title: 'کالیبراسیون دقیق ۱۰۰٪ DCI-P3',
+          desc: 'رنگ‌های زنده با استاندارد صنعتی فیلم و تصویر',
+          align: 'top-left'
+        },
+        {
+          title: 'پوشش ضد بازتاب پیشرفته',
+          desc: 'وضوح بی‌نقص حتی در تابش مستقیم نور طبیعی',
+          align: 'bottom-right'
+        }
+      ]
     },
     {
       id: 'silicon',
-      title: 'معماری سیلیکون و خنک‌کاری پیشرفته',
-      subtitle: 'محفظه بخار مسی برای پایداری ۱۰۰٪ توان پردازشی بدون افت فرکانس',
-      tag: 'خنک‌کننده Vapor Chamber',
+      number: '۰۳',
+      title: 'معماری سیلیکونی و توان پیوسته',
+      subtitle: 'پایداری ۱۰۰٪ فرکانس توربو بوست بدون افت فریم در سنگین‌ترین پردازش‌ها',
+      tag: 'معماری سیلیکون',
       icon: Zap,
       color: 'hsl(var(--accent-green))',
       imageIndex: (images.length > 2 ? 2 : 0),
-      description: `پردازنده ${product.shortSpecs?.cpu || 'نسل جدید'} در هماهنگی کامل با گرافیک ${product.shortSpecs?.gpu || 'اختصاصی'}، حتی در رندرهای مداوم شبانه‌روزی با دمای کنترل‌شده عمل می‌کند.`
+      description: `هماهنگی یکپارچه پردازنده ${product.shortSpecs?.cpu || 'نسل جدید'} در کنار پردازشگر گرافیکی ${product.shortSpecs?.gpu || 'پیشرفته'}، حداکثر بازدهی را حتی در خروجی‌های سنگین و پردازش‌های شبانه‌روزی تضمین می‌کند.`,
+      callouts: [
+        {
+          title: 'پایداری ۱۰۰٪ فرکانس بوست',
+          desc: 'حفظ اوج عملکرد پردازنده در رندرهای چندساعته',
+          align: 'top-right'
+        },
+        {
+          title: 'شتاب‌دهنده سخت‌افزاری AI',
+          desc: 'پاسخ‌دهی آنی به بارهای کاری نسل جدید',
+          align: 'bottom-left'
+        }
+      ]
     },
     {
-      id: 'ergonomics',
-      title: 'کیبورد ارگونومیک و ارتباطات همه‌جانبه',
-      subtitle: 'درگاه‌های پرسرعت Thunderbolt 4 و حس بی‌نظیر تایپ',
-      tag: 'پورت‌های نسل جدید',
+      id: 'connectivity',
+      number: '۰۴',
+      title: 'درگاه‌های مدرن و کیبورد ارگونومیک',
+      subtitle: 'سرعت اتصال Thunderbolt 4 بدون نیاز به حمل دانگل و حس بی‌نظیر تایپ',
+      tag: 'ارتباطات و ارگونومی',
       icon: HardDrive,
       color: '#ea580c',
       imageIndex: (images.length > 3 ? 3 : (images.length - 1)),
-      description: 'مجموعه پورت‌های استاندارد بدون نیاز به دانگل اضافی شامل تاندربولت ۴، خروجی تصویری مستقیم HDMI و درگاه پرسرعت شبکه و کارت‌خوان SD.'
+      description: 'مجموعه کاملی از درگاه‌های نسل جدید تاندربولت ۴، خروجی تصویری مستقیم با کیفیت 8K و شیار کارت‌خوان در کنار کیبورد کم‌صدا با نور پس‌زمینه یکدست و حس تایپ استثنایی.',
+      callouts: [
+        {
+          title: 'درگاه‌های Thunderbolt 4 پرسرعت',
+          desc: 'انتقال سریع ۴۰ گیگابیت بر ثانیه و اتصال مستقیم مانیتور',
+          align: 'top-left'
+        },
+        {
+          title: 'کیبورد ارگونومیک کم‌صدا',
+          desc: 'عمق کلید بهینه با بازخورد لمسی دقیق و دلنشین',
+          align: 'bottom-right'
+        }
+      ]
     }
   ];
 
+  // Merge admin stages if present
   const stages = (customConfig?.stages && customConfig.stages.length >= 4)
     ? customConfig.stages.map((st, i) => ({
         ...st,
+        number: `۰${i + 1}`,
         icon: [Layers, Monitor, Zap, HardDrive][i % 4],
-        color: ['hsl(var(--accent-cyan))', 'hsl(var(--accent-purple))', 'hsl(var(--accent-green))', '#ea580c'][i % 4]
+        color: ['hsl(var(--accent-cyan))', 'hsl(var(--accent-purple))', 'hsl(var(--accent-green))', '#ea580c'][i % 4],
+        callouts: defaultStages[i % 4].callouts
       }))
     : defaultStages;
 
-  // Interactive Hardware Hotspots
-  const defaultHotspots = [
-    { id: 'screen', top: '26%', left: '48%', title: 'پنل ضد انعکاس کالیبره', desc: `${product.shortSpecs?.display || 'نمایشگر استاندارد با زاویه دید عریض و تفکیک رنگ سینمایی'}` },
-    { id: 'cooling', top: '64%', left: '28%', title: 'محفظه خنک‌کاری اتاق بخار (Vapor Chamber)', desc: 'خنک‌کاری مدار تغذیه و پردازنده با هیت‌پایپ‌های عریض مسی' },
-    { id: 'keyboard', top: '72%', left: '52%', title: 'کیبورد ارگونومیک با نور پس‌زمینه', desc: 'عمق کلید بهینه با مکانیزم قیچی نرم و تایپ طولانی بدون خستگی' },
-    { id: 'ports', top: '56%', left: '80%', title: 'درگاه‌های Thunderbolt 4', desc: 'انتقال داده با سرعت ۴۰ گیگابیت بر ثانیه و اتصال به مانیتورهای 8K' }
+  // Visual 3D perspective choreography for each chapter
+  const stageTransforms = [
+    { scale: 1.02, rotateY: -10, rotateX: 6, translateY: -6, glow: 'rgba(56, 189, 248, 0.16)' },
+    { scale: 1.06, rotateY: 0, rotateX: 2, translateY: -12, glow: 'rgba(168, 85, 247, 0.20)' },
+    { scale: 1.03, rotateY: 12, rotateX: 6, translateY: -6, glow: 'rgba(16, 185, 129, 0.20)' },
+    { scale: 1.0, rotateY: -6, rotateX: 12, translateY: 0, glow: 'rgba(234, 88, 12, 0.16)' }
   ];
 
-  const hotspots = (customConfig?.hotspots && customConfig.hotspots.length > 0)
-    ? customConfig.hotspots
-    : defaultHotspots;
+  // Scroll Tracking Engine
+  useEffect(() => {
+    let animationFrameId;
 
-  // Workload Simulation metrics
-  const defaultWorkloads = [
-    { label: 'آماده به کار (Idle)', temp: '34°C', fanRpm: '0 RPM (کامپکت و بی‌صدا)', power: '15W', status: 'خاموشی فن‌ها و حداکثر پایداری باتری' },
-    { label: 'برنامه‌نویسی و وب (Coding)', temp: '42°C', fanRpm: '1400 RPM (زمزمه ملایم)', power: '38W', status: 'دمای خنک استراحتگاه مچ دست' },
-    { label: 'رندرینگ سه‌بعدی و تدوین (3D Render)', temp: '68°C', fanRpm: '2800 RPM (تهویه بهینه)', power: '95W', status: 'حداکثر بازدهی فرکانس توربو بوست' },
-    { label: 'شبیه‌سازی سنگین و AI (Full Load)', temp: '76°C', fanRpm: '3900 RPM (حداکثر توربو)', power: '140W', status: 'خنک‌کاری کامل توسط محفظه بخار بدون افت فریم' }
-  ];
+    const onScrollOrResize = () => {
+      if (isJumpingRef.current || !trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const totalScrollable = rect.height - viewportHeight;
 
-  const workloads = (customConfig?.workloads && customConfig.workloads.length === 4)
-    ? customConfig.workloads
-    : defaultWorkloads;
+      if (totalScrollable > 50) {
+        // When top of track hits 80px from top of viewport, progress starts
+        const startOffset = 80;
+        const scrolled = -(rect.top - startOffset);
+        const rawProgress = scrolled / totalScrollable;
+        const clamped = Math.max(0, Math.min(1, rawProgress));
+        targetProgressRef.current = clamped;
+      }
+    };
 
-  // Direct manipulation 3D perspective tilt
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    onScrollOrResize();
+
+    // Silky lerp loop for smooth scrub interpolation
+    const tick = () => {
+      const diff = targetProgressRef.current - currentProgressRef.current;
+      if (Math.abs(diff) > 0.0006) {
+        currentProgressRef.current += diff * 0.14;
+        const p = currentProgressRef.current;
+        setScrollProgress(p);
+
+        // Derive active stage
+        const nextStage = Math.min(stages.length - 1, Math.max(0, Math.floor(p * stages.length)));
+        setActiveStage(nextStage);
+      }
+      animationFrameId = requestAnimationFrame(tick);
+    };
+    animationFrameId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [stages.length]);
+
+  // Jump to specific chapter smoothly
+  const handleJumpToStage = useCallback((index) => {
+    isJumpingRef.current = true;
+    setActiveStage(index);
+    const targetP = (index + 0.5) / stages.length;
+    targetProgressRef.current = targetP;
+    currentProgressRef.current = targetP;
+    setScrollProgress(targetP);
+
+    if (trackRef.current) {
+      const rect = trackRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const totalScrollable = rect.height - viewportHeight;
+      if (totalScrollable > 50) {
+        const targetScrollY = window.scrollY + rect.top - 80 + (targetP * totalScrollable);
+        window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
+      }
+    }
+
+    setTimeout(() => {
+      isJumpingRef.current = false;
+    }, 600);
+  }, [stages.length]);
+
+  // Tactile Mouse Parallax
   const handlePointerMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left - rect.width / 2;
     const y = e.clientY - rect.top - rect.height / 2;
     setTilt({
-      x: (y / (rect.height / 2)) * -8,
-      y: (x / (rect.width / 2)) * 8
+      x: (y / (rect.height / 2)) * -5,
+      y: (x / (rect.width / 2)) * 6
     });
   };
 
@@ -120,63 +233,126 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
     setTilt({ x: 0, y: 0 });
   };
 
-  // Auto-play timer for presentation mode
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-    const timer = setInterval(() => {
-      setActiveStage(prev => (prev + 1) % stages.length);
-    }, 4500);
-    return () => clearInterval(timer);
-  }, [isAutoPlaying, stages.length]);
+  // Mobile Touch Swiping
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+
+    if (Math.abs(deltaX) > 40) {
+      if (deltaX < 0 && activeStage < stages.length - 1) {
+        handleJumpToStage(activeStage + 1);
+      } else if (deltaX > 0 && activeStage > 0) {
+        handleJumpToStage(activeStage - 1);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   const currentStage = stages[activeStage] || stages[0];
+  const activeTransform = stageTransforms[activeStage] || stageTransforms[0];
   const activeImg = images[currentStage.imageIndex] || images[0] || product.image;
-  const currentWorkload = workloads[workloadLevel] || workloads[0];
 
   return (
-    <section 
-      ref={containerRef}
-      className="apple-showcase-container" 
-      style={{ margin: '48px 0 64px', position: 'relative' }}
+    <div 
+      ref={trackRef}
+      className="apple-showcase-track"
+      style={{
+        position: 'relative',
+        minHeight: '260vh',
+        margin: '24px 0 60px'
+      }}
     >
-      {/* Top Banner Header */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span className="badge badge-glow" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>
-            <Sparkles size={13} style={{ marginLeft: '5px' }} />
-            کاوش تعاملی پرچمدار اپل‌استایل
-          </span>
-          {customConfig?.enabled && (
-            <span className="badge" style={{ background: 'hsla(var(--accent-purple), 0.15)', color: 'hsl(var(--accent-purple))', fontSize: '0.72rem' }}>
-              اختصاصی مدیر
-            </span>
-          )}
-        </div>
-
-        <h2 style={{ fontSize: 'clamp(1.5rem, 3.5vw, 2.4rem)', fontWeight: 900, margin: '0 0 10px', letterSpacing: '-0.5px' }}>
-          مهندسی بی‌نقص، <span className="gradient-text">{product.name}</span>
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', maxWidth: '640px', margin: '0 auto', lineHeight: '1.7' }}>
-          برای آشنایی عمیق با معماری سخت‌افزار، لایه‌ها را ورق بزنید، اشعه ایکس سیستم خنک‌کاری را روشن کنید یا نقاط بررسی را لمس نمایید.
-        </p>
-      </div>
-
-      {/* Main Interactive Stage Box */}
+      {/* Sticky Stage Viewport */}
       <div 
-        className="glass-card"
+        className="apple-showcase-sticky"
         style={{
+          position: 'sticky',
+          top: '76px',
+          height: 'calc(100vh - 90px)',
+          minHeight: '620px',
+          maxHeight: '940px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
           borderRadius: '28px',
-          padding: 'clamp(20px, 3.5vw, 40px)',
-          position: 'relative',
+          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 249, 252, 0.94) 100%)',
+          border: '1px solid rgba(226, 232, 240, 0.95)',
+          boxShadow: '0 30px 70px -20px rgba(0, 0, 0, 0.08)',
           overflow: 'hidden',
-          background: 'linear-gradient(180deg, var(--glass-card-bg) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.08)'
+          padding: 'clamp(18px, 2.5vw, 32px)',
+          zIndex: 10,
+          contain: 'layout style'
         }}
       >
-        {/* Stages Navigation Bar with Auto-Play & Scroller */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', paddingBottom: '14px', marginBottom: '28px', borderBottom: '1px solid var(--border-glass)' }}>
-          {/* Stage Buttons */}
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', flexGrow: 1 }}>
+        {/* Top Header & Chapter Pill Controller */}
+        <div>
+          {/* Top Title Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="badge badge-glow" style={{ fontSize: '0.78rem', padding: '4px 12px', fontWeight: 700 }}>
+                <Sparkles size={13} style={{ marginLeft: '5px' }} />
+                شوکیس بازاریابی پرچمدار اپل‌استایل
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                فصل {currentStage.number} از ۰۴
+              </span>
+            </div>
+
+            {/* Next/Prev Chapter Step Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={() => handleJumpToStage(Math.max(0, activeStage - 1))}
+                disabled={activeStage === 0}
+                className="btn btn-glass"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '10px',
+                  fontSize: '0.75rem',
+                  opacity: activeStage === 0 ? 0.4 : 1,
+                  cursor: activeStage === 0 ? 'not-allowed' : 'pointer'
+                }}
+                title="فصل قبلی"
+              >
+                <ChevronRight size={15} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleJumpToStage(Math.min(stages.length - 1, activeStage + 1))}
+                disabled={activeStage === stages.length - 1}
+                className="btn btn-glass"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '10px',
+                  fontSize: '0.75rem',
+                  opacity: activeStage === stages.length - 1 ? 0.4 : 1,
+                  cursor: activeStage === stages.length - 1 ? 'not-allowed' : 'pointer'
+                }}
+                title="فصل بعدی"
+              >
+                <ChevronLeft size={15} />
+              </button>
+            </div>
+          </div>
+
+          {/* Chapter Scrubber Segmented Bar */}
+          <div 
+            style={{
+              display: 'flex',
+              gap: '6px',
+              background: 'rgba(0, 0, 0, 0.03)',
+              padding: '4px',
+              borderRadius: '14px',
+              border: '1px solid var(--border-glass)',
+              overflowX: 'auto',
+              position: 'relative'
+            }}
+          >
             {stages.map((st, idx) => {
               const Icon = st.icon;
               const isActive = activeStage === idx;
@@ -184,405 +360,336 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
                 <button
                   key={st.id || idx}
                   type="button"
-                  onClick={() => {
-                    setActiveStage(idx);
-                    setActiveHotspot(null);
-                  }}
-                  className={`btn ${isActive ? 'btn-primary' : 'btn-glass'}`}
+                  onClick={() => handleJumpToStage(idx)}
                   style={{
-                    padding: '9px 16px',
-                    borderRadius: '12px',
-                    fontSize: '0.825rem',
-                    fontWeight: isActive ? 700 : 500,
-                    whiteSpace: 'nowrap',
+                    flex: '1 1 0',
+                    minWidth: '120px',
+                    padding: '8px 12px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: isActive ? '#ffffff' : 'transparent',
+                    boxShadow: isActive ? '0 4px 14px rgba(0, 0, 0, 0.08)' : 'none',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontWeight: isActive ? 800 : 500,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    flexShrink: 0,
-                    transition: 'transform 140ms ease'
+                    justifyContent: 'center',
+                    gap: '6px',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 200ms ease'
                   }}
                 >
-                  <Icon size={15} color={isActive ? '#fff' : st.color} />
-                  <span>{st.title}</span>
-                  <span className="badge" style={{ 
-                    background: isActive ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.06)', 
-                    color: isActive ? '#fff' : 'var(--text-secondary)', 
-                    fontSize: '0.675rem',
-                    padding: '1px 6px'
-                  }}>
-                    {st.tag}
-                  </span>
+                  <Icon size={14} color={isActive ? st.color : 'currentColor'} />
+                  <span>{st.number}. {st.title.split(' ')[0]} {st.title.split(' ')[1] || ''}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Quick Interactive Toggles (Auto-Play & X-Ray Mode) */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-            {/* X-Ray Vision Mode */}
-            <button
-              type="button"
-              onClick={() => setIsXrayMode(!isXrayMode)}
-              className="btn btn-glass"
+          {/* Hairline Scroll Progress Bar */}
+          <div style={{ height: '3px', background: 'rgba(0,0,0,0.06)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
+            <div 
               style={{
-                padding: '8px 14px',
-                fontSize: '0.78rem',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                borderColor: isXrayMode ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                background: isXrayMode ? 'hsla(var(--accent-cyan), 0.15)' : 'transparent',
-                color: isXrayMode ? 'hsl(var(--accent-cyan))' : 'var(--text-secondary)'
+                height: '100%',
+                width: `${Math.round(scrollProgress * 100)}%`,
+                background: `linear-gradient(90deg, hsl(var(--accent-cyan)), ${currentStage.color})`,
+                transition: 'width 80ms ease-out'
               }}
-              title="مشاهده شبیه‌سازی ساختار داخلی و مدار خنک‌کننده"
-            >
-              <Flame size={14} color={isXrayMode ? 'hsl(var(--accent-cyan))' : 'currentColor'} />
-              <span>{isXrayMode ? 'نمای اشعه ایکس: فعال' : 'نمای اشعه ایکس'}</span>
-            </button>
-
-            {/* Auto Play Presentation */}
-            <button
-              type="button"
-              onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-              className="btn btn-glass"
-              style={{
-                padding: '8px 12px',
-                fontSize: '0.78rem',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: isAutoPlaying ? 'hsl(var(--accent-purple))' : 'var(--text-secondary)'
-              }}
-              title={isAutoPlaying ? 'توقف نمایش خودکار' : 'پخش خودکار مراحل اپل'}
-            >
-              {isAutoPlaying ? <Pause size={14} /> : <Play size={14} />}
-              <span>{isAutoPlaying ? 'توقف' : 'پخش خودکار'}</span>
-            </button>
+            />
           </div>
         </div>
 
-        {/* 2-Column Grid: Left Visual Card + Right Interactive Inspector */}
-        <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '36px', alignItems: 'center' }}>
-          
-          {/* Visual Showcase with 3D Tilt & Hotspots */}
-          <div 
+        {/* Center Stage: 2-Column Responsive Grid */}
+        <div 
+          style={{
+            flex: '1 1 auto',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
+            gap: 'clamp(20px, 3.5vw, 48px)',
+            alignItems: 'center',
+            margin: '12px 0',
+            overflow: 'hidden'
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Left Column: Visual Hardware Showcase with 3D Perspective */}
+          <div
             ref={cardRef}
             onPointerMove={handlePointerMove}
             onPointerEnter={() => setIsHovered(true)}
             onPointerLeave={handlePointerLeave}
             style={{
               position: 'relative',
-              borderRadius: '20px',
-              padding: '28px 20px',
-              background: isXrayMode
-                ? 'radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.22) 0%, rgba(15, 23, 42, 0.95) 80%)'
-                : 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 80%)',
-              border: isXrayMode ? '1px solid hsl(var(--accent-cyan))' : '1px solid var(--border-glass)',
-              transform: isHovered 
-                ? `perspective(1000px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale3d(1.02, 1.02, 1.02)`
-                : 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)',
-              transition: isHovered ? 'transform 80ms ease-out' : 'transform 400ms var(--ease-out)',
-              cursor: 'crosshair',
-              overflow: 'hidden'
+              borderRadius: '24px',
+              padding: 'clamp(20px, 4vw, 40px)',
+              background: `radial-gradient(ellipse at 50% 50%, ${activeTransform.glow} 0%, rgba(248, 250, 252, 0) 75%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '280px',
+              maxHeight: '440px',
+              userSelect: 'none'
             }}
           >
-            {/* Ambient Shimmer Line */}
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: '2px',
-              background: `linear-gradient(90deg, transparent, ${currentStage.color}, transparent)`
-            }} />
-
-            {/* Laptop Image (Normal or X-Ray internal filter) */}
-            <div style={{ position: 'relative', width: '100%', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img 
-                src={activeImg} 
+            {/* The Hardware Product Image */}
+            <div
+              style={{
+                position: 'relative',
+                width: '100%',
+                maxWidth: '460px',
+                transform: isHovered
+                  ? `perspective(1000px) rotateX(${activeTransform.rotateX + tilt.x}deg) rotateY(${activeTransform.rotateY + tilt.y}deg) translateY(${activeTransform.translateY}px) scale3d(${activeTransform.scale * 1.02}, ${activeTransform.scale * 1.02}, 1.02)`
+                  : `perspective(1000px) rotateX(${activeTransform.rotateX}deg) rotateY(${activeTransform.rotateY}deg) translateY(${activeTransform.translateY}px) scale3d(${activeTransform.scale}, ${activeTransform.scale}, 1)`,
+                transition: isHovered ? 'transform 90ms ease-out' : 'transform 550ms cubic-bezier(0.16, 1, 0.3, 1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <img
+                src={activeImg}
                 alt={product.name}
                 style={{
                   width: '100%',
-                  maxHeight: '340px',
-                  aspectRatio: '16/10',
+                  maxHeight: '360px',
                   objectFit: 'contain',
                   display: 'block',
-                  filter: isXrayMode 
-                    ? 'invert(0.9) hue-rotate(185deg) contrast(1.4) drop-shadow(0 0 25px rgba(56, 189, 248, 0.8))'
-                    : 'drop-shadow(0 20px 30px rgba(0,0,0,0.14))',
-                  transition: 'filter 350ms ease, opacity 240ms ease-out'
+                  filter: 'drop-shadow(0 25px 35px rgba(0, 0, 0, 0.14))',
+                  transition: 'opacity 250ms ease-out'
                 }}
               />
-
-              {/* X-Ray Heat Dissipation Overlay Graphics */}
-              {isXrayMode && (
-                <div 
-                  className="animate-fade-in"
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div style={{
-                    width: '60%',
-                    height: '35%',
-                    border: '1.5px dashed hsl(var(--accent-cyan))',
-                    borderRadius: '12px',
-                    background: 'radial-gradient(ellipse at center, rgba(239, 68, 68, 0.3) 0%, rgba(56, 189, 248, 0.1) 70%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxShadow: '0 0 30px rgba(56, 189, 248, 0.5)'
-                  }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#fff', letterSpacing: '1px' }}>
-                      ⚡ VAPOR CHAMBER COOLING MATRIX
-                    </span>
-                    <span style={{ fontSize: '0.65rem', color: 'hsl(var(--accent-cyan))', marginTop: '2px' }}>
-                      دمای چیپ: {currentWorkload.temp} | چرخش فن: {currentWorkload.fanRpm}
-                    </span>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Interactive Hotspot Dots */}
-            {hotspots.map((h) => {
-              const isSelected = activeHotspot === h.id;
+            {/* Pristine Floating Feature Callouts */}
+            {currentStage.callouts && currentStage.callouts.map((callout, cIdx) => {
+              const isTop = callout.align.includes('top');
+              const isRight = callout.align.includes('right');
               return (
-                <button
-                  key={h.id}
-                  type="button"
-                  onClick={() => setActiveHotspot(isSelected ? null : h.id)}
+                <div
+                  key={cIdx}
+                  className="apple-showcase-callout animate-fade-in"
                   style={{
                     position: 'absolute',
-                    top: h.top,
-                    left: h.left,
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    background: isSelected ? 'hsl(var(--accent-cyan))' : 'rgba(255, 255, 255, 0.92)',
-                    border: '2px solid hsl(var(--accent-cyan))',
-                    boxShadow: '0 0 16px rgba(56, 189, 248, 0.75)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transform: 'translate(-50%, -50%)',
+                    top: isTop ? '12%' : 'auto',
+                    bottom: !isTop ? '12%' : 'auto',
+                    right: isRight ? '4%' : 'auto',
+                    left: !isRight ? '4%' : 'auto',
+                    maxWidth: '240px',
+                    padding: '10px 14px',
+                    borderRadius: '14px',
+                    background: 'rgba(255, 255, 255, 0.94)',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
                     zIndex: 4,
-                    transition: 'transform 180ms ease'
+                    pointerEvents: 'none'
                   }}
-                  title={h.title}
                 >
-                  {/* Radar Ripple Animation Ring */}
-                  <span style={{
-                    position: 'absolute',
-                    inset: '-4px',
-                    borderRadius: '50%',
-                    border: '1.5px solid hsl(var(--accent-cyan))',
-                    opacity: 0.7,
-                    animation: 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite'
-                  }} />
-                  <span style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    background: isSelected ? '#fff' : 'hsl(var(--accent-cyan))' 
-                  }} />
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+                    <span 
+                      style={{ 
+                        width: '7px', 
+                        height: '7px', 
+                        borderRadius: '50%', 
+                        background: currentStage.color,
+                        boxShadow: `0 0 8px ${currentStage.color}` 
+                      }} 
+                    />
+                    <strong style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                      {callout.title}
+                    </strong>
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                    {callout.desc}
+                  </div>
+                </div>
               );
             })}
-
-            {/* Active Hotspot Bubble Pill */}
-            {activeHotspot && (() => {
-              const h = hotspots.find(item => item.id === activeHotspot);
-              if (!h) return null;
-              return (
-                <div 
-                  className="glass-panel animate-fade-in"
-                  style={{
-                    position: 'absolute',
-                    bottom: '16px',
-                    left: '16px',
-                    right: '16px',
-                    padding: '14px 18px',
-                    borderRadius: '16px',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    backdropFilter: 'blur(16px)',
-                    border: '1.5px solid hsl(var(--accent-cyan))',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
-                    zIndex: 6
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Radio size={14} color="hsl(var(--accent-cyan))" />
-                      <div style={{ fontWeight: 800, fontSize: '0.875rem', color: 'hsl(var(--accent-cyan))' }}>
-                        {h.title}
-                      </div>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => setActiveHotspot(null)} 
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '2px 6px' }}
-                    >
-                      ✕ بستن
-                    </button>
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', marginTop: '6px', lineHeight: 1.5 }}>
-                    {h.desc}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Mode Indicator Badges */}
-            <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '6px' }}>
-              <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: '0.7rem' }}>
-                نمای ۳D تعاملی
-              </span>
-              {isXrayMode && (
-                <span className="badge" style={{ background: 'hsl(var(--accent-cyan))', color: '#fff', fontSize: '0.7rem' }}>
-                  X-Ray Circuit
-                </span>
-              )}
-            </div>
           </div>
 
-          {/* Right Inspector Details */}
-          <div>
+          {/* Right Column: Pristine Marketing Storytelling & Specs */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            {/* Stage Badge & Title */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
-                بخش {activeStage + 1} از {stages.length}
-              </span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              <span 
+                className="badge" 
+                style={{ 
+                  background: `hsla(var(--accent-cyan), 0.12)`, 
+                  color: currentStage.color,
+                  fontSize: '0.78rem',
+                  fontWeight: 800
+                }}
+              >
                 {currentStage.tag}
+              </span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                استاندارد کلاس پرچمدار
               </span>
             </div>
 
-            <h3 style={{ fontSize: '1.45rem', fontWeight: 850, margin: '0 0 10px', letterSpacing: '-0.4px' }}>
+            <h3 
+              style={{ 
+                fontSize: 'clamp(1.35rem, 2.6vw, 1.85rem)', 
+                fontWeight: 900, 
+                lineHeight: 1.3, 
+                margin: '0 0 10px',
+                letterSpacing: '-0.3px',
+                color: 'var(--text-primary)'
+              }}
+            >
               {currentStage.title}
             </h3>
 
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.7', marginBottom: '20px' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.7', margin: '0 0 20px' }}>
               {currentStage.description}
             </p>
 
-            {/* Hardware Specs Micro Bento */}
-            <div className="grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '24px' }}>
-              <div className="glass-panel" style={{ padding: '12px 14px', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  پردازنده سیلیکونی
+            {/* Pristine Hardware Bento Specs Grid */}
+            <div 
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '10px',
+                marginBottom: '22px'
+              }}
+            >
+              {/* CPU Box */}
+              <div 
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  border: '1px solid rgba(226, 232, 240, 0.8)'
+                }}
+              >
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Cpu size={13} color="hsl(var(--accent-cyan))" />
+                  <span>پردازنده سیلیکونی</span>
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700, direction: 'ltr', textAlign: 'left' }}>
-                  {product.shortSpecs?.cpu || 'Core i7'}
+                <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 800, direction: 'ltr', textAlign: 'left', color: 'var(--text-primary)' }}>
+                  {product.shortSpecs?.cpu || 'Core i7 / Ultra 7'}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '12px 14px', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  گرافیک رندرینگ
+              {/* GPU Box */}
+              <div 
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  border: '1px solid rgba(226, 232, 240, 0.8)'
+                }}
+              >
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Zap size={13} color="hsl(var(--accent-green))" />
+                  <span>پردازشگر گرافیکی</span>
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700, direction: 'ltr', textAlign: 'left' }}>
+                <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 800, direction: 'ltr', textAlign: 'left', color: 'var(--text-primary)' }}>
                   {product.shortSpecs?.gpu || 'NVIDIA RTX'}
                 </div>
               </div>
 
-              <div className="glass-panel" style={{ padding: '12px 14px', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  حافظه و ذخیره‌سازی
+              {/* Memory / Storage Box */}
+              <div 
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  border: '1px solid rgba(226, 232, 240, 0.8)'
+                }}
+              >
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <HardDrive size={13} color="#ea580c" />
+                  <span>حافظه و ذخیره‌سازی</span>
                 </div>
-                <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700, direction: 'ltr', textAlign: 'left' }}>
-                  {product.shortSpecs?.ram} | {product.shortSpecs?.storage}
-                </div>
-              </div>
-
-              <div className="glass-panel" style={{ padding: '12px 14px', borderRadius: '12px' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  متریال شاسی
-                </div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-                  {product.shortSpecs?.chassis || 'آلیاژ فلزی'}
-                </div>
-              </div>
-            </div>
-
-            {/* Live Silicon & Thermal Load Simulator */}
-            <div className="glass-panel" style={{ padding: '16px 20px', borderRadius: '16px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border-glass)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.825rem', fontWeight: 700 }}>
-                  <Activity size={15} color="hsl(var(--accent-purple))" />
-                  <span>شبیه‌ساز بار پردازشی و دمای کاری:</span>
-                </div>
-                <span className="badge" style={{ background: 'hsla(var(--accent-purple), 0.15)', color: 'hsl(var(--accent-purple))', fontSize: '0.72rem' }}>
-                  {currentWorkload.label}
-                </span>
-              </div>
-
-              {/* Slider Input */}
-              <input 
-                type="range"
-                min="0"
-                max="3"
-                step="1"
-                value={workloadLevel}
-                onChange={(e) => setWorkloadLevel(Number(e.target.value))}
-                style={{ width: '100%', marginBottom: '12px', accentColor: 'hsl(var(--accent-purple))', cursor: 'pointer' }}
-                aria-label="شبیه‌ساز بار پردازشی"
-              />
-
-              {/* Real-time Simulated Gauges */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', fontSize: '0.78rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Thermometer size={14} color="#ea580c" />
-                  <span>دما:</span>
-                  <strong className="font-tech" style={{ color: '#ea580c' }}>{currentWorkload.temp}</strong>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Wind size={14} color="hsl(var(--accent-cyan))" />
-                  <span>فن:</span>
-                  <strong className="font-tech" style={{ color: 'hsl(var(--accent-cyan))' }}>{currentWorkload.fanRpm}</strong>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Zap size={14} color="hsl(var(--accent-green))" />
-                  <span>توان:</span>
-                  <strong className="font-tech" style={{ color: 'hsl(var(--accent-green))' }}>{currentWorkload.power}</strong>
+                <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 800, direction: 'ltr', textAlign: 'left', color: 'var(--text-primary)' }}>
+                  {product.shortSpecs?.ram || '16GB'} | {product.shortSpecs?.storage || '512GB SSD'}
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                {currentWorkload.status}
+              {/* Chassis / Material Box */}
+              <div 
+                style={{
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  border: '1px solid rgba(226, 232, 240, 0.8)'
+                }}
+              >
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Layers size={13} color="hsl(var(--accent-purple))" />
+                  <span>متریال و شاسی</span>
+                </div>
+                <div style={{ fontSize: '0.825rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {product.shortSpecs?.chassis || 'آلیاژ منیزیم و آلومینیوم'}
+                </div>
               </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div style={{ display: 'flex', gap: '12px', marginTop: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Direct Action CTAs */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => onAddToCart && onAddToCart(product)}
-                style={{ flexGrow: 1, padding: '12px 20px', fontSize: '0.925rem' }}
+                style={{
+                  flexGrow: 1,
+                  padding: '12px 20px',
+                  fontSize: '0.925rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
               >
-                خرید لپ‌تاپ ({formatPrice(product.basePrice)})
+                <ShoppingBag size={17} />
+                <span>سفارش لپ‌تاپ ({formatPrice(product.basePrice)})</span>
               </button>
 
               <button
                 type="button"
                 className="btn btn-glass"
                 onClick={() => onSelectProduct && onSelectProduct(product.slug)}
-                style={{ padding: '12px 18px', fontSize: '0.875rem' }}
+                style={{
+                  padding: '12px 18px',
+                  fontSize: '0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
               >
-                مشاهده صفحه کامل <ChevronRight size={15} />
+                <span>مشاهده مشخصات کامل</span>
+                <ChevronLeft size={15} />
               </button>
             </div>
           </div>
         </div>
+
+        {/* Bottom Helper Bar: Scroll Indicator Tip */}
+        <div 
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: '10px',
+            borderTop: '1px solid var(--border-glass)',
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <ArrowDown size={13} color="hsl(var(--accent-cyan))" />
+            <span>با اسکرول کردن به پایین، فصل‌های بعدی مهندسی پرچمدار نمایش داده می‌شوند.</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <CheckCircle2 size={13} color="hsl(var(--accent-green))" />
+            <span>تضمین اصالت ۱۰۰٪ فابریک تک‌تینک</span>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

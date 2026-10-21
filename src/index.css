@@ -1293,4 +1293,34 @@ details[open] summary ~ * {
   }
 }
 
+/* =========================================================
+   Apple Flagship Showcase Responsive & Motion Styles
+   ========================================================= */
+.apple-showcase-track {
+  contain: layout style;
+}
+
+.apple-showcase-sticky {
+  contain: layout style;
+}
+
+@media (max-width: 860px) {
+  .apple-showcase-sticky {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    position: relative !important;
+    top: 0 !important;
+  }
+  .apple-showcase-track {
+    min-height: auto !important;
+  }
+  .apple-showcase-callout {
+    position: static !important;
+    max-width: 100% !important;
+    margin-top: 8px !important;
+  }
+}
+
+
 

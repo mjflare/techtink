@@ -1578,7 +1578,7 @@ export default function ProductEditorModal({
                         استودیو پیکربندی شوکیس تعاملی اپل (Flagship Showcase Builder)
                       </h4>
                       <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                        فعال‌سازی اسکرول تعاملی، نقاط لمسی ۳ بعدی و شبیه‌ساز حرارتی سیلیکون برای این محصول
+                        فعال‌سازی شوکیس تعاملی اسکرول‌محور با استانداردهای بازاریابی پرچمدار اپل
                       </p>
                     </div>
 
