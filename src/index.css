@@ -1151,7 +1151,7 @@ details[open] summary ~ * {
   gap: 16px;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 859px) {
   .apple-sticky-buy-bar {
     top: auto;
     bottom: 0;
@@ -1360,9 +1360,107 @@ details[open] summary ~ * {
   .apple-showcase-callout {
     position: static !important;
     max-width: 100% !important;
+    width: 100% !important;
     margin-top: 8px !important;
     animation: none !important;
+    box-sizing: border-box;
   }
+}
+
+/* =========================================================
+   Product Page Dual-Mode Responsive Architecture
+   (Desktop Horizontal View vs Mobile Vertical View)
+   ========================================================= */
+@media (min-width: 860px) {
+  .product-mobile-layout {
+    display: none !important;
+  }
+  .product-desktop-layout {
+    display: block !important;
+  }
+  .product-mobile-only {
+    display: none !important;
+  }
+  .product-desktop-only {
+    display: block !important;
+  }
+}
+
+@media (max-width: 859px) {
+  .product-desktop-layout {
+    display: none !important;
+  }
+  .product-mobile-layout {
+    display: block !important;
+  }
+  .product-desktop-only {
+    display: none !important;
+  }
+  .product-mobile-only {
+    display: block !important;
+  }
+}
+
+.product-mobile-gallery-frame {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 290px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, rgba(56, 189, 248, 0.06) 0%, rgba(248, 250, 252, 0.95) 75%);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  padding: 12px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+}
+
+.product-mobile-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.product-mobile-spec-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.product-mobile-config-pill {
+  flex: 1 1 calc(50% - 6px);
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  text-align: right;
+  transition: all 180ms ease;
+  user-select: none;
+}
+.product-mobile-config-pill:active {
+  transform: scale(0.97);
+}
+.product-mobile-config-pill.is-active {
+  border-color: hsl(var(--accent-cyan));
+  background: hsla(var(--accent-cyan), 0.08);
+  box-shadow: 0 0 0 1px hsl(var(--accent-cyan)) inset;
+}
+
+.product-mobile-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 24px;
 }
 
 /* =========================================================

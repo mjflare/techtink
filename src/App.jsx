@@ -228,10 +228,20 @@ function App() {
     });
   };
 
+  // Disable automatic browser scroll restoration for crisp SPA transitions
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
+
   const handleSelectProduct = (slug) => {
     setSelectedProductSlug(slug);
     setActiveTab('product');
     window.history.pushState(null, '', `/product/${slug}`);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   };
 
   // Safety guard: Administrators should never stay on customer account tab
@@ -259,7 +269,9 @@ function App() {
     } else {
       window.history.pushState(null, '', `/${targetTab}`);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   };
 
   const handleRequireAuthForCheckout = () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { 
   Star, CheckCircle, AlertTriangle, ShieldCheck, Truck, RotateCcw, 
   Cpu, HardDrive, Monitor, ArrowLeftRight, Plus, ShoppingCart, MessageSquare, 
@@ -279,8 +279,14 @@ export default function ProductPage({
     setLoadingBlogReview(false);
   };
 
+  // Force instant top scroll on slug change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     setLoading(true);
     setError(null);
 
@@ -298,6 +304,13 @@ export default function ProductPage({
         setQuantity(1);
         setActiveImage(0);
         setLoading(false);
+
+        // Instant scroll lock to top when new product data arrives
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        });
 
         // Fetch drivers for this product
         setDriversLoading(true);
@@ -329,6 +342,15 @@ export default function ProductPage({
       .then(setComments)
       .catch(() => {});
   }, [productSlug]);
+
+  // Pre-paint scroll reset to prevent any mobile scroll anchoring jump
+  useLayoutEffect(() => {
+    if (!loading && product) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [productSlug, loading]);
 
   // Dynamic Google Product JSON-LD Schema for Rich Snippets
   useEffect(() => {
@@ -500,372 +522,677 @@ export default function ProductPage({
 
       <div className="container" style={{ paddingTop: '24px', paddingBottom: '80px' }}>
       
-      {/* Embedded mobile styles for product page */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media (max-width: 768px) {
-          .product-hero-grid {
-            grid-template-columns: 1fr !important;
-            gap: 24px !important;
-            margin-bottom: 32px !important;
-          }
-          .product-main-img {
-            max-height: 290px !important;
-            aspect-ratio: 16/10 !important;
-          }
-          .product-cta-bar {
-            flex-direction: column !important;
-            align-items: stretch !important;
-          }
-          .product-cta-bar .btn-primary {
-            width: 100% !important;
-            padding: 14px 20px !important;
-            font-size: 1rem !important;
-          }
-          .product-specs-table td {
-            padding: 10px 12px !important;
-            font-size: 0.85rem !important;
-          }
-        }
-      `}} />
+      {/* =========================================================
+          1. DESKTOP / HORIZONTAL VIEW (>= 860px)
+          Spacious two-column layout tailored for large screens
+          ========================================================= */}
+      <div className="product-desktop-layout animate-fade-in">
+        {/* Breadcrumb & Back */}
+        <div className="flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+          <div className="flex" style={{ alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+            <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} onClick={onBack}>فروشگاه</span>
+            <span>/</span>
+            <span>{product.category}</span>
+            <span>/</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{product.name}</span>
+          </div>
 
-      {/* Breadcrumb & Back */}
-      <div className="flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div className="flex" style={{ alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-          <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} onClick={onBack}>فروشگاه</span>
-          <span>/</span>
-          <span>{product.category}</span>
-          <span>/</span>
-          <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{product.name}</span>
+          <button className="btn btn-glass" style={{ padding: '6px 14px', fontSize: '0.8125rem' }} onClick={onBack}>
+            <ArrowRight size={16} /> بازگشت به لیست
+          </button>
         </div>
 
-        <button className="btn btn-glass" style={{ padding: '6px 14px', fontSize: '0.8125rem' }} onClick={onBack}>
-          <ArrowRight size={16} /> بازگشت به لیست
-        </button>
-      </div>
+        {/* Main Product Hero Grid */}
+        <div className="grid product-hero-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '36px', alignItems: 'start', marginBottom: '40px' }}>
+          
+          {/* Right column: Gallery */}
+          <div>
+            <div className="glass-card product-gallery-frame" style={{ padding: '16px', overflow: 'hidden', position: 'relative', marginBottom: '14px', width: '100%', minHeight: '320px', maxHeight: '440px', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img 
+                src={images[activeImage] || product.image} 
+                alt={product.name} 
+                className="product-main-img"
+                onError={handleImageError}
+                style={{ width: '100%', height: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '12px', display: 'block', filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.14))', transition: 'transform 260ms var(--ease-out)' }}
+              />
+              {product.badge && (
+                <span className="badge badge-glow" style={{ position: 'absolute', top: '20px', right: '20px' }}>
+                  {product.badge}
+                </span>
+              )}
+              <div style={{ position: 'absolute', bottom: '24px', right: '24px', display: 'flex', gap: '8px' }}>
+                <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
+                  {cpuBadge}
+                </span>
+                <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
+                  {gpuBadge}
+                </span>
+              </div>
+            </div>
 
-      {/* Main Product Hero Grid */}
-      <div className="grid product-hero-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '36px', alignItems: 'start', marginBottom: '40px' }}>
-        
-        {/* Right column: Gallery */}
-        <div>
-          <div className="glass-card product-gallery-frame" style={{ padding: '16px', overflow: 'hidden', position: 'relative', marginBottom: '14px', width: '100%', minHeight: '320px', maxHeight: '440px', aspectRatio: '16/10', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <img 
-              src={images[activeImage] || product.image} 
-              alt={product.name} 
-              className="product-main-img"
-              onError={handleImageError}
-              style={{ width: '100%', height: '100%', maxHeight: '420px', objectFit: 'contain', borderRadius: '12px', display: 'block', filter: 'drop-shadow(0 20px 35px rgba(0,0,0,0.14))', transition: 'transform 260ms var(--ease-out)' }}
-            />
-            {product.badge && (
-              <span className="badge badge-glow" style={{ position: 'absolute', top: '20px', right: '20px' }}>
-                {product.badge}
-              </span>
+            {/* Angle / Perspective Selector Pills (Apple Style) */}
+            {images.length > 1 && (
+              <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '12px' }}>
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(idx)}
+                    className={`angle-pill ${activeImage === idx ? 'active' : ''}`}
+                    type="button"
+                  >
+                    <Eye size={13} />
+                    {angleLabels[idx] || `زاویه ${idx + 1}`}
+                  </button>
+                ))}
+              </div>
             )}
-            <div style={{ position: 'absolute', bottom: '24px', right: '24px', display: 'flex', gap: '8px' }}>
-              <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
-                {cpuBadge}
-              </span>
-              <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
-                {gpuBadge}
-              </span>
+
+            {/* Thumbnails if multiple images */}
+            {images.length > 1 && (
+              <div className="flex" style={{ gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(idx)}
+                    style={{
+                      border: activeImage === idx ? '2px solid hsl(var(--accent-cyan))' : '1px solid var(--border-glass)',
+                      borderRadius: '8px',
+                      padding: '4px',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      width: '80px',
+                      height: '80px',
+                      flexShrink: 0,
+                      overflow: 'hidden'
+                    }}
+                  >
+                    <img src={img} alt="" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Trust Guarantees */}
+            <div className="glass-panel grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px', padding: '20px', marginTop: '24px' }}>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+                <ShieldCheck size={24} color="hsl(var(--accent-cyan))" />
+                <div style={{ fontSize: '0.8125rem' }}>
+                  <div style={{ fontWeight: 'bold' }}>ضمانت ۲ ساله رسمی</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>تک‌تینک سرویس</div>
+                </div>
+              </div>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+                <Truck size={24} color="hsl(var(--accent-green))" />
+                <div style={{ fontSize: '0.8125rem' }}>
+                  <div style={{ fontWeight: 'bold' }}>ارسال اکسپرس</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>بسته‌بندی ایمن و فوری</div>
+                </div>
+              </div>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+                <RotateCcw size={24} color="hsl(var(--accent-purple))" />
+                <div style={{ fontSize: '0.8125rem' }}>
+                  <div style={{ fontWeight: 'bold' }}>مهلت تست ۷ روزه</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>تضمین سلامت فنی</div>
+                </div>
+              </div>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
+                <CheckCircle size={24} color="hsl(var(--accent-cyan))" />
+                <div style={{ fontSize: '0.8125rem' }}>
+                  <div style={{ fontWeight: 'bold' }}>تضمین اصالت و سلامت</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>تست فنی کامل سخت‌افزار</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Angle / Perspective Selector Pills (Apple Style) */}
+          {/* Left column: Info, Configurator & Purchase */}
+          <div>
+            <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+              <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
+                {product.category}
+              </span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                {product.series}
+              </span>
+              {/* Grade Badge */}
+              <span className="badge badge-glow" style={{ 
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%)', 
+                color: 'hsl(var(--accent-green))',
+                borderColor: 'hsl(var(--accent-green))',
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <CheckCircle size={13} />
+                {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
+              </span>
+            </div>
+
+            {/* Two-Line Title Layout: Brand on top line, Model on line below */}
+            <div style={{ marginBottom: '12px', textAlign: 'left', direction: 'ltr' }}>
+              <div style={{ 
+                fontSize: '1rem', 
+                fontWeight: 800, 
+                letterSpacing: '0.12em', 
+                textTransform: 'uppercase', 
+                color: 'hsl(var(--accent-cyan))', 
+                fontFamily: 'var(--font-tech)',
+                marginBottom: '2px'
+              }}>
+                {product.brand || (product.name?.split(' ')[0] || '')}
+              </div>
+              <h1 style={{ 
+                fontSize: '2.4rem', 
+                fontWeight: 800, 
+                margin: 0, 
+                lineHeight: 1.25,
+                fontFamily: 'var(--font-tech)',
+                color: 'var(--text-primary)'
+              }}>
+                {product.model || (product.name?.replace(product.brand || '', '').trim() || product.name)}
+              </h1>
+            </div>
+
+            {/* Price Under Product Name */}
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
+              <div className="font-tech price-gradient-text" style={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1.2 }}>
+                {formatPrice(unitPrice)}
+              </div>
+              {product.oldPrice && product.oldPrice > product.basePrice && (
+                <span style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+                  {formatPrice(product.oldPrice)}
+                </span>
+              )}
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '20px' }}>
+              {product.tagline}
+            </p>
+
+            {/* Rating & Stock row */}
+            <div className="flex" style={{ alignItems: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+              <div className="flex font-tech" style={{ alignItems: 'center', gap: '6px' }}>
+                <Star size={18} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
+                <span style={{ fontWeight: 700 }}>{product.rating || '۵.۰'}</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+                  ({product.reviewsCount || comments.length} دیدگاه خریداران)
+                </span>
+              </div>
+
+              <div className="flex" style={{ alignItems: 'center', gap: '6px' }}>
+                {product.inStock ? (
+                  <>
+                    <CheckCircle size={18} color="hsl(var(--accent-green))" />
+                    <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 600, fontSize: '0.875rem' }}>
+                      موجود در انبار ({product.stock} عدد)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle size={18} color="hsl(var(--accent-red))" />
+                    <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 600, fontSize: '0.875rem' }}>
+                      ناموجود
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Key Hardware Highlights Deck */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+              gap: '10px',
+              marginBottom: '24px'
+            }}>
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.cpu}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <Zap size={13} color="hsl(var(--accent-green))" /> کارت گرافیک
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.gpu}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <HardDrive size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.ram}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <HardDrive size={13} color="hsl(var(--accent-cyan))" /> حافظه داخلی (SSD)
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.storage}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.display}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <Battery size={13} color="hsl(var(--accent-green))" /> ظرفیت باتری
+                </div>
+                <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.battery || '50Wh Battery'}
+                </div>
+              </div>
+
+              <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
+                  <Layers size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
+                </div>
+                <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {shortSpecs.chassis}
+                </div>
+              </div>
+            </div>
+
+            {/* Hardware Configurator */}
+            <div style={{ marginBottom: '32px' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '16px' }}>پیکربندی قطعات سفارشی:</h3>
+
+              {/* RAM Options */}
+              {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                    <Cpu size={16} color="hsl(var(--accent-cyan))" />
+                    <span>حافظه رم (RAM):</span>
+                  </div>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                    {product.upgrades.ram.map((opt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedRam(idx)}
+                        className="glass-card"
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          cursor: 'pointer',
+                          borderColor: selectedRam === idx ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                          background: selectedRam === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
+                        }}
+                      >
+                        <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
+                          {opt.name}
+                        </div>
+                        <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                          {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Storage Options */}
+              {product.upgrades?.storage && product.upgrades.storage.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                    <HardDrive size={16} color="hsl(var(--accent-purple))" />
+                    <span>حافظه ذخیره‌سازی (SSD):</span>
+                  </div>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                    {product.upgrades.storage.map((opt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedStorage(idx)}
+                        className="glass-card"
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          cursor: 'pointer',
+                          borderColor: selectedStorage === idx ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
+                          background: selectedStorage === idx ? 'hsla(var(--accent-purple), 0.08)' : 'var(--glass-bg)'
+                        }}
+                      >
+                        <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
+                          {opt.name}
+                        </div>
+                        <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                          {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Display Options */}
+              {product.upgrades?.display && product.upgrades.display.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                    <Monitor size={16} color="hsl(var(--accent-green))" />
+                    <span>صفحه نمایش:</span>
+                  </div>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                    {product.upgrades.display.map((opt, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedDisplay(idx)}
+                        className="glass-card"
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          cursor: 'pointer',
+                          borderColor: selectedDisplay === idx ? 'hsl(var(--accent-green))' : 'var(--border-glass)',
+                          background: selectedDisplay === idx ? 'hsla(var(--accent-green), 0.08)' : 'var(--glass-bg)'
+                        }}
+                      >
+                        <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
+                          {opt.name}
+                        </div>
+                        <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
+                          {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Quantity & CTA */}
+            <div className="flex product-cta-bar" style={{ gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div className="flex" style={{ alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.04)', padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-glass)', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
+                  aria-label="کاهش تعداد"
+                >
+                  -
+                </button>
+                <span className="font-code" style={{ fontWeight: 'bold', fontSize: '1.125rem', minWidth: '24px', textAlign: 'center' }}>
+                  {quantity}
+                </span>
+                <button 
+                  onClick={() => setQuantity(q => Math.min(product.stock || 10, q + 1))}
+                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
+                  aria-label="افزایش تعداد"
+                >
+                  +
+                </button>
+              </div>
+
+              <button 
+                className="btn btn-primary" 
+                style={{ flexGrow: 1, padding: '14px 24px', fontSize: '1.05rem' }}
+                onClick={handleAddToCart}
+                disabled={!product.inStock}
+              >
+                <ShoppingCart size={18} /> افزودن به سبد خرید ({formatPrice(totalPrice)})
+              </button>
+
+              <button 
+                className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
+                style={{ padding: '14px', flexShrink: 0 }}
+                onClick={() => onCompare(product.id)}
+                title={isComparing ? 'حذف از مقایسه' : 'افزودن به مقایسه'}
+              >
+                <ArrowLeftRight size={20} className="compare-icon" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* =========================================================
+          2. MOBILE / VERTICAL VIEW (< 860px)
+          Streamlined single-column hierarchy designed specifically
+          for mobile phones, one-thumb usability and vertical reading
+          ========================================================= */}
+      <div className="product-mobile-layout animate-fade-in">
+        {/* Mobile Breadcrumb & Back */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '8px' }}>
+          <button 
+            className="btn btn-glass" 
+            style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }} 
+            onClick={onBack}
+          >
+            <ArrowRight size={14} /> بازگشت به لیست
+          </button>
+
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>{product.category}</span>
+            <span>•</span>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{product.brand}</span>
+          </div>
+        </div>
+
+        {/* Mobile Header: Brand, Model, Badges */}
+        <div style={{ marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+            <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.75rem', fontWeight: 700 }}>
+              {product.brand || product.category}
+            </span>
+            <span className="badge badge-glow" style={{ 
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%)', 
+              color: 'hsl(var(--accent-green))',
+              borderColor: 'hsl(var(--accent-green))',
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <CheckCircle size={12} />
+              {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
+            </span>
+            {product.badge && (
+              <span className="badge badge-glow" style={{ fontSize: '0.72rem' }}>
+                {product.badge}
+              </span>
+            )}
+          </div>
+
+          <h1 style={{ 
+            fontSize: '1.65rem', 
+            fontWeight: 900, 
+            margin: '0 0 6px 0', 
+            lineHeight: 1.3,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.3px'
+          }}>
+            {product.model || product.name}
+          </h1>
+
+          {product.tagline && (
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0, lineHeight: 1.55 }}>
+              {product.tagline}
+            </p>
+          )}
+        </div>
+
+        {/* Mobile Visual Gallery Frame */}
+        <div style={{ marginBottom: '16px' }}>
+          <div className="product-mobile-gallery-frame">
+            <img 
+              src={images[activeImage] || product.image} 
+              alt={product.name} 
+              onError={handleImageError}
+              style={{ width: '100%', height: '100%', maxHeight: '270px', objectFit: 'contain', filter: 'drop-shadow(0 15px 25px rgba(0,0,0,0.12))' }}
+            />
+            {/* Overlay hardware badges */}
+            <div style={{ position: 'absolute', bottom: '12px', right: '12px', display: 'flex', gap: '6px' }}>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.7)', color: 'white', backdropFilter: 'blur(4px)', fontSize: '0.7rem' }}>
+                {cpuBadge}
+              </span>
+              <span className="badge" style={{ background: 'rgba(0,0,0,0.7)', color: 'white', backdropFilter: 'blur(4px)', fontSize: '0.7rem' }}>
+                {gpuBadge}
+              </span>
+            </div>
+            {/* Image counter indicator */}
+            {images.length > 1 && (
+              <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: 'white', fontSize: '0.68rem', padding: '2px 8px', borderRadius: '10px', backdropFilter: 'blur(4px)' }}>
+                {activeImage + 1} از {images.length}
+              </div>
+            )}
+          </div>
+
+          {/* Perspective Pills / Angle Selectors */}
           {images.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px', marginBottom: '12px' }}>
+            <div className="touch-scroll-x" style={{ gap: '6px', marginTop: '10px', paddingBottom: '4px' }}>
               {images.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
                   className={`angle-pill ${activeImage === idx ? 'active' : ''}`}
                   type="button"
+                  style={{ fontSize: '0.75rem', padding: '5px 10px', flexShrink: 0 }}
                 >
-                  <Eye size={13} />
+                  <Eye size={12} />
                   {angleLabels[idx] || `زاویه ${idx + 1}`}
                 </button>
               ))}
             </div>
           )}
-
-          {/* Thumbnails if multiple images */}
-          {images.length > 1 && (
-            <div className="flex" style={{ gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImage(idx)}
-                  style={{
-                    border: activeImage === idx ? '2px solid hsl(var(--accent-cyan))' : '1px solid var(--border-glass)',
-                    borderRadius: '8px',
-                    padding: '4px',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    width: '80px',
-                    height: '80px',
-                    flexShrink: 0,
-                    overflow: 'hidden'
-                  }}
-                >
-                  <img src={img} alt="" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Trust Guarantees */}
-          <div className="glass-panel grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '16px', padding: '20px', marginTop: '24px' }}>
-            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
-              <ShieldCheck size={24} color="hsl(var(--accent-cyan))" />
-              <div style={{ fontSize: '0.8125rem' }}>
-                <div style={{ fontWeight: 'bold' }}>ضمانت ۲ ساله رسمی</div>
-                <div style={{ color: 'var(--text-secondary)' }}>تک‌تینک سرویس</div>
-              </div>
-            </div>
-            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
-              <Truck size={24} color="hsl(var(--accent-green))" />
-              <div style={{ fontSize: '0.8125rem' }}>
-                <div style={{ fontWeight: 'bold' }}>ارسال اکسپرس</div>
-                <div style={{ color: 'var(--text-secondary)' }}>بسته‌بندی ایمن و فوری</div>
-              </div>
-            </div>
-            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
-              <RotateCcw size={24} color="hsl(var(--accent-purple))" />
-              <div style={{ fontSize: '0.8125rem' }}>
-                <div style={{ fontWeight: 'bold' }}>مهلت تست ۷ روزه</div>
-                <div style={{ color: 'var(--text-secondary)' }}>تضمین سلامت فنی</div>
-              </div>
-            </div>
-            <div className="flex" style={{ alignItems: 'center', gap: '12px' }}>
-              <CheckCircle size={24} color="hsl(var(--accent-cyan))" />
-              <div style={{ fontSize: '0.8125rem' }}>
-                <div style={{ fontWeight: 'bold' }}>تضمین اصالت و سلامت</div>
-                <div style={{ color: 'var(--text-secondary)' }}>تست فنی کامل سخت‌افزار</div>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Left column: Info, Configurator & Purchase */}
-        <div>
-          <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))' }}>
-              {product.category}
-            </span>
-            <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              {product.series}
-            </span>
-            {/* Grade Badge - ONLY on product selection page */}
-            <span className="badge badge-glow" style={{ 
-              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%)', 
-              color: 'hsl(var(--accent-green))',
-              borderColor: 'hsl(var(--accent-green))',
-              fontWeight: 700,
-              fontSize: '0.8125rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <CheckCircle size={13} />
-              {product.grade ? (product.grade.startsWith('گرید') ? product.grade : `گرید ${product.grade}`) : 'گرید A+ (در حد نو)'}
-            </span>
+        {/* Mobile Price & Status Card */}
+        <div className="glass-card" style={{ padding: '16px', marginBottom: '18px', borderRadius: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>قیمت نهایی قابل پرداخت:</span>
+            {product.inStock ? (
+              <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 700, fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle size={13} /> موجود در انبار ({product.stock} عدد)
+              </span>
+            ) : (
+              <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 700, fontSize: '0.78rem' }}>
+                ناموجود
+              </span>
+            )}
           </div>
 
-          {/* Two-Line Title Layout: Brand on top line, Model on line below */}
-          <div style={{ marginBottom: '12px', textAlign: 'left', direction: 'ltr' }}>
-            <div style={{ 
-              fontSize: '1rem', 
-              fontWeight: 800, 
-              letterSpacing: '0.12em', 
-              textTransform: 'uppercase', 
-              color: 'hsl(var(--accent-cyan))', 
-              fontFamily: 'var(--font-tech)',
-              marginBottom: '2px'
-            }}>
-              {product.brand || (product.name?.split(' ')[0] || '')}
-            </div>
-            <h1 style={{ 
-              fontSize: '2.4rem', 
-              fontWeight: 800, 
-              margin: 0, 
-              lineHeight: 1.25,
-              fontFamily: 'var(--font-tech)',
-              color: 'var(--text-primary)'
-            }}>
-              {product.model || (product.name?.replace(product.brand || '', '').trim() || product.name)}
-            </h1>
-          </div>
-
-          {/* Price Under Product Name */}
-          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'baseline', gap: '14px', flexWrap: 'wrap' }}>
-            <div className="font-tech price-gradient-text" style={{ fontWeight: 800, fontSize: '2rem', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
+            <div className="price-gradient-text font-tech" style={{ fontSize: '1.75rem', fontWeight: 900, lineHeight: 1.1 }}>
               {formatPrice(unitPrice)}
             </div>
-            {product.oldPrice && product.oldPrice > product.basePrice && (
-              <span style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
+            {product.oldPrice && product.oldPrice > unitPrice && (
+              <span style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', textDecoration: 'line-through' }}>
                 {formatPrice(product.oldPrice)}
               </span>
             )}
           </div>
 
-          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '20px' }}>
-            {product.tagline}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(226, 232, 240, 0.7)', fontSize: '0.78rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Star size={14} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
+              <strong className="font-tech">{product.rating || '۵.۰'}</strong>
+              <span style={{ color: 'var(--text-secondary)' }}>({product.reviewsCount || comments.length} دیدگاه)</span>
+            </div>
+            <span style={{ color: 'var(--text-secondary)' }}>تست فنی فابریک تک‌تینک</span>
+          </div>
+        </div>
 
-          {/* Rating & Stock row */}
-          <div className="flex" style={{ alignItems: 'center', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            <div className="flex font-tech" style={{ alignItems: 'center', gap: '6px' }}>
-              <Star size={18} color="hsl(var(--accent-cyan))" fill="hsl(var(--accent-cyan))" />
-              <span style={{ fontWeight: 700 }}>{product.rating || '۵.۰'}</span>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-                ({product.reviewsCount || comments.length} دیدگاه خریداران)
+        {/* Mobile Compact 2-Column Specs Deck */}
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>
+            مشخصات کلیدی سخت‌افزار:
+          </div>
+          <div className="product-mobile-specs-grid">
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Cpu size={12} color="hsl(var(--accent-cyan))" /> پردازنده
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {shortSpecs.cpu}
               </span>
             </div>
 
-            <div className="flex" style={{ alignItems: 'center', gap: '6px' }}>
-              {product.inStock ? (
-                <>
-                  <CheckCircle size={18} color="hsl(var(--accent-green))" />
-                  <span style={{ color: 'hsl(var(--accent-green))', fontWeight: 600, fontSize: '0.875rem' }}>
-                    موجود در انبار ({product.stock} عدد)
-                  </span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle size={18} color="hsl(var(--accent-red))" />
-                  <span style={{ color: 'hsl(var(--accent-red))', fontWeight: 600, fontSize: '0.875rem' }}>
-                    ناموجود
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Key Hardware Highlights Deck */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-            gap: '10px',
-            marginBottom: '24px'
-          }}>
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shortSpecs.cpu}
-              </div>
-            </div>
-
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <Zap size={13} color="hsl(var(--accent-green))" /> کارت گرافیک
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Zap size={12} color="hsl(var(--accent-green))" /> کارت گرافیک
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {shortSpecs.gpu}
-              </div>
+              </span>
             </div>
 
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <HardDrive size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <HardDrive size={12} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
                 {shortSpecs.ram}
-              </div>
+              </span>
             </div>
 
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <HardDrive size={13} color="hsl(var(--accent-cyan))" /> حافظه داخلی (SSD)
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <HardDrive size={12} color="hsl(var(--accent-cyan))" /> حافظه ذخیره (SSD)
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
                 {shortSpecs.storage}
-              </div>
+              </span>
             </div>
 
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Monitor size={12} color="hsl(var(--accent-cyan))" /> نمایشگر
+              </span>
+              <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {shortSpecs.display}
-              </div>
+              </span>
             </div>
 
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <Battery size={13} color="hsl(var(--accent-green))" /> ظرفیت باتری
-              </div>
-              <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {shortSpecs.battery || '50Wh Battery'}
-              </div>
-            </div>
-
-            <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                <Layers size={13} color="hsl(var(--accent-green))" /> جنس بدنه و شاسی
-              </div>
-              <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div className="product-mobile-spec-item">
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Layers size={12} color="hsl(var(--accent-green))" /> شاسی و متریال
+              </span>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {shortSpecs.chassis}
-              </div>
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Price Box */}
-          <div className="glass-card" style={{ padding: '24px', marginBottom: '28px' }}>
-            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '4px' }}>
-                  قیمت نهایی قابل پرداخت:
-                </div>
-                {product.oldPrice && product.oldPrice > unitPrice && (
-                  <div className="font-tech" style={{ textDecoration: 'line-through', color: 'var(--text-secondary)', fontSize: '1rem' }}>
-                    {formatPrice(product.oldPrice)}
-                  </div>
-                )}
-                <div className="price-gradient-text font-tech" style={{ fontSize: '2rem', fontWeight: 800 }}>
-                  {formatPrice(unitPrice)}
-                </div>
-              </div>
-
-              {product.oldPrice && product.oldPrice > unitPrice && (
-                <span className="badge" style={{ background: 'hsl(var(--accent-red))', color: 'white', padding: '6px 12px', fontSize: '0.875rem' }}>
-                  تخفیف ویژه
-                </span>
-              )}
+        {/* Mobile Hardware Configurator */}
+        {(product.upgrades?.ram?.length > 0 || product.upgrades?.storage?.length > 0 || product.upgrades?.display?.length > 0) && (
+          <div style={{ marginBottom: '22px' }}>
+            <div style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '12px' }}>
+              پیکربندی قطعات سفارشی:
             </div>
-          </div>
-
-          {/* Hardware Configurator */}
-          <div style={{ marginBottom: '32px' }}>
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '16px' }}>پیکربندی قطعات سفارشی:</h3>
 
             {/* RAM Options */}
             {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                  <Cpu size={16} color="hsl(var(--accent-cyan))" />
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Cpu size={14} color="hsl(var(--accent-cyan))" />
                   <span>حافظه رم (RAM):</span>
                 </div>
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {product.upgrades.ram.map((opt, idx) => (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => setSelectedRam(idx)}
-                      className="glass-card"
-                      style={{
-                        padding: '12px',
-                        textAlign: 'right',
-                        cursor: 'pointer',
-                        borderColor: selectedRam === idx ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                        background: selectedRam === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
-                      }}
+                      className={`product-mobile-config-pill ${selectedRam === idx ? 'is-active' : ''}`}
                     >
-                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
-                        {opt.name}
-                      </div>
-                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
+                      <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -876,29 +1203,21 @@ export default function ProductPage({
 
             {/* Storage Options */}
             {product.upgrades?.storage && product.upgrades.storage.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                  <HardDrive size={16} color="hsl(var(--accent-purple))" />
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <HardDrive size={14} color="hsl(var(--accent-purple))" />
                   <span>حافظه ذخیره‌سازی (SSD):</span>
                 </div>
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {product.upgrades.storage.map((opt, idx) => (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => setSelectedStorage(idx)}
-                      className="glass-card"
-                      style={{
-                        padding: '12px',
-                        textAlign: 'right',
-                        cursor: 'pointer',
-                        borderColor: selectedStorage === idx ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
-                        background: selectedStorage === idx ? 'hsla(var(--accent-purple), 0.08)' : 'var(--glass-bg)'
-                      }}
+                      className={`product-mobile-config-pill ${selectedStorage === idx ? 'is-active' : ''}`}
                     >
-                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
-                        {opt.name}
-                      </div>
-                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
+                      <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -909,29 +1228,21 @@ export default function ProductPage({
 
             {/* Display Options */}
             {product.upgrades?.display && product.upgrades.display.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                  <Monitor size={16} color="hsl(var(--accent-green))" />
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Monitor size={14} color="hsl(var(--accent-green))" />
                   <span>صفحه نمایش:</span>
                 </div>
-                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {product.upgrades.display.map((opt, idx) => (
                     <button
                       key={idx}
+                      type="button"
                       onClick={() => setSelectedDisplay(idx)}
-                      className="glass-card"
-                      style={{
-                        padding: '12px',
-                        textAlign: 'right',
-                        cursor: 'pointer',
-                        borderColor: selectedDisplay === idx ? 'hsl(var(--accent-green))' : 'var(--border-glass)',
-                        background: selectedDisplay === idx ? 'hsla(var(--accent-green), 0.08)' : 'var(--glass-bg)'
-                      }}
+                      className={`product-mobile-config-pill ${selectedDisplay === idx ? 'is-active' : ''}`}
                     >
-                      <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
-                        {opt.name}
-                      </div>
-                      <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
+                      <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
+                      <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-green))' }}>
                         {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                       </div>
                     </button>
@@ -940,46 +1251,82 @@ export default function ProductPage({
               </div>
             )}
           </div>
+        )}
 
-          {/* Quantity & CTA */}
-          <div className="flex product-cta-bar" style={{ gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ alignItems: 'center', gap: '12px', background: 'rgba(0,0,0,0.04)', padding: '8px 16px', borderRadius: '12px', border: '1px solid var(--border-glass)', justifyContent: 'center' }}>
-              <button 
-                onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
-                aria-label="کاهش تعداد"
-              >
-                -
-              </button>
-              <span className="font-code" style={{ fontWeight: 'bold', fontSize: '1.125rem', minWidth: '24px', textAlign: 'center' }}>
-                {quantity}
-              </span>
-              <button 
-                onClick={() => setQuantity(q => Math.min(product.stock || 10, q + 1))}
-                style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--text-primary)', padding: '4px 8px' }}
-                aria-label="افزایش تعداد"
-              >
-                +
-              </button>
+        {/* Mobile Primary Actions Deck */}
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.04)', padding: '6px 12px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+            <button 
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '2px 6px' }}
+              aria-label="کاهش تعداد"
+            >
+              -
+            </button>
+            <span className="font-code" style={{ fontWeight: 'bold', fontSize: '1rem', minWidth: '20px', textAlign: 'center' }}>
+              {quantity}
+            </span>
+            <button 
+              onClick={() => setQuantity(q => Math.min(product.stock || 10, q + 1))}
+              style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '2px 6px' }}
+              aria-label="افزایش تعداد"
+            >
+              +
+            </button>
+          </div>
+
+          <button 
+            className="btn btn-primary" 
+            style={{ flexGrow: 1, padding: '13px 18px', fontSize: '0.95rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            onClick={handleAddToCart}
+            disabled={!product.inStock}
+          >
+            <ShoppingCart size={17} />
+            <span>افزودن به سبد ({formatPrice(totalPrice)})</span>
+          </button>
+
+          <button 
+            className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
+            style={{ padding: '13px', flexShrink: 0 }}
+            onClick={() => onCompare(product.id)}
+            title={isComparing ? 'حذف از مقایسه' : 'افزودن به مقایسه'}
+          >
+            <ArrowLeftRight size={18} className="compare-icon" />
+          </button>
+        </div>
+
+        {/* Mobile Trust Guarantees */}
+        <div className="product-mobile-trust-grid">
+          <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ShieldCheck size={20} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 800 }}>ضمانت ۲ ساله رسمی</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem' }}>تک‌تینک سرویس</div>
             </div>
+          </div>
 
-            <button 
-              className="btn btn-primary" 
-              style={{ flexGrow: 1, padding: '14px 24px', fontSize: '1.05rem' }}
-              onClick={handleAddToCart}
-              disabled={!product.inStock}
-            >
-              <ShoppingCart size={18} /> افزودن به سبد خرید ({formatPrice(totalPrice)})
-            </button>
+          <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Truck size={20} color="hsl(var(--accent-green))" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 800 }}>ارسال سریع و بیمه</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem' }}>بسته‌بندی ضربه‌گیر</div>
+            </div>
+          </div>
 
-            <button 
-              className={`btn btn-glass btn-compare ${isComparing ? 'is-active' : ''}`}
-              style={{ padding: '14px', flexShrink: 0 }}
-              onClick={() => onCompare(product.id)}
-              title={isComparing ? 'حذف از مقایسه' : 'افزودن به مقایسه'}
-            >
-              <ArrowLeftRight size={20} className="compare-icon" />
-            </button>
+          <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <RotateCcw size={20} color="hsl(var(--accent-purple))" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 800 }}>مهلت تست ۷ روزه</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem' }}>تضمین سلامت فنی</div>
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle size={20} color="hsl(var(--accent-cyan))" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.75rem' }}>
+              <div style={{ fontWeight: 800 }}>تضمین اصالت کالا</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.68rem' }}>تست کامل سخت‌افزار</div>
+            </div>
           </div>
         </div>
       </div>
@@ -1569,50 +1916,82 @@ export default function ProductPage({
               در حال حاضر درایور اختصاصی برای این مدل بارگذاری نشده است. برای دریافت درایور با پشتیبانی تماس بگیرید.
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.875rem' }}>
-                <thead>
-                  <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
-                    <th style={{ padding: '12px' }}>عنوان درایور / نرم‌افزار</th>
-                    <th style={{ padding: '12px' }}>دسته‌بندی</th>
-                    <th style={{ padding: '12px' }}>نسخه</th>
-                    <th style={{ padding: '12px' }}>تاریخ انتشار</th>
-                    <th style={{ padding: '12px' }}>حجم فایل</th>
-                    <th style={{ padding: '12px', textAlign: 'left' }}>دریافت</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {drivers.map((d, idx) => (
-                    <tr key={d.id || idx} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent', borderBottom: '1px solid var(--border-glass)' }}>
-                      <td style={{ padding: '14px 12px', fontWeight: 'bold' }}>
-                        <div className="flex" style={{ alignItems: 'center', gap: '8px' }}>
-                          <FileText size={16} color="hsl(var(--accent-cyan))" />
-                          <span>{d.name}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '14px 12px' }}>
-                        <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', fontSize: '0.75rem' }}>
-                          {d.category || 'درایور سیستم'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 12px' }} className="font-code">{d.version || '1.0'}</td>
-                      <td style={{ padding: '14px 12px' }} className="font-code">{d.date || '۱۴۰۴/۱۲'}</td>
-                      <td style={{ padding: '14px 12px' }} className="font-code">{d.size || '120 MB'}</td>
-                      <td style={{ padding: '14px 12px', textAlign: 'left' }}>
-                        <a 
-                          href={d.downloadUrl || d.download_url || '#'} 
-                          download 
-                          className="btn btn-primary" 
-                          style={{ padding: '6px 14px', fontSize: '0.75rem' }}
-                        >
-                          <Download size={14} /> دانلود مستقیم
-                        </a>
-                      </td>
+            <>
+              {/* Desktop Drivers Table View */}
+              <div className="product-desktop-only" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', minWidth: '700px', borderCollapse: 'collapse', textAlign: 'right', fontSize: '0.875rem' }}>
+                  <thead>
+                    <tr style={{ color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-glass)' }}>
+                      <th style={{ padding: '12px' }}>عنوان درایور / نرم‌افزار</th>
+                      <th style={{ padding: '12px' }}>دسته‌بندی</th>
+                      <th style={{ padding: '12px' }}>نسخه</th>
+                      <th style={{ padding: '12px' }}>تاریخ انتشار</th>
+                      <th style={{ padding: '12px' }}>حجم فایل</th>
+                      <th style={{ padding: '12px', textAlign: 'left' }}>دریافت</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {drivers.map((d, idx) => (
+                      <tr key={d.id || idx} style={{ background: idx % 2 === 0 ? 'rgba(0,0,0,0.02)' : 'transparent', borderBottom: '1px solid var(--border-glass)' }}>
+                        <td style={{ padding: '14px 12px', fontWeight: 'bold' }}>
+                          <div className="flex" style={{ alignItems: 'center', gap: '8px' }}>
+                            <FileText size={16} color="hsl(var(--accent-cyan))" />
+                            <span>{d.name}</span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '14px 12px' }}>
+                          <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', fontSize: '0.75rem' }}>
+                            {d.category || 'درایور سیستم'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 12px' }} className="font-code">{d.version || '1.0'}</td>
+                        <td style={{ padding: '14px 12px' }} className="font-code">{d.date || '۱۴۰۴/۱۲'}</td>
+                        <td style={{ padding: '14px 12px' }} className="font-code">{d.size || '120 MB'}</td>
+                        <td style={{ padding: '14px 12px', textAlign: 'left' }}>
+                          <a 
+                            href={d.downloadUrl || d.download_url || '#'} 
+                            download 
+                            className="btn btn-primary" 
+                            style={{ padding: '6px 14px', fontSize: '0.75rem' }}
+                          >
+                            <Download size={14} /> دانلود مستقیم
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Drivers Card List View */}
+              <div className="product-mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {drivers.map((d, idx) => (
+                  <div key={d.id || idx} className="glass-panel" style={{ padding: '14px', borderRadius: '12px', border: '1px solid var(--border-glass)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                        {d.name}
+                      </div>
+                      <span className="badge" style={{ background: 'rgba(0,0,0,0.05)', fontSize: '0.7rem', flexShrink: 0 }}>
+                        {d.category || 'درایور'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                      <span>نسخه: <strong className="font-code">{d.version || '1.0'}</strong></span>
+                      <span>حجم: <strong className="font-code">{d.size || '120 MB'}</strong></span>
+                      <span>تاریخ: <strong className="font-code">{d.date || '۱۴۰۴/۱۲'}</strong></span>
+                    </div>
+                    <a 
+                      href={d.downloadUrl || d.download_url || '#'} 
+                      download 
+                      className="btn btn-primary" 
+                      style={{ width: '100%', padding: '8px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                    >
+                      <Download size={14} /> دانلود مستقیم فایل
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -1771,7 +2150,12 @@ export default function ProductPage({
                 key={rel.id} 
                 className="glass-card flex" 
                 style={{ flexDirection: 'column', overflow: 'hidden', cursor: 'pointer' }}
-                onClick={() => onSelectProduct && onSelectProduct(rel.slug)}
+                onClick={() => {
+                  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                  document.documentElement.scrollTop = 0;
+                  document.body.scrollTop = 0;
+                  if (onSelectProduct) onSelectProduct(rel.slug);
+                }}
               >
                 <div className="related-product-img-wrapper">
                   <img src={rel.image} alt={rel.name} loading="lazy" onError={handleImageError} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
