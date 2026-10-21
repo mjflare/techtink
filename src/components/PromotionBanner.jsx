@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Flame, Clock, Sparkles, Copy, Check, ArrowLeft, Tag, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatPersianDateTime } from '../utils/jalaliDate.js';
 
 export default function PromotionBanner({ config, onExploreClick }) {
   const [copied, setCopied] = useState(false);
@@ -252,6 +253,12 @@ export default function PromotionBanner({ config, onExploreClick }) {
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '2px', fontWeight: 500 }}>روز</div>
                 </div>
               </div>
+
+              {config.expireDate && (
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '10px', fontWeight: 600 }}>
+                  مهلت: {formatPersianDateTime(config.expireDate)}
+                </div>
+              )}
             </div>
           )}
 

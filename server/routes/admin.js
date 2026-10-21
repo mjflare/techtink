@@ -508,13 +508,15 @@ r.get('/homepage', (_req, res) => {
   const promotion = getJson('homepage_promotion', {});
   const showcase = getJson('homepage_showcase', { productSlugs: [] });
   const products = db.all('SELECT id, slug, name, brand, model, base_price, old_price, image, category, grade, stock FROM products WHERE active = 1 ORDER BY id DESC');
+  const activeCoupons = db.all('SELECT id, code, title, discount_type, discount_value, min_order_value, valid_until, is_active, is_promoted FROM coupons WHERE is_active = 1 ORDER BY is_promoted DESC, id DESC');
 
   res.json({
     announcement,
     hero,
     promotion,
     showcase,
-    availableProducts: products
+    availableProducts: products,
+    activeCoupons
   });
 });
 

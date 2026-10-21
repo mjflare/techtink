@@ -2,9 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { 
   Layout, Megaphone, Sparkles, Flame, Star, Save, RefreshCw, 
   Check, AlertCircle, Eye, Tag, Clock, ArrowLeft, Image, 
-  Sliders, Plus, Trash2, CheckCircle2, Shield
+  Sliders, Plus, Trash2, CheckCircle2, Shield, Calendar, Ticket
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { 
+  JALALI_MONTH_NAMES, 
+  getDaysInJalaliMonth, 
+  isoToJalali, 
+  jalaliToIso, 
+  getPersianDatePresets, 
+  formatPersianDateTime 
+} from '../utils/jalaliDate.js';
 
 export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUpdated }) {
   const [activeSubTab, setActiveSubTab] = useState('promotion'); // Default to promotion so admin sees promo right away
@@ -14,6 +22,7 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
   const [error, setError] = useState(null);
 
   const [availableProducts, setAvailableProducts] = useState([]);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
 
   // Form states
   const [announcement, setAnnouncement] = useState({
@@ -86,12 +95,22 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
       if (data.announcement) setAnnouncement(prev => ({ ...prev, ...data.announcement }));
       if (data.hero) setHero(prev => ({ ...prev, ...data.hero }));
       if (data.promotion) {
-        let exp = data.promotion.expireDate;
-        if (exp && exp.includes('T')) exp = exp.slice(0, 16);
-        setPromotion(prev => ({ ...prev, ...data.promotion, expireDate: exp }));
+        setPromotion(prev => ({ ...prev, ...data.promotion, expireDate: data.promotion.expireDate || null }));
       }
       if (data.showcase) setShowcase(prev => ({ ...prev, ...data.showcase }));
       if (data.availableProducts) setAvailableProducts(data.availableProducts);
+
+      if (data.activeCoupons && Array.isArray(data.activeCoupons)) {
+        setAvailableCoupons(data.activeCoupons);
+      } else {
+        try {
+          const cRes = await fetch('/api/admin/coupons?status=active', { headers: authHeaders });
+          if (cRes.ok) {
+            const cData = await cRes.json();
+            setAvailableCoupons(cData);
+          }
+        } catch {}
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -108,7 +127,7 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
     if (newActive) {
       const isPast = !expDate || new Date(expDate).getTime() <= Date.now();
       if (isPast) {
-        expDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+        expDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
       }
     }
 
@@ -132,6 +151,66 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const selectedCoupon = availableCoupons.find(
+    c => c.code.toUpperCase() === (promotion.promoCode || '').toUpperCase()
+  );
+
+  const handleSelectCoupon = (couponCode) => {
+    const c = availableCoupons.find(x => x.code.toUpperCase() === couponCode.toUpperCase());
+    if (c) {
+      const disc = c.discount_type === 'percentage'
+        ? `${c.discount_value}٪`
+        : `${Number(c.discount_value).toLocaleString('fa-IR')} تومان`;
+
+      setPromotion(prev => ({
+        ...prev,
+        promoCode: c.code,
+        discountPercent: disc,
+        title: (!prev.title || prev.title === 'جشنواره ورک‌استیشن‌های رندرینگ و طراحی مهندسی') ? c.title : prev.title
+      }));
+    } else {
+      setPromotion(prev => ({ ...prev, promoCode: couponCode }));
+    }
+  };
+
+  const currentJalaliInfo = isoToJalali(promotion.expireDate) || isoToJalali(new Date(Date.now() + 14 * 86400000).toISOString());
+  const maxDaysInMonth = currentJalaliInfo ? getDaysInJalaliMonth(currentJalaliInfo.jy, currentJalaliInfo.jm) : 30;
+  const isExpired = promotion.expireDate ? new Date(promotion.expireDate).getTime() <= Date.now() : false;
+
+  const handleUpdateJalaliPart = (key, val) => {
+    const cur = currentJalaliInfo || isoToJalali(new Date().toISOString());
+    let jy = key === 'jy' ? Number(val) : cur.jy;
+    let jm = key === 'jm' ? Number(val) : cur.jm;
+    let jd = key === 'jd' ? Number(val) : cur.jd;
+    const maxDays = getDaysInJalaliMonth(jy, jm);
+    if (jd > maxDays) jd = maxDays;
+
+    const newIso = jalaliToIso(jy, jm, jd, cur.hour, cur.minute);
+    setPromotion(prev => ({ ...prev, expireDate: newIso }));
+  };
+
+  const handleUpdateJalaliTime = (hour, minute) => {
+    const cur = currentJalaliInfo || isoToJalali(new Date().toISOString());
+    const newIso = jalaliToIso(cur.jy, cur.jm, cur.jd, hour, minute);
+    setPromotion(prev => ({ ...prev, expireDate: newIso }));
+  };
+
+  const handleSetPreset = (presetIso) => {
+    setPromotion(prev => ({ ...prev, expireDate: presetIso }));
+  };
+
+  const getRemainingText = (expireDate) => {
+    if (!expireDate) return '';
+    const diff = new Date(expireDate).getTime() - Date.now();
+    if (diff <= 0) return 'منقضی شده';
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    if (days > 0) return `${days} روز و ${hours} ساعت مانده`;
+    if (hours > 0) return `${hours} ساعت مانده`;
+    return `${minutes} دقیقه مانده`;
   };
 
   const handleSave = async () => {
@@ -643,58 +722,236 @@ export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUp
               />
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                کد تخفیف (Promo Code)
+            {/* 1. ACTIVE COUPON CODE SELECTOR */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <Ticket size={16} color="#f97316" />
+                  انتخاب کد تخفیف فعال (تنها کدهای معتبر و تعریف‌شده قابل انتخاب هستند):
+                </span>
               </label>
-              <input 
-                type="text" 
-                className="input font-code" 
-                value={promotion.promoCode || ''} 
-                onChange={(e) => setPromotion(prev => ({ ...prev, promoCode: e.target.value.toUpperCase() }))}
-                placeholder="مثال: TECHTINK2026"
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', letterSpacing: '1px' }}
-              />
+
+              {availableCoupons.length === 0 ? (
+                <div style={{ padding: '14px 18px', borderRadius: '14px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#d97706', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <AlertCircle size={18} />
+                  <span>در حال حاضر هیچ کد تخفیف فعالی در سیستم ثبت نشده است. لطفاً ابتدا در تب «کدهای تخفیف» یک کوپن فعال تعریف کنید.</span>
+                </div>
+              ) : (
+                <div>
+                  <select
+                    className="input"
+                    value={promotion.promoCode || ''}
+                    onChange={(e) => handleSelectCoupon(e.target.value)}
+                    style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: 700, minHeight: '46px' }}
+                  >
+                    <option value="">-- برای نمایش در بنر، یک کد تخفیف فعال را انتخاب کنید --</option>
+                    {availableCoupons.map((c) => {
+                      const discText = c.discount_type === 'percentage' 
+                        ? `${c.discount_value}٪ تخفیف` 
+                        : `${Number(c.discount_value).toLocaleString('fa-IR')} تومان تخفیف`;
+                      return (
+                        <option key={c.id} value={c.code}>
+                          {c.code} ── {c.title} ({discText})
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  {/* Selected Coupon Visual Badge Card */}
+                  {selectedCoupon && (
+                    <div style={{ marginTop: '10px', padding: '12px 16px', borderRadius: '14px', background: '#ffffff', border: '1.5px dashed rgba(249, 115, 22, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span className="font-code" style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ea580c', background: '#fff7ed', padding: '4px 12px', borderRadius: '8px', border: '1px solid rgba(234, 88, 12, 0.25)', letterSpacing: '1px' }}>
+                          {selectedCoupon.code}
+                        </span>
+                        <div>
+                          <div style={{ fontSize: '0.875rem', fontWeight: 700 }}>{selectedCoupon.title}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            {selectedCoupon.discount_type === 'percentage' ? `${selectedCoupon.discount_value}٪ تخفیف` : `${Number(selectedCoupon.discount_value).toLocaleString('fa-IR')} تومان تخفیف`}
+                            {selectedCoupon.min_order_value > 0 ? ` (حداقل سفارش: ${Number(selectedCoupon.min_order_value).toLocaleString('fa-IR')} تومان)` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', background: '#f0fdf4', color: '#16a34a', padding: '4px 10px', borderRadius: '8px', fontWeight: 700, border: '1px solid rgba(22, 163, 74, 0.2)' }}>
+                        ✓ کوپن فعال و آماده خرید
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                برچسب درصد تخفیف
+                برچسب درصد یا مبلغ تخفیف (نمایش در نشان بنر)
               </label>
               <input 
                 type="text" 
                 className="input" 
                 value={promotion.discountPercent || ''} 
                 onChange={(e) => setPromotion(prev => ({ ...prev, discountPercent: e.target.value }))}
-                placeholder="مثال: ۱۵٪ یا تا ۲۰٪"
+                placeholder="مثال: ۱۵٪ یا تا ۲۰٪ یا ۵۰۰,۰۰۰ تومان"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '12px' }}
               />
             </div>
 
             <div>
               <label style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                زمان پایان تخفیف (جهت شمارش معکوس زنده)
-              </label>
-              <input 
-                type="datetime-local" 
-                className="input font-code" 
-                value={promotion.expireDate || ''} 
-                onChange={(e) => setPromotion(prev => ({ ...prev, expireDate: e.target.value }))}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '12px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.825rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                متن دکمه کمپین
+                متن دکمه کمپین (CTA Button)
               </label>
               <input 
                 type="text" 
                 className="input" 
                 value={promotion.btnText || ''} 
                 onChange={(e) => setPromotion(prev => ({ ...prev, btnText: e.target.value }))}
+                placeholder="مشاهده محصولات جشنواره"
                 style={{ width: '100%', padding: '10px 14px', borderRadius: '12px' }}
               />
+            </div>
+
+            {/* 2. IRAN CALENDAR (JALALI) END DATE PICKER */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '12px', borderTop: '1px solid var(--border-glass)', paddingTop: '18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+                <div>
+                  <label style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Calendar size={18} color="#0284c7" />
+                    تنظیم زمان پایان تخفیف با تقویم خورشیدی ایران (تاریخ شمسی)
+                  </label>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    جهت محاسبه و اجرای تایمر معکوس زنده در بنر تبلیغاتی صفحه نخست
+                  </span>
+                </div>
+
+                {/* Live Jalali Persian Status Badge */}
+                {currentJalaliInfo && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '8px 14px',
+                    borderRadius: '12px',
+                    background: isExpired ? 'rgba(239, 68, 68, 0.1)' : 'rgba(2, 132, 199, 0.1)',
+                    border: isExpired ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(2, 132, 199, 0.3)',
+                    color: isExpired ? '#ef4444' : '#0284c7',
+                    fontSize: '0.825rem',
+                    fontWeight: 700
+                  }}>
+                    <Clock size={15} />
+                    <span>پایان: {currentJalaliInfo.fullText}</span>
+                    <span style={{ opacity: 0.85, fontSize: '0.75rem' }}>
+                      ({getRemainingText(promotion.expireDate)})
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Presets Pills */}
+              <div style={{ marginBottom: '16px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                  انتخاب سریع مدت زمان کمپین (با یک لمس):
+                </span>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {getPersianDatePresets().map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSetPreset(preset.iso)}
+                      className="btn btn-glass"
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        background: '#ffffff',
+                        border: '1px solid rgba(0, 0, 0, 0.08)',
+                        cursor: 'pointer',
+                        minHeight: '44px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <Sparkles size={13} color="#0284c7" />
+                      <span>{preset.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Detailed Persian Date Picker Selectors */}
+              <div style={{ padding: '16px', borderRadius: '16px', background: '#f8fafc', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px', fontWeight: 600 }}>
+                  تنظیم دستی روز، ماه، سال و ساعت شمسی:
+                </span>
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                  {/* Day Selector */}
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>روز ماه شمسی:</label>
+                    <select
+                      value={currentJalaliInfo?.jd || 1}
+                      onChange={(e) => handleUpdateJalaliPart('jd', Number(e.target.value))}
+                      className="input"
+                      style={{ width: '100%', padding: '10px', borderRadius: '10px', fontWeight: 700, minHeight: '44px' }}
+                    >
+                      {Array.from({ length: maxDaysInMonth }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d} {currentJalaliInfo?.monthName}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Month Selector */}
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>ماه شمسی:</label>
+                    <select
+                      value={currentJalaliInfo?.jm || 1}
+                      onChange={(e) => handleUpdateJalaliPart('jm', Number(e.target.value))}
+                      className="input"
+                      style={{ width: '100%', padding: '10px', borderRadius: '10px', fontWeight: 700, minHeight: '44px' }}
+                    >
+                      {JALALI_MONTH_NAMES.map((name, i) => (
+                        <option key={i + 1} value={i + 1}>{name} (ماه {i + 1})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Year Selector */}
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>سال شمسی:</label>
+                    <select
+                      value={currentJalaliInfo?.jy || 1405}
+                      onChange={(e) => handleUpdateJalaliPart('jy', Number(e.target.value))}
+                      className="input"
+                      style={{ width: '100%', padding: '10px', borderRadius: '10px', fontWeight: 700, minHeight: '44px' }}
+                    >
+                      <option value={1405}>۱۴۰۵</option>
+                      <option value={1406}>۱۴۰۶</option>
+                      <option value={1407}>۱۴۰۷</option>
+                    </select>
+                  </div>
+
+                  {/* Hour & Minute Selector */}
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>ساعت پایان:</label>
+                    <select
+                      value={`${String(currentJalaliInfo?.hour ?? 23).padStart(2, '0')}:${String(currentJalaliInfo?.minute ?? 59).padStart(2, '0')}`}
+                      onChange={(e) => {
+                        const [h, m] = e.target.value.split(':').map(Number);
+                        handleUpdateJalaliTime(h, m);
+                      }}
+                      className="input"
+                      style={{ width: '100%', padding: '10px', borderRadius: '10px', fontWeight: 700, minHeight: '44px' }}
+                    >
+                      <option value="23:59">۲۳:۵۹ (پایان شب - استاندارد)</option>
+                      <option value="20:00">۲۰:۰۰ (پایان وقت اداری / شب)</option>
+                      <option value="18:00">۱۸:۰۰ (عصر)</option>
+                      <option value="14:00">۱۴:۰۰ (بعدازظهر)</option>
+                      <option value="12:00">۱۲:۰۰ (ظهر)</option>
+                      <option value="00:00">۰۰:۰۰ (بامداد)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
