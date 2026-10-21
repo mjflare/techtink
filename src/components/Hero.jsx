@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { ArrowDown, Check } from 'lucide-react';
 
-export default function Hero({ config, onExploreClick, onSecondaryClick }) {
+export default function Hero({ config, onExploreClick, onSecondaryClick, onDismiss }) {
   const c = config || {};
   if (c.active === false) return null;
 
@@ -137,6 +137,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     setProgress(1.0);
     setIsDismissed(true);
     document.body.style.overflow = '';
+
+    if (onDismiss) onDismiss();
 
     setTimeout(() => {
       setIsMounted(false);

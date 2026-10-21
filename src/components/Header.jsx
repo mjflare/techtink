@@ -19,7 +19,8 @@ export default function Header({
   laptops = [],
   onSelectProduct,
   siteSettings,
-  onOpenDemoNotice
+  onOpenDemoNotice,
+  onGoToShop
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -37,8 +38,12 @@ export default function Header({
   ];
 
   const handleTabClick = (id) => {
-    setActiveTab(id);
     setMobileMenuOpen(false);
+    if (id === 'store' && onGoToShop) {
+      onGoToShop();
+    } else {
+      setActiveTab(id);
+    }
   };
 
   // Real-time Search Matcher

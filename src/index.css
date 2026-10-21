@@ -1514,6 +1514,37 @@ details[open] summary ~ * {
   }
 }
 
+/* =========================================================
+   Modern CSS3 & HTML5 Performance Optimizations
+   ========================================================= */
+.tab-content-optimized {
+  content-visibility: auto;
+  contain-intrinsic-size: 700px;
+}
+
+.product-mobile-config-pill {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  min-height: 46px;
+  transition: transform 120ms ease, border-color 160ms ease, background-color 160ms ease;
+}
+
+.product-mobile-config-pill:active {
+  transform: scale(0.97);
+}
+
+.product-mobile-layout {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+.product-desktop-layout {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+
 
 
 

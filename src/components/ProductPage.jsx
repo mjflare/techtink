@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
-import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
+import { getShortSpecs, getHardwareBadges, parseShortRam, parseShortStorage, parseShortDisplay, parseShortCpu } from '../utils/shortSpecs.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
@@ -229,6 +229,7 @@ export default function ProductPage({
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'review', 'drivers', 'comments'
 
   // Selected upgrades
+  const [selectedCpu, setSelectedCpu] = useState(0);
   const [selectedRam, setSelectedRam] = useState(0);
   const [selectedStorage, setSelectedStorage] = useState(0);
   const [selectedDisplay, setSelectedDisplay] = useState(0);
@@ -298,6 +299,7 @@ export default function ProductPage({
       })
       .then(data => {
         setProduct(data);
+        setSelectedCpu(0);
         setSelectedRam(0);
         setSelectedStorage(0);
         setSelectedDisplay(0);
@@ -414,19 +416,32 @@ export default function ProductPage({
     );
   }
 
-  // Calculate dynamic price
-  const ramPrice = product.upgrades?.ram?.[selectedRam]?.price || 0;
-  const storagePrice = product.upgrades?.storage?.[selectedStorage]?.price || 0;
-  const displayPrice = product.upgrades?.display?.[selectedDisplay]?.price || 0;
-  const unitPrice = product.basePrice + ramPrice + storagePrice + displayPrice;
+  // Active options and real-time configured specs
+  const activeCpuOption = product.upgrades?.cpu?.[selectedCpu];
+  const activeRamOption = product.upgrades?.ram?.[selectedRam];
+  const activeStorageOption = product.upgrades?.storage?.[selectedStorage];
+  const activeDisplayOption = product.upgrades?.display?.[selectedDisplay];
+
+  const shortSpecs = getShortSpecs(product);
+  const { cpuBadge, gpuBadge } = getHardwareBadges(product);
+
+  const configuredCpu = activeCpuOption ? parseShortCpu(activeCpuOption.name, product.brand) : shortSpecs.cpu;
+  const configuredRam = activeRamOption ? parseShortRam(activeRamOption.name) : shortSpecs.ram;
+  const configuredStorage = activeStorageOption ? parseShortStorage(activeStorageOption.name) : shortSpecs.storage;
+  const configuredDisplay = activeDisplayOption ? parseShortDisplay(activeDisplayOption.name) : shortSpecs.display;
+
+  // Calculate dynamic price based on configured hardware
+  const cpuPrice = activeCpuOption?.price || 0;
+  const ramPrice = activeRamOption?.price || 0;
+  const storagePrice = activeStorageOption?.price || 0;
+  const displayPrice = activeDisplayOption?.price || 0;
+  const unitPrice = product.basePrice + cpuPrice + ramPrice + storagePrice + displayPrice;
   const totalPrice = unitPrice * quantity;
 
   const isComparing = compareList.includes(product.id);
   const images = product.images && product.images.length > 0 ? product.images : [product.image];
   const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
   const review = product.expertReview || {};
-  const shortSpecs = getShortSpecs(product);
-  const { cpuBadge, gpuBadge } = getHardwareBadges(product);
 
   const handleAddToCart = () => {
     onAddToCart({
@@ -438,14 +453,16 @@ export default function ProductPage({
       totalPrice: unitPrice,
       image: product.image,
       configuration: {
-        ram: product.upgrades?.ram?.[selectedRam]?.name || product.specs?.ram || 'استاندارد',
-        storage: product.upgrades?.storage?.[selectedStorage]?.name || product.specs?.storage || 'استاندارد',
-        display: product.upgrades?.display?.[selectedDisplay]?.name || product.specs?.display || 'استاندارد'
+        cpu: activeCpuOption?.name || product.specs?.cpu || 'استاندارد',
+        ram: activeRamOption?.name || product.specs?.ram || 'استاندارد',
+        storage: activeStorageOption?.name || product.specs?.storage || 'استاندارد',
+        display: activeDisplayOption?.name || product.specs?.display || 'استاندارد'
       },
       variantIds: [
-        product.upgrades?.ram?.[selectedRam]?.id,
-        product.upgrades?.storage?.[selectedStorage]?.id,
-        product.upgrades?.display?.[selectedDisplay]?.id
+        activeCpuOption?.id,
+        activeRamOption?.id,
+        activeStorageOption?.id,
+        activeDisplayOption?.id
       ].filter(Boolean),
       quantity
     });
@@ -526,9 +543,9 @@ export default function ProductPage({
           1. DESKTOP / HORIZONTAL VIEW (>= 860px)
           Spacious two-column layout tailored for large screens
           ========================================================= */}
-      <div className="product-desktop-layout animate-fade-in">
+      <article className="product-desktop-layout animate-fade-in" aria-label={`مشخصات لپ‌تاپ ${product.name}`}>
         {/* Breadcrumb & Back */}
-        <div className="flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
+        <nav aria-label="مسیریابی" className="flex" style={{ alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div className="flex" style={{ alignItems: 'center', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
             <span style={{ cursor: 'pointer', transition: 'color 0.2s' }} onClick={onBack}>فروشگاه</span>
             <span>/</span>
@@ -540,7 +557,7 @@ export default function ProductPage({
           <button className="btn btn-glass" style={{ padding: '6px 14px', fontSize: '0.8125rem' }} onClick={onBack}>
             <ArrowRight size={16} /> بازگشت به لیست
           </button>
-        </div>
+        </nav>
 
         {/* Main Product Hero Grid */}
         <div className="grid product-hero-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '36px', alignItems: 'start', marginBottom: '40px' }}>
@@ -741,7 +758,7 @@ export default function ProductPage({
             </div>
 
             {/* Key Hardware Highlights Deck */}
-            <div style={{
+            <section aria-label="مشخصات کلیدی سریع" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
               gap: '10px',
@@ -752,7 +769,7 @@ export default function ProductPage({
                   <Cpu size={13} color="hsl(var(--accent-cyan))" /> پردازنده
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {shortSpecs.cpu}
+                  {configuredCpu}
                 </div>
               </div>
 
@@ -767,10 +784,10 @@ export default function ProductPage({
 
               <div className="glass-panel" style={{ padding: '10px 12px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--text-secondary)', fontSize: '0.72rem' }}>
-                  <HardDrive size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
+                  <Layers size={13} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {shortSpecs.ram}
+                  {configuredRam}
                 </div>
               </div>
 
@@ -779,7 +796,7 @@ export default function ProductPage({
                   <HardDrive size={13} color="hsl(var(--accent-cyan))" /> حافظه داخلی (SSD)
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {shortSpecs.storage}
+                  {configuredStorage}
                 </div>
               </div>
 
@@ -788,7 +805,7 @@ export default function ProductPage({
                   <Monitor size={13} color="hsl(var(--accent-cyan))" /> نمایشگر
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {shortSpecs.display}
+                  {configuredDisplay}
                 </div>
               </div>
 
@@ -809,37 +826,86 @@ export default function ProductPage({
                   {shortSpecs.chassis}
                 </div>
               </div>
-            </div>
+            </section>
 
             {/* Hardware Configurator */}
-            <div style={{ marginBottom: '32px' }}>
+            <section aria-label="پیکربندی قطعات سفارشی" style={{ marginBottom: '32px' }}>
               <h3 style={{ fontSize: '1.125rem', marginBottom: '16px' }}>پیکربندی قطعات سفارشی:</h3>
 
-              {/* RAM Options */}
-              {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
-                <div style={{ marginBottom: '20px' }}>
-                  <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
-                    <Cpu size={16} color="hsl(var(--accent-cyan))" />
-                    <span>حافظه رم (RAM):</span>
-                  </div>
+              {/* CPU Configuration */}
+              <div style={{ marginBottom: '20px' }}>
+                <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                  <Cpu size={16} color="hsl(var(--accent-cyan))" />
+                  <span>پردازنده مرکزی (CPU):</span>
+                </div>
+                {product.upgrades?.cpu && product.upgrades.cpu.length > 0 ? (
                   <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
-                    {product.upgrades.ram.map((opt, idx) => (
+                    {product.upgrades.cpu.map((opt, idx) => (
                       <button
                         key={idx}
-                        onClick={() => setSelectedRam(idx)}
+                        type="button"
+                        onClick={() => setSelectedCpu(idx)}
                         className="glass-card"
                         style={{
                           padding: '12px',
                           textAlign: 'right',
                           cursor: 'pointer',
-                          borderColor: selectedRam === idx ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
-                          background: selectedRam === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
+                          borderColor: selectedCpu === idx ? 'hsl(var(--accent-cyan))' : 'var(--border-glass)',
+                          background: selectedCpu === idx ? 'hsla(var(--accent-cyan), 0.08)' : 'var(--glass-bg)'
                         }}
                       >
                         <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
                           {opt.name}
                         </div>
                         <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                          {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="glass-panel" style={{ padding: '10px 14px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.75rem', fontWeight: 700 }}>
+                        {cpuBadge}
+                      </span>
+                      <span className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
+                        {configuredCpu}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'hsl(var(--accent-green))', fontWeight: 600 }}>
+                      پردازنده استاندارد فابریک
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* RAM Options */}
+              {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <div className="flex" style={{ alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.875rem', fontWeight: 'bold' }}>
+                    <Layers size={16} color="hsl(var(--accent-purple))" />
+                    <span>حافظه رم (RAM / Memory):</span>
+                  </div>
+                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '8px' }}>
+                    {product.upgrades.ram.map((opt, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedRam(idx)}
+                        className="glass-card"
+                        style={{
+                          padding: '12px',
+                          textAlign: 'right',
+                          cursor: 'pointer',
+                          borderColor: selectedRam === idx ? 'hsl(var(--accent-purple))' : 'var(--border-glass)',
+                          background: selectedRam === idx ? 'hsla(var(--accent-purple), 0.08)' : 'var(--glass-bg)'
+                        }}
+                      >
+                        <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '4px' }}>
+                          {opt.name}
+                        </div>
+                        <div className="font-tech" style={{ fontSize: '0.75rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
                           {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
                         </div>
                       </button>
@@ -913,7 +979,7 @@ export default function ProductPage({
                   </div>
                 </div>
               )}
-            </div>
+            </section>
 
             {/* Quantity & CTA */}
             <div className="flex product-cta-bar" style={{ gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -957,16 +1023,16 @@ export default function ProductPage({
             </div>
           </div>
         </div>
-      </div>
+      </article>
 
       {/* =========================================================
           2. MOBILE / VERTICAL VIEW (< 860px)
           Streamlined single-column hierarchy designed specifically
           for mobile phones, one-thumb usability and vertical reading
           ========================================================= */}
-      <div className="product-mobile-layout animate-fade-in">
+      <article className="product-mobile-layout animate-fade-in" aria-label={`مشخصات لپ‌تاپ ${product.name}`}>
         {/* Mobile Breadcrumb & Back */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '8px' }}>
+        <nav aria-label="مسیریابی موبایل" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', gap: '8px' }}>
           <button 
             className="btn btn-glass" 
             style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }} 
@@ -980,7 +1046,7 @@ export default function ProductPage({
             <span>•</span>
             <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{product.brand}</span>
           </div>
-        </div>
+        </nav>
 
         {/* Mobile Header: Brand, Model, Badges */}
         <div style={{ marginBottom: '14px' }}>
@@ -1108,7 +1174,7 @@ export default function ProductPage({
         </div>
 
         {/* Mobile Compact 2-Column Specs Deck */}
-        <div style={{ marginBottom: '18px' }}>
+        <section aria-label="مشخصات کلیدی سریع سخت‌افزار" style={{ marginBottom: '18px' }}>
           <div style={{ fontSize: '0.85rem', fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>
             مشخصات کلیدی سخت‌افزار:
           </div>
@@ -1118,7 +1184,7 @@ export default function ProductPage({
                 <Cpu size={12} color="hsl(var(--accent-cyan))" /> پردازنده
               </span>
               <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {shortSpecs.cpu}
+                {configuredCpu}
               </span>
             </div>
 
@@ -1133,10 +1199,10 @@ export default function ProductPage({
 
             <div className="product-mobile-spec-item">
               <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <HardDrive size={12} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
+                <Layers size={12} color="hsl(var(--accent-purple))" /> حافظه رم (RAM)
               </span>
               <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
-                {shortSpecs.ram}
+                {configuredRam}
               </span>
             </div>
 
@@ -1145,7 +1211,7 @@ export default function ProductPage({
                 <HardDrive size={12} color="hsl(var(--accent-cyan))" /> حافظه ذخیره (SSD)
               </span>
               <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left' }}>
-                {shortSpecs.storage}
+                {configuredStorage}
               </span>
             </div>
 
@@ -1154,7 +1220,7 @@ export default function ProductPage({
                 <Monitor size={12} color="hsl(var(--accent-cyan))" /> نمایشگر
               </span>
               <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {shortSpecs.display}
+                {configuredDisplay}
               </span>
             </div>
 
@@ -1167,39 +1233,77 @@ export default function ProductPage({
               </span>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Mobile Hardware Configurator */}
-        {(product.upgrades?.ram?.length > 0 || product.upgrades?.storage?.length > 0 || product.upgrades?.display?.length > 0) && (
-          <div style={{ marginBottom: '22px' }}>
-            <div style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '12px' }}>
-              پیکربندی قطعات سفارشی:
-            </div>
+        <section aria-label="پیکربندی قطعات سفارشی" style={{ marginBottom: '22px' }}>
+          <div style={{ fontSize: '0.875rem', fontWeight: 800, marginBottom: '12px' }}>
+            پیکربندی قطعات سفارشی:
+          </div>
 
-            {/* RAM Options */}
-            {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
-              <div style={{ marginBottom: '14px' }}>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Cpu size={14} color="hsl(var(--accent-cyan))" />
-                  <span>حافظه رم (RAM):</span>
+          {/* CPU Options / Info on Mobile */}
+          <div style={{ marginBottom: '14px' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Cpu size={14} color="hsl(var(--accent-cyan))" />
+              <span>پردازنده مرکزی (CPU):</span>
+            </div>
+            {product.upgrades?.cpu && product.upgrades.cpu.length > 0 ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {product.upgrades.cpu.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedCpu(idx)}
+                    className={`product-mobile-config-pill ${selectedCpu === idx ? 'is-active' : ''}`}
+                  >
+                    <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
+                    <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
+                      {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="glass-panel" style={{ padding: '8px 12px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.7rem', fontWeight: 700 }}>
+                    {cpuBadge}
+                  </span>
+                  <span className="font-tech" style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', direction: 'ltr' }}>
+                    {configuredCpu}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {product.upgrades.ram.map((opt, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => setSelectedRam(idx)}
-                      className={`product-mobile-config-pill ${selectedRam === idx ? 'is-active' : ''}`}
-                    >
-                      <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
-                      <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-cyan))' }}>
-                        {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                <span style={{ fontSize: '0.7rem', color: 'hsl(var(--accent-green))', fontWeight: 600 }}>
+                  استاندارد
+                </span>
               </div>
             )}
+          </div>
+
+          {/* RAM Options */}
+          {product.upgrades?.ram && product.upgrades.ram.length > 0 && (
+            <div style={{ marginBottom: '14px' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Layers size={14} color="hsl(var(--accent-purple))" />
+                <span>حافظه رم (RAM / Memory):</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {product.upgrades.ram.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setSelectedRam(idx)}
+                    className={`product-mobile-config-pill ${selectedRam === idx ? 'is-active' : ''}`}
+                  >
+                    <div className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{opt.name}</div>
+                    <div className="font-tech" style={{ fontSize: '0.72rem', color: opt.price === 0 ? 'var(--text-secondary)' : 'hsl(var(--accent-purple))' }}>
+                      {opt.price === 0 ? 'پیش‌فرض' : `+${formatPrice(opt.price)}`}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
             {/* Storage Options */}
             {product.upgrades?.storage && product.upgrades.storage.length > 0 && (
@@ -1250,8 +1354,7 @@ export default function ProductPage({
                 </div>
               </div>
             )}
-          </div>
-        )}
+          </section>
 
         {/* Mobile Primary Actions Deck */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
@@ -1329,7 +1432,7 @@ export default function ProductPage({
             </div>
           </div>
         </div>
-      </div>
+      </article>
 
       {/* =========================================================
           APPLE-GRADE BENTO GRID: HARDWARE HIGHLIGHTS AT A GLANCE
@@ -1494,7 +1597,7 @@ export default function ProductPage({
       </section>
 
       {/* Navigation Tabs for Detailed Sections */}
-      <div id="product-specs-section" className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', scrollMarginTop: '80px' }}>
+      <nav aria-label="زبانه مشخصات" role="tablist" id="product-specs-section" className="touch-scroll-x" style={{ gap: '8px', marginBottom: '24px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px', scrollMarginTop: '80px' }}>
         {[
           { id: 'specs', label: 'مشخصات فنی و امتیاز تک‌تینک', icon: BarChart2 },
           { id: 'review', label: 'نقد و بررسی تخصصی', icon: BookOpen },
@@ -1503,6 +1606,8 @@ export default function ProductPage({
         ].map(t => (
           <button
             key={t.id}
+            role="tab"
+            aria-selected={activeTab === t.id}
             onClick={() => setActiveTab(t.id)}
             className="btn"
             style={{
@@ -1519,11 +1624,11 @@ export default function ProductPage({
             <t.icon size={16} /> {t.label}
           </button>
         ))}
-      </div>
+      </nav>
 
       {/* 1. SPECS & TECHTINK SCORE TAB */}
       {activeTab === 'specs' && (
-        <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        <section role="tabpanel" aria-label="مشخصات فنی و امتیاز تک‌تینک" className="tab-content-optimized animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           
           {/* TechTink Score (امتیاز تک‌تینک) */}
           {(() => {
@@ -1630,7 +1735,11 @@ export default function ProductPage({
                 </div>
                 <div className="spec-row">
                   <span className="spec-row-label">مدل دقیق CPU</span>
-                  <span className="spec-row-value">{product.specs?.cpu || '—'}</span>
+                  <span className="spec-row-value">
+                    {activeCpuOption && activeCpuOption.price > 0
+                      ? `${activeCpuOption.name} (پیکربندی انتخابی شما)`
+                      : (product.specs?.cpu || '—')}
+                  </span>
                 </div>
                 {product.specs?.npuScore && (
                   <div className="spec-row">
@@ -1682,11 +1791,19 @@ export default function ProductPage({
                 </div>
                 <div className="spec-row">
                   <span className="spec-row-label">حافظه رم (RAM)</span>
-                  <span className="spec-row-value">{product.specs?.ram || '—'}</span>
+                  <span className="spec-row-value">
+                    {activeRamOption && activeRamOption.price > 0 
+                      ? `${activeRamOption.name} (پیکربندی انتخابی شما)` 
+                      : (product.specs?.ram || '—')}
+                  </span>
                 </div>
                 <div className="spec-row">
                   <span className="spec-row-label">حافظه ذخیره‌سازی داخلی</span>
-                  <span className="spec-row-value">{product.specs?.storage || '—'}</span>
+                  <span className="spec-row-value">
+                    {activeStorageOption && activeStorageOption.price > 0 
+                      ? `${activeStorageOption.name} (پیکربندی انتخابی شما)` 
+                      : (product.specs?.storage || '—')}
+                  </span>
                 </div>
                 <div className="spec-row">
                   <span className="spec-row-label">قابلیت ارتقا قطعات</span>
@@ -1765,12 +1882,12 @@ export default function ProductPage({
               </div>
             </div>
           </div>
-        </div>
+        </section>
       )}
 
       {/* 2. EXPERT REVIEW & PROS/CONS TAB */}
       {activeTab === 'review' && (
-        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+        <section role="tabpanel" aria-label="نقد و بررسی تخصصی" className="tab-content-optimized animate-fade-in glass-card" style={{ padding: '36px' }}>
           <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h2 style={{ fontSize: '1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1888,12 +2005,12 @@ export default function ProductPage({
               </p>
             </div>
           )}
-        </div>
+        </section>
       )}
 
       {/* 3. PRODUCT DRIVERS & SUPPORT SECTION TAB */}
       {activeTab === 'drivers' && (
-        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+        <section role="tabpanel" aria-label="دانلود درایورها" className="tab-content-optimized animate-fade-in glass-card" style={{ padding: '36px' }}>
           <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <h2 style={{ fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
@@ -1993,12 +2110,12 @@ export default function ProductPage({
               </div>
             </>
           )}
-        </div>
+        </section>
       )}
 
       {/* 4. COMMENTS & REVIEWS TAB */}
       {activeTab === 'comments' && (
-        <div className="animate-fade-in glass-card" style={{ padding: '36px' }}>
+        <section role="tabpanel" aria-label="دیدگاه‌های خریداران" className="tab-content-optimized animate-fade-in glass-card" style={{ padding: '36px' }}>
           <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h2 style={{ fontSize: '1.75rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -2135,7 +2252,7 @@ export default function ProductPage({
               </div>
             )}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Related Products Section */}

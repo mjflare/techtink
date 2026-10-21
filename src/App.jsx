@@ -251,12 +251,50 @@ function App() {
     }
   }, [currentUser, activeTab]);
 
+  // Control hero animation: show on fresh first visit to root URL only, but NEVER on subsequent clicks on home page / logo / store
+  const [showHeroAnimation, setShowHeroAnimation] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const isRoot = window.location.pathname === '/' && !window.location.hash;
+    const hasSeenHero = sessionStorage.getItem('techtink_hero_seen');
+    return isRoot && !hasSeenHero;
+  });
+
+  const handleDismissHero = () => {
+    setShowHeroAnimation(false);
+    try { sessionStorage.setItem('techtink_hero_seen', 'true'); } catch {}
+  };
+
+  const handleGoToShop = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setShowHeroAnimation(false);
+    try { sessionStorage.setItem('techtink_hero_seen', 'true'); } catch {}
+
+    if (activeTab === 'store') {
+      const shoppingCenter = document.getElementById('shopping-center') || document.getElementById('catalog');
+      if (shoppingCenter) {
+        shoppingCenter.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    } else {
+      setActiveTab('store');
+      window.history.pushState(null, '', '/');
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  };
+
   const handleTabChange = (tabId) => {
     let targetTab = tabId;
     // Admins have no customer account dashboard; redirect to admin portal
     if (targetTab === 'account' && currentUser?.role === 'admin') {
       targetTab = 'admin';
     }
+    // Any tab change dismisses hero animation so returning to home/shop always goes straight to catalog
+    setShowHeroAnimation(false);
+    try { sessionStorage.setItem('techtink_hero_seen', 'true'); } catch {}
+
     setActiveTab(targetTab);
     if (targetTab === 'store') {
       window.history.pushState(null, '', '/');
@@ -350,19 +388,23 @@ function App() {
         onSelectProduct={handleSelectProduct}
         siteSettings={siteSettings}
         onOpenDemoNotice={() => setIsDemoNoticeOpen(true)}
+        onGoToShop={handleGoToShop}
       />
 
       {/* 1. STORE VIEW */}
       {activeTab === 'store' && (
         <main>
-          <Hero 
-            config={homepageConfig?.hero}
-            onExploreClick={() => {
-              const el = document.getElementById('catalog');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            onSecondaryClick={() => handleTabChange('blog')}
-          />
+          {showHeroAnimation && (
+            <Hero 
+              config={homepageConfig?.hero}
+              onExploreClick={() => {
+                const el = document.getElementById('catalog');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              onSecondaryClick={() => handleTabChange('blog')}
+              onDismiss={handleDismissHero}
+            />
+          )}
 
           <div id="shopping-center" style={{ scrollMarginTop: '80px' }}>
             <FlagshipHero 
@@ -406,7 +448,7 @@ function App() {
         <main>
           <ProductPage 
             productSlug={selectedProductSlug}
-            onBack={() => handleTabChange('store')}
+            onBack={handleGoToShop}
             onAddToCart={handleAddToCart}
             onCompare={toggleCompare}
             compareList={compareList}
@@ -426,7 +468,7 @@ function App() {
               <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
                 شما هنوز هیچ لپ‌تاپی برای مقایسه انتخاب نکرده‌اید. برای افزودن به بخش فروشگاه بروید.
               </p>
-              <button className="btn btn-primary" onClick={() => handleTabChange('store')}>
+              <button className="btn btn-primary" onClick={handleGoToShop}>
                 مشاهده محصولات فروشگاه
               </button>
             </div>
@@ -434,7 +476,7 @@ function App() {
             <SpecCompareModal 
               compareList={compareList} 
               laptops={laptops} 
-              onClose={() => handleTabChange('store')} 
+              onClose={handleGoToShop} 
               onAddToCart={handleAddToCart}
               onSelectProduct={handleSelectProduct}
             />
@@ -466,7 +508,7 @@ function App() {
               user={currentUser} 
               onLogout={handleLogout} 
               onSelectProduct={handleSelectProduct} 
-              onGoToStore={() => handleTabChange('store')} 
+              onGoToStore={handleGoToShop} 
               onGoToSupport={() => handleTabChange('support')} 
               onGoToAdmin={() => handleTabChange('admin')}
               onUpdateUser={(u) => {

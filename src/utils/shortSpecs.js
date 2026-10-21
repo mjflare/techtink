@@ -76,10 +76,33 @@ export function getHardwareBadges(product) {
     return { cpuBadge, gpuBadge };
   }
 
-  return {
-    cpuBadge: product.cpuBrand || 'Intel',
-    gpuBadge: product.gpuBrand || 'NVIDIA'
-  };
+  // Smart CPU detection for PC/Windows laptops (Intel, AMD, Snapdragon)
+  const cpuText = `${product.cpuBrand || ''} ${product.cpu_brand || ''} ${product.specs?.cpu || ''}`.toLowerCase();
+  let cpuBadge = 'Intel';
+  if (cpuText.includes('amd') || cpuText.includes('ryzen')) {
+    cpuBadge = 'AMD';
+  } else if (cpuText.includes('snapdragon') || cpuText.includes('qualcomm')) {
+    cpuBadge = 'Snapdragon';
+  } else if (cpuText.includes('intel') || cpuText.includes('core')) {
+    cpuBadge = 'Intel';
+  } else if (product.cpuBrand || product.cpu_brand) {
+    cpuBadge = product.cpuBrand || product.cpu_brand;
+  }
+
+  // Smart GPU detection for PC/Windows laptops (NVIDIA, Intel, AMD Radeon)
+  const gpuText = `${product.gpuBrand || ''} ${product.gpu_brand || ''} ${product.specs?.gpu || ''}`.toLowerCase();
+  let gpuBadge = 'NVIDIA';
+  if (gpuText.includes('amd') || gpuText.includes('radeon')) {
+    gpuBadge = 'AMD Radeon';
+  } else if (gpuText.includes('intel') || gpuText.includes('iris') || gpuText.includes('uhd') || gpuText.includes('arc')) {
+    gpuBadge = 'Intel';
+  } else if (gpuText.includes('nvidia') || gpuText.includes('rtx') || gpuText.includes('gtx') || gpuText.includes('geforce')) {
+    gpuBadge = 'NVIDIA';
+  } else if (product.gpuBrand || product.gpu_brand) {
+    gpuBadge = product.gpuBrand || product.gpu_brand;
+  }
+
+  return { cpuBadge, gpuBadge };
 }
 
 export function parseShortCpu(str, brand = '') {
@@ -98,7 +121,13 @@ export function parseShortCpu(str, brand = '') {
     }
   }
 
-  return str.split('(')[0].trim();
+  // Remove Persian prefixes like "پردازنده:"
+  let s = str.replace(/پردازنده\s*:?\s*/gi, '').trim();
+
+  // Remove technical bracket clutter
+  s = s.split('(')[0].trim();
+
+  return s || brand || 'Processor';
 }
 
 export function parseShortGpu(str, brand = '') {
@@ -130,15 +159,36 @@ export function parseShortGpu(str, brand = '') {
 
 export function parseShortRam(str) {
   if (!str) return '16GB RAM';
-  const m = str.match(/(\d+\s*GB)/i);
-  const val = m ? m[1].toUpperCase().replace(/\s+/g, '') : str.split(' ')[0];
-  return `${val} RAM`;
+
+  // 1. Convert Persian numerals to English digits first
+  const normalized = str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+
+  // 2. Apple Unified Memory support
+  if (/unified/i.test(normalized)) {
+    const num = normalized.match(/(\d+)\s*(?:GB|گیگابایت|گیگ)?/i);
+    return num ? `${num[1]}GB Unified Memory` : 'Unified Memory';
+  }
+  
+  // 3. Match GB / گیگابایت / گیگ
+  const m = normalized.match(/(\d+)\s*(?:GB|گیگابایت|گیگ)/i);
+  const gb = m ? m[1] : (normalized.match(/(\d+)/)?.[1] || '16');
+
+  // 4. Check DDR type if present (DDR4, DDR5, LPDDR5, LPDDR4X)
+  const ddrMatch = normalized.match(/\b(LPDDR\d[a-z]?|DDR\d)\b/i);
+  const ddr = ddrMatch ? ddrMatch[1].toUpperCase() : null;
+
+  return ddr ? `${gb}GB ${ddr}` : `${gb}GB RAM`;
 }
 
 export function parseShortStorage(str) {
   if (!str) return '1TB SSD';
-  const m = str.match(/(\d+\s*(?:TB|GB))/i);
-  return m ? m[1].toUpperCase() + ' SSD' : str.split(' ')[0] + ' SSD';
+  const normalized = str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  const m = normalized.match(/(\d+)\s*(?:TB|GB|ترابایت|گیگابایت)/i);
+  if (m) {
+    const isTb = /tb|ترابایت/i.test(m[0]);
+    return `${m[1]}${isTb ? 'TB' : 'GB'} SSD`;
+  }
+  return '1TB SSD';
 }
 
 export function parseShortDisplay(str) {
@@ -171,14 +221,14 @@ export function getShortSpecs(product) {
   const existingShort = product.shortSpecs || specs.shortSpecs || {};
 
   let ramValue = existingShort.ram || parseShortRam(specs.ram);
-  if (ramValue) {
+  if (ramValue && !/unified/i.test(ramValue)) {
     const cleanNum = ramValue.replace(/\bRAM\b/gi, '').trim();
-    ramValue = cleanNum ? `${cleanNum} RAM` : '16GB RAM';
+    ramValue = cleanNum ? (cleanNum.includes('DDR') ? cleanNum : `${cleanNum} RAM`) : '16GB RAM';
   }
 
   return {
-    cpu: existingShort.cpu || parseShortCpu(specs.cpu, product.cpuBrand),
-    gpu: existingShort.gpu || parseShortGpu(specs.gpu, product.gpuBrand),
+    cpu: existingShort.cpu || parseShortCpu(specs.cpu, product.cpuBrand || product.cpu_brand),
+    gpu: existingShort.gpu || parseShortGpu(specs.gpu, product.gpuBrand || product.gpu_brand),
     ram: ramValue,
     storage: existingShort.storage || parseShortStorage(specs.storage),
     display: existingShort.display || parseShortDisplay(specs.display),
