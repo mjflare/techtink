@@ -10,7 +10,6 @@ import {
 import { formatPrice } from '../utils/formatPrice.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
-import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
 import AssetSelector from './AssetSelector.jsx';
 
@@ -331,64 +330,6 @@ function parseRawSpecs(rawText) {
   return { brand, cpu, gpu, ram, storage, display, grade, basePrice, category };
 }
 
-// Auto-generate Apple Flagship Storytelling from current product specs
-function generateFlagshipFromSpecs(name, specs, chassisVal) {
-  const c = specs?.cpu || 'پردازنده نسل جدید';
-  const g = specs?.gpu || 'کارت گرافیک قدرتمند';
-  const d = specs?.display || 'نمایشگر استاندارد کالیبره';
-  const ch = chassisVal || specs?.chassis || 'آلیاژ مستحکم آلومینیوم و منیزیم';
-
-  return {
-    enabled: true,
-    stages: [
-      {
-        id: 'design',
-        title: `شاسی مهندسی‌شده ${ch}`,
-        subtitle: 'استحکام فوق‌العاده با مقاومت در برابر ضربه و استانداردهای فیزیکی MIL-STD',
-        tag: 'متریال هوافضا',
-        imageIndex: 0,
-        description: `بدنه تراش‌خورده و ارگونومیک ${name || 'دستگاه'} با بالاترین دقت مهندسی و متریال ${ch} برای کنترل وزن و انتقال بهینه حرارت طراحی شده است.`
-      },
-      {
-        id: 'display',
-        title: `نمایشگر حرفه‌ای ${d}`,
-        subtitle: 'وضوح استثنایی با تفکیک رنگی سینمایی و روشنایی عالی برای امور طولانی‌مدت',
-        tag: 'دقت رنگ ۱۰۰٪',
-        imageIndex: 1,
-        description: `پنل کالیبره‌شده کارخانه‌ای ${d} با پوشش طیف رنگی گسترده، مناسب ادیتورهای ویدیویی، طراحان گرافیک و مهندسان نقشه‌کشی بدون خستگی چشم.`
-      },
-      {
-        id: 'silicon',
-        title: `معماری پردازش سیلیکونی ${c}`,
-        subtitle: `خنک‌کاری خنک با محفظه بخار و گرافیک ${g}`,
-        tag: 'خنک‌کننده پیشرفته',
-        imageIndex: 2,
-        description: `هماهنگی بی‌نقص پردازنده ${c} با شتاب‌دهنده گرافیکی ${g}، حداکثر پایداری کلاک توربو بوست را حتی در رندرهای مداوم چندروزه تضمین می‌کند.`
-      },
-      {
-        id: 'ergonomics',
-        title: 'درگاه‌های ارتباطی کامل و کیبورد ارگونومیک',
-        subtitle: 'ارتباطات پرسرعت بدون نیاز به تبدیل و حس بی‌نظیر تایپ',
-        tag: 'پورت‌های نسل جدید',
-        imageIndex: 3,
-        description: 'مجهز به درگاه‌های پرسرعت Thunderbolt / Type-C، خروجی تصویری مستقیم HDMI و درگاه پرسرعت شبکه و کارت‌خوان SD بدون نیاز به حمل دانگل.'
-      }
-    ],
-    hotspots: [
-      { id: 'screen', top: '26%', left: '48%', title: 'پنل ضد انعکاس کالیبره', desc: d },
-      { id: 'cooling', top: '64%', left: '28%', title: 'سیستم خنک‌کاری اتاق بخار (Vapor Chamber)', desc: 'خنک‌کاری مدار تغذیه و چیپ‌ها با هیت‌پایپ‌های مسی عریض' },
-      { id: 'keyboard', top: '72%', left: '52%', title: 'کیبورد ارگونومیک', desc: 'عمق کلید بهینه با نور پس‌زمینه یکدست و تایپ کم‌صدا' },
-      { id: 'ports', top: '56%', left: '80%', title: 'درگاه‌های Thunderbolt 4', desc: 'انتقال داده با سرعت ۴۰ گیگابیت بر ثانیه و اتصال به مانیتورهای 8K' }
-    ],
-    workloads: [
-      { label: 'آماده به کار (Idle)', temp: '34°C', fanRpm: '0 RPM (کامپکت و بی‌صدا)', power: '15W', status: 'خاموشی فن‌ها و حداکثر پایداری باتری' },
-      { label: 'برنامه‌نویسی و وب (Coding)', temp: '42°C', fanRpm: '1400 RPM (زمزمه ملایم)', power: '38W', status: 'دمای خنک استراحتگاه مچ دست' },
-      { label: 'رندرینگ سه‌بعدی و تدوین (3D Render)', temp: '68°C', fanRpm: '2800 RPM (تهویه بهینه)', power: '95W', status: 'حداکثر بازدهی فرکانس توربو بوست' },
-      { label: 'شبیه‌سازی سنگین و AI (Full Load)', temp: '76°C', fanRpm: '3900 RPM (حداکثر توربو)', power: '140W', status: 'خنک‌کاری کامل توسط محفظه بخار بدون افت فریم' }
-    ]
-  };
-}
-
 export default function ProductEditorModal({ 
   isOpen, 
   mode = 'add', 
@@ -447,7 +388,6 @@ export default function ProductEditorModal({
         { name: '۱۶ اینچ WUXGA IPS مات ضد انعکاس', price: 0 }
       ]
     },
-    flagshipShowcase: null,
     model3d_url: '/models/laptop-flagship.glb',
     enable_3d_viewer: true,
     expertReview: {
@@ -520,7 +460,6 @@ export default function ProductEditorModal({
           chassis: initialData.chassis || initialData.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم'
         },
         upgrades: initialData.upgrades || { ram: [], storage: [], display: [] },
-        flagshipShowcase: initialData.specs?.flagshipShowcase || initialData.flagshipShowcase || null,
         model3d_url: initialData.model3d_url || initialData.specs?.model3d_url || '/models/laptop-flagship.glb',
         enable_3d_viewer: initialData.enable_3d_viewer !== false && initialData.specs?.enable_3d_viewer !== false,
         expertReview: {
@@ -561,8 +500,7 @@ export default function ProductEditorModal({
       images: d.images,
       specs: { ...d.specs },
       upgrades: { ...d.upgrades },
-      expertReview: { ...d.expertReview },
-      flagshipShowcase: generateFlagshipFromSpecs(d.name, d.specs, d.chassis)
+      expertReview: { ...d.expertReview }
     }));
     setParseNotice(`✅ پیش‌تنظیم "${preset.label}" با موفقیت بر روی تمام بخش‌ها اعمال گردید!`);
     setTimeout(() => setParseNotice(''), 4000);
@@ -670,9 +608,6 @@ export default function ProductEditorModal({
     const consList = (formData.expertReview?.cons || '').split('\n').map(s => s.trim()).filter(Boolean);
     const chassisVal = formData.chassis || formData.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم';
 
-    // Auto-generate flagship showcase if none is set
-    const finalFlagship = formData.flagshipShowcase || generateFlagshipFromSpecs(formData.name, formData.specs, chassisVal);
-
     const payload = {
       ...formData,
       basePrice: Number(formData.basePrice),
@@ -684,10 +619,8 @@ export default function ProductEditorModal({
       specs: {
         ...formData.specs,
         chassis: chassisVal,
-        enable_3d_viewer: formData.enable_3d_viewer !== false,
-        flagshipShowcase: finalFlagship
+        enable_3d_viewer: formData.enable_3d_viewer !== false
       },
-      flagshipShowcase: finalFlagship,
       expertReview: {
         intro: formData.expertReview?.intro || '',
         pros: prosList,
@@ -711,8 +644,7 @@ export default function ProductEditorModal({
       display: formData.specs.display || '15.6" IPS Display',
       battery: formData.specs.battery || '80Wh Battery',
       chassis: formData.chassis || 'آلیاژ فلزی'
-    },
-    flagshipShowcase: formData.flagshipShowcase || generateFlagshipFromSpecs(formData.name, formData.specs, formData.chassis)
+    }
   };
 
   return (
@@ -764,7 +696,7 @@ export default function ProductEditorModal({
                 </span>
               </h2>
               <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                مدیریت زوایای گالری، ارتقای سخت‌افزار، کاوش تعاملی پرچمدار و استخراج هوشمند مشخصات
+                مدیریت زوایای گالری، ارتقای سخت‌افزار، مدل‌های ۳D و مشخصات فنی
               </div>
             </div>
           </div>
@@ -986,7 +918,7 @@ export default function ProductEditorModal({
               { id: 'specs', label: 'مشخصات سخت‌افزار', icon: Cpu },
               { id: 'gallery', label: 'گالری چندزاویه‌ای', icon: Image, badge: '۴ زاویه' },
               { id: 'upgrades', label: 'ارتقای سخت‌افزاری', icon: Layers, badge: 'RAM/SSD' },
-              { id: 'flagship', label: 'کاوش تعاملی پرچمدار', icon: Sparkles, badge: 'Flagship' },
+              { id: 'model3d', label: 'مدل سه‌بعدی و نمایشگر ۳D', icon: Rotate3d, badge: '3D' },
               { id: 'review', label: 'نقد و بررسی زنده', icon: BookOpen, badge: 'Studio' }
             ].map(tab => (
               <button
@@ -1643,169 +1575,84 @@ export default function ProductEditorModal({
                 </div>
               )}
 
-              {/* ──────────────── TAB 5: APPLE FLAGSHIP SHOWCASE STUDIO ──────────────── */}
-              {activeTab === 'flagship' && (
+              {/* ──────────────── TAB 5: 3D MODEL & VIEWER ──────────────── */}
+              {activeTab === 'model3d' && (
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }} className="animate-fade-in">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <h4 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Sparkles size={16} color="hsl(var(--accent-cyan))" />
-                        استودیو پیکربندی کاوش تعاملی پرچمدار (Flagship Showcase Builder)
+                        <Rotate3d size={18} color="hsl(var(--accent-cyan))" />
+                        مدل سه‌بعدی و نمایشگر ۳۶۰ درجه (3D Model Viewer)
                       </h4>
                       <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                        فعال‌سازی کاوش تعاملی اسکرول‌محور با استانداردهای مهندسی و ارائه پرچمدار
+                        امکان چرخش ۳۶۰ درجه، زوم سه‌بعدی و کاوش جزئیات لپ‌تاپ توسط خریدار با موتور WebGL
                       </p>
                     </div>
 
                     <button
                       type="button"
-                      className="btn btn-primary"
-                      onClick={() => {
-                        const generated = generateFlagshipFromSpecs(formData.name, formData.specs, formData.chassis);
-                        setFormData(prev => ({ ...prev, flagshipShowcase: generated }));
-                        setParseNotice('⚡ سناریوی چهار مرحله‌ای کاوش سخت‌افزار بر اساس مشخصات این لپ‌تاپ تولید شد!');
-                        setTimeout(() => setParseNotice(''), 4000);
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '0.78rem',
-                        background: 'linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--accent-purple)))'
-                      }}
+                      className="btn btn-glass"
+                      onClick={() => setFormData(prev => ({ ...prev, model3d_url: '/models/laptop-flagship.glb' }))}
+                      style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <Sparkles size={13} style={{ marginLeft: '4px' }} /> تولید خودکار سناریو از مشخصات فنی
+                      <RefreshCw size={13} /> استفاده از مدل پیش‌فرض
                     </button>
                   </div>
 
-                  {/* 3D Model Configuration (GLB / GLTF) */}
-                  <div className="glass-panel" style={{ padding: '16px 18px', borderRadius: '14px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  {/* Toggle for 3D Viewer */}
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '14px 18px',
+                    borderRadius: '12px',
+                    background: formData.enable_3d_viewer !== false ? 'rgba(56, 189, 248, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                    border: formData.enable_3d_viewer !== false ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid var(--border-glass)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{
+                        width: '10px',
+                        height: '10px',
+                        borderRadius: '50%',
+                        backgroundColor: formData.enable_3d_viewer !== false ? 'hsl(var(--accent-green))' : 'var(--text-muted)',
+                        boxShadow: formData.enable_3d_viewer !== false ? '0 0 8px hsl(var(--accent-green))' : 'none'
+                      }} />
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'hsl(var(--accent-cyan))' }}>
-                          <Rotate3d size={16} /> نمایشگر سه‌بعدی تعاملی ۳۶۰ درجه (3D Model Viewer)
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
+                          {formData.enable_3d_viewer !== false ? 'نمایشگر ۳D برای این محصول فعال است' : 'نمایشگر ۳D غیرفعال است'}
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                          امکان چرخش ۳۶۰ درجه، زوم سه‌بعدی و نمایش تعاملی محصول با موتور WebGL / Three.js
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <button
-                          type="button"
-                          className="btn btn-glass"
-                          onClick={() => setFormData(prev => ({ ...prev, model3d_url: '/models/laptop-flagship.glb' }))}
-                          style={{ fontSize: '0.75rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                        >
-                          <RefreshCw size={13} /> استفاده از مدل پیش‌فرض
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Apple-style Toggle for 3D Viewer */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 14px',
-                      borderRadius: '10px',
-                      background: formData.enable_3d_viewer !== false ? 'rgba(56, 189, 248, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                      border: formData.enable_3d_viewer !== false ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid var(--border-glass)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{
-                          width: '10px',
-                          height: '10px',
-                          borderRadius: '50%',
-                          backgroundColor: formData.enable_3d_viewer !== false ? 'hsl(var(--accent-green))' : 'var(--text-muted)',
-                          boxShadow: formData.enable_3d_viewer !== false ? '0 0 8px hsl(var(--accent-green))' : 'none'
-                        }} />
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '0.82rem' }}>
-                            {formData.enable_3d_viewer !== false ? 'نمایشگر ۳D برای این محصول فعال است' : 'نمایشگر ۳D غیرفعال است (کاوش تعاملی پرچمدار نمایش داده می‌شود)'}
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '1px' }}>
-                            با خاموش کردن این گزینه، دکمه و موتور سه‌بعدی برای این لپ‌تاپ بارگذاری نخواهد شد.
-                          </div>
+                        <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          در صورت فعال بودن، کاربران می‌توانند با کلیک روی نمایشگر ۳D، شاسی دستگاه را ۳۶۰ درجه بررسی کنند.
                         </div>
                       </div>
-
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
-                        <input 
-                          type="checkbox"
-                          checked={formData.enable_3d_viewer !== false}
-                          onChange={e => setFormData(prev => ({ ...prev, enable_3d_viewer: e.target.checked }))}
-                          style={{ width: '18px', height: '18px', accentColor: 'hsl(var(--accent-cyan))' }}
-                        />
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                          {formData.enable_3d_viewer !== false ? 'فعال' : 'غیرفعال'}
-                        </span>
-                      </label>
                     </div>
 
-                    <div style={{ opacity: formData.enable_3d_viewer !== false ? 1 : 0.6, pointerEvents: formData.enable_3d_viewer !== false ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
-                      <AssetSelector
-                        label="فایل مدل سه‌بعدی محصول (3D GLB / GLTF Model)"
-                        value={formData.model3d_url || ''}
-                        onChange={url => setFormData(prev => ({ ...prev, model3d_url: url }))}
-                        type="model"
-                        placeholder="/models/laptop-flagship.glb یا آپلود فایل لوکال"
-                        helperText="می‌توانید مدل ۳D (.glb) را مستقیماً از سیستم آپلود کنید، از دایرکتوری‌های سرور انتخاب نمایید، یا آدرس اینترنتی بدهید."
-                        presets={[
-                          { label: 'مدل پرچمدار پیش‌فرض', url: '/models/laptop-flagship.glb' }
-                        ]}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Toggle Enable/Disable */}
-                  <div className="glass-panel" style={{ padding: '14px 18px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>
-                        وضعیت کاوش تعاملی پرچمدار برای این دستگاه
-                      </div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                        اگر فعال باشد، ماژول اسکرول تعاملی، چرخش پرسپکتیو و مشخصات فنی در صفحه محصول رندر می‌شود.
-                      </div>
-                    </div>
-
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0 }}>
                       <input 
                         type="checkbox"
-                        checked={formData.flagshipShowcase?.enabled !== false}
-                        onChange={e => {
-                          const isEn = e.target.checked;
-                          setFormData(prev => ({
-                            ...prev,
-                            flagshipShowcase: prev.flagshipShowcase 
-                              ? { ...prev.flagshipShowcase, enabled: isEn }
-                              : generateFlagshipFromSpecs(prev.name, prev.specs, prev.chassis)
-                          }));
-                        }}
+                        checked={formData.enable_3d_viewer !== false}
+                        onChange={e => setFormData(prev => ({ ...prev, enable_3d_viewer: e.target.checked }))}
                         style={{ width: '18px', height: '18px', accentColor: 'hsl(var(--accent-cyan))' }}
                       />
-                      <span>فعال باشد</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                        {formData.enable_3d_viewer !== false ? 'فعال' : 'غیرفعال'}
+                      </span>
                     </label>
                   </div>
 
-                  {/* 4 Apple Stages Summary */}
-                  <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
-                    {[
-                      { step: 1, title: 'مرحله ۱: شاسی و متریال تیتانیوم/منیزیم', tag: 'متریال هوافضا', color: 'hsl(var(--accent-cyan))' },
-                      { step: 2, title: 'مرحله ۲: نمایشگر کالیبره و دقت رنگ', tag: 'دقت رنگ ۱۰۰٪', color: 'hsl(var(--accent-purple))' },
-                      { step: 3, title: 'مرحله ۳: معماری سیلیکون و محفظه بخار', tag: 'خنک‌کننده اتاق بخار', color: 'hsl(var(--accent-green))' },
-                      { step: 4, title: 'مرحله ۴: کیبورد ارگونومیک و تاندربولت ۴', tag: 'پورت‌های نسل جدید', color: '#ea580c' }
-                    ].map(st => (
-                      <div key={st.step} className="glass-panel" style={{ padding: '12px 14px', borderRadius: '12px', borderLeft: `3px solid ${st.color}` }}>
-                        <div style={{ fontSize: '0.72rem', color: st.color, fontWeight: 700, marginBottom: '4px' }}>
-                          بخش {st.step} • {st.tag}
-                        </div>
-                        <div style={{ fontSize: '0.825rem', fontWeight: 700 }}>
-                          {st.title}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(0,0,0,0.03)', padding: '12px', borderRadius: '10px' }}>
-                    💡 <strong>نکته طراحی:</strong> برای مشاهده و بررسی رفتار حرکتی این ماژول، تب پیش‌نمایش در سمت راست را بر روی <strong>«کاوش تعاملی پرچمدار»</strong> قرار دهید.
+                  {/* 3-Mode AssetSelector for 3D GLB/GLTF */}
+                  <div className="glass-panel" style={{ padding: '18px', borderRadius: '14px', opacity: formData.enable_3d_viewer !== false ? 1 : 0.6, pointerEvents: formData.enable_3d_viewer !== false ? 'auto' : 'none', transition: 'all 0.2s ease' }}>
+                    <AssetSelector
+                      label="فایل مدل سه‌بعدی محصول (3D GLB / GLTF Model)"
+                      value={formData.model3d_url || ''}
+                      onChange={url => setFormData(prev => ({ ...prev, model3d_url: url }))}
+                      type="model"
+                      placeholder="/models/laptop-flagship.glb یا آپلود فایل لوکال"
+                      helperText="می‌توانید فایل .glb را مستقیماً از حافظه گوشی یا کامپیوتر آپلود کنید، از دایرکتوری‌های سرور انتخاب کنید، یا آدرس لینک مستقیم اینترنتی بدهید."
+                      presets={[
+                        { label: 'مدل پرچمدار پیش‌فرض', url: '/models/laptop-flagship.glb' }
+                      ]}
+                    />
                   </div>
                 </div>
               )}
@@ -1932,7 +1779,7 @@ export default function ProductEditorModal({
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
                     { id: 'card', label: 'کارت کالا و مشخصات' },
-                    { id: 'flagship', label: 'کاوش تعاملی پرچمدار' },
+                    { id: 'model3d', label: 'پیش‌نمایش سه‌بعدی ۳D' },
                     { id: 'review', label: 'نقد و بررسی زنده' }
                   ].map(pt => (
                     <button
@@ -2009,14 +1856,22 @@ export default function ProductEditorModal({
                   </div>
                 )}
 
-                {/* 2. Flagship Live Preview */}
-                {previewSubTab === 'flagship' && (
-                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                    <AppleFlagshipShowcase 
-                      product={previewProduct} 
-                      onSelectProduct={() => {}} 
-                      onAddToCart={() => {}} 
-                    />
+                {/* 2. 3D Model Live Preview */}
+                {previewSubTab === 'model3d' && (
+                  <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{
+                      height: '360px',
+                      borderRadius: '16px',
+                      overflow: 'hidden',
+                      background: 'radial-gradient(circle at center, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                      border: '1px solid var(--border-glass)'
+                    }}>
+                      <LaptopModelViewer 
+                        modelUrl={formData.model3d_url || '/models/laptop-flagship.glb'} 
+                        productName={formData.name || 'لپ‌تاپ'}
+                        specs={formData.specs}
+                      />
+                    </div>
                   </div>
                 )}
 

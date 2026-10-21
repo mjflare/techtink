@@ -787,7 +787,6 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       image: p.image || '',
       images: Array.isArray(p.images) && p.images.length > 0 ? p.images : (p.image ? [p.image] : []),
       upgrades: p.upgrades || { ram: [], storage: [], display: [] },
-      flagshipShowcase: p.specs?.flagshipShowcase || p.flagshipShowcase || null,
       model3d_url: p.model3d_url || p.specs?.model3d_url || '/models/laptop-flagship.glb',
       guarantee: p.guarantee || 'گارانتی ۶ ماهه طلایی استوک تک‌تینک',
       cpuBrand: p.cpuBrand || 'Intel',
@@ -802,8 +801,7 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         battery: p.specs?.battery || '',
         weight: p.specs?.weight || '',
         npuScore: p.specs?.npuScore || '',
-        chassis: p.chassis || p.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم',
-        flagshipShowcase: p.specs?.flagshipShowcase || p.flagshipShowcase || null
+        chassis: p.chassis || p.specs?.chassis || 'آلیاژ تیتانیوم و آلومینیوم'
       },
       expertReview: {
         intro: p.expertReview?.intro || '',
@@ -851,10 +849,8 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       chassis: chassisVal,
       specs: { 
         ...dataToSave.specs, 
-        chassis: chassisVal,
-        flagshipShowcase: dataToSave.flagshipShowcase || dataToSave.specs?.flagshipShowcase || null
+        chassis: chassisVal
       },
-      flagshipShowcase: dataToSave.flagshipShowcase || dataToSave.specs?.flagshipShowcase || null,
       model3d_url: dataToSave.model3d_url || dataToSave.specs?.model3d_url || null,
       images: Array.isArray(dataToSave.images) && dataToSave.images.length > 0 ? dataToSave.images : (dataToSave.image ? [dataToSave.image] : []),
       upgrades: dataToSave.upgrades || null,

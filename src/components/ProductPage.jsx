@@ -10,7 +10,6 @@ import { formatPrice } from '../utils/formatPrice.js';
 import { getShortSpecs, getHardwareBadges, parseShortRam, parseShortStorage, parseShortDisplay, parseShortCpu } from '../utils/shortSpecs.js';
 import { handleImageError } from '../utils/imageFallback.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
-import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 
 function ProductPageLoadingAnimation() {
   const [activeStep, setActiveStep] = useState(0);
@@ -1577,32 +1576,6 @@ export default function ProductPage({
             </p>
           </div>
         </div>
-      </section>
-      
-      {/* 2.5 INTERACTIVE HARDWARE SHOWCASE */}
-      <section style={{ marginBottom: '40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span className="badge badge-glow" style={{ fontSize: '0.78rem', padding: '4px 12px', fontWeight: 800 }}>
-                <Sparkles size={13} style={{ marginLeft: '4px' }} />
-                روایت مهندسی پرچمدار
-              </span>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                کاوش تعاملی سخت‌افزار
-              </h3>
-            </div>
-            <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              بررسی پیوسته شاسی، شفافیت نمایشگر، اوج توان پردازشی و درگاه‌ها
-            </p>
-          </div>
-        </div>
-
-        <AppleFlagshipShowcase 
-          product={product} 
-          onSelectProduct={onSelectProduct} 
-          onAddToCart={handleAddToCart} 
-        />
       </section>
 
       {/* Navigation Tabs for Detailed Sections */}
