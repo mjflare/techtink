@@ -5,7 +5,6 @@ import 'sonner/dist/styles.css';
 import { formatPrice } from './utils/formatPrice.js';
 import Header from './components/Header.jsx';
 import Hero from './components/Hero.jsx';
-import LandoPreloader from './components/LandoPreloader.jsx';
 import AnnouncementBar from './components/AnnouncementBar.jsx';
 import PromotionBanner from './components/PromotionBanner.jsx';
 import ProductShowcase from './components/ProductShowcase.jsx';
@@ -38,13 +37,6 @@ function App() {
   const [homepageConfig, setHomepageConfig] = useState(null);
   const [siteSettings, setSiteSettings] = useState(null);
   const [isDemoNoticeOpen, setIsDemoNoticeOpen] = useState(false);
-
-  // Lando Norris Style Welcome Preloader (0% to 100% Shutter Reveal)
-  const [showPreloader, setShowPreloader] = useState(true);
-
-  const handlePreloaderComplete = () => {
-    setShowPreloader(false);
-  };
 
   // Compute compared laptop objects
   const comparedLaptops = useMemo(() => {
@@ -302,9 +294,6 @@ function App() {
 
   return (
     <div>
-      {/* LANDO NORRIS SPEED-COUNTER PRELOADER & WELCOME REVEAL */}
-      {showPreloader && <LandoPreloader onComplete={handlePreloaderComplete} />}
-
       {/* 0. HIGH-CRAFT TOAST NOTIFICATION SYSTEM (SONNER) */}
       <Toaster 
         position="top-center" 
