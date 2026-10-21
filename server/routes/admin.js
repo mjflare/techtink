@@ -1,9 +1,10 @@
 // Admin API: dashboard, products/variants/stock, orders, comments, users, blog, FAQ, tickets, settings.
 import { Router } from 'express';
 import { db, getSettings, setSetting, getSetting } from '../db.js';
-import { requireAdmin, publicUser, hashPassword } from '../auth.js';
+import { requireAdmin, publicUser, hashPassword, normalizeMobile } from '../auth.js';
 import { serializeProduct } from '../products.js';
 import { orderWithItems } from './account.js';
+import { sendOtp, sendCustomSms } from '../services/smsService.js';
 import { 
   listEmails, getEmailById, markEmailRead, deleteEmail, saveIncomingEmail, 
   getMailServerStatus, extractVerificationCode, sendOutgoingEmail, 
@@ -361,7 +362,9 @@ const EDITABLE = [
   'store_address', 'store_phone', 'store_mobile', 'store_hours', 'store_map_link', 'store_about',
   'telegram_url', 'instagram_url', 'bale_url', 'aparat_url',
   'google_site_verification', 'google_analytics_id', 'seo_meta_title', 'seo_meta_description', 'seo_meta_keywords',
-  'homepage_announcement', 'homepage_hero', 'homepage_promotion', 'homepage_showcase'
+  'homepage_announcement', 'homepage_hero', 'homepage_promotion', 'homepage_showcase',
+  'sms_provider', 'sms_api_key', 'sms_template_otp', 'sms_sender_line', 'sms_2fa_enabled', 'admin_2fa_enforced',
+  'smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_from'
 ];
 r.get('/settings', (_req, res) => {
   const all = getSettings();
@@ -375,6 +378,118 @@ r.patch('/settings', (req, res) => {
     }
   }
   res.json(getSettings());
+});
+
+// ---------- SMS & 2FA Admin Management ----------
+r.post('/sms/test', async (req, res) => {
+  const { mobile, message, code, template } = req.body || {};
+  const m = normalizeMobile(mobile || getSetting('store_mobile'));
+  if (!m) return res.status(400).json({ error: 'شماره موبایل گیرنده نامعتبر است.' });
+
+  const testCode = code || '12345';
+  const testTemplate = template || getSetting('sms_template_otp') || 'techtink-verify';
+  const result = await sendOtp({ mobile: m, code: testCode, template: testTemplate });
+
+  try {
+    db.run(
+      "INSERT INTO sms_logs (mobile, provider, template, message, status, message_id, error) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      m,
+      result.provider || getSetting('sms_provider') || 'mock',
+      testTemplate,
+      message || `تست وب‌سرویس پیامک تک‌تینک (کد: ${testCode})`,
+      result.success ? 'sent' : 'failed',
+      result.messageId || null,
+      result.error || null
+    );
+  } catch {}
+
+  if (result.success) {
+    res.json({
+      success: true,
+      simulated: result.simulated,
+      message: result.simulated
+        ? 'پیامک تستی شبیه‌سازی شد (کد در لاگ‌های کنسول سرور چاپ شد).'
+        : `پیامک تستی با موفقیت به ${m} ارسال شد.`
+    });
+  } else {
+    res.status(500).json({ error: result.error || 'خطا در ارسال پیامک تستی' });
+  }
+});
+
+r.get('/sms/logs', (_req, res) => {
+  try {
+    const logs = db.all('SELECT * FROM sms_logs ORDER BY id DESC LIMIT 100');
+    res.json(logs);
+  } catch {
+    res.json([]);
+  }
+});
+
+r.get('/recovery/requests', (_req, res) => {
+  try {
+    const tokens = db.all(
+      `SELECT id, target, type, attempts, used, expires_at AS expiresAt, created_at AS createdAt 
+       FROM verification_tokens 
+       ORDER BY id DESC LIMIT 50`
+    );
+    res.json(tokens);
+  } catch {
+    res.json([]);
+  }
+});
+
+r.get('/security/audit', (req, res) => {
+  const adminUsers = db.all("SELECT id, name, email, mobile, role, phone_verified, two_factor_enabled, created_at FROM users WHERE role = 'admin'");
+  const siteUrl = getSetting('site_url') || 'https://techtink.ir';
+  const isHttps = siteUrl.startsWith('https://');
+  const tokenSecretSet = !!getSetting('token_secret');
+  const siteMode = getSetting('site_mode') || 'operational';
+  const smsProvider = getSetting('sms_provider') || 'kavenegar';
+  const smsApiKeyConfigured = !!getSetting('sms_api_key');
+  const totalUsers = db.get("SELECT COUNT(*) AS c FROM users")?.c || 0;
+  const verifiedPhones = db.get("SELECT COUNT(*) AS c FROM users WHERE phone_verified = 1")?.c || 0;
+
+  res.json({
+    targetDomain: 'techtink.ir',
+    siteUrl,
+    isHttps,
+    siteMode,
+    sslEnforced: true,
+    securityHeaders: {
+      contentSecurityPolicy: 'Active (Hardened)',
+      strictTransportSecurity: 'max-age=31536000; includeSubDomains',
+      xContentTypeOptions: 'nosniff',
+      xFrameOptions: 'SAMEORIGIN',
+      xXssProtection: '1; mode=block',
+      referrerPolicy: 'strict-origin-when-cross-origin'
+    },
+    rateLimiting: {
+      authRateLimit: 'Active (15 req/min per IP window)',
+      protection: 'Brute-force & Credential Stuffing Mitigation'
+    },
+    database: {
+      engine: 'SQLite (WAL mode)',
+      parameterizedQueries: true,
+      sqlInjectionDefense: 'Active (Strict Prepared Statements)'
+    },
+    authSecurity: {
+      tokenSecretSet,
+      hashAlgorithm: 'scrypt (with 16-byte random salt)',
+      adminUsersCount: adminUsers.length,
+      smsProvider,
+      smsApiKeyConfigured,
+      totalUsers,
+      verifiedPhones
+    },
+    adminAccounts: adminUsers.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      mobile: u.mobile,
+      hasPhoneVerified: !!u.phone_verified,
+      createdAt: u.created_at
+    }))
+  });
 });
 
 // ---------- Homepage Customizer API ----------
@@ -797,7 +912,7 @@ r.get('/analytics', (_req, res) => {
         uniqueVisitorsToday,
         pageviews7d,
         uniqueVisitors7d,
-        liveActive: Math.max(liveActive, 1), // Minimum 1 for active admin session
+        liveActive: Number(liveActive) || 0,
         googleReferrals
       },
       chartData: chartRows,

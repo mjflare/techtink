@@ -1,8 +1,11 @@
-// Customer accounts, comments and orders.
+// Customer accounts, comments, OTP/2FA verification and orders.
 import { Router } from 'express';
+import crypto from 'node:crypto';
 import { db, getSetting } from '../db.js';
 import { hashPassword, verifyPassword, issueToken, publicUser, requireUser, normalizeMobile } from '../auth.js';
 import { priceCart } from '../products.js';
+import { sendOtp } from '../services/smsService.js';
+import { buildMimeMessage, sendViaSmtpSocket } from '../mailServer.js';
 
 const r = Router();
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || ''));
@@ -68,6 +71,281 @@ r.put('/auth/password', requireUser, (req, res) => {
   if (!next || String(next).length < 8) return res.status(400).json({ error: 'رمز جدید باید حداقل ۸ کاراکتر باشد.' });
   db.run('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?', hashPassword(next), req.user.id);
   res.json({ user: publicUser(db.get('SELECT * FROM users WHERE id = ?', req.user.id)) });
+});
+
+// ---- OTP & 2FA Mobile Verification ----
+r.post('/auth/otp/send', async (req, res) => {
+  const { mobile, purpose = 'login' } = req.body || {};
+  const m = normalizeMobile(mobile);
+  if (!m) return res.status(400).json({ error: 'شماره موبایل نامعتبر است (مثال: ۰۹۱۲۳۴۵۶۷۸۹).' });
+
+  if (purpose === 'recovery') {
+    const existing = db.get('SELECT id FROM users WHERE mobile = ?', m);
+    if (!existing) return res.status(404).json({ error: 'کاربری با این شماره موبایل یافت نشد.' });
+  }
+
+  // Rate limiting: 1 request per 60 seconds per mobile
+  const lastToken = db.get(
+    "SELECT created_at FROM verification_tokens WHERE target = ? AND type = 'mobile_otp' ORDER BY id DESC LIMIT 1",
+    m
+  );
+  if (lastToken) {
+    const elapsed = Date.now() - new Date(lastToken.created_at + 'Z').getTime();
+    if (elapsed < 60000) {
+      const waitSec = Math.max(1, Math.ceil((60000 - elapsed) / 1000));
+      return res.status(429).json({ error: `لطفاً ${waitSec} ثانیه پیش از درخواست مجدد کد شکیبا باشید.` });
+    }
+  }
+
+  const code = String(crypto.randomInt(10000, 99999));
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+  db.run("UPDATE verification_tokens SET used = 1 WHERE target = ? AND type = 'mobile_otp' AND used = 0", m);
+  db.run(
+    "INSERT INTO verification_tokens (target, type, code, expires_at) VALUES (?, 'mobile_otp', ?, ?)",
+    m, code, expiresAt
+  );
+
+  const template = getSetting('sms_template_otp') || 'techtink-verify';
+  const smsResult = await sendOtp({ mobile: m, code, template });
+
+  try {
+    db.run(
+      "INSERT INTO sms_logs (mobile, provider, template, message, status, message_id, error) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      m,
+      smsResult.provider || getSetting('sms_provider') || 'mock',
+      template,
+      `کد اعتبارسنجی تک‌تینک: ${code}`,
+      smsResult.success ? 'sent' : 'failed',
+      smsResult.messageId || null,
+      smsResult.error || null
+    );
+  } catch {}
+
+  res.json({
+    success: true,
+    message: smsResult.simulated
+      ? 'کد اعتبارسنجی (حالت آزمایشی) در کنسول سرور ثبت شد.'
+      : 'کد اعتبارسنجی ۵ رقمی با موفقیت پیامک شد.',
+    expiresIn: 300
+  });
+});
+
+r.post('/auth/otp/verify', (req, res) => {
+  const { mobile, code, purpose = 'login', name } = req.body || {};
+  const m = normalizeMobile(mobile);
+  const cleanCode = String(code || '').replace(/\D/g, '').trim();
+
+  if (!m || !cleanCode) {
+    return res.status(400).json({ error: 'شماره موبایل و کد ۵ رقمی الزامی است.' });
+  }
+
+  const tokenRow = db.get(
+    "SELECT * FROM verification_tokens WHERE target = ? AND type = 'mobile_otp' AND used = 0 ORDER BY id DESC LIMIT 1",
+    m
+  );
+
+  if (!tokenRow || tokenRow.expires_at < Date.now()) {
+    return res.status(400).json({ error: 'کد منقضی شده یا نامعتبر است. لطفاً کد جدید دریافت کنید.' });
+  }
+
+  if (tokenRow.attempts >= 5) {
+    db.run("UPDATE verification_tokens SET used = 1 WHERE id = ?", tokenRow.id);
+    return res.status(400).json({ error: 'تعداد دفعات اشتباه بیش از حد مجاز است. لطفاً کد جدید دریافت کنید.' });
+  }
+
+  if (tokenRow.code !== cleanCode) {
+    db.run("UPDATE verification_tokens SET attempts = attempts + 1 WHERE id = ?", tokenRow.id);
+    return res.status(400).json({ error: 'کد واردشده اشتباه است.' });
+  }
+
+  // Code is verified
+  db.run("UPDATE verification_tokens SET used = 1 WHERE id = ?", tokenRow.id);
+
+  if (purpose === 'recovery') {
+    const recoveryToken = crypto.randomBytes(32).toString('hex');
+    const recoveryExpires = Date.now() + 15 * 60 * 1000;
+    db.run(
+      "INSERT INTO verification_tokens (target, type, code, token, expires_at) VALUES (?, 'password_recovery_session', 'OK', ?, ?)",
+      m, recoveryToken, recoveryExpires
+    );
+    return res.json({
+      success: true,
+      recoveryToken,
+      message: 'شماره موبایل تأیید شد. اکنون می‌توانید رمز عبور جدید را تعیین کنید.'
+    });
+  }
+
+  // Login or Register flow
+  let user = db.get("SELECT * FROM users WHERE mobile = ?", m);
+  if (!user) {
+    const tempPass = crypto.randomBytes(8).toString('hex');
+    const cleanName = String(name || '').trim() || `کاربر ${m.slice(-4)}`;
+    const { lastId } = db.run(
+      "INSERT INTO users (name, mobile, password_hash, role, phone_verified) VALUES (?, ?, ?, 'customer', 1)",
+      cleanName, m, hashPassword(tempPass)
+    );
+    user = db.get("SELECT * FROM users WHERE id = ?", lastId);
+  } else {
+    db.run("UPDATE users SET phone_verified = 1 WHERE id = ?", user.id);
+  }
+
+  if (user.blocked) {
+    return res.status(403).json({ error: 'حساب کاربری شما مسدود شده است.' });
+  }
+
+  res.json({ success: true, token: issueToken(user), user: publicUser(user) });
+});
+
+// ---- Password Reset (Email & Phone) ----
+r.post('/auth/password/reset-request', async (req, res) => {
+  const { identifier } = req.body || {};
+  const raw = String(identifier || '').trim();
+  const m = normalizeMobile(raw);
+
+  if (m) {
+    const existing = db.get('SELECT id FROM users WHERE mobile = ?', m);
+    if (!existing) {
+      return res.status(404).json({ error: 'کاربری با این شماره موبایل در سیستم یافت نشد.' });
+    }
+    const code = String(crypto.randomInt(10000, 99999));
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+
+    db.run("UPDATE verification_tokens SET used = 1 WHERE target = ? AND type = 'mobile_otp' AND used = 0", m);
+    db.run(
+      "INSERT INTO verification_tokens (target, type, code, expires_at) VALUES (?, 'mobile_otp', ?, ?)",
+      m, code, expiresAt
+    );
+
+    const template = getSetting('sms_template_otp') || 'techtink-verify';
+    await sendOtp({ mobile: m, code, template });
+
+    return res.json({
+      success: true,
+      method: 'mobile',
+      mobile: m,
+      message: 'کد ۵ رقمی بازیابی به شماره موبایل شما ارسال شد.'
+    });
+  }
+
+  if (isEmail(raw)) {
+    const email = raw.toLowerCase();
+    const user = db.get('SELECT id, name FROM users WHERE email = ?', email);
+
+    if (user) {
+      const code = String(crypto.randomInt(100000, 999999));
+      const token = crypto.randomBytes(24).toString('hex');
+      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+      db.run("UPDATE verification_tokens SET used = 1 WHERE target = ? AND type = 'email_reset' AND used = 0", email);
+      db.run(
+        "INSERT INTO verification_tokens (target, type, code, token, expires_at) VALUES (?, 'email_reset', ?, ?, ?)",
+        email, code, token, expiresAt
+      );
+
+      const siteUrl = getSetting('site_url') || 'https://techtink.ir';
+      const fromAddr = getSetting('smtp_from') || 'تک‌تینک <info@techtink.ir>';
+      const subject = 'درخواست بازیابی رمز عبور تک‌تینک (TechTink)';
+      const bodyText = `سلام ${user.name || 'کاربر گرامی'}\n\nکد تأیید بازیابی رمز عبور شما در تک‌تینک:\n${code}\n\nاین کد تا ۱۵ دقیقه معتبر است.\nدر صورتی که شما این درخواست را نداده‌اید، لطفاً این پیام را نادیده بگیرید.\n\nتک‌تینک - فروشگاه تخصصی لپ‌تاپ\n${siteUrl}`;
+      const bodyHtml = `
+        <div dir="rtl" style="font-family: Tahoma, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+          <h2 style="color: #0284c7; margin-top: 0;">بازیابی رمز عبور حساب تک‌تینک</h2>
+          <p style="color: #475569; font-size: 14px;">سلام ${user.name || 'کاربر گرامی'}،</p>
+          <p style="color: #475569; font-size: 14px;">کد اعتبارسنجی زیر جهت تغییر و بازنشانی رمز عبور برای شما صادر شده است:</p>
+          <div style="background: #f1f5f9; padding: 16px; text-align: center; border-radius: 12px; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #0f172a; margin: 20px 0;">
+            ${code}
+          </div>
+          <p style="color: #64748b; font-size: 12px; line-height: 1.6;">این کد تا ۱۵ دقیقه معتبر است. در صورتی که این درخواست توسط شما ثبت نشده است، نیازی به انجام اقدامی نیست و حساب شما امن است.</p>
+          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+          <div style="font-size: 12px; color: #94a3b8; text-align: center;">فروشگاه تخصصی تک‌تینک | مرجع لپ‌تاپ‌های مهندسی و گیمینگ</div>
+        </div>
+      `;
+
+      try {
+        const mime = buildMimeMessage({ from: fromAddr, to: email, subject, bodyText, bodyHtml });
+        const smtpHost = getSetting('smtp_host') || 'localhost';
+        const smtpPort = Number(getSetting('smtp_port')) || 25;
+        const smtpUser = getSetting('smtp_user') || '';
+        const smtpPass = getSetting('smtp_pass') || '';
+        const auth = (smtpUser && smtpPass) ? { user: smtpUser, pass: smtpPass } : null;
+
+        await sendViaSmtpSocket({
+          host: smtpHost,
+          port: smtpPort,
+          useTls: smtpPort === 465,
+          auth,
+          from: 'info@techtink.ir',
+          to: email,
+          rawData: mime
+        });
+      } catch (mailErr) {
+        console.log(`[PasswordReset] SMTP notice: ${mailErr.message} (Code: ${code})`);
+      }
+    }
+
+    // Always return success for user privacy
+    return res.json({
+      success: true,
+      method: 'email',
+      email,
+      message: 'در صورت وجود حساب کاربری با این آدرس، دستورالعمل و کد بازیابی به ایمیل شما ارسال شد.'
+    });
+  }
+
+  return res.status(400).json({ error: 'شماره موبایل یا ایمیل معتبر وارد کنید.' });
+});
+
+r.post('/auth/password/reset-confirm', (req, res) => {
+  const { identifier, code, recoveryToken, newPassword } = req.body || {};
+  if (!newPassword || String(newPassword).length < 8) {
+    return res.status(400).json({ error: 'رمز عبور جدید باید حداقل ۸ کاراکتر باشد.' });
+  }
+
+  // Case 1: Verified via recoveryToken (from mobile OTP)
+  if (recoveryToken) {
+    const tokenRow = db.get(
+      "SELECT * FROM verification_tokens WHERE token = ? AND type = 'password_recovery_session' AND used = 0 ORDER BY id DESC LIMIT 1",
+      recoveryToken
+    );
+    if (!tokenRow || tokenRow.expires_at < Date.now()) {
+      return res.status(400).json({ error: 'جلسه بازیابی منقضی شده است. لطفاً مجدداً اقدام نمایید.' });
+    }
+    const user = db.get("SELECT id FROM users WHERE mobile = ?", tokenRow.target);
+    if (!user) return res.status(404).json({ error: 'کاربر یافت نشد.' });
+
+    db.run("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?", hashPassword(newPassword), user.id);
+    db.run("UPDATE verification_tokens SET used = 1 WHERE id = ?", tokenRow.id);
+    return res.json({ success: true, message: 'رمز عبور با موفقیت به‌روزرسانی شد. اکنون می‌توانید وارد شوید.' });
+  }
+
+  // Case 2: Verified via email 6-digit code or hex token
+  if (identifier && (code || recoveryToken)) {
+    const cleanId = String(identifier).trim().toLowerCase();
+    const cleanCode = String(code || '').replace(/\D/g, '').trim();
+
+    const tokenRow = db.get(
+      "SELECT * FROM verification_tokens WHERE target = ? AND type = 'email_reset' AND used = 0 ORDER BY id DESC LIMIT 1",
+      cleanId
+    );
+
+    if (!tokenRow || tokenRow.expires_at < Date.now()) {
+      return res.status(400).json({ error: 'کد بازیابی منقضی شده است. لطفاً مجدداً درخواست دهید.' });
+    }
+
+    if (cleanCode && tokenRow.code !== cleanCode) {
+      db.run("UPDATE verification_tokens SET attempts = attempts + 1 WHERE id = ?", tokenRow.id);
+      return res.status(400).json({ error: 'کد واردشده اشتباه است.' });
+    }
+
+    const user = db.get("SELECT id FROM users WHERE email = ?", cleanId);
+    if (!user) return res.status(404).json({ error: 'کاربر یافت نشد.' });
+
+    db.run("UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?", hashPassword(newPassword), user.id);
+    db.run("UPDATE verification_tokens SET used = 1 WHERE id = ?", tokenRow.id);
+    return res.json({ success: true, message: 'رمز عبور با موفقیت به‌روزرسانی شد. اکنون می‌توانید وارد شوید.' });
+  }
+
+  return res.status(400).json({ error: 'اطلاعات بازیابی ناقص است.' });
 });
 
 // ---- Comments ----

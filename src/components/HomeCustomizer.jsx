@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 
-export default function HomeCustomizer({ authToken, onNotify }) {
-  const [activeSubTab, setActiveSubTab] = useState('announcement'); // 'announcement' | 'hero' | 'promotion' | 'showcase'
+export default function HomeCustomizer({ authToken, onNotify, onHomepageConfigUpdated }) {
+  const [activeSubTab, setActiveSubTab] = useState('promotion'); // Default to promotion so admin sees promo right away
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -103,11 +103,48 @@ export default function HomeCustomizer({ authToken, onNotify }) {
     loadData();
   }, []);
 
+  const handleTogglePromoActive = async (newActive) => {
+    let expDate = promotion.expireDate;
+    if (newActive) {
+      const isPast = !expDate || new Date(expDate).getTime() <= Date.now();
+      if (isPast) {
+        expDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+      }
+    }
+
+    const updatedPromo = { ...promotion, active: newActive, expireDate: expDate };
+    setPromotion(updatedPromo);
+
+    try {
+      await fetch('/api/admin/homepage', {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({
+          promotion: {
+            ...updatedPromo,
+            expireDate: updatedPromo.expireDate ? new Date(updatedPromo.expireDate).toISOString() : null
+          }
+        })
+      });
+      window.dispatchEvent(new CustomEvent('techtink-homepage-updated'));
+      if (onHomepageConfigUpdated) onHomepageConfigUpdated();
+      if (onNotify) onNotify(newActive ? 'بنر تخفیف در صفحه نخست فعال شد.' : 'بنر تخفیف از صفحه نخست برداشته شد.');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     setSaveSuccess(false);
     try {
+      let expDate = promotion.expireDate;
+      if (promotion.active && (!expDate || new Date(expDate).getTime() <= Date.now())) {
+        expDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+        setPromotion(prev => ({ ...prev, expireDate: expDate }));
+      }
+
       const res = await fetch('/api/admin/homepage', {
         method: 'PUT',
         headers: authHeaders,
@@ -116,7 +153,7 @@ export default function HomeCustomizer({ authToken, onNotify }) {
           hero,
           promotion: {
             ...promotion,
-            expireDate: promotion.expireDate ? new Date(promotion.expireDate).toISOString() : null
+            expireDate: expDate ? new Date(expDate).toISOString() : null
           },
           showcase
         })
@@ -124,6 +161,8 @@ export default function HomeCustomizer({ authToken, onNotify }) {
 
       if (!res.ok) throw new Error('خطا در ذخیره تنظیمات');
       setSaveSuccess(true);
+      window.dispatchEvent(new CustomEvent('techtink-homepage-updated'));
+      if (onHomepageConfigUpdated) onHomepageConfigUpdated();
       if (onNotify) onNotify('تنظیمات ویترین و صفحه اصلی با موفقیت ذخیره شد.');
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err) {
@@ -533,14 +572,16 @@ export default function HomeCustomizer({ authToken, onNotify }) {
               </span>
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.875rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '0.875rem', background: promotion.active ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255, 255, 255, 0.05)', padding: '8px 16px', borderRadius: '14px', border: promotion.active ? '1px solid rgba(249, 115, 22, 0.4)' : '1px solid var(--border-glass)', transition: 'all 0.2s' }}>
               <input 
                 type="checkbox" 
                 checked={promotion.active} 
-                onChange={(e) => setPromotion(prev => ({ ...prev, active: e.target.checked }))} 
+                onChange={(e) => handleTogglePromoActive(e.target.checked)} 
                 style={{ width: '18px', height: '18px', accentColor: '#f97316' }}
               />
-              <span style={{ fontWeight: 600 }}>نمایش بنر کمپین در سایت</span>
+              <span style={{ fontWeight: 700, color: promotion.active ? '#f97316' : 'var(--text-secondary)' }}>
+                {promotion.active ? 'نمایش بنر کمپین (فعال در سایت)' : 'نمایش بنر کمپین (غیرفعال است)'}
+              </span>
             </label>
           </div>
 

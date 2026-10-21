@@ -95,10 +95,15 @@ function App() {
       .then(data => { if (data && !data.error) setStoreAboutInfo(data); })
       .catch(() => {});
 
-    fetch('/api/homepage')
-      .then(res => res.json())
-      .then(data => { if (data && !data.error) setHomepageConfig(data); })
-      .catch(() => {});
+    const loadHomepage = () => {
+      fetch('/api/homepage')
+        .then(res => res.json())
+        .then(data => { if (data && !data.error) setHomepageConfig(data); })
+        .catch(() => {});
+    };
+    loadHomepage();
+
+    window.addEventListener('techtink-homepage-updated', loadHomepage);
 
     fetch('/api/settings')
       .then(res => res.json())
@@ -496,6 +501,12 @@ function App() {
             onLogout={handleLogout} 
             siteSettings={siteSettings}
             onSettingsUpdated={(updated) => setSiteSettings(prev => ({ ...prev, ...updated }))}
+            onHomepageConfigUpdated={() => {
+              fetch('/api/homepage')
+                .then(res => res.json())
+                .then(data => { if (data && !data.error) setHomepageConfig(data); })
+                .catch(() => {});
+            }}
           />
         </main>
       )}

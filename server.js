@@ -42,7 +42,48 @@ startSmtpServer();
 
 const app = express();
 app.disable('x-powered-by');
+
+// Production Security Hardening Headers (OWASP Recommended)
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+
 app.use(cors());
+
+// Rate Limiter for Authentication & OTP endpoints (Defends against brute force & SMS flooding)
+const authRateMap = new Map();
+function authRateLimiter(req, res, next) {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '127.0.0.1';
+  const now = Date.now();
+  const windowMs = 60 * 1000;
+  const maxAttempts = 15;
+
+  const record = authRateMap.get(ip) || { count: 0, resetAt: now + windowMs };
+  if (now > record.resetAt) {
+    record.count = 1;
+    record.resetAt = now + windowMs;
+  } else {
+    record.count++;
+  }
+  authRateMap.set(ip, record);
+
+  if (authRateMap.size > 2000) {
+    for (const [k, v] of authRateMap.entries()) {
+      if (now > v.resetAt) authRateMap.delete(k);
+    }
+  }
+
+  if (record.count > maxAttempts) {
+    return res.status(429).json({ error: 'تعداد درخواست‌ها بیش از حد مجاز است. لطفاً یک دقیقه دیگر تلاش کنید.' });
+  }
+  next();
+}
 
 // Cloudflare Email Routing / Inbound Webhook (receives emails via Cloudflare on root domain)
 app.post(
@@ -104,8 +145,17 @@ app.post(
   }
 );
 app.use(express.json({ limit: '2mb' }));
+app.use(express.text({ type: ['text/*', 'application/json'], limit: '2mb' }));
+app.use((req, _res, next) => {
+  // If beacon sent text/plain containing JSON, parse it
+  if (typeof req.body === 'string' && req.body.startsWith('{') && req.body.endsWith('}')) {
+    try { req.body = JSON.parse(req.body); } catch {}
+  }
+  next();
+});
 app.use(attachUser);
 
+app.use('/api/auth', authRateLimiter);
 app.use('/api', publicRoutes);
 app.use('/api', accountRoutes);
 app.use('/api', paymentRoutes);

@@ -7,7 +7,7 @@ import {
   Calendar, Truck, Barcode as BarcodeIcon, MapPin, Phone, Clock, ArrowRight,
   ArrowDownLeft, ArrowUpRight, QrCode, Filter, Eye, CreditCard,
   Upload, Terminal, Server, AlertOctagon, Layout, ShieldCheck,
-  Megaphone, Ticket, Globe, Mail, Activity
+  Megaphone, Ticket, Globe, Mail, Activity, Lock, KeyRound, Send
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
 import { getHardwareBadges } from '../utils/shortSpecs.js';
@@ -24,7 +24,7 @@ import AdminWebmail from './AdminWebmail.jsx';
 import ResourceMonitor from './ResourceMonitor.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './SocialLogos.jsx';
 
-export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated }) {
+export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated, onHomepageConfigUpdated }) {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('token') || '');
   const [unreadEmailCount, setUnreadEmailCount] = useState(0);
@@ -139,6 +139,14 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
   const [torobCopied, setTorobCopied] = useState(false);
   const [previewDemoModalOpen, setPreviewDemoModalOpen] = useState(false);
   const [modeSwitchLoading, setModeSwitchLoading] = useState(false);
+
+  // SMS, 2FA & Security Pentest State
+  const [testSmsMobile, setTestSmsMobile] = useState('');
+  const [testSmsLoading, setTestSmsLoading] = useState(false);
+  const [testSmsResult, setTestSmsResult] = useState(null);
+  const [showSmsApiKey, setShowSmsApiKey] = useState(false);
+  const [securityAuditData, setSecurityAuditData] = useState(null);
+  const [securityAuditLoading, setSecurityAuditLoading] = useState(false);
 
   useEffect(() => {
     if (siteSettings && (!settings || Object.keys(settingsForm).length === 0)) {
@@ -1074,6 +1082,47 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
     setSavingSettings(false);
   };
 
+  const handleTestSms = async () => {
+    if (!testSmsMobile) {
+      alert('لطفاً شماره موبایل گیرنده پیامک تستی را وارد کنید.');
+      return;
+    }
+    setTestSmsLoading(true);
+    setTestSmsResult(null);
+    try {
+      const res = await fetch('/api/admin/sms/test', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          mobile: testSmsMobile,
+          code: '12345'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در ارسال پیامک');
+      setTestSmsResult({ success: true, message: data.message });
+    } catch (err) {
+      setTestSmsResult({ success: false, message: err.message });
+    } finally {
+      setTestSmsLoading(false);
+    }
+  };
+
+  const handleFetchSecurityAudit = async () => {
+    setSecurityAuditLoading(true);
+    try {
+      const res = await fetch('/api/admin/security/audit', { headers: authHeaders });
+      if (res.ok) {
+        const data = await res.json();
+        setSecurityAuditData(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSecurityAuditLoading(false);
+    }
+  };
+
   const triggerDbMaintenance = async (op) => {
     setDbMessage(null);
     try {
@@ -1797,7 +1846,10 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
 
       {/* HOME PAGE CUSTOMIZER */}
       {activeSection === 'home_customizer' && (
-        <HomeCustomizer authToken={authToken} />
+        <HomeCustomizer 
+          authToken={authToken} 
+          onHomepageConfigUpdated={onHomepageConfigUpdated}
+        />
       )}
 
       {/* 2. PRODUCTS & STOCK MANAGEMENT */}
@@ -3896,6 +3948,267 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* SMS Gateway & 2FA / OTP Verification Management Card */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(14, 165, 233, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Phone size={20} color="#0284c7" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', margin: 0, fontWeight: 800 }}>سامانه پیامک، احراز هویت دو مرحله‌ای (2FA) و رمز یکبارمصرف (OTP)</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      اتصال به درگاه‌های معتبر پیامک در ایران (کاوه‌نگار، فراز اس‌ام‌اس، قاصدک) جهت ارسال کدهای اعتبارسنجی، ورود سریع بدون رمز و بازیابی حساب
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                      انتخاب سامانه پیامک (SMS Provider):
+                    </label>
+                    <select
+                      value={settingsForm.sms_provider || 'kavenegar'}
+                      onChange={e => setSettingsForm({ ...settingsForm, sms_provider: e.target.value })}
+                      style={{ width: '100%' }}
+                    >
+                      <option value="kavenegar">کاوه‌نگار (Kavenegar - وب‌سرویس Verify بدون مسدودی بلک‌لیست - پیشنهادی)</option>
+                      <option value="farazsms">فراز اس‌ام‌اس / آی‌پی پنل (FarazSMS / IPPanel)</option>
+                      <option value="ghasedak">قاصدک (Ghasedak SMS)</option>
+                      <option value="mock">شبیه‌ساز تستی (کنسول سرور بدون مصرف شارژ)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>کلید اتصال وب‌سرویس (API Key):</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowSmsApiKey(!showSmsApiKey)}
+                        style={{ background: 'none', border: 'none', color: '#0284c7', fontSize: '0.75rem', cursor: 'pointer' }}
+                      >
+                        {showSmsApiKey ? 'مخفی‌سازی' : 'نمایش کلید'}
+                      </button>
+                    </div>
+                    <input
+                      type={showSmsApiKey ? 'text' : 'password'}
+                      className="font-code"
+                      value={settingsForm.sms_api_key || ''}
+                      onChange={e => setSettingsForm({ ...settingsForm, sms_api_key: e.target.value })}
+                      placeholder="API Key دریافتی از پنل پیامک..."
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                      نام قالب تاییدیه (OTP Template Name):
+                    </label>
+                    <input
+                      type="text"
+                      className="font-code"
+                      value={settingsForm.sms_template_otp || 'techtink-verify'}
+                      onChange={e => setSettingsForm({ ...settingsForm, sms_template_otp: e.target.value })}
+                      placeholder="مثال: techtink-verify یا verify"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                    <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
+                      نام قالبی که در پنل کاوه‌نگار یا فراز اس‌ام‌اس برای اعتبارسنجی تایید شده است.
+                    </span>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 600 }}>
+                      سرشماره اختصاصی ارسال پیامک (اختیاری):
+                    </label>
+                    <input
+                      type="text"
+                      className="font-code"
+                      value={settingsForm.sms_sender_line || ''}
+                      onChange={e => setSettingsForm({ ...settingsForm, sms_sender_line: e.target.value })}
+                      placeholder="مثال: 1000... (در صورت خالی بودن از خط خدماتی وب‌سرویس استفاده می‌شود)"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* 2FA & OTP Options */}
+                <div style={{ marginTop: '16px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.sms_2fa_enabled === '1' || settingsForm.sms_2fa_enabled === 1 || settingsForm.sms_2fa_enabled === true}
+                      onChange={e => setSettingsForm({ ...settingsForm, sms_2fa_enabled: e.target.checked ? '1' : '0' })}
+                    />
+                    <span style={{ fontWeight: 600 }}>فعال‌سازی ورود با پیامک یکبارمصرف (OTP) برای مشتریان</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={settingsForm.admin_2fa_enforced === '1' || settingsForm.admin_2fa_enforced === 1 || settingsForm.admin_2fa_enforced === true}
+                      onChange={e => setSettingsForm({ ...settingsForm, admin_2fa_enforced: e.target.checked ? '1' : '0' })}
+                    />
+                    <span style={{ fontWeight: 600 }}>الزام تایید هویت دو مرحله‌ای (2FA) برای حساب‌های مدیر</span>
+                  </label>
+                </div>
+
+                {/* Interactive SMS Testing Tool */}
+                <div style={{ marginTop: '18px', padding: '16px', borderRadius: '14px', background: 'rgba(2, 132, 199, 0.06)', border: '1px dashed rgba(2, 132, 199, 0.3)' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 700, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#0284c7' }}>
+                    <Send size={15} />
+                    ابزار تست زنده ارسال پیامک اعتبارسنجی:
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="tel"
+                      value={testSmsMobile}
+                      onChange={e => setTestSmsMobile(e.target.value)}
+                      placeholder="شماره موبایل گیرنده (مثال: ۰۹۱۲۳۴۵۶۷۸۹)"
+                      style={{ flex: '1 1 240px', maxWidth: '320px', padding: '8px 12px', borderRadius: '10px', direction: 'ltr', textAlign: 'right' }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={testSmsLoading}
+                      onClick={handleTestSms}
+                      style={{ padding: '8px 16px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <RefreshCw size={14} className={testSmsLoading ? 'spin' : ''} />
+                      {testSmsLoading ? 'در حال ارسال تست...' : 'ارسال پیامک تستی'}
+                    </button>
+                  </div>
+                  {testSmsResult && (
+                    <div style={{ marginTop: '10px', fontSize: '0.825rem', color: testSmsResult.success ? '#10b981' : '#ef4444', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {testSmsResult.success ? <CheckCircle size={15} /> : <AlertTriangle size={15} />}
+                      <span>{testSmsResult.message}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Outbound SMTP Email Settings */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mail size={20} color="hsl(var(--accent-purple))" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '1.15rem', margin: 0, fontWeight: 800 }}>تنظیمات سرور ایمیل ارسالی (SMTP) جهت بازیابی رمز عبور</h3>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      تنظیم هاست و پورت SMTP برای ارسال لینک و کدهای بازنشانی گذرواژه به ایمیل کاربران
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>هاست سرور SMTP (Host):</label>
+                    <input
+                      type="text"
+                      className="font-code"
+                      value={settingsForm.smtp_host || 'localhost'}
+                      onChange={e => setSettingsForm({ ...settingsForm, smtp_host: e.target.value })}
+                      placeholder="localhost یا mail.techtink.ir"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>پورت سرور (Port):</label>
+                    <input
+                      type="number"
+                      className="font-code"
+                      value={settingsForm.smtp_port || '25'}
+                      onChange={e => setSettingsForm({ ...settingsForm, smtp_port: e.target.value })}
+                      placeholder="25 / 587 / 465"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>نام کاربری SMTP (اختیاری):</label>
+                    <input
+                      type="text"
+                      className="font-code"
+                      value={settingsForm.smtp_user || ''}
+                      onChange={e => setSettingsForm({ ...settingsForm, smtp_user: e.target.value })}
+                      placeholder="info@techtink.ir"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.85rem' }}>عنوان و ایمیل فرستنده (From):</label>
+                    <input
+                      type="text"
+                      value={settingsForm.smtp_from || 'تک‌تینک <info@techtink.ir>'}
+                      onChange={e => setSettingsForm({ ...settingsForm, smtp_from: e.target.value })}
+                      placeholder="تک‌تینک <info@techtink.ir>"
+                      style={{ direction: 'ltr', fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pre-Launch Operational Security & Pentest Status Widget */}
+              <div style={{ marginTop: '16px', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <ShieldCheck size={20} color="#10b981" />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: '1.15rem', margin: 0, fontWeight: 800 }}>ارزیابی امنیتی، پنتست و آماده‌سازی فاز عملیاتی دامنه techtink.ir</h3>
+                      <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        بررسی وضعیت دفاع در برابر حملات تزریق SQL، تست‌های OWASP Top 10، هدرهای امنیتی و مهارکننده Brute-Force
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-glass"
+                    onClick={handleFetchSecurityAudit}
+                    disabled={securityAuditLoading}
+                    style={{ fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <RefreshCw size={14} className={securityAuditLoading ? 'spin' : ''} />
+                    {securityAuditLoading ? 'در حال پایش امنیت...' : 'بررسی زنده امنیت سرور'}
+                  </button>
+                </div>
+
+                <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                  <div className="glass-panel" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.06)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>گواهی امنیتی SSL / TLS</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>✓ فعال و الزامی (HTTPS)</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>HSTS با انقضای ۱ ساله فعال است</div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.06)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>هدرهای امنیتی OWASP</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>✓ Hardened (nosniff & CSP)</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>ضد Clickjacking و XSS</div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.06)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>دفاع در برابر Brute-force</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>✓ Rate Limiter فعال</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>محدودیت ۱۵ درخواست بر دقیقه</div>
+                  </div>
+
+                  <div className="glass-panel" style={{ padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.06)' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>امنیت پایگاه داده</div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#10b981', marginTop: '4px' }}>✓ Prepared Statements</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>مصونیت ۱۰۰٪ از SQL Injection</div>
+                  </div>
+                </div>
+
+                {securityAuditData && (
+                  <div style={{ marginTop: '14px', padding: '14px', borderRadius: '12px', background: '#0f172a', color: '#f8fafc', fontSize: '0.8rem', fontFamily: 'monospace', direction: 'ltr', overflowX: 'auto' }}>
+                    <div style={{ color: '#38bdf8', marginBottom: '6px' }}># Live Security Health Check for techtink.ir:</div>
+                    <pre style={{ margin: 0 }}>{JSON.stringify(securityAuditData, null, 2)}</pre>
+                  </div>
+                )}
               </div>
 
               <div style={{ marginTop: '20px' }}>

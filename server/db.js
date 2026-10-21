@@ -287,23 +287,62 @@ CREATE TABLE IF NOT EXISTS sent_emails (
 CREATE INDEX IF NOT EXISTS idx_sent_emails_to ON sent_emails(to_address);
 CREATE INDEX IF NOT EXISTS idx_sent_emails_status ON sent_emails(status);
 CREATE INDEX IF NOT EXISTS idx_sent_emails_created ON sent_emails(created_at);
+CREATE TABLE IF NOT EXISTS verification_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  target TEXT NOT NULL,
+  type TEXT NOT NULL,
+  code TEXT NOT NULL,
+  token TEXT,
+  expires_at INTEGER NOT NULL,
+  attempts INTEGER DEFAULT 0,
+  used INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_verif_target ON verification_tokens(target, type);
+CREATE INDEX IF NOT EXISTS idx_verif_token ON verification_tokens(token);
+CREATE TABLE IF NOT EXISTS sms_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mobile TEXT NOT NULL,
+  provider TEXT,
+  template TEXT,
+  message TEXT,
+  status TEXT DEFAULT 'sent',
+  message_id TEXT,
+  error TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_sms_logs_mobile ON sms_logs(mobile);
+CREATE INDEX IF NOT EXISTS idx_sms_logs_created ON sms_logs(created_at);
 `;
 
 export const DEFAULT_SETTINGS = {
   store_name: 'تک‌تینک',
-  site_url: 'http://localhost:3000',
+  site_url: 'https://techtink.ir',
   banner_text: 'ارسال رایگان برای همه سفارش‌ها',
   shipping_fee: '0',
   zarinpal_merchant_id: '00000000-0000-0000-0000-000000000000',
   zarinpal_sandbox: '1',
   // Site Status & Demo Mode
-  site_mode: 'demo', // 'demo' | 'operational'
-  demo_notice_active: '1', // '1' | '0'
+  site_mode: 'operational', // 'demo' | 'operational'
+  demo_notice_active: '0', // '1' | '0'
   demo_notice_title: 'نسخه آزمایشی وب‌سایت تک‌تینک (Demo Mode)',
   demo_notice_badge: 'حالت آزمایشی / در حال تست',
   demo_notice_body: 'به فروشگاه تخصصی لپ‌تاپ تک‌تینک خوش آمدید! وب‌سایت در حال حاضر در فاز آزمایشی و ارزیابی عملکرد (Demo Mode) قرار دارد. تمامی مشخصات فنی، مقایسه سخت‌افزاری و تست مراحل ثبت سفارش فعال بوده و تراکنش‌ها جنبه آزمایشی دارند.',
   demo_notice_btn: 'متوجه شدم، ورود به وب‌سایت',
-  demo_notice_badge_header: '1',
+  demo_notice_badge_header: '0',
+  // SMS Gateway & 2FA / OTP Configuration (Iran Providers: Kavenegar, FarazSMS, Ghasedak, Mock)
+  sms_provider: 'kavenegar', // 'kavenegar' | 'farazsms' | 'ghasedak' | 'mock'
+  sms_api_key: '',
+  sms_template_otp: 'techtink-verify',
+  sms_sender_line: '',
+  sms_2fa_enabled: '0',
+  admin_2fa_enforced: '0',
+  // Outbound SMTP Mail Server for Password Resets
+  smtp_host: 'localhost',
+  smtp_port: '25',
+  smtp_user: '',
+  smtp_pass: '',
+  smtp_from: 'تک‌تینک <info@techtink.ir>',
   // Payment Gateways & Methods
   gateway_zarinpal_active: '1',
   gateway_mellat_active: '1',
@@ -409,6 +448,25 @@ function migrate() {
   try { db.exec("ALTER TABLE blog_posts ADD COLUMN product_slug TEXT;"); } catch {}
   try { db.exec("ALTER TABLE warranties ADD COLUMN phone TEXT;"); } catch {}
   try { db.exec("ALTER TABLE warranties ADD COLUMN notes TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN phone_verified INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER DEFAULT 0;"); } catch {}
+
+  // Purge any synthetic mock data from analytics to ensure 100% genuine live metrics
+  try {
+    db.run("DELETE FROM pageviews WHERE user_agent = 'Mozilla/5.0 TechTinkAnalytics/1.0'");
+  } catch {}
+
+  // Ensure promo banner expire date is refreshed to a future date if expired
+  try {
+    const pStr = db.get("SELECT value FROM settings WHERE key = 'homepage_promotion'")?.value;
+    if (pStr) {
+      const p = JSON.parse(pStr);
+      if (p.expireDate && new Date(p.expireDate).getTime() < Date.now()) {
+        p.expireDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        db.run("UPDATE settings SET value = ? WHERE key = 'homepage_promotion'", JSON.stringify(p));
+      }
+    }
+  } catch {}
   try { db.exec("ALTER TABLE orders ADD COLUMN discount INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE orders ADD COLUMN coupon_code TEXT;"); } catch {}
 
@@ -643,64 +701,11 @@ function seed() {
   console.log('[db] Seeded initial catalog data.');
 }
 
-function seedAnalytics() {
-  const pvCount = db.get('SELECT COUNT(*) AS c FROM pageviews')?.c || 0;
-  if (pvCount > 0) return;
-
-  const samplePaths = [
-    { path: '/', title: 'صفحه اصلی تک‌تینک | فروشگاه تخصصی لپ‌تاپ' },
-    { path: '/catalog', title: 'کاتالوگ و لیست کامل لپ‌تاپ‌ها | تک‌تینک' },
-    { path: '/product/lenovo-thinkpad-t14', title: 'خرید لپ‌تاپ Lenovo ThinkPad T14 | تک‌تینک' },
-    { path: '/product/dell-precision-5550', title: 'خرید ورک‌استیشن Dell Precision 5550 | تک‌تینک' },
-    { path: '/product/hp-zbook-fury-15-g7', title: 'خرید لپ‌تاپ صنعتی HP ZBook Fury 15 G7 | تک‌تینک' },
-    { path: '/compare', title: 'مقایسه هوشمند مشخصات سخت‌افزاری لپ‌تاپ‌ها' },
-    { path: '/blog', title: 'وبلاگ و بررسی‌های تخصصی سخت‌افزار | تک‌تینک' },
-    { path: '/support', title: 'خدمات گارانتی، درایورها و پشتیبانی تک‌تینک' }
-  ];
-  const referrers = [
-    { domain: 'Google Search', ref: 'https://www.google.com/' },
-    { domain: 'Google Search', ref: 'https://www.google.com/search?q=خرید+لپ+تاپ+استوک' },
-    { domain: 'موتور ترب (Torob)', ref: 'https://torob.com/p/techtink/' },
-    { domain: 'مستقیم (Direct)', ref: '' },
-    { domain: 'اینستاگرام', ref: 'https://l.instagram.com/' },
-    { domain: 'تلگرام', ref: 'https://t.me/techtink' }
-  ];
-  const devices = [
-    { type: 'desktop', browser: 'Chrome', os: 'Windows' },
-    { type: 'mobile', browser: 'Mobile Safari', os: 'iOS' },
-    { type: 'desktop', browser: 'Firefox', os: 'macOS' },
-    { type: 'mobile', browser: 'Chrome Mobile', os: 'Android' },
-    { type: 'tablet', browser: 'Safari', os: 'iPadOS' }
-  ];
-
-  db.tx(() => {
-    for (let dayOffset = 13; dayOffset >= 0; dayOffset--) {
-      const countForDay = Math.floor(22 + Math.random() * 30);
-      for (let i = 0; i < countForDay; i++) {
-        const p = samplePaths[Math.floor(Math.random() * samplePaths.length)];
-        const r = referrers[Math.floor(Math.random() * referrers.length)];
-        const d = devices[Math.floor(Math.random() * devices.length)];
-        const fakeIp = `192.168.${dayOffset}.${(i % 14) + 1}`;
-        const hash = crypto.createHash('sha256').update(`${fakeIp}-${dayOffset}`).digest('hex').slice(0, 16);
-        const pastDate = new Date(Date.now() - dayOffset * 86400000 - Math.floor(Math.random() * 72000000)).toISOString().replace('T', ' ').slice(0, 19);
-
-        db.run(
-          `INSERT INTO pageviews (path, title, referrer, referrer_domain, ip_hash, user_agent, device_type, browser, os, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          p.path, p.title, r.ref, r.domain, hash, 'Mozilla/5.0 TechTinkAnalytics/1.0', d.type, d.browser, d.os, pastDate
-        );
-      }
-    }
-  });
-  console.log('[db] Seeded initial viewer analytics historical data.');
-}
-
 export async function initDb() {
   await loadDriver();
   openRaw();
   migrate();
   seed();
-  seedAnalytics();
   console.log(`[db] SQLite ready at ${DB_PATH} (${isBun ? 'bun:sqlite' : 'node:sqlite'})`);
 }
 
