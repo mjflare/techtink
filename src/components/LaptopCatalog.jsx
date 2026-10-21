@@ -4,7 +4,7 @@ import {
   Cpu, HardDrive, Monitor, X, RotateCcw, Zap, Sparkles, Layers, Battery, ShoppingCart 
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
-import { getShortSpecs } from '../utils/shortSpecs.js';
+import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
 
 export default function LaptopCatalog({ 
   laptops, 
@@ -480,6 +480,7 @@ export default function LaptopCatalog({
 
           const bm = laptop.benchmarks || { cpuScore: 90, gamingScore: 85, displayScore: 92 };
           const shortSpecs = getShortSpecs(laptop);
+          const { cpuBadge, gpuBadge } = getHardwareBadges(laptop);
           const brand = laptop.brand || (laptop.name ? laptop.name.split(' ')[0] : '');
           const model = laptop.model || (laptop.name ? laptop.name.replace(brand, '').trim() : laptop.name);
           const overallScore = laptop.techTinkScore?.overall || bm.cpuScore || 88;
@@ -515,10 +516,10 @@ export default function LaptopCatalog({
                 {/* Brand badges on card */}
                 <div style={{ position: 'absolute', bottom: '12px', right: '12px', display: 'flex', gap: '6px' }}>
                   <span className="badge" style={{ background: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(4px)', fontSize: '0.7rem' }}>
-                    {laptop.cpuBrand || 'Intel'}
+                    {cpuBadge}
                   </span>
                   <span className="badge" style={{ background: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(4px)', fontSize: '0.7rem' }}>
-                    {laptop.gpuBrand || 'NVIDIA'}
+                    {gpuBadge}
                   </span>
                 </div>
               </div>

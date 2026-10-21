@@ -5,6 +5,7 @@ import {
   ArrowDown, CheckCircle2, SlidersHorizontal
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { getHardwareBadges, getShortSpecs } from '../utils/shortSpecs.js';
 
 export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddToCart }) {
   if (!product) return null;
@@ -29,6 +30,11 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
   const images = (product.images && product.images.length > 0)
     ? product.images
     : (product.image ? [product.image] : ['/assets/laptop-placeholder.png']);
+
+  const hardwareBadges = getHardwareBadges(product);
+  const derivedShortSpecs = getShortSpecs(product);
+  const cpuDisplay = derivedShortSpecs.cpu || product.shortSpecs?.cpu || hardwareBadges.cpuBadge;
+  const gpuDisplay = derivedShortSpecs.gpu || product.shortSpecs?.gpu || hardwareBadges.gpuBadge;
 
   // 4 Pristine Apple Storytelling Chapters
   const defaultStages = [
@@ -87,7 +93,7 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
       icon: Zap,
       color: 'hsl(var(--accent-green))',
       imageIndex: (images.length > 2 ? 2 : 0),
-      description: `هماهنگی یکپارچه پردازنده ${product.shortSpecs?.cpu || 'نسل جدید'} در کنار پردازشگر گرافیکی ${product.shortSpecs?.gpu || 'پیشرفته'}، حداکثر بازدهی را حتی در خروجی‌های سنگین و پردازش‌های شبانه‌روزی تضمین می‌کند.`,
+      description: `هماهنگی یکپارچه پردازنده ${cpuDisplay} در کنار پردازشگر گرافیکی ${gpuDisplay}، حداکثر بازدهی را حتی در خروجی‌های سنگین و پردازش‌های شبانه‌روزی تضمین می‌کند.`,
       callouts: [
         {
           title: 'پایداری ۱۰۰٪ فرکانس بوست',
@@ -564,12 +570,17 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
                   border: '1px solid rgba(226, 232, 240, 0.8)'
                 }}
               >
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Cpu size={13} color="hsl(var(--accent-cyan))" />
-                  <span>پردازنده سیلیکونی</span>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Cpu size={13} color="hsl(var(--accent-cyan))" />
+                    <span>پردازنده سیلیکونی</span>
+                  </div>
+                  <span className="badge" style={{ fontSize: '0.65rem', padding: '1px 6px', background: 'hsla(var(--accent-cyan), 0.1)', color: 'hsl(var(--accent-cyan))', fontWeight: 700 }}>
+                    {hardwareBadges.cpuBadge}
+                  </span>
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 800, direction: 'ltr', textAlign: 'left', color: 'var(--text-primary)' }}>
-                  {product.shortSpecs?.cpu || 'Core i7 / Ultra 7'}
+                  {cpuDisplay}
                 </div>
               </div>
 
@@ -582,12 +593,17 @@ export default function AppleFlagshipShowcase({ product, onSelectProduct, onAddT
                   border: '1px solid rgba(226, 232, 240, 0.8)'
                 }}
               >
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Zap size={13} color="hsl(var(--accent-green))" />
-                  <span>پردازشگر گرافیکی</span>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Zap size={13} color="hsl(var(--accent-green))" />
+                    <span>پردازشگر گرافیکی</span>
+                  </div>
+                  <span className="badge" style={{ fontSize: '0.65rem', padding: '1px 6px', background: 'hsla(var(--accent-green), 0.1)', color: 'hsl(var(--accent-green))', fontWeight: 700 }}>
+                    {hardwareBadges.gpuBadge}
+                  </span>
                 </div>
                 <div className="font-tech" style={{ fontSize: '0.875rem', fontWeight: 800, direction: 'ltr', textAlign: 'left', color: 'var(--text-primary)' }}>
-                  {product.shortSpecs?.gpu || 'NVIDIA RTX'}
+                  {gpuDisplay}
                 </div>
               </div>
 

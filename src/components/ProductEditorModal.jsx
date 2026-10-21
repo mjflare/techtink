@@ -584,7 +584,13 @@ export default function ProductEditorModal({
         grade: parsed.grade ? `گرید ${parsed.grade}` : prev.grade,
         basePrice: parsed.basePrice > 0 ? parsed.basePrice : prev.basePrice,
         cpuBrand: parsed.cpu.toLowerCase().includes('amd') ? 'AMD' : parsed.cpu.toLowerCase().includes('apple') ? 'Apple' : 'Intel',
-        gpuBrand: parsed.gpu.toLowerCase().includes('nvidia') || parsed.gpu.toLowerCase().includes('rtx') ? 'NVIDIA' : parsed.gpu.toLowerCase().includes('amd') ? 'AMD' : 'Intel',
+        gpuBrand: parsed.gpu.toLowerCase().includes('nvidia') || parsed.gpu.toLowerCase().includes('rtx') 
+          ? 'NVIDIA' 
+          : parsed.gpu.toLowerCase().includes('amd') 
+            ? 'AMD' 
+            : (parsed.gpu.toLowerCase().includes('apple') || parsed.cpu.toLowerCase().includes('apple'))
+              ? 'Apple'
+              : 'Intel',
         specs: {
           ...prev.specs,
           cpu: parsed.cpu || prev.specs.cpu,

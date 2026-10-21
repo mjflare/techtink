@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatPrice } from '../utils/formatPrice.js';
-import { getShortSpecs } from '../utils/shortSpecs.js';
+import { getShortSpecs, getHardwareBadges } from '../utils/shortSpecs.js';
 import { renderMarkdownToHtml } from '../utils/markdownRenderer.js';
 import AppleFlagshipShowcase from './AppleFlagshipShowcase.jsx';
 import LaptopModelViewer from './LaptopModelViewer.jsx';
@@ -421,6 +421,7 @@ export default function ProductPage({
   const bm = product.benchmarks || { cpuScore: 95, gamingScore: 92, displayScore: 94, batteryScore: 80, coolingScore: 90, aiScore: 85 };
   const review = product.expertReview || {};
   const shortSpecs = getShortSpecs(product);
+  const { cpuBadge, gpuBadge } = getHardwareBadges(product);
 
   const handleAddToCart = () => {
     onAddToCart({
@@ -578,10 +579,10 @@ export default function ProductPage({
             )}
             <div style={{ position: 'absolute', bottom: '24px', right: '24px', display: 'flex', gap: '8px' }}>
               <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
-                {product.cpuBrand || 'Intel'}
+                {cpuBadge}
               </span>
               <span className="badge" style={{ background: 'rgba(0,0,0,0.65)', color: 'white', backdropFilter: 'blur(4px)' }}>
-                {product.gpuBrand || 'NVIDIA'}
+                {gpuBadge}
               </span>
             </div>
           </div>
@@ -1361,7 +1362,7 @@ export default function ProductPage({
                     <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>پردازنده و چیپست اصلی</span>
                   </div>
                   <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.15)', color: 'hsl(var(--accent-cyan))', fontSize: '0.75rem' }}>
-                    {product.cpuBrand || 'Intel'}
+                    {cpuBadge}
                   </span>
                 </div>
                 <div className="spec-row">
@@ -1390,7 +1391,7 @@ export default function ProductPage({
                     <span style={{ fontWeight: 700, fontSize: '0.9375rem' }}>گرافیک و پردازش تصویر</span>
                   </div>
                   <span className="badge" style={{ background: 'hsla(var(--accent-green), 0.15)', color: 'hsl(var(--accent-green))', fontSize: '0.75rem' }}>
-                    {product.gpuBrand || 'NVIDIA'}
+                    {gpuBadge}
                   </span>
                 </div>
                 <div className="spec-row">

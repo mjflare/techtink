@@ -10,6 +10,7 @@ import {
   Megaphone, Ticket, Globe, Mail, Activity
 } from 'lucide-react';
 import { formatPrice } from '../utils/formatPrice.js';
+import { getHardwareBadges } from '../utils/shortSpecs.js';
 import BlogEditorModal from './BlogEditorModal.jsx';
 import ProductEditorModal from './ProductEditorModal.jsx';
 import BarcodeGeneratorModal from './BarcodeGeneratorModal.jsx';
@@ -1866,14 +1867,19 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
                           <span>{p.name}</span>
                           {p.badge && <span className="badge" style={{ background: 'hsla(var(--accent-cyan), 0.1)', color: 'hsl(var(--accent-cyan))', fontSize: '0.65rem' }}>{p.badge}</span>}
                         </div>
-                        <div className="flex" style={{ gap: '6px', marginTop: '4px' }}>
-                          <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)' }}>
-                            CPU: {p.cpuBrand || 'Intel'}
-                          </span>
-                          <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)' }}>
-                            GPU: {p.gpuBrand || 'NVIDIA'}
-                          </span>
-                        </div>
+                        {(() => {
+                          const { cpuBadge, gpuBadge } = getHardwareBadges(p);
+                          return (
+                            <div className="flex" style={{ gap: '6px', marginTop: '4px' }}>
+                              <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)' }}>
+                                CPU: {cpuBadge}
+                              </span>
+                              <span className="badge" style={{ fontSize: '0.65rem', background: 'rgba(0,0,0,0.04)', color: 'var(--text-secondary)' }}>
+                                GPU: {gpuBadge}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>{p.category}</td>
                       <td style={{ padding: '12px' }} className="font-code">
