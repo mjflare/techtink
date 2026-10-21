@@ -23,6 +23,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
   const targetProgressRef = useRef(0);
   const animationFrameRef = useRef(null);
   const touchStartYRef = useRef(0);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 640 : false);
 
   // Mouse coords for camera parallax
   const mouseRef = useRef({ x: 0, y: 0 });
@@ -34,10 +35,10 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
-    // Ultra-tuned scroll sensitivity for an extended, satisfying scrub distance
+    // Ultra-tuned scroll sensitivity (more sensitive, perfectly balanced for modern trackpads and mice)
     const handleWheel = (e) => {
       e.preventDefault();
-      const delta = e.deltaY * 0.00025;
+      const delta = e.deltaY * 0.00036;
       targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
 
@@ -51,7 +52,8 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       touchStartYRef.current = currentY;
 
       if (e.cancelable) e.preventDefault();
-      const delta = diffY * 0.00065;
+      // Responsive touch delta tuned for mobile screens
+      const delta = diffY * 0.0010;
       targetProgressRef.current = Math.max(0, Math.min(1.15, targetProgressRef.current + delta));
     };
 
@@ -124,13 +126,25 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    // Responsive FOV calculation (avoids lateral clipping on portrait mobile devices)
+    const getTargetFov = (w, h) => {
+      const aspect = w / h;
+      if (aspect < 0.75) {
+        return Math.min(58, 38 / aspect * 0.76);
+      } else if (aspect < 1.0) {
+        return 46;
+      }
+      return 38;
+    };
+
     // --- Scene & Camera (Sterile Lumon Off-White Environment) ---
     const scene = new THREE.Scene();
     const lumonWhiteColor = new THREE.Color(0xf0f5f4); // Pristine Lumon White
     scene.background = lumonWhiteColor;
     scene.fog = new THREE.FogExp2(0xf0f5f4, 0.045);
 
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
+    const initialFov = getTargetFov(width, height);
+    const camera = new THREE.PerspectiveCamera(initialFov, width / height, 0.1, 100);
     camera.position.set(0, 3.2, 7.8);
 
     const renderer = new THREE.WebGLRenderer({
@@ -253,28 +267,69 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
       group.add(leg);
     });
 
-    // --- 4. MINIMALIST APPLE/LUMON WHITE LUXURY PACKAGING BOX ---
+    // --- 4. AUTHENTIC NATURAL KRAFT CARDBOARD PACKAGING BOX ---
     const boxGroup = new THREE.Group();
-    boxGroup.position.set(-0.75, 1.18, 0.2);
+    boxGroup.position.set(-0.85, 1.18, 0.15);
     group.add(boxGroup);
 
-    const boxBaseGeo = new THREE.BoxGeometry(1.05, 0.24, 0.82);
-    const boxMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.05 });
-    const boxBase = new THREE.Mesh(boxBaseGeo, boxMat);
+    // Natural Cardboard Materials (Matte Kraft tan)
+    const kraftBaseMat = new THREE.MeshStandardMaterial({
+      color: 0xba8c58, // Warm authentic Kraft cardboard tan
+      roughness: 0.88,
+      metalness: 0.02
+    });
+    const kraftInnerMat = new THREE.MeshStandardMaterial({
+      color: 0x9e7343, // Slightly darker corrugated interior
+      roughness: 0.92,
+      metalness: 0.01
+    });
+    const kraftTapeMat = new THREE.MeshStandardMaterial({
+      color: 0x8c6130, // Cardboard packaging tape seal
+      roughness: 0.72,
+      metalness: 0.04
+    });
+
+    // Outer Bottom Tray (Generously sized to nest the laptop inside)
+    const boxBaseGeo = new THREE.BoxGeometry(1.34, 0.16, 0.94);
+    const boxBase = new THREE.Mesh(boxBaseGeo, kraftBaseMat);
     boxBase.castShadow = true;
     boxBase.receiveShadow = true;
     boxGroup.add(boxBase);
 
-    const boxLidGeo = new THREE.BoxGeometry(1.07, 0.1, 0.84);
-    const boxLidMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.18, metalness: 0.05 });
-    const boxLid = new THREE.Mesh(boxLidGeo, boxLidMat);
-    boxLid.position.set(0, 0.14, 0);
+    // Inner protective cradle insert
+    const insertGeo = new THREE.BoxGeometry(1.26, 0.05, 0.86);
+    const boxInsert = new THREE.Mesh(insertGeo, kraftInnerMat);
+    boxInsert.position.set(0, 0.065, 0);
+    boxGroup.add(boxInsert);
+
+    // Box Lid Group (for precision lift & tilt animation)
+    const lidGroup = new THREE.Group();
+    lidGroup.position.set(0, 0.09, 0);
+    boxGroup.add(lidGroup);
+
+    const boxLidGeo = new THREE.BoxGeometry(1.36, 0.14, 0.96);
+    const boxLid = new THREE.Mesh(boxLidGeo, kraftBaseMat);
     boxLid.castShadow = true;
-    boxGroup.add(boxLid);
+    boxLid.receiveShadow = true;
+    lidGroup.add(boxLid);
+
+    // Center Packing Tape Strip
+    const tapeGeo = new THREE.BoxGeometry(1.365, 0.005, 0.16);
+    const tape = new THREE.Mesh(tapeGeo, kraftTapeMat);
+    tape.position.set(0, 0.073, 0);
+    lidGroup.add(tape);
+
+    // Minimal Shipping / Fragile sticker on lid corner
+    const labelGeo = new THREE.PlaneGeometry(0.24, 0.14);
+    const labelMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+    const label = new THREE.Mesh(labelGeo, labelMat);
+    label.rotation.x = -Math.PI / 2;
+    label.position.set(0.42, 0.074, 0.28);
+    lidGroup.add(label);
 
     // --- 5. THE 3D LAPTOP (Deep Space Gray Aluminum - Crisp contrast on white desk) ---
     const laptopGroup = new THREE.Group();
-    laptopGroup.position.set(0, 1.18, 0);
+    laptopGroup.position.set(-0.85, 1.24, 0.15); // Starts nestled inside the Kraft cardboard box
     group.add(laptopGroup);
 
     const baseGeo = new THREE.BoxGeometry(1.22, 0.034, 0.84);
@@ -457,36 +512,51 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }, 650);
       }
 
-      // Camera Choreography:
+      // Camera Choreography (Adaptive framing for both mobile portrait and desktop widescreen)
+      const isNarrow = window.innerWidth < 768 || (window.innerWidth / window.innerHeight < 1.0);
       const progressClamped = Math.min(0.85, p);
-      const camTargetZ = THREE.MathUtils.lerp(7.8, 2.5, progressClamped / 0.85);
-      const camTargetY = THREE.MathUtils.lerp(3.2, 1.48, progressClamped / 0.85);
-      const camTargetX = THREE.MathUtils.lerp(0, 0.42, progressClamped / 0.85) + (mouseRef.current.x * 0.3);
+
+      const startZ = isNarrow ? 9.6 : 7.8;
+      const endZ = isNarrow ? 3.3 : 2.5;
+      const startY = isNarrow ? 3.5 : 3.2;
+      const endY = isNarrow ? 1.60 : 1.48;
+      const endX = isNarrow ? 0.12 : 0.42;
+
+      const camTargetZ = THREE.MathUtils.lerp(startZ, endZ, progressClamped / 0.85);
+      const camTargetY = THREE.MathUtils.lerp(startY, endY, progressClamped / 0.85);
+      const camTargetX = THREE.MathUtils.lerp(0, endX, progressClamped / 0.85) + (mouseRef.current.x * (isNarrow ? 0.10 : 0.3));
 
       camera.position.x += (camTargetX - camera.position.x) * 0.08;
       camera.position.y += (camTargetY - camera.position.y) * 0.08;
       camera.position.z += (camTargetZ - camera.position.z) * 0.08;
       camera.lookAt(0, 1.25, 0);
 
-      // Stage 1: Unboxing (p: 0.0 -> 0.28)
-      const lidLift = THREE.MathUtils.clamp((p - 0.03) / 0.22, 0, 1);
-      boxLid.position.y = 0.14 + (lidLift * 0.45);
-      boxLid.rotation.z = lidLift * 0.22;
+      // --- Physical Accurate Unboxing Sequence ---
+      // Stage 1: Cardboard Box Lid slides vertically up with vacuum glide (p: 0.02 -> 0.14)
+      const lidLift = THREE.MathUtils.clamp((p - 0.02) / 0.12, 0, 1);
+      lidGroup.position.y = 0.09 + (lidLift * 0.45);
 
-      const boxFade = THREE.MathUtils.clamp((p - 0.20) / 0.14, 0, 1);
-      boxGroup.position.y = 1.18 - (boxFade * 0.6);
-      boxBase.material.opacity = 1 - boxFade;
-      boxLid.material.opacity = 1 - boxFade;
-      boxBase.material.transparent = true;
-      boxLid.material.transparent = true;
+      // Stage 2: Lid tilts and rests to the side; Laptop emerges and glides to center stage (p: 0.12 -> 0.28)
+      const unboxSlide = THREE.MathUtils.clamp((p - 0.12) / 0.16, 0, 1);
 
-      // Stage 2: Laptop Position & Lid Opening (p: 0.28 -> 0.58)
-      const laptopSlide = THREE.MathUtils.clamp((p - 0.08) / 0.24, 0, 1);
-      laptopGroup.position.x = THREE.MathUtils.lerp(-0.75, 0, laptopSlide);
-      laptopGroup.position.z = THREE.MathUtils.lerp(0.2, 0, laptopSlide);
+      // Lid smoothly rotates and rests naturally on the desk
+      lidGroup.position.x = -unboxSlide * 0.65;
+      lidGroup.position.z = -unboxSlide * 0.35;
+      lidGroup.position.y = 0.09 + 0.45 - (unboxSlide * 0.38);
+      lidGroup.rotation.z = unboxSlide * 0.14;
+      lidGroup.rotation.x = -unboxSlide * 0.16;
 
-      // Screen Lid rotates open smoothly
-      const lidOpen = THREE.MathUtils.clamp((p - 0.26) / 0.28, 0, 1);
+      // Cardboard Box Base gently rests on the left of the desk
+      boxGroup.position.x = THREE.MathUtils.lerp(-0.85, -1.35, unboxSlide);
+      boxGroup.position.z = THREE.MathUtils.lerp(0.15, -0.15, unboxSlide);
+
+      // Laptop emerges from the packaging tray and glides to center
+      laptopGroup.position.x = THREE.MathUtils.lerp(-0.85, 0, unboxSlide);
+      laptopGroup.position.y = THREE.MathUtils.lerp(1.24, 1.18, unboxSlide);
+      laptopGroup.position.z = THREE.MathUtils.lerp(0.15, 0, unboxSlide);
+
+      // Stage 3: Laptop Display opens smoothly (p: 0.26 -> 0.52)
+      const lidOpen = THREE.MathUtils.clamp((p - 0.24) / 0.26, 0, 1);
       screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
 
       // CRT Light Glow (Floods onto chassis and white desk)
@@ -523,7 +593,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
     const handleResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
+      setIsMobile(w < 640);
       camera.aspect = w / h;
+      camera.fov = getTargetFov(w, h);
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
@@ -578,6 +650,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         color: '#0f172a',
         overflow: 'hidden',
         userSelect: 'none',
+        touchAction: 'none', // Prevents browser overscroll & pull-to-refresh on mobile
         transform: `translateY(-${curtainLift}%)`,
         opacity: isDismissed ? 0.96 : 1,
         transition: isDismissed ? 'transform 0.65s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.65s ease' : 'none'
@@ -614,56 +687,60 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00e5a3', boxShadow: '0 0 10px #00e5a3' }} />
-            <span className="font-tech" style={{ fontSize: '0.85rem', fontWeight: 900, letterSpacing: '2.5px', color: '#0f2d26' }}>
+            <span className="font-tech" style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', fontWeight: 900, letterSpacing: '2px', color: '#0f2d26' }}>
               LUMON MDR-04 ENGINE // INITIALIZING...
             </span>
           </div>
 
-          <div style={{ width: '220px', height: '3px', background: 'rgba(0, 229, 163, 0.25)', borderRadius: '4px', overflow: 'hidden' }}>
+          <div style={{ width: isMobile ? '180px' : '220px', height: '3px', background: 'rgba(0, 229, 163, 0.25)', borderRadius: '4px', overflow: 'hidden' }}>
             <div style={{ width: `${loadingPercent}%`, height: '100%', background: '#00e5a3', boxShadow: '0 0 8px #00e5a3', transition: 'width 0.1s linear' }} />
           </div>
 
-          <span className="font-tech" style={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '1px' }}>
+          <span className="font-tech" style={{ fontSize: '0.62rem', color: '#64748b', letterSpacing: '1px' }}>
             COMPILING RETINA SHADERS & 3D ASSETS
           </span>
         </div>
       )}
 
       {/* Cinematic Letterboxing Bars (Lumon Deep Slate with Mint Laser Seams) */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderBottom: '1.5px solid #00e5a3' }} />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderTop: '1.5px solid #00e5a3' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: isMobile ? '20px' : 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderBottom: '1.5px solid #00e5a3' }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: isMobile ? '20px' : 'clamp(22px, 3.5vh, 36px)', background: '#0d1816', zIndex: 30, borderTop: '1.5px solid #00e5a3' }} />
 
       {/* Viewfinder Crosshairs */}
-      <div style={{ position: 'absolute', top: '50px', left: '36px', width: '14px', height: '14px', borderTop: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', top: '50px', right: '36px', width: '14px', height: '14px', borderTop: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', bottom: '50px', left: '36px', width: '14px', height: '14px', borderBottom: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
-      <div style={{ position: 'absolute', bottom: '50px', right: '36px', width: '14px', height: '14px', borderBottom: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', top: isMobile ? '28px' : '50px', left: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderTop: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', top: isMobile ? '28px' : '50px', right: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderTop: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', left: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderLeft: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
+      <div style={{ position: 'absolute', bottom: isMobile ? '28px' : '50px', right: isMobile ? '16px' : '36px', width: '12px', height: '12px', borderBottom: '1.5px solid #00e5a3', borderRight: '1.5px solid #00e5a3', pointerEvents: 'none', zIndex: 20 }} />
 
-      {/* TOP VIEWFINDER HUD */}
+      {/* TOP VIEWFINDER HUD (Responsive Desktop / Mobile) */}
       <div 
         style={{
           position: 'absolute',
-          top: 'clamp(28px, 4.5vh, 44px)',
-          left: '36px',
-          right: '36px',
+          top: isMobile ? '24px' : 'clamp(28px, 4.5vh, 44px)',
+          left: isMobile ? '16px' : '36px',
+          right: isMobile ? '16px' : '36px',
           zIndex: 35,
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: '12px'
         }}
         dir="ltr"
       >
         <div>
-          <span className="font-tech" style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: '2.5px', color: '#0f2d26' }}>
-            LUMON // TECHTINK DIVISION
+          <span className="font-tech" style={{ fontSize: isMobile ? '0.70rem' : '0.78rem', fontWeight: 900, letterSpacing: isMobile ? '1.5px' : '2.5px', color: '#0f2d26' }}>
+            LUMON // TECHTINK
           </span>
-          <span style={{ fontSize: '0.62rem', color: '#475569', display: 'block', letterSpacing: '1px' }}>
-            TERMINAL 04 · SEVERED LEVEL
-          </span>
+          {!isMobile && (
+            <span style={{ fontSize: '0.62rem', color: '#475569', display: 'block', letterSpacing: '1px' }}>
+              TERMINAL 04 · SEVERED LEVEL
+            </span>
+          )}
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {[
+          {/* Chapter Quick-Jump Buttons (Desktop Only) */}
+          {!isMobile && [
             { id: 1, label: '01 UNBOX', val: 0.14 },
             { id: 2, label: '02 BOOT', val: 0.45 },
             { id: 3, label: '03 CRUNCH', val: 0.72 },
@@ -700,9 +777,9 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               background: '#0d1816',
               border: '1.5px solid #00e5a3',
               color: '#00e5a3',
-              fontSize: '0.74rem',
+              fontSize: isMobile ? '0.68rem' : '0.74rem',
               fontWeight: 800,
-              padding: '6px 14px',
+              padding: isMobile ? '5px 10px' : '6px 14px',
               borderRadius: '6px',
               cursor: 'pointer',
               display: 'inline-flex',
@@ -710,43 +787,50 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               gap: '6px',
               fontFamily: 'var(--font-sans)',
               direction: 'rtl',
-              boxShadow: '0 4px 12px rgba(0, 229, 163, 0.25)'
+              boxShadow: '0 4px 12px rgba(0, 229, 163, 0.25)',
+              whiteSpace: 'nowrap'
             }}
           >
-            <span>ورود به فروشگاه [ESC]</span>
-            <ArrowDown size={13} />
+            <span>{isMobile ? 'ورود به فروشگاه' : 'ورود به فروشگاه [ESC]'}</span>
+            <ArrowDown size={isMobile ? 11 : 13} />
           </button>
         </div>
       </div>
 
-      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON */}
+      {/* BOTTOM TELEMETRY & BIG PERSIAN PROCEED BUTTON (Responsive Mobile/Desktop) */}
       <div 
         style={{
           position: 'absolute',
-          bottom: 'clamp(28px, 4.5vh, 44px)',
-          left: '36px',
-          right: '36px',
+          bottom: isMobile ? '24px' : 'clamp(28px, 4.5vh, 44px)',
+          left: isMobile ? '16px' : '36px',
+          right: isMobile ? '16px' : '36px',
           zIndex: 35,
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-end',
-          gap: '20px'
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: isMobile ? 'flex-end' : 'space-between',
+          alignItems: isMobile ? 'center' : 'flex-end',
+          gap: isMobile ? '10px' : '20px'
         }}
         dir="ltr"
       >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        <div style={{ textAlign: isMobile ? 'center' : 'left', width: isMobile ? '100%' : 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'center' : 'flex-start', gap: '8px', marginBottom: '4px' }}>
             <span 
               className="font-tech"
               style={{
-                fontSize: '0.72rem',
+                fontSize: isMobile ? '0.62rem' : '0.72rem',
                 fontWeight: 800,
                 color: '#0f2d26',
                 background: 'rgba(0, 229, 163, 0.2)',
                 padding: '3px 8px',
                 borderRadius: '4px',
                 border: '1px solid #00e5a3',
-                letterSpacing: '1.5px'
+                letterSpacing: isMobile ? '1px' : '1.5px',
+                maxWidth: isMobile ? '92vw' : 'none',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'inline-block'
               }}
             >
               {sceneTag}
@@ -757,7 +841,7 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
             className="font-tech"
             style={{
               margin: 0,
-              fontSize: '0.68rem',
+              fontSize: isMobile ? '0.58rem' : '0.68rem',
               color: '#475569',
               letterSpacing: '0.5px'
             }}
@@ -775,23 +859,26 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
               background: 'linear-gradient(135deg, #00e5a3 0%, #059669 100%)',
               border: '2px solid #ffffff',
               color: '#041713',
-              padding: '16px 36px',
+              padding: isMobile ? '14px 24px' : '16px 36px',
               borderRadius: '16px',
-              fontSize: '1.05rem',
+              fontSize: isMobile ? '0.96rem' : '1.05rem',
               fontWeight: 900,
               fontFamily: 'var(--font-sans)',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '12px',
+              justifyContent: 'center',
+              gap: isMobile ? '10px' : '12px',
               boxShadow: '0 12px 36px rgba(0, 229, 163, 0.55), 0 0 0 3px rgba(255, 255, 255, 0.4)',
               animation: 'pulseGlow 2s infinite',
-              direction: 'rtl'
+              direction: 'rtl',
+              width: isMobile ? '100%' : 'auto',
+              maxWidth: isMobile ? '360px' : 'none'
             }}
           >
-            <Check size={22} strokeWidth={3} />
+            <Check size={isMobile ? 20 : 22} strokeWidth={3} />
             <span>ورود به فروشگاه تک‌تینک</span>
-            <ArrowDown size={18} strokeWidth={2.5} />
+            <ArrowDown size={isMobile ? 16 : 18} strokeWidth={2.5} />
           </button>
         ) : (
           <div 
@@ -799,21 +886,23 @@ export default function Hero({ config, onExploreClick, onSecondaryClick }) {
             style={{
               display: 'flex',
               alignItems: 'center',
+              justifyContent: isMobile ? 'center' : 'flex-start',
               gap: '14px',
               cursor: 'pointer',
-              background: 'rgba(255, 255, 255, 0.8)',
+              background: 'rgba(255, 255, 255, 0.85)',
               padding: '8px 16px',
               borderRadius: '10px',
               border: '1px solid #cbd5e1',
               backdropFilter: 'blur(8px)',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.04)'
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.04)',
+              width: isMobile ? 'auto' : 'auto'
             }}
           >
             <div style={{ textAlign: 'right' }}>
-              <div className="font-tech" style={{ fontSize: '0.88rem', fontWeight: 900, color: '#0f2d26', letterSpacing: '1px' }}>
+              <div className="font-tech" style={{ fontSize: isMobile ? '0.80rem' : '0.88rem', fontWeight: 900, color: '#0f2d26', letterSpacing: '1px' }}>
                 {Math.min(100, Math.round(p / 0.82 * 100))}%
               </div>
-              <div style={{ fontSize: '0.62rem', color: '#475569', fontWeight: 700, fontFamily: 'var(--font-sans)', direction: 'rtl' }}>
+              <div style={{ fontSize: isMobile ? '0.58rem' : '0.62rem', color: '#475569', fontWeight: 700, fontFamily: 'var(--font-sans)', direction: 'rtl' }}>
                 اسکرول برای پردازش داده‌ها
               </div>
             </div>
