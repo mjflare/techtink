@@ -14,6 +14,8 @@ import CartDrawer from './components/CartDrawer.jsx';
 import InteractiveFloatingIsland from './components/InteractiveFloatingIsland.jsx';
 import { trackPageView } from './utils/analytics.js';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './components/SocialLogos.jsx';
+import SessionTimeoutModal from './components/SessionTimeoutModal.jsx';
+import { useSessionTimeout } from './hooks/useSessionTimeout.js';
 
 // Lazy-loaded heavy views & modals for optimal code-splitting and pristine mobile performance
 const ProductPage = lazy(() => import('./components/ProductPage.jsx'));
@@ -349,6 +351,29 @@ function App() {
       setActiveTab('store');
     }
   };
+
+  // Industry-Standard Inactivity Session Timeout Manager (OWASP 15-min default for Admin, 24 hr for Users)
+  const {
+    isWarningOpen: isSessionWarningOpen,
+    remainingSeconds: sessionRemainingSeconds,
+    extendSession: extendUserSession,
+    logoutNow: logoutUserSession
+  } = useSessionTimeout({
+    user: currentUser,
+    onTimeout: () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setCurrentUser(null);
+      if (activeTab === 'admin' || activeTab === 'account') {
+        setActiveTab('store');
+      }
+      setAuthNotice('نشست شما به دلیل عدم فعالیت (Inactivity Timeout) جهت حفظ امنیت منقضی شد. لطفاً دوباره وارد شوید.');
+      setIsAuthModalOpen(true);
+      toast.error('نشست شما منقضی شد', {
+        description: 'به دلیل عدم فعالیت طولانی، جهت حفظ امنیت از حساب خارج شدید.'
+      });
+    }
+  });
 
   return (
     <div>
@@ -833,6 +858,15 @@ function App() {
           onOpenAdmin={() => handleTabChange('admin')}
         />
       </Suspense>
+
+      {/* Session Inactivity Timeout Modal */}
+      <SessionTimeoutModal
+        isOpen={isSessionWarningOpen}
+        remainingSeconds={sessionRemainingSeconds}
+        onExtend={extendUserSession}
+        onLogout={logoutUserSession}
+        role={currentUser?.role}
+      />
     </div>
   );
 }

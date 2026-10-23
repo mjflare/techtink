@@ -21,9 +21,39 @@ export function verifyPassword(password, stored) {
 const b64 = (s) => Buffer.from(s).toString('base64url');
 const sign = (data) => crypto.createHmac('sha256', getSetting('token_secret')).update(data).digest('base64url');
 
+export function getAdminTimeoutMinutes() {
+  const s = getSetting('admin_session_timeout_minutes');
+  const val = parseInt(s, 10);
+  return isNaN(val) || val <= 0 ? 15 : val;
+}
+
 export function issueToken(user) {
+  // Update last_active_at on login/token issue
+  try {
+    db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", user.id);
+  } catch {}
   const payload = b64(JSON.stringify({ uid: user.id, role: user.role, exp: Date.now() + TOKEN_TTL_MS }));
   return `${payload}.${sign(payload)}`;
+}
+
+export function issueTemp2FAToken(user) {
+  const payload = b64(JSON.stringify({ 
+    uid: user.id, 
+    role: user.role, 
+    type: '2fa_challenge', 
+    exp: Date.now() + (5 * 60 * 1000) // 5 minutes validity
+  }));
+  return `${payload}.${sign(payload)}`;
+}
+
+export function readTemp2FAToken(token) {
+  const [payload, sig] = String(token || '').split('.');
+  if (!payload || !sig) return null;
+  const expected = sign(payload);
+  if (sig.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  const data = JSON.parse(Buffer.from(payload, 'base64url').toString());
+  if (data.type !== '2fa_challenge') return null;
+  return data.exp > Date.now() ? data : null;
 }
 
 function readToken(token) {
@@ -52,6 +82,10 @@ export const publicUser = (u) => {
     role: u.role,
     savedAddress,
     mustChangePassword: !!u.must_change_password,
+    totpEnabled: !!u.totp_enabled,
+    twoFactorEnabled: !!(u.totp_enabled || u.two_factor_enabled),
+    timeoutMinutes: getAdminTimeoutMinutes(),
+    lastActiveAt: u.last_active_at || u.created_at,
     createdAt: u.created_at
   };
 };
@@ -63,7 +97,17 @@ export function attachUser(req, _res, next) {
   const data = tokenStr ? readToken(tokenStr) : null;
   if (data) {
     const u = db.get('SELECT * FROM users WHERE id = ?', data.uid);
-    if (u && !u.blocked) req.user = u;
+    if (u && !u.blocked) {
+      req.user = u;
+      // Inactivity check for admin
+      if (u.role === 'admin' && u.last_active_at) {
+        const timeoutMs = getAdminTimeoutMinutes() * 60 * 1000;
+        const lastActiveTime = new Date(u.last_active_at + (u.last_active_at.endsWith('Z') ? '' : 'Z')).getTime();
+        if (Date.now() - lastActiveTime > timeoutMs) {
+          req.adminSessionExpired = true;
+        }
+      }
+    }
   }
   next();
 }
@@ -76,6 +120,16 @@ export function requireUser(req, res, next) {
 export function requireAdmin(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'لطفاً ابتدا وارد شوید.' });
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'دسترسی مدیر لازم است.' });
+  if (req.adminSessionExpired) {
+    return res.status(401).json({ 
+      error: 'نشست مدیریتی شما به دلیل عدم فعالیت منقضی شده است. لطفاً مجدداً وارد شوید.',
+      code: 'ADMIN_SESSION_EXPIRED'
+    });
+  }
+  // Keep alive: update last_active_at on each authenticated admin action
+  try {
+    db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", req.user.id);
+  } catch {}
   next();
 }
 

@@ -2,10 +2,18 @@
 import { Router } from 'express';
 import crypto from 'node:crypto';
 import { db, getSetting } from '../db.js';
-import { hashPassword, verifyPassword, issueToken, publicUser, requireUser, normalizeMobile } from '../auth.js';
+import { 
+  hashPassword, verifyPassword, issueToken, publicUser, 
+  requireUser, requireAdmin, normalizeMobile, issueTemp2FAToken, 
+  readTemp2FAToken, getAdminTimeoutMinutes 
+} from '../auth.js';
 import { priceCart } from '../products.js';
 import { sendOtp } from '../services/smsService.js';
 import { buildMimeMessage, sendViaSmtpSocket } from '../mailServer.js';
+import { 
+  generateSecret, generateTOTP, verifyTOTP, 
+  generateBackupCodes, getOtpAuthUri 
+} from '../services/totpService.js';
 
 const r = Router();
 const isEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || ''));
@@ -39,7 +47,199 @@ r.post('/auth/login', (req, res) => {
     return res.status(401).json({ error: 'نام کاربری یا رمز عبور اشتباه است.' });
   }
   if (user.blocked) return res.status(403).json({ error: 'حساب کاربری شما مسدود شده است.' });
+
+  // If user has Google Authenticator / TOTP 2FA enabled, issue challenge token
+  if (user.totp_enabled) {
+    const tempToken = issueTemp2FAToken(user);
+    return res.json({
+      success: true,
+      requires2FA: true,
+      twoFactorType: 'totp',
+      tempToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        mobile: user.mobile,
+        role: user.role
+      }
+    });
+  }
+
+  // Update activity timestamp and issue full session token
+  db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", user.id);
   res.json({ success: true, token: issueToken(user), user: publicUser(user) });
+});
+
+// Verify Google Authenticator TOTP during login
+r.post('/auth/2fa/verify-totp', (req, res) => {
+  const { tempToken, code } = req.body || {};
+  if (!tempToken || !code) {
+    return res.status(400).json({ error: 'کد ۶ رقمی و شناسه احراز الزامی است.' });
+  }
+
+  const tokenData = readTemp2FAToken(tempToken);
+  if (!tokenData) {
+    return res.status(401).json({ error: 'اعتبار جلسه تایید دومرحله‌ای منقضی شده است. لطفاً دوباره وارد شوید.' });
+  }
+
+  const user = db.get('SELECT * FROM users WHERE id = ?', tokenData.uid);
+  if (!user || user.blocked) {
+    return res.status(403).json({ error: 'حساب کاربری یافت نشد یا مسدود است.' });
+  }
+
+  const cleanCode = String(code).trim().replace(/\s+/g, '');
+
+  // 1. Check standard 6-digit TOTP
+  let isValid = verifyTOTP(cleanCode, user.totp_secret);
+
+  // 2. If invalid, check backup recovery codes
+  if (!isValid && user.totp_backup_codes) {
+    try {
+      const backupCodes = JSON.parse(user.totp_backup_codes);
+      const codeUpper = cleanCode.toUpperCase();
+      const codeIndex = backupCodes.findIndex(c => c === codeUpper || c.replace('-', '') === codeUpper.replace('-', ''));
+      if (codeIndex !== -1) {
+        isValid = true;
+        backupCodes.splice(codeIndex, 1);
+        db.run('UPDATE users SET totp_backup_codes = ? WHERE id = ?', JSON.stringify(backupCodes), user.id);
+      }
+    } catch {}
+  }
+
+  if (!isValid) {
+    return res.status(400).json({ error: 'کد تایید Google Authenticator یا کد پشتیبان اشتباه است.' });
+  }
+
+  // Session keepalive & issue permanent token
+  db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", user.id);
+  const fullToken = issueToken(user);
+  res.json({
+    success: true,
+    token: fullToken,
+    user: publicUser(user)
+  });
+});
+
+// Refresh session / Keep-Alive (updates last_active_at)
+r.post('/auth/refresh-session', requireUser, (req, res) => {
+  if (req.user.role === 'admin' && req.adminSessionExpired) {
+    return res.status(401).json({ 
+      error: 'نشست مدیریتی شما به دلیل عدم فعالیت منقضی شده است. لطفاً مجدداً وارد شوید.',
+      code: 'ADMIN_SESSION_EXPIRED'
+    });
+  }
+
+  db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", req.user.id);
+  const updatedUser = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+  res.json({
+    success: true,
+    user: publicUser(updatedUser),
+    timeoutMinutes: getAdminTimeoutMinutes()
+  });
+});
+
+// Generate new TOTP setup data for Google Authenticator
+r.post('/auth/totp/setup', requireUser, (req, res) => {
+  const secret = generateSecret();
+  const backupCodes = generateBackupCodes(8);
+  const qrUri = getOtpAuthUri(req.user.email || req.user.mobile || req.user.name, secret, 'TechTink');
+
+  res.json({
+    success: true,
+    secret,
+    qrUri,
+    backupCodes
+  });
+});
+
+// Confirm & Enable TOTP with the first 6-digit verification code
+r.post('/auth/totp/enable', requireUser, (req, res) => {
+  const { secret, code, backupCodes } = req.body || {};
+  if (!secret || !code) {
+    return res.status(400).json({ error: 'کلید و کد تایید الزامی است.' });
+  }
+
+  const isValid = verifyTOTP(code, secret);
+  if (!isValid) {
+    return res.status(400).json({ error: 'کد ۶ رقمی وارد شده صحیح نیست. لطفاً ساعت تلفن همراه خود را چک کرده و مجدداً امتحان کنید.' });
+  }
+
+  const bCodesJson = Array.isArray(backupCodes) ? JSON.stringify(backupCodes) : JSON.stringify(generateBackupCodes(8));
+  db.run('UPDATE users SET totp_secret = ?, totp_enabled = 1, totp_backup_codes = ? WHERE id = ?', secret, bCodesJson, req.user.id);
+
+  const updated = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+  res.json({
+    success: true,
+    message: 'احراز هویت دومرحله‌ای Google Authenticator با موفقیت فعال گردید.',
+    user: publicUser(updated)
+  });
+});
+
+// Disable TOTP
+r.post('/auth/totp/disable', requireUser, (req, res) => {
+  const { password, code } = req.body || {};
+  if (!password && !code) {
+    return res.status(400).json({ error: 'رمز عبور یا کد ۶ رقمی جهت غیرفعال‌سازی الزامی است.' });
+  }
+
+  let authorized = false;
+  if (password && verifyPassword(String(password), req.user.password_hash)) {
+    authorized = true;
+  } else if (code && verifyTOTP(code, req.user.totp_secret)) {
+    authorized = true;
+  }
+
+  if (!authorized) {
+    return res.status(400).json({ error: 'رمز عبور یا کد تایید وارد شده معتبر نیست.' });
+  }
+
+  db.run('UPDATE users SET totp_secret = NULL, totp_enabled = 0, totp_backup_codes = NULL WHERE id = ?', req.user.id);
+  const updated = db.get('SELECT * FROM users WHERE id = ?', req.user.id);
+  res.json({
+    success: true,
+    message: 'احراز هویت دومرحله‌ای غیرفعال گردید.',
+    user: publicUser(updated)
+  });
+});
+
+// Get TOTP Status
+r.get('/auth/totp/status', requireUser, (req, res) => {
+  let backupCount = 0;
+  if (req.user.totp_backup_codes) {
+    try {
+      backupCount = JSON.parse(req.user.totp_backup_codes).length;
+    } catch {}
+  }
+  res.json({
+    enabled: !!req.user.totp_enabled,
+    backupCodesRemaining: backupCount,
+    lastActiveAt: req.user.last_active_at,
+    timeoutMinutes: getAdminTimeoutMinutes()
+  });
+});
+
+// Admin Security Settings (Inactivity Timeout)
+r.get('/admin/security/settings', requireAdmin, (req, res) => {
+  res.json({
+    timeoutMinutes: getAdminTimeoutMinutes(),
+    totpEnabled: !!req.user.totp_enabled
+  });
+});
+
+r.put('/admin/security/settings', requireAdmin, (req, res) => {
+  const { timeoutMinutes } = req.body || {};
+  const mins = parseInt(timeoutMinutes, 10);
+  if (isNaN(mins) || mins < 5 || mins > 240) {
+    return res.status(400).json({ error: 'زمان انقضای نشست باید بین ۵ تا ۲۴۰ دقیقه باشد.' });
+  }
+
+  db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('admin_session_timeout_minutes', ?)", String(mins));
+  res.json({
+    success: true,
+    timeoutMinutes: mins,
+    message: `زمان انقضای نشست عدم فعالیت مدیر بر روی ${mins} دقیقه تنظیم شد.`
+  });
 });
 
 r.get('/auth/me', requireUser, (req, res) => res.json({ user: publicUser(req.user) }));

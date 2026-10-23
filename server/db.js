@@ -450,6 +450,15 @@ function migrate() {
   try { db.exec("ALTER TABLE warranties ADD COLUMN notes TEXT;"); } catch {}
   try { db.exec("ALTER TABLE users ADD COLUMN phone_verified INTEGER DEFAULT 0;"); } catch {}
   try { db.exec("ALTER TABLE users ADD COLUMN two_factor_enabled INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN totp_secret TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN totp_enabled INTEGER DEFAULT 0;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN totp_backup_codes TEXT;"); } catch {}
+  try { db.exec("ALTER TABLE users ADD COLUMN last_active_at TEXT;"); } catch {}
+  try {
+    if (!db.get("SELECT key FROM settings WHERE key = 'admin_session_timeout_minutes'")) {
+      db.run("INSERT INTO settings (key, value) VALUES ('admin_session_timeout_minutes', '15')");
+    }
+  } catch {}
 
   // Purge any synthetic mock data from analytics to ensure 100% genuine live metrics
   try {

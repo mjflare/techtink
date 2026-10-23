@@ -218,6 +218,28 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
   const [submittingShipment, setSubmittingShipment] = useState(false);
   const [shipmentMessage, setShipmentMessage] = useState(null);
 
+  // Admin 2FA Login Challenge State
+  const [adminRequires2FA, setAdminRequires2FA] = useState(false);
+  const [adminTempToken, setAdminTempToken] = useState('');
+  const [adminTotpCode, setAdminTotpCode] = useState('');
+  const [adminUseBackupCode, setAdminUseBackupCode] = useState(false);
+
+  // Admin Security Settings State (Inactivity Timeout & Google Authenticator)
+  const [adminTimeoutMinutes, setAdminTimeoutMinutes] = useState(15);
+  const [adminTimeoutLoading, setAdminTimeoutLoading] = useState(false);
+  const [totpStatus, setTotpStatus] = useState(null);
+  const [isTotpSetupOpen, setIsTotpSetupOpen] = useState(false);
+  const [totpSetupData, setTotpSetupData] = useState(null);
+  const [totpVerifyCode, setTotpVerifyCode] = useState('');
+  const [totpSetupLoading, setTotpSetupLoading] = useState(false);
+  const [totpSetupError, setTotpSetupError] = useState('');
+  const [isDisableTotpOpen, setIsDisableTotpOpen] = useState(false);
+  const [totpDisablePassword, setTotpDisablePassword] = useState('');
+  const [disableTotpLoading, setDisableTotpLoading] = useState(false);
+  const [disableTotpError, setDisableTotpError] = useState('');
+  const [copiedSecret, setCopiedSecret] = useState(false);
+  const [copiedBackupCodes, setCopiedBackupCodes] = useState(false);
+
   const authHeaders = {
     'Content-Type': 'application/json',
     ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
@@ -235,6 +257,42 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'ورود ناموفق بود');
+
+      if (data.requires2FA) {
+        setAdminRequires2FA(true);
+        setAdminTempToken(data.tempToken);
+        setAdminTotpCode('');
+        setAuthLoading(false);
+        return;
+      }
+
+      if (data.user?.role !== 'admin') throw new Error('این حساب کاربری دسترسی مدیریت ندارد.');
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      setAuthToken(data.token);
+      window.location.reload();
+    } catch (err) {
+      setAuthError(err.message);
+    }
+    setAuthLoading(false);
+  };
+
+  const handleAdminVerify2FA = async (e) => {
+    e.preventDefault();
+    if (!adminTotpCode || adminTotpCode.trim().length < 4) {
+      setAuthError('کد ورود دو مرحله‌ای را وارد نمایید.');
+      return;
+    }
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const res = await fetch('/api/auth/2fa/verify-totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken: adminTempToken, code: adminTotpCode.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'کد تایید دو مرحله‌ای صحیح نیست.');
       if (data.user?.role !== 'admin') throw new Error('این حساب کاربری دسترسی مدیریت ندارد.');
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -306,6 +364,24 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
           setSettingsLoading(false); 
         })
         .catch(() => setSettingsLoading(false));
+
+      fetch('/api/admin/security/settings', { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.admin_session_timeout_minutes) {
+            setAdminTimeoutMinutes(Number(data.admin_session_timeout_minutes));
+          }
+        })
+        .catch(() => {});
+
+      fetch('/api/auth/totp/status', { headers: authHeaders })
+        .then(res => res.json())
+        .then(data => {
+          if (data && typeof data.enabled !== 'undefined') {
+            setTotpStatus(data);
+          }
+        })
+        .catch(() => {});
     }
 
     // Check mail server & unread emails count
@@ -1142,6 +1218,117 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
     setTimeout(() => setTorobCopied(false), 3000);
   };
 
+  // Security & Inactivity Session Timeout Handlers
+  const handleSaveTimeout = async (mins) => {
+    setAdminTimeoutLoading(true);
+    try {
+      const res = await fetch('/api/admin/security/settings', {
+        method: 'PUT',
+        headers: authHeaders,
+        body: JSON.stringify({ admin_session_timeout_minutes: mins })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در ذخیره تنظیمات نشست');
+      setAdminTimeoutMinutes(mins);
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        u.timeoutMinutes = mins;
+        localStorage.setItem('user', JSON.stringify(u));
+      } catch {}
+      alert(`مدت زمان انقضای خودکار نشست مدیریت به ${mins} دقیقه تغییر یافت.`);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setAdminTimeoutLoading(false);
+    }
+  };
+
+  const handleStartTotpSetup = async () => {
+    setTotpSetupLoading(true);
+    setTotpSetupError('');
+    try {
+      const res = await fetch('/api/auth/totp/setup', {
+        method: 'POST',
+        headers: authHeaders
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'خطا در تولید کلید Google Authenticator');
+      setTotpSetupData(data);
+      setTotpVerifyCode('');
+      setIsTotpSetupOpen(true);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setTotpSetupLoading(false);
+    }
+  };
+
+  const handleConfirmTotpEnable = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (!totpVerifyCode || totpVerifyCode.trim().length !== 6) {
+      setTotpSetupError('لطفاً کد ۶ رقمی زمان‌دار نمایش داده شده در Google Authenticator را وارد کنید.');
+      return;
+    }
+    setTotpSetupLoading(true);
+    setTotpSetupError('');
+    try {
+      const res = await fetch('/api/auth/totp/enable', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          secret: totpSetupData.secret,
+          code: totpVerifyCode.trim(),
+          backupCodes: totpSetupData.backupCodes
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'کد ۶ رقمی صحیح نیست.');
+      
+      setTotpStatus({
+        enabled: true,
+        backupCodesRemaining: totpSetupData.backupCodes?.length || 8
+      });
+      setIsTotpSetupOpen(false);
+      setTotpSetupData(null);
+      setTotpVerifyCode('');
+      alert('احراز هویت دومرحله‌ای Google Authenticator با موفقیت فعال شد.');
+    } catch (err) {
+      setTotpSetupError(err.message);
+    } finally {
+      setTotpSetupLoading(false);
+    }
+  };
+
+  const handleDisableTotp = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (!totpDisablePassword) {
+      setDisableTotpError('وارد کردن رمز عبور یا کد ۶ رقمی جهت تایید هویت الزامی است.');
+      return;
+    }
+    setDisableTotpLoading(true);
+    setDisableTotpError('');
+    try {
+      const res = await fetch('/api/auth/totp/disable', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          password: totpDisablePassword,
+          code: totpDisablePassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'رمز عبور یا کد تایید نادرست است.');
+      setTotpStatus({ enabled: false, backupCodesRemaining: 0 });
+      setIsDisableTotpOpen(false);
+      setTotpDisablePassword('');
+      alert('ورود دومرحله‌ای با موفقیت غیرفعال گردید.');
+    } catch (err) {
+      setDisableTotpError(err.message);
+    } finally {
+      setDisableTotpLoading(false);
+    }
+  };
+
   const ADMIN_CATEGORIES = [
     {
       id: 'analytics',
@@ -1245,25 +1432,117 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
             </div>
           )}
 
-          <form onSubmit={handleAdminLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <input 
-              type="text" 
-              placeholder="ایمیل یا موبایل مدیر" 
-              value={adminEmail} 
-              onChange={e => setAdminEmail(e.target.value)} 
-              required 
-            />
-            <input 
-              type="password" 
-              placeholder="رمز عبور مدیر" 
-              value={adminPassword} 
-              onChange={e => setAdminPassword(e.target.value)} 
-              required 
-            />
-            <button type="submit" className="btn btn-primary" style={{ padding: '14px' }} disabled={authLoading}>
-              {authLoading ? 'در حال ورود...' : 'ورود به پنل مدیریت'}
-            </button>
-          </form>
+          {adminRequires2FA ? (
+            <form onSubmit={handleAdminVerify2FA} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} className="animate-fade-in">
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                fontSize: '0.825rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.6,
+                textAlign: 'center'
+              }}>
+                ورود دومرحله‌ای Google Authenticator فعال است. کد لحظه‌ای ۶ رقمی نرم‌افزار یا کد بازیابی اضطراری را وارد نمایید.
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.825rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                  {adminUseBackupCode ? 'کد بازیابی اضطراری (Backup Code)' : 'کد ۶ رقمی Google Authenticator'}
+                </label>
+                <input 
+                  type="text" 
+                  autoFocus
+                  placeholder={adminUseBackupCode ? 'مثال: A1B2-C3D4' : '● ● ● ● ● ●'} 
+                  value={adminTotpCode} 
+                  onChange={e => setAdminTotpCode(e.target.value)} 
+                  maxLength={adminUseBackupCode ? 16 : 6}
+                  style={{
+                    direction: 'ltr',
+                    textAlign: 'center',
+                    letterSpacing: adminUseBackupCode ? '2px' : '8px',
+                    fontFamily: 'monospace',
+                    fontSize: '1.25rem',
+                    fontWeight: 'bold',
+                    padding: '12px',
+                    minHeight: '48px'
+                  }}
+                  required 
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminUseBackupCode(!adminUseBackupCode);
+                    setAdminTotpCode('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'hsl(var(--accent-cyan))',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    padding: '6px'
+                  }}
+                >
+                  {adminUseBackupCode ? 'ورود با کد ۶ رقمی اپلیکیشن' : 'ورود با کد پشتیبان اضطراری (Backup Code)'}
+                </button>
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ padding: '14px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} disabled={authLoading || !adminTotpCode.trim()}>
+                {authLoading ? 'در حال تایید...' : (
+                  <>
+                    <ShieldCheck size={18} />
+                    تایید هویت و ورود به پنل
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminRequires2FA(false);
+                  setAdminTempToken('');
+                  setAdminTotpCode('');
+                  setAuthError('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  padding: '6px'
+                }}
+              >
+                انصراف و بازگشت به فرم ورود
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleAdminLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <input 
+                type="text" 
+                placeholder="ایمیل یا موبایل مدیر" 
+                value={adminEmail} 
+                onChange={e => setAdminEmail(e.target.value)} 
+                required 
+              />
+              <input 
+                type="password" 
+                placeholder="رمز عبور مدیر" 
+                value={adminPassword} 
+                onChange={e => setAdminPassword(e.target.value)} 
+                required 
+              />
+              <button type="submit" className="btn btn-primary" style={{ padding: '14px', minHeight: '48px' }} disabled={authLoading}>
+                {authLoading ? 'در حال ورود...' : 'ورود به پنل مدیریت'}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     );
@@ -3419,6 +3698,212 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
 
           </div>
 
+          {/* Advanced Security, Inactivity Session Timeout & Google Authenticator (OWASP / PCI-DSS / RFC 6238) */}
+          <div className="glass-card" style={{ 
+            padding: '32px', 
+            position: 'relative', 
+            overflow: 'hidden',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            boxShadow: '0 10px 40px rgba(56, 189, 248, 0.08)'
+          }}>
+            {/* Top decorative gradient bar */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '4px',
+              background: 'linear-gradient(90deg, #38bdf8, #818cf8, #34d399)'
+            }} />
+
+            <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <ShieldCheck size={26} color="#38bdf8" />
+                  <h2 style={{ fontSize: '1.45rem', margin: 0 }}>امنیت پیشرفته، نشست خودکار و Google Authenticator</h2>
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '0.78rem',
+                    fontWeight: 'bold',
+                    background: totpStatus?.enabled ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                    color: totpStatus?.enabled ? '#10b981' : '#f59e0b',
+                    border: totpStatus?.enabled ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)'
+                  }}>
+                    <span style={{
+                      width: '7px',
+                      height: '7px',
+                      borderRadius: '50%',
+                      background: totpStatus?.enabled ? '#10b981' : '#f59e0b'
+                    }} />
+                    {totpStatus?.enabled ? 'ورود دومرحله‌ای فعال (ایمن)' : 'ورود دومرحله‌ای غیرفعال'}
+                  </span>
+                </div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0, lineHeight: 1.6 }}>
+                  تنظیم مدت زمان خروج خودکار هنگام ترک میز کار بر اساس استاندارد OWASP ASVS و الزام تایید هویت دومرحله‌ای RFC 6238 برای تمامی نشست‌های حساس مدیریتی.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '12px' }}>
+              
+              {/* Feature A: Inactivity Session Timeout */}
+              <div style={{
+                padding: '22px',
+                borderRadius: '16px',
+                border: '1px solid var(--border-glass)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <Clock size={20} color="#38bdf8" />
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>انقضای خودکار نشست مدیریت (Inactivity Timeout)</h3>
+                  </div>
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '16px' }}>
+                    طبق استاندارد بین‌المللی <strong>OWASP ASVS</strong> و <strong>PCI-DSS 4.0</strong>، در صورت عدم فعالیت مدیر، نشست کاربری باید پس از زمان مشخصی منقضی شده و درخواست ورود مجدد کند.
+                  </p>
+
+                  <label style={{ display: 'block', fontSize: '0.825rem', marginBottom: '8px', fontWeight: 600 }}>
+                    مدت زمان مجاز عدم فعالیت:
+                  </label>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
+                    {[
+                      { mins: 15, label: '۱۵ دقیقه', desc: 'استاندارد OWASP' },
+                      { mins: 30, label: '۳۰ دقیقه', desc: 'متعادل و روان' },
+                      { mins: 60, label: '۶۰ دقیقه', desc: 'حداکثر مجاز اداری' }
+                    ].map(opt => {
+                      const isSelected = adminTimeoutMinutes === opt.mins;
+                      return (
+                        <button
+                          key={opt.mins}
+                          type="button"
+                          onClick={() => handleSaveTimeout(opt.mins)}
+                          disabled={adminTimeoutLoading}
+                          style={{
+                            padding: '10px 6px',
+                            borderRadius: '12px',
+                            border: isSelected ? '2px solid #38bdf8' : '1px solid var(--border-glass)',
+                            background: isSelected ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                            color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            fontWeight: isSelected ? 700 : 500,
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            alignItems: 'center',
+                            minHeight: '48px'
+                          }}
+                        >
+                          <span style={{ fontSize: '0.9rem' }}>{opt.label}</span>
+                          <span style={{ fontSize: '0.675rem', opacity: 0.8 }}>{opt.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', background: 'rgba(56, 189, 248, 0.05)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(56, 189, 248, 0.15)' }}>
+                  وضعیت فعلی: نشست پس از <strong>{adminTimeoutMinutes} دقیقه</strong> عدم حرکت ماوس، تایپ یا اسکرول با اخطار ۶۰ ثانیه‌ای بسته خواهد شد.
+                </div>
+              </div>
+
+              {/* Feature B: Google Authenticator (TOTP 2FA) */}
+              <div style={{
+                padding: '22px',
+                borderRadius: '16px',
+                border: '1px solid var(--border-glass)',
+                background: 'rgba(255, 255, 255, 0.02)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <KeyRound size={20} color="#818cf8" />
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, fontWeight: 700 }}>احراز هویت دو مرحله‌ای (Google Authenticator)</h3>
+                  </div>
+                  <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '16px' }}>
+                    پروتکل امن مبتنی بر زمان <strong>RFC 6238 TOTP</strong> با پشتیبانی از Google Authenticator، Microsoft Authenticator و 1Password بدون وابستگی به خط پیامک.
+                  </p>
+
+                  <div style={{
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: totpStatus?.enabled ? 'rgba(16, 185, 129, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                    border: totpStatus?.enabled ? '1px solid rgba(16, 185, 129, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
+                    marginBottom: '16px'
+                  }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: totpStatus?.enabled ? '#10b981' : '#f59e0b', marginBottom: '4px' }}>
+                      {totpStatus?.enabled ? 'ورود امن با رمز یکبارمصرف فعال است' : 'لایه دوم امنیتی برای این حساب غیرفعال است'}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                      {totpStatus?.enabled 
+                        ? `کدهای پشتیبان باقیمانده: ${totpStatus.backupCodesRemaining ?? 8} عدد جهت بازیابی اضطراری.`
+                        : 'جهت جلوگیری از نفوذ در صورت سرقت یا افشای رمز عبور، فعال‌سازی توصیه اکید می‌گردد.'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  {!totpStatus?.enabled ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleStartTotpSetup}
+                      disabled={totpSetupLoading}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        minHeight: '48px'
+                      }}
+                    >
+                      <QrCode size={18} />
+                      {totpSetupLoading ? 'در حال تولید کلید...' : 'راه‌اندازی Google Authenticator'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-glass"
+                      onClick={() => setIsDisableTotpOpen(true)}
+                      style={{
+                        flex: 1,
+                        padding: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: 600,
+                        fontSize: '0.875rem',
+                        color: 'hsl(var(--accent-red))',
+                        borderColor: 'hsla(var(--accent-red), 0.3)',
+                        minHeight: '48px'
+                      }}
+                    >
+                      <Lock size={18} />
+                      غیرفعال‌سازی ورود دو مرحله‌ای
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+
           {/* Google Search Console, XML Sitemap & SEO Card */}
           <div className="glass-card" style={{ padding: '32px', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
             <div className="flex" style={{ justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '16px' }}>
@@ -4461,6 +4946,445 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
         onClose={() => setPreviewDemoModalOpen(false)}
         onOpenAdmin={() => setPreviewDemoModalOpen(false)}
       />
+
+      {/* 6. Modal: Google Authenticator (TOTP) Setup Wizard */}
+      {isTotpSetupOpen && totpSetupData && (
+        <div 
+          className="modal-backdrop-wrapper animate-fade-in"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            padding: '16px',
+            paddingBottom: 'calc(16px + env(safe-area-inset-bottom))'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsTotpSetupOpen(false);
+              setTotpSetupData(null);
+              setTotpVerifyCode('');
+            }
+          }}
+        >
+          <div 
+            className="glass-card animate-scale-up"
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              borderRadius: '24px',
+              padding: '28px 24px',
+              border: '1px solid rgba(56, 189, 248, 0.4)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
+              position: 'relative',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              direction: 'rtl'
+            }}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsTotpSetupOpen(false);
+                setTotpSetupData(null);
+                setTotpVerifyCode('');
+              }}
+              style={{
+                position: 'absolute',
+                top: '18px',
+                left: '18px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)'
+              }}
+              title="بستن"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '16px',
+                background: 'rgba(56, 189, 248, 0.15)',
+                color: '#38bdf8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+                border: '1px solid rgba(56, 189, 248, 0.3)'
+              }}>
+                <KeyRound size={28} />
+              </div>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 6px 0' }}>
+                راه‌اندازی Google Authenticator
+              </h2>
+              <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+                این بارکد را در اپلیکیشن Google Authenticator یا برنامه‌های مشابه اسکن کنید.
+              </p>
+            </div>
+
+            {/* Error Message */}
+            {totpSetupError && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: 'hsla(var(--accent-red), 0.15)',
+                border: '1px solid hsla(var(--accent-red), 0.3)',
+                color: 'hsl(var(--accent-red))',
+                fontSize: '0.825rem',
+                marginBottom: '16px',
+                textAlign: 'center'
+              }}>
+                {totpSetupError}
+              </div>
+            )}
+
+            {/* Step 1: QR Code */}
+            <div style={{
+              background: '#ffffff',
+              padding: '16px',
+              borderRadius: '16px',
+              width: 'fit-content',
+              margin: '0 auto 16px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)'
+            }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=170x170&data=${encodeURIComponent(totpSetupData.qrUri)}`}
+                alt="QR Code Google Authenticator"
+                style={{ width: '170px', height: '170px', display: 'block' }}
+              />
+            </div>
+
+            {/* Step 2: Manual Secret Key */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.25)',
+              padding: '12px 16px',
+              borderRadius: '14px',
+              marginBottom: '18px',
+              border: '1px solid var(--border-glass)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>کلید دستی (Manual Key):</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(totpSetupData.secret);
+                    setCopiedSecret(true);
+                    setTimeout(() => setCopiedSecret(false), 2500);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    cursor: 'pointer',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px'
+                  }}
+                >
+                  <Copy size={13} />
+                  {copiedSecret ? 'کپی شد ✓' : 'کپی کلید'}
+                </button>
+              </div>
+              <div className="font-code" style={{
+                direction: 'ltr',
+                textAlign: 'center',
+                letterSpacing: '2px',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                color: 'var(--text-primary)'
+              }}>
+                {totpSetupData.secret}
+              </div>
+            </div>
+
+            {/* Step 3: Emergency Backup Codes */}
+            {Array.isArray(totpSetupData.backupCodes) && totpSetupData.backupCodes.length > 0 && (
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.08)',
+                border: '1px solid rgba(245, 158, 11, 0.25)',
+                borderRadius: '14px',
+                padding: '14px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#f59e0b' }}>
+                    کدهای پشتیبان اضطراری (یک‌بار مصرف):
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(totpSetupData.backupCodes.join('\n'));
+                      setCopiedBackupCodes(true);
+                      setTimeout(() => setCopiedBackupCodes(false), 2500);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#f59e0b',
+                      cursor: 'pointer',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px'
+                    }}
+                  >
+                    <Copy size={13} />
+                    {copiedBackupCodes ? 'کپی شدند ✓' : 'کپی همه کدها'}
+                  </button>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: '6px',
+                  direction: 'ltr',
+                  marginBottom: '8px'
+                }}>
+                  {totpSetupData.backupCodes.map((code, idx) => (
+                    <div 
+                      key={idx}
+                      className="font-code"
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.2)',
+                        padding: '6px 8px',
+                        borderRadius: '8px',
+                        textAlign: 'center',
+                        fontSize: '0.825rem',
+                        fontWeight: 600,
+                        border: '1px solid rgba(245, 158, 11, 0.15)'
+                      }}
+                    >
+                      {code}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ fontSize: '0.725rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  این کدهای ۸ رقمی را در یادداشت‌های امن خود نگه دارید تا در صورت عدم دسترسی به تلفن همراه، بتوانید وارد حساب مدیریت شوید.
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Verification Form */}
+            <form onSubmit={handleConfirmTotpEnable} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', fontWeight: 700, textAlign: 'center' }}>
+                  کد ۶ رقمی نمایش داده شده در اپلیکیشن را وارد کنید:
+                </label>
+                <input 
+                  type="text"
+                  autoFocus
+                  placeholder="● ● ● ● ● ●"
+                  maxLength={6}
+                  value={totpVerifyCode}
+                  onChange={e => setTotpVerifyCode(e.target.value)}
+                  required
+                  style={{
+                    direction: 'ltr',
+                    textAlign: 'center',
+                    letterSpacing: '8px',
+                    fontFamily: 'monospace',
+                    fontSize: '1.35rem',
+                    fontWeight: 'bold',
+                    padding: '12px',
+                    minHeight: '48px'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={totpSetupLoading || totpVerifyCode.trim().length !== 6}
+                style={{
+                  padding: '14px',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '48px'
+                }}
+              >
+                {totpSetupLoading ? 'در حال فعال‌سازی...' : (
+                  <>
+                    <ShieldCheck size={18} />
+                    تایید نهایی و فعال‌سازی ورود دومرحله‌ای
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTotpSetupOpen(false);
+                  setTotpSetupData(null);
+                  setTotpVerifyCode('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  padding: '6px'
+                }}
+              >
+                انصراف و بستن
+              </button>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* 7. Modal: Disable 2FA Confirmation */}
+      {isDisableTotpOpen && (
+        <div 
+          className="modal-backdrop-wrapper animate-fade-in"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(8px)',
+            padding: '16px',
+            paddingBottom: 'calc(16px + env(safe-area-inset-bottom))'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsDisableTotpOpen(false);
+              setTotpDisablePassword('');
+            }
+          }}
+        >
+          <div 
+            className="glass-card animate-scale-up"
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              borderRadius: '24px',
+              padding: '28px 24px',
+              border: '1px solid hsla(var(--accent-red), 0.4)',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.35)',
+              position: 'relative',
+              direction: 'rtl',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '16px',
+              background: 'hsla(var(--accent-red), 0.15)',
+              color: 'hsl(var(--accent-red))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 14px',
+              border: '1px solid hsla(var(--accent-red), 0.3)'
+            }}>
+              <AlertTriangle size={28} />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 8px 0' }}>
+              غیرفعال‌سازی ورود دو مرحله‌ای
+            </h3>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 18px 0' }}>
+              با غیرفعال‌سازی Google Authenticator، حساب شما تنها با رمز عبور قابل دسترس خواهد بود و آسیب‌پذیری در برابر نفوذ افزایش می‌یابد.
+            </p>
+
+            {disableTotpError && (
+              <div style={{
+                padding: '10px 14px',
+                borderRadius: '12px',
+                background: 'hsla(var(--accent-red), 0.15)',
+                border: '1px solid hsla(var(--accent-red), 0.3)',
+                color: 'hsl(var(--accent-red))',
+                fontSize: '0.825rem',
+                marginBottom: '14px'
+              }}>
+                {disableTotpError}
+              </div>
+            )}
+
+            <form onSubmit={handleDisableTotp} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.825rem', textAlign: 'right', fontWeight: 600 }}>
+                  رمز عبور فعلی مدیریت یا کد ۶ رقمی اپلیکیشن:
+                </label>
+                <input 
+                  type="password"
+                  placeholder="رمز عبور یا کد تایید"
+                  value={totpDisablePassword}
+                  onChange={e => setTotpDisablePassword(e.target.value)}
+                  required
+                  style={{ minHeight: '48px' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={disableTotpLoading || !totpDisablePassword}
+                style={{
+                  padding: '13px',
+                  background: '#ef4444',
+                  borderColor: '#ef4444',
+                  minHeight: '48px',
+                  fontWeight: 700
+                }}
+              >
+                {disableTotpLoading ? 'در حال پردازش...' : 'تایید و غیرفعال‌سازی'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDisableTotpOpen(false);
+                  setTotpDisablePassword('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  padding: '6px'
+                }}
+              >
+                انصراف و حفظ امنیت
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

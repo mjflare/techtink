@@ -28,6 +28,12 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCountdown, setOtpCountdown] = useState(0);
 
+  // Google Authenticator TOTP Challenge State
+  const [temp2FAToken, setTemp2FAToken] = useState('');
+  const [temp2FAUser, setTemp2FAUser] = useState(null);
+  const [totpCode, setTotpCode] = useState('');
+  const [useBackupCode, setUseBackupCode] = useState(false);
+
   // Password Recovery State
   const [recoveryMethod, setRecoveryMethod] = useState('mobile'); // 'mobile' | 'email'
   const [recoveryIdentifier, setRecoveryIdentifier] = useState('');
@@ -59,6 +65,10 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
     setOtpCode('');
     setOtpSent(false);
     setOtpCountdown(0);
+    setTemp2FAToken('');
+    setTemp2FAUser(null);
+    setTotpCode('');
+    setUseBackupCode(false);
     setRecoveryIdentifier('');
     setRecoveryStep(1);
     setRecoveryCode('');
@@ -72,6 +82,10 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
 
   const switchTab = (tab) => {
     setActiveTab(tab);
+    setTemp2FAToken('');
+    setTemp2FAUser(null);
+    setTotpCode('');
+    setUseBackupCode(false);
     setError('');
     setSuccessMsg('');
     setShowPassword(false);
@@ -98,6 +112,54 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
 
       if (!response.ok) {
         throw new Error(data.error || 'خطا در ورود به حساب کاربری');
+      }
+
+      // Check if 2FA (Google Authenticator) is required
+      if (data.requires2FA) {
+        setTemp2FAToken(data.tempToken);
+        setTemp2FAUser(data.user);
+        setActiveTab('totp');
+        setError('');
+        return;
+      }
+
+      if (data.token) localStorage.setItem('token', data.token);
+      if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+
+      resetAll();
+      onLogin(data.user);
+      onClose();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 1.1 Verify TOTP 2FA Challenge
+  const handleVerifyTotp = async (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (!totpCode || totpCode.trim().length < 4) {
+      setError('لطفاً کد تایید دو مرحله‌ای را وارد کنید.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/auth/2fa/verify-totp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tempToken: temp2FAToken,
+          code: totpCode.trim()
+        })
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'کد ورود دو مرحله‌ای صحیح نیست.');
       }
 
       if (data.token) localStorage.setItem('token', data.token);
@@ -386,18 +448,21 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
             }}
           >
             {activeTab === 'login' && <LogIn size={26} />}
+            {activeTab === 'totp' && <ShieldCheck size={26} />}
             {activeTab === 'otp' && <ShieldCheck size={26} />}
             {activeTab === 'recovery' && <KeyRound size={26} />}
             {activeTab === 'register' && <UserPlus size={26} />}
           </div>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px 0' }}>
             {activeTab === 'login' && 'ورود به حساب کاربری'}
+            {activeTab === 'totp' && 'تایید هویت دو مرحله‌ای (Google Authenticator)'}
             {activeTab === 'otp' && 'ورود سریع با پیامک (OTP)'}
             {activeTab === 'recovery' && 'بازیابی رمز عبور'}
             {activeTab === 'register' && 'ایجاد حساب کاربری'}
           </h2>
           <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
             {activeTab === 'login' && 'ایمیل یا شماره همراه خود را وارد کنید'}
+            {activeTab === 'totp' && 'کد زمان‌دار تولید شده در اپلیکیشن یا کد پشتیبان را وارد نمایید'}
             {activeTab === 'otp' && 'ورود امن بدون نیاز به حفظ رمز عبور'}
             {activeTab === 'recovery' && 'تعیین مجدد رمز عبور از طریق پیامک یا ایمیل'}
             {activeTab === 'register' && 'ثبت‌نام سریع در فروشگاه تخصصی تک‌تینک'}
@@ -423,75 +488,108 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
           </div>
         )}
 
-        {/* Tab Switcher */}
-        <div
-          style={{
+        {/* Tab Switcher - Hidden during 2FA challenge */}
+        {activeTab !== 'totp' ? (
+          <div
+            style={{
+              display: 'flex',
+              background: 'rgba(0, 0, 0, 0.05)',
+              borderRadius: '14px',
+              padding: '4px',
+              marginBottom: '20px',
+              gap: '4px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => switchTab('login')}
+              style={{
+                flex: 1,
+                padding: '9px 4px',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'login' ? '#ffffff' : 'transparent',
+                color: activeTab === 'login' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: activeTab === 'login' ? 700 : 500,
+                fontSize: '0.825rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'login' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >
+              رمز عبور
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('otp')}
+              style={{
+                flex: 1,
+                padding: '9px 4px',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'otp' ? '#ffffff' : 'transparent',
+                color: activeTab === 'otp' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: activeTab === 'otp' ? 700 : 500,
+                fontSize: '0.825rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'otp' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >
+              پیامک OTP
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('register')}
+              style={{
+                flex: 1,
+                padding: '9px 4px',
+                borderRadius: '10px',
+                border: 'none',
+                background: activeTab === 'register' ? '#ffffff' : 'transparent',
+                color: activeTab === 'register' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: activeTab === 'register' ? 700 : 500,
+                fontSize: '0.825rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: activeTab === 'register' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
+              }}
+            >
+              ثبت‌نام
+            </button>
+          </div>
+        ) : (
+          <div style={{
             display: 'flex',
-            background: 'rgba(0, 0, 0, 0.05)',
-            borderRadius: '14px',
-            padding: '4px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'rgba(56, 189, 248, 0.08)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '12px',
+            padding: '10px 14px',
             marginBottom: '20px',
-            gap: '4px',
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => switchTab('login')}
-            style={{
-              flex: 1,
-              padding: '9px 4px',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'login' ? '#ffffff' : 'transparent',
-              color: activeTab === 'login' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'login' ? 700 : 500,
-              fontSize: '0.825rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: activeTab === 'login' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-            }}
-          >
-            رمز عبور
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab('otp')}
-            style={{
-              flex: 1,
-              padding: '9px 4px',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'otp' ? '#ffffff' : 'transparent',
-              color: activeTab === 'otp' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'otp' ? 700 : 500,
-              fontSize: '0.825rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: activeTab === 'otp' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-            }}
-          >
-            پیامک OTP
-          </button>
-          <button
-            type="button"
-            onClick={() => switchTab('register')}
-            style={{
-              flex: 1,
-              padding: '9px 4px',
-              borderRadius: '10px',
-              border: 'none',
-              background: activeTab === 'register' ? '#ffffff' : 'transparent',
-              color: activeTab === 'register' ? 'var(--text-primary)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'register' ? 700 : 500,
-              fontSize: '0.825rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: activeTab === 'register' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none',
-            }}
-          >
-            ثبت‌نام
-          </button>
-        </div>
+            fontSize: '0.825rem'
+          }}>
+            <span style={{ color: 'var(--text-secondary)' }}>
+              کاربر: <strong style={{ color: 'var(--text-primary)' }}>{temp2FAUser?.name || temp2FAUser?.email || temp2FAUser?.mobile || 'مدیر'}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => switchTab('login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#0284c7',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '0.825rem',
+                padding: '4px 8px'
+              }}
+            >
+              تغییر حساب
+            </button>
+          </div>
+        )}
 
         {/* Status Messages */}
         {error && (
@@ -534,6 +632,119 @@ export default function AuthModal({ isOpen, onClose, onLogin, notice = null }) {
             <CheckCircle2 size={16} />
             <span>{successMsg}</span>
           </div>
+        )}
+
+        {/* ---------------------------------------------------- */}
+        {/* TAB 0: 2FA TOTP VERIFICATION */}
+        {/* ---------------------------------------------------- */}
+        {activeTab === 'totp' && (
+          <form onSubmit={handleVerifyTotp} className="animate-fade-in">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: 'rgba(56, 189, 248, 0.08)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                fontSize: '0.825rem',
+                color: 'var(--text-secondary)',
+                lineHeight: 1.6,
+                textAlign: 'center'
+              }}>
+                حساب شما مجهز به ورود دومرحله‌ای Google Authenticator است. کد لحظه‌ای ۶ رقمی تولید شده در اپلیکیشن را وارد نمایید.
+              </div>
+
+              <div style={inputGroupStyle}>
+                <label style={labelStyle}>
+                  {useBackupCode ? 'کد بازیابی اضطراری (Backup Code)' : 'کد ۶ رقمی Google Authenticator'}
+                </label>
+                <div style={inputWrapperStyle}>
+                  <KeyRound size={16} style={inputIconStyle} />
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder={useBackupCode ? 'مثال: A1B2-C3D4' : '● ● ● ● ● ●'}
+                    maxLength={useBackupCode ? 16 : 6}
+                    required
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value)}
+                    style={{
+                      paddingRight: '38px',
+                      direction: 'ltr',
+                      textAlign: 'center',
+                      letterSpacing: useBackupCode ? '2px' : '8px',
+                      fontFamily: 'monospace',
+                      fontSize: '1.25rem',
+                      fontWeight: 'bold',
+                      minHeight: '48px'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseBackupCode(!useBackupCode);
+                    setTotpCode('');
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#0284c7',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    padding: '6px'
+                  }}
+                >
+                  {useBackupCode ? 'ورود با کد ۶ رقمی اپلیکیشن' : 'ورود با کد پشتیبان اضطراری (Backup Code)'}
+                </button>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading || !totpCode.trim()}
+                style={{
+                  width: '100%',
+                  marginTop: '6px',
+                  padding: '13px',
+                  fontSize: '0.95rem',
+                  opacity: (loading || !totpCode.trim()) ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '48px'
+                }}
+              >
+                {loading ? 'در حال بررسی...' : (
+                  <>
+                    <ShieldCheck size={18} />
+                    تایید و ورود به حساب
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchTab('login')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.825rem',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  marginTop: '4px',
+                  padding: '6px'
+                }}
+              >
+                انصراف و بازگشت به فرم ورود عادی
+              </button>
+            </div>
+          </form>
         )}
 
         {/* ---------------------------------------------------- */}
