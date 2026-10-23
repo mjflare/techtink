@@ -23,6 +23,7 @@ import ViewerAnalytics from './ViewerAnalytics.jsx';
 import AdminWebmail from './AdminWebmail.jsx';
 import ResourceMonitor from './ResourceMonitor.jsx';
 import MediaAssetsManager from './MediaAssetsManager.jsx';
+import SecurityDashboard from './SecurityDashboard.jsx';
 import { TelegramIcon, InstagramIcon, BaleIcon, AparatIcon, EnamadLogo } from './SocialLogos.jsx';
 
 export default function AdminDashboard({ user, onLogout, siteSettings, onSettingsUpdated, onHomepageConfigUpdated }) {
@@ -1388,6 +1389,16 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       badgeColor: '#ef4444',
       tabs: [
         { id: 'webmail', label: 'صندوق وب‌میل (info@techtink.ir)', icon: Mail, badge: unreadEmailCount > 0 ? `${unreadEmailCount} جدید` : null }
+      ]
+    },
+    {
+      id: 'security_access',
+      title: 'امنیت، نشست‌ها و دسترسی کاربران',
+      enTitle: 'Security, Sessions & Users',
+      desc: 'کنترل نشست‌های فعال، انقضای خودکار OWASP، تایید دومرحله‌ای Google Authenticator، ریست پسورد و گزارش رخدادها',
+      icon: ShieldCheck,
+      tabs: [
+        { id: 'security_dashboard', label: 'مرکز پایش امنیت و نشست‌ها', icon: ShieldCheck, badge: 'امنیت' }
       ]
     },
     {
@@ -4721,6 +4732,17 @@ export default function AdminDashboard({ user, onLogout, siteSettings, onSetting
       {activeSection === 'resource_monitor' && (
         <ResourceMonitor
           authHeaders={authHeaders}
+        />
+      )}
+
+      {/* 9. SECURITY DASHBOARD & ACCESS CONTROL (OWASP ASVS / Google Authenticator / User Activity) */}
+      {activeSection === 'security_dashboard' && (
+        <SecurityDashboard
+          authToken={authToken}
+          onOpenTotpSetup={handleStartTotpSetup}
+          totpStatus={totpStatus}
+          adminTimeoutMinutes={adminTimeoutMinutes}
+          onSaveTimeout={handleSaveTimeout}
         />
       )}
 

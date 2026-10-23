@@ -210,13 +210,20 @@ export default function Hero({ config, onExploreClick, onSecondaryClick, onDismi
     const ambientLight = new THREE.AmbientLight(0xdcf0ec, 1.9); // Diffuse sterile white/mint
     scene.add(ambientLight);
 
-    // Overhead Clinical White Fluorescent Key Light
-    const ceilingLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    // Overhead Clinical White Fluorescent Key Light with Anti-Aliased Soft Shadows
+    const ceilingLight = new THREE.DirectionalLight(0xffffff, 2.3);
     ceilingLight.position.set(0, 8, 2.5);
     ceilingLight.castShadow = true;
-    ceilingLight.shadow.mapSize.width = 1024;
-    ceilingLight.shadow.mapSize.height = 1024;
-    ceilingLight.shadow.bias = -0.001;
+    ceilingLight.shadow.mapSize.width = 2048;
+    ceilingLight.shadow.mapSize.height = 2048;
+    ceilingLight.shadow.camera.near = 1.0;
+    ceilingLight.shadow.camera.far = 16.0;
+    ceilingLight.shadow.camera.left = -3.5;
+    ceilingLight.shadow.camera.right = 3.5;
+    ceilingLight.shadow.camera.top = 3.5;
+    ceilingLight.shadow.camera.bottom = -3.5;
+    ceilingLight.shadow.bias = -0.0003;
+    ceilingLight.shadow.normalBias = 0.035; // Eliminates shadow acne and surface noise
     scene.add(ceilingLight);
 
     // Glowing CRT Phosphor Point Light (Bright green glow from the screen)
@@ -306,62 +313,70 @@ export default function Hero({ config, onExploreClick, onSecondaryClick, onDismi
 
     // --- 4. AUTHENTIC NATURAL KRAFT CARDBOARD PACKAGING BOX ---
     const boxGroup = new THREE.Group();
-    boxGroup.position.set(-0.85, 1.25, 0.15); // Sits on desk top
+    boxGroup.position.set(-0.85, 1.24, 0.15); // Sits flush on white desk top (desk at y=1.15)
     group.add(boxGroup);
 
-    // Natural Cardboard Materials (Matte Kraft tan)
+    // Natural Cardboard Materials (Anti-Aliased Silk Matte Kraft tan)
     const kraftBaseMat = new THREE.MeshStandardMaterial({
-      color: 0xba8c58, // Warm authentic Kraft cardboard tan
-      roughness: 0.88,
-      metalness: 0.02
+      color: 0xc49a6a, // Warm authentic Kraft cardboard tan
+      roughness: 0.65,
+      metalness: 0.01
     });
     const kraftInnerMat = new THREE.MeshStandardMaterial({
-      color: 0x9e7343, // Slightly darker corrugated interior
-      roughness: 0.92,
+      color: 0x9f7447, // Slightly darker corrugated interior
+      roughness: 0.70,
       metalness: 0.01
     });
     const kraftTapeMat = new THREE.MeshStandardMaterial({
-      color: 0x8c6130, // Cardboard packaging tape seal
-      roughness: 0.72,
-      metalness: 0.04
+      color: 0x8a5f33, // Cardboard packaging tape seal
+      roughness: 0.55,
+      metalness: 0.02,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
     });
 
-    // Outer Bottom Tray (height: 0.20)
-    const boxBaseGeo = new THREE.BoxGeometry(1.36, 0.20, 0.96);
+    // Outer Bottom Tray (height: 0.18, clearance for lid)
+    const boxBaseGeo = new THREE.BoxGeometry(1.33, 0.18, 0.93);
     const boxBase = new THREE.Mesh(boxBaseGeo, kraftBaseMat);
     boxBase.castShadow = true;
     boxBase.receiveShadow = true;
     boxGroup.add(boxBase);
 
     // Inner protective cradle insert
-    const insertGeo = new THREE.BoxGeometry(1.28, 0.05, 0.88);
+    const insertGeo = new THREE.BoxGeometry(1.26, 0.04, 0.86);
     const boxInsert = new THREE.Mesh(insertGeo, kraftInnerMat);
-    boxInsert.position.set(0, 0.075, 0);
+    boxInsert.position.set(0, 0.065, 0);
     boxGroup.add(boxInsert);
 
-    // Box Lid Group (Closed flush over the base initially)
+    // Box Lid Group (Closed flush over the base initially with anti-aliasing clearance)
     const lidGroup = new THREE.Group();
-    lidGroup.position.set(0, 0.03, 0);
+    lidGroup.position.set(0, 0.038, 0);
     boxGroup.add(lidGroup);
 
-    const boxLidGeo = new THREE.BoxGeometry(1.38, 0.16, 0.98);
+    const boxLidGeo = new THREE.BoxGeometry(1.38, 0.13, 0.98);
     const boxLid = new THREE.Mesh(boxLidGeo, kraftBaseMat);
     boxLid.castShadow = true;
     boxLid.receiveShadow = true;
     lidGroup.add(boxLid);
 
-    // Center Packing Tape Strip
-    const tapeGeo = new THREE.BoxGeometry(1.385, 0.005, 0.16);
+    // Center Packing Tape Strip (Offset smoothly to eliminate Z-fighting noise)
+    const tapeGeo = new THREE.BoxGeometry(1.382, 0.002, 0.15);
     const tape = new THREE.Mesh(tapeGeo, kraftTapeMat);
-    tape.position.set(0, 0.082, 0);
+    tape.position.set(0, 0.066, 0);
     lidGroup.add(tape);
 
-    // Minimal Shipping / Fragile sticker on lid corner
+    // Minimal Shipping / Fragile sticker on lid corner (Offset to eliminate moire flickering)
     const labelGeo = new THREE.PlaneGeometry(0.24, 0.14);
-    const labelMat = new THREE.MeshBasicMaterial({ color: 0xf8fafc });
+    const labelMat = new THREE.MeshBasicMaterial({ 
+      color: 0xf8fafc,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    });
     const label = new THREE.Mesh(labelGeo, labelMat);
     label.rotation.x = -Math.PI / 2;
-    label.position.set(0.42, 0.083, 0.28);
+    label.position.set(0.42, 0.0665, 0.28);
     lidGroup.add(label);
 
     // --- 5. THE 3D LAPTOP (Deep Space Gray Aluminum - Crisp contrast on white desk) ---
@@ -584,51 +599,80 @@ export default function Hero({ config, onExploreClick, onSecondaryClick, onDismi
       camera.position.z += (camTargetZ - camera.position.z) * 0.08;
       camera.lookAt(0, 1.25, 0);
 
-      // --- Physical Accurate Unboxing Sequence ---
+      // --- Physical Realistic Unboxing Sequence ---
       // Firmly closed packaging initially (p < 0.08)
       if (p < 0.08) {
         laptopGroup.visible = false;
-        lidGroup.position.set(0, 0.03, 0);
+        lidGroup.position.set(0, 0.038, 0);
         lidGroup.rotation.set(0, 0, 0);
-        boxGroup.position.set(-0.85, 1.25, 0.15);
+        boxGroup.position.set(-0.85, 1.24, 0.15);
+        laptopGroup.position.set(-0.85, 1.25, 0.15);
+        laptopGroup.rotation.set(0, 0, 0);
         screenHinge.rotation.x = Math.PI / 2;
       } else {
         laptopGroup.visible = true;
 
-        // Stage 1: Cardboard Box Lid slides vertically up with vacuum glide (p: 0.08 -> 0.22)
-        const lidLift = THREE.MathUtils.clamp((p - 0.08) / 0.14, 0, 1);
-        lidGroup.position.y = 0.03 + (lidLift * 0.52);
+        // Stage 1: Cardboard Box Lid slides vertically up with smooth easing (p: 0.08 -> 0.22)
+        const lidLiftRaw = THREE.MathUtils.clamp((p - 0.08) / 0.14, 0, 1);
+        const lidLift = lidLiftRaw * lidLiftRaw * (3 - 2 * lidLiftRaw);
+        lidGroup.position.y = 0.038 + (lidLift * 0.58);
 
-        // Stage 2: Lid tilts and rests to the side; Laptop emerges and glides to center stage (p: 0.20 -> 0.38)
-        const unboxSlide = THREE.MathUtils.clamp((p - 0.20) / 0.18, 0, 1);
+        // Stage 2: Lid tilts and rests naturally to the side on the desk (p: 0.18 -> 0.30)
+        const lidAsideRaw = THREE.MathUtils.clamp((p - 0.18) / 0.12, 0, 1);
+        const lidAside = lidAsideRaw * lidAsideRaw * (3 - 2 * lidAsideRaw);
+        lidGroup.position.x = -lidAside * 0.72;
+        lidGroup.position.z = -lidAside * 0.32;
+        lidGroup.position.y = 0.038 + 0.58 - (lidAside * 0.50);
+        lidGroup.rotation.z = lidAside * 0.12;
+        lidGroup.rotation.x = -lidAside * 0.14;
 
-        // Lid smoothly rotates and rests naturally on the desk
-        lidGroup.position.x = -unboxSlide * 0.70;
-        lidGroup.position.z = -unboxSlide * 0.35;
-        lidGroup.position.y = 0.03 + 0.52 - (unboxSlide * 0.44);
-        lidGroup.rotation.z = unboxSlide * 0.14;
-        lidGroup.rotation.x = -unboxSlide * 0.16;
+        // Stage 3: Cardboard Box Base gently shifts to the left as laptop takes flight (p: 0.24 -> 0.44)
+        const boxSlideRaw = THREE.MathUtils.clamp((p - 0.24) / 0.18, 0, 1);
+        const boxSlide = boxSlideRaw * boxSlideRaw * (3 - 2 * boxSlideRaw);
+        boxGroup.position.x = THREE.MathUtils.lerp(-0.85, -1.35, boxSlide);
+        boxGroup.position.z = THREE.MathUtils.lerp(0.15, -0.15, boxSlide);
 
-        // Cardboard Box Base gently rests on the left of the desk
-        boxGroup.position.x = THREE.MathUtils.lerp(-0.85, -1.35, unboxSlide);
-        boxGroup.position.z = THREE.MathUtils.lerp(0.15, -0.15, unboxSlide);
+        // Stage 4: Laptop UP then DOWN arc onto desk (Realistic physical trajectory)
+        // Part 4A: Laptop lifts vertically UP out of packaging tray (p: 0.18 -> 0.32)
+        const liftUpRaw = THREE.MathUtils.clamp((p - 0.18) / 0.14, 0, 1);
+        const liftUp = Math.sin((liftUpRaw * Math.PI) / 2);
+        const initialY = 1.25;
+        const peakFlightY = 1.72; // Clears the cardboard box lip completely in mid-air
 
-        // Laptop emerges from the packaging tray and glides to center
-        laptopGroup.position.x = THREE.MathUtils.lerp(-0.85, 0, unboxSlide);
-        laptopGroup.position.y = THREE.MathUtils.lerp(1.25, 1.18, unboxSlide);
-        laptopGroup.position.z = THREE.MathUtils.lerp(0.15, 0, unboxSlide);
+        // Part 4B: Laptop glides horizontally across to desk center (p: 0.28 -> 0.46)
+        const glideRaw = THREE.MathUtils.clamp((p - 0.28) / 0.18, 0, 1);
+        const glide = glideRaw * glideRaw * (3 - 2 * glideRaw);
+        laptopGroup.position.x = THREE.MathUtils.lerp(-0.85, 0, glide);
+        laptopGroup.position.z = THREE.MathUtils.lerp(0.15, 0, glide);
 
-        // Stage 3: Laptop Display opens smoothly (p: 0.36 -> 0.60)
-        const lidOpen = THREE.MathUtils.clamp((p - 0.36) / 0.24, 0, 1);
+        // Part 4C: Laptop descends DOWN onto the desk surface (p: 0.34 -> 0.48)
+        const deskLandingY = 1.168; // Settles flush onto pristine white lacquer desk
+        const dropRaw = THREE.MathUtils.clamp((p - 0.34) / 0.14, 0, 1);
+        const drop = dropRaw * dropRaw * (3 - 2 * dropRaw);
+
+        if (p < 0.34) {
+          laptopGroup.position.y = THREE.MathUtils.lerp(initialY, peakFlightY, liftUp);
+        } else {
+          laptopGroup.position.y = THREE.MathUtils.lerp(peakFlightY, deskLandingY, drop);
+        }
+
+        // Natural aerodynamic tilt while gliding in the air, returns to flat on landing
+        const flightTilt = Math.sin(glide * Math.PI);
+        laptopGroup.rotation.z = flightTilt * 0.04;
+        laptopGroup.rotation.x = -flightTilt * 0.03;
+
+        // Stage 5: Laptop Display opens smoothly ONLY after landing securely on the desk (p: 0.48 -> 0.72)
+        const lidOpenRaw = THREE.MathUtils.clamp((p - 0.48) / 0.24, 0, 1);
+        const lidOpen = lidOpenRaw * lidOpenRaw * (3 - 2 * lidOpenRaw);
         screenHinge.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0.20, lidOpen);
       }
 
-      // CRT Light Glow (Floods onto chassis and white desk)
-      const crtGlow = THREE.MathUtils.clamp((p - 0.35) / 0.24, 0, 1);
+      // CRT Light Glow (Floods onto chassis and white desk as screen opens)
+      const crtGlow = THREE.MathUtils.clamp((p - 0.50) / 0.22, 0, 1);
       crtScreenLight.intensity = crtGlow * 4.2;
 
       // Backlit Keyboard Glow Pulse
-      if (p > 0.4) {
+      if (p > 0.48) {
         kbMat.emissiveIntensity = 0.15 + (Math.sin(frameTicker * 0.08) * 0.06);
       }
 

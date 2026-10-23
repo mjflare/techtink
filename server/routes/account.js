@@ -1,7 +1,7 @@
 // Customer accounts, comments, OTP/2FA verification and orders.
 import { Router } from 'express';
 import crypto from 'node:crypto';
-import { db, getSetting } from '../db.js';
+import { db, getSetting, logSecurityEvent } from '../db.js';
 import { 
   hashPassword, verifyPassword, issueToken, publicUser, 
   requireUser, requireAdmin, normalizeMobile, issueTemp2FAToken, 
@@ -44,12 +44,17 @@ r.post('/auth/login', (req, res) => {
     ? db.get('SELECT * FROM users WHERE mobile = ?', m)
     : db.get('SELECT * FROM users WHERE email = ?', identifier.toLowerCase());
   if (!user || !verifyPassword(String(password || ''), user.password_hash)) {
+    logSecurityEvent(user?.id || null, identifier, 'login_fail', req.ip, 'تلاش ناموفق برای ورود: کلمه عبور نادرست');
     return res.status(401).json({ error: 'نام کاربری یا رمز عبور اشتباه است.' });
   }
-  if (user.blocked) return res.status(403).json({ error: 'حساب کاربری شما مسدود شده است.' });
+  if (user.blocked) {
+    logSecurityEvent(user.id, user.email || user.mobile, 'blocked_attempt', req.ip, 'تلاش ورود به حساب مسدود شده');
+    return res.status(403).json({ error: 'حساب کاربری شما مسدود شده است.' });
+  }
 
   // If user has Google Authenticator / TOTP 2FA enabled, issue challenge token
   if (user.totp_enabled) {
+    logSecurityEvent(user.id, user.email || user.mobile, '2fa_challenge', req.ip, 'صدور چالش ورود دومرحله‌ای Google Authenticator');
     const tempToken = issueTemp2FAToken(user);
     return res.json({
       success: true,
@@ -68,6 +73,7 @@ r.post('/auth/login', (req, res) => {
 
   // Update activity timestamp and issue full session token
   db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", user.id);
+  logSecurityEvent(user.id, user.email || user.mobile, 'login_success', req.ip, 'ورود موفق به حساب کاربری');
   res.json({ success: true, token: issueToken(user), user: publicUser(user) });
 });
 
@@ -103,16 +109,19 @@ r.post('/auth/2fa/verify-totp', (req, res) => {
         isValid = true;
         backupCodes.splice(codeIndex, 1);
         db.run('UPDATE users SET totp_backup_codes = ? WHERE id = ?', JSON.stringify(backupCodes), user.id);
+        logSecurityEvent(user.id, user.email || user.mobile, 'backup_code_used', req.ip, 'ورود با استفاده از کد بازیابی اضطراری ۲FA');
       }
     } catch {}
   }
 
   if (!isValid) {
+    logSecurityEvent(user.id, user.email || user.mobile, '2fa_verify_fail', req.ip, 'کد ۲FA وارد شده نامعتبر بود');
     return res.status(400).json({ error: 'کد تایید Google Authenticator یا کد پشتیبان اشتباه است.' });
   }
 
   // Session keepalive & issue permanent token
   db.run("UPDATE users SET last_active_at = datetime('now') WHERE id = ?", user.id);
+  logSecurityEvent(user.id, user.email || user.mobile, '2fa_verify_success', req.ip, 'تایید موفقیت‌آمیز ورود دومرحله‌ای Google Authenticator');
   const fullToken = issueToken(user);
   res.json({
     success: true,

@@ -2,8 +2,9 @@
 import { Router } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
-import { db, getSettings, setSetting, getSetting } from '../db.js';
-import { requireAdmin, publicUser, hashPassword, normalizeMobile } from '../auth.js';
+import crypto from 'node:crypto';
+import { db, getSettings, setSetting, getSetting, logSecurityEvent } from '../db.js';
+import { requireAdmin, publicUser, hashPassword, normalizeMobile, getAdminTimeoutMinutes } from '../auth.js';
 import { serializeProduct } from '../products.js';
 import { orderWithItems } from './account.js';
 import { sendOtp, sendCustomSms } from '../services/smsService.js';
@@ -492,6 +493,136 @@ r.get('/security/audit', (req, res) => {
       createdAt: u.created_at
     }))
   });
+});
+
+// ---------- Security Dashboard & User Access Control API ----------
+r.get('/security/dashboard-stats', (_req, res) => {
+  const totalUsers = db.get("SELECT COUNT(*) AS c FROM users")?.c || 0;
+  const activeUsers24h = db.get("SELECT COUNT(*) AS c FROM users WHERE last_active_at >= datetime('now', '-24 hours')")?.c || 0;
+  const adminCount = db.get("SELECT COUNT(*) AS c FROM users WHERE role = 'admin'")?.c || 0;
+  const totpEnabledCount = db.get("SELECT COUNT(*) AS c FROM users WHERE totp_enabled = 1")?.c || 0;
+  const blockedCount = db.get("SELECT COUNT(*) AS c FROM users WHERE blocked = 1")?.c || 0;
+  const timeoutMinutes = getAdminTimeoutMinutes();
+
+  const activeAdmins = db.all("SELECT id, name, email, mobile, role, totp_enabled, last_active_at, created_at FROM users WHERE role = 'admin' ORDER BY last_active_at DESC");
+  const recentLogs = db.all("SELECT * FROM security_logs ORDER BY id DESC LIMIT 25");
+
+  res.json({
+    stats: {
+      totalUsers,
+      activeUsers24h,
+      adminCount,
+      totpEnabledCount,
+      blockedCount,
+      timeoutMinutes
+    },
+    activeAdmins: activeAdmins.map(u => ({
+      ...u,
+      totpEnabled: !!u.totp_enabled
+    })),
+    recentLogs
+  });
+});
+
+r.get('/security/users', (req, res) => {
+  const search = String(req.query.search || '').trim().toLowerCase();
+  const roleFilter = String(req.query.role || '');
+  const statusFilter = String(req.query.status || '');
+
+  const query = `
+    SELECT u.*, (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS orders_count
+    FROM users u
+    ORDER BY 
+      CASE WHEN u.last_active_at >= datetime('now', '-15 minutes') THEN 1 ELSE 2 END,
+      u.last_active_at DESC, 
+      u.id DESC
+    LIMIT 250
+  `;
+  const users = db.all(query).map(u => {
+    let status = 'inactive';
+    if (u.blocked) {
+      status = 'blocked';
+    } else if (u.last_active_at && new Date(u.last_active_at).getTime() > Date.now() - 15 * 60 * 1000) {
+      status = 'online';
+    } else if (u.last_active_at && new Date(u.last_active_at).getTime() > Date.now() - 24 * 60 * 60 * 1000) {
+      status = 'recent';
+    }
+    return {
+      ...publicUser(u),
+      ordersCount: u.orders_count || 0,
+      blocked: !!u.blocked,
+      status
+    };
+  });
+
+  const filtered = users.filter(u => {
+    if (roleFilter && u.role !== roleFilter) return false;
+    if (statusFilter && u.status !== statusFilter) return false;
+    if (!search) return true;
+    return (
+      (u.name && u.name.toLowerCase().includes(search)) ||
+      (u.email && u.email.toLowerCase().includes(search)) ||
+      (u.mobile && u.mobile.includes(search))
+    );
+  });
+
+  res.json(filtered);
+});
+
+r.post('/security/users/:id/reset-password', (req, res) => {
+  const u = db.get('SELECT * FROM users WHERE id = ?', req.params.id);
+  if (!u) return res.status(404).json({ error: 'کاربر مورد نظر یافت نشد.' });
+
+  let { newPassword, autoGenerate, forceChangeOnLogin } = req.body || {};
+  if (autoGenerate) {
+    newPassword = 'TT-' + crypto.randomBytes(3).toString('hex').toUpperCase();
+  } else if (!newPassword || String(newPassword).length < 6) {
+    return res.status(400).json({ error: 'رمز عبور باید حداقل ۶ کاراکتر باشد.' });
+  }
+
+  const mustChange = forceChangeOnLogin ? 1 : 0;
+  db.run('UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?', hashPassword(newPassword), mustChange, u.id);
+  logSecurityEvent(req.user.id, req.user.email || req.user.name, 'admin_reset_password', req.ip, `بازنشانی رمز عبور برای حساب ${u.email || u.mobile || u.name} توسط مدیر`);
+
+  res.json({
+    success: true,
+    message: 'رمز عبور با موفقیت به‌روزرسانی شد.',
+    newPassword,
+    mustChangePassword: !!mustChange
+  });
+});
+
+r.post('/security/users/:id/toggle-block', (req, res) => {
+  const u = db.get('SELECT * FROM users WHERE id = ?', req.params.id);
+  if (!u) return res.status(404).json({ error: 'کاربر یافت نشد.' });
+  if (u.id === req.user?.id) {
+    return res.status(400).json({ error: 'امکان مسدودسازی حساب مدیریت جاری وجود ندارد.' });
+  }
+  const newBlocked = u.blocked ? 0 : 1;
+  db.run('UPDATE users SET blocked = ? WHERE id = ?', newBlocked, u.id);
+  logSecurityEvent(req.user.id, req.user.email || req.user.name, newBlocked ? 'account_blocked' : 'account_unblocked', req.ip, `${newBlocked ? 'مسدودسازی' : 'رفع مسدودی'} حساب ${u.email || u.mobile || u.name} توسط مدیر`);
+  res.json({ success: true, blocked: !!newBlocked });
+});
+
+r.post('/security/users/:id/reset-2fa', (req, res) => {
+  const u = db.get('SELECT * FROM users WHERE id = ?', req.params.id);
+  if (!u) return res.status(404).json({ error: 'کاربر یافت نشد.' });
+  db.run('UPDATE users SET totp_secret = NULL, totp_enabled = 0, totp_backup_codes = NULL, two_factor_enabled = 0 WHERE id = ?', u.id);
+  logSecurityEvent(req.user.id, req.user.email || req.user.name, 'admin_reset_2fa', req.ip, `حذف و بازنشانی ورود دومرحله‌ای Google Authenticator برای حساب ${u.email || u.mobile || u.name}`);
+  res.json({ success: true, message: 'احراز هویت دومرحله‌ای کاربر ریست و غیرفعال شد.' });
+});
+
+r.post('/security/users/:id/terminate-session', (req, res) => {
+  const u = db.get('SELECT * FROM users WHERE id = ?', req.params.id);
+  if (!u) return res.status(404).json({ error: 'کاربر یافت نشد.' });
+  db.run("UPDATE users SET last_active_at = '2000-01-01 00:00:00' WHERE id = ?", u.id);
+  logSecurityEvent(req.user.id, req.user.email || req.user.name, 'terminate_session', req.ip, `پایان اجباری نشست کاربر ${u.email || u.mobile || u.name}`);
+  res.json({ success: true, message: 'نشست فعال کاربر با موفقیت پایان یافت.' });
+});
+
+r.get('/security/logs', (_req, res) => {
+  const logs = db.all('SELECT * FROM security_logs ORDER BY id DESC LIMIT 100');
+  res.json(logs);
 });
 
 // ---------- Homepage Customizer API ----------
